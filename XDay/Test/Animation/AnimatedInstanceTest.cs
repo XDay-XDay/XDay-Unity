@@ -21,6 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#if UNITY_EDITOR
+
 using UnityEngine;
 using UnityEditor;
 using XDay.AnimationAPI;
@@ -58,3 +60,5 @@ public class AnimatedInstanceTest : MonoBehaviour
 
     private IInstanceAnimatorManager m_AnimatedInstanceManager;
 }
+
+#endif

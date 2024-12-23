@@ -71,6 +71,7 @@ namespace XDay.WorldAPI
 
         public static string GetIconPath(string name)
         {
+#if UNITY_EDITOR
             if (string.IsNullOrEmpty(m_ResourceDir))
             {
                 string[] guids = AssetDatabase.FindAssets("XDayDummy t:Scene");
@@ -85,6 +86,9 @@ namespace XDay.WorldAPI
                 }
             }
             return $"{m_ResourceDir}/Icon/{name}";
+#else
+            return "";
+#endif
         }
 
         public static bool ImageButton(string name, string tooltip, int imageSize = 18)

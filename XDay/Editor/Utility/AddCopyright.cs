@@ -42,6 +42,11 @@ namespace XDay.UtilityAPI.Editor
             {
                 if (path.EndsWith(".cs"))
                 {
+                    if (SkipFile(path))
+                    {
+                        continue;
+                    }
+
                     var text = File.ReadAllText(path);
                     if (text.IndexOf("Copyright (c) 2024 XDay") == -1)
                     {
@@ -52,6 +57,11 @@ namespace XDay.UtilityAPI.Editor
             }
 
             AssetDatabase.Refresh();
+        }
+
+        private static bool SkipFile(string filePath)
+        {
+            return filePath.IndexOf("MiniJSON") >= 0;
         }
 
         private const string m_CopyrightText =
