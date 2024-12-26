@@ -31,8 +31,8 @@ namespace XDay.InputAPI
 {
     internal class ScrollMotion : Motion, IScrollMotion
     {
-        public Vector2 Direction => m_Direction;
-        public float Distance => m_Distance;
+        public Vector2 MoveDirection => m_Direction;
+        public float MoveDistance => m_Distance;
         public override MotionType Type => MotionType.MouseScroll;
 
         public ScrollMotion(int id, float maxAngle, float interval, TouchID touchID, IDeviceInput device)

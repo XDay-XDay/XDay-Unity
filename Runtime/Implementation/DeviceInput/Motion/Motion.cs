@@ -54,7 +54,7 @@ namespace XDay.InputAPI
             {
                 if (setFinish)
                 {
-                    m_State = MotionState.Finish;
+                    m_State = MotionState.End;
                     OnMatch();
                 }
                 m_State = null;

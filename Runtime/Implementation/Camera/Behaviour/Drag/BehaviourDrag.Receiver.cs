@@ -69,7 +69,7 @@ namespace XDay.CameraAPI
 
                         m_Manipulator.EnableRestore = true;
                     }
-                    else if (req.State == MotionState.Finish)
+                    else if (req.State == MotionState.End)
                     {
                         BounceCheck(req, pos);
                     }

@@ -78,7 +78,7 @@ namespace XDay.InputAPI
         IMouseScrollMotion CreateMouseScrollMotion();
         ILongPressMotion CreateLongPressMotion(float pressDuration);
         IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Camera camera);
-        IScrollMotion CreateSlideMotion(float validInterval = 0.2f);
+        IScrollMotion CreateScrollMotion(float validInterval = 0.2f);
         IDoubleClickMotion CreateDoubleClickMotion(float validClickInterval);
         IClickMotion CreateClickMotion();
         IDragMotion CreateDragMotion(TouchID validTouchName, float touchMovingThreshold);
@@ -120,7 +120,7 @@ namespace XDay.InputAPI
     {
         Start,
         Running,
-        Finish,
+        End,
     }
 
     public interface IMotion
@@ -134,8 +134,8 @@ namespace XDay.InputAPI
 
     public interface IScrollMotion : IMotion
     {
-        float Distance { get; }
-        Vector2 Direction { get; }
+        float MoveDistance { get; }
+        Vector2 MoveDirection { get; }
     }
 
     public interface IMouseScrollMotion : IMotion

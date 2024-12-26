@@ -45,7 +45,7 @@ namespace XDay.CameraAPI
             protected override void RespondInternal(BehaviourRequest request, CameraTransform pos)
             {
                 var req = request as Request;
-                if (req.State == MotionState.Finish)
+                if (req.State == MotionState.End)
                 {
                     m_CalculatorInitialized = false;
                 }

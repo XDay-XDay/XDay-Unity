@@ -28,7 +28,7 @@ namespace XDay.UtilityAPI
     public abstract class TaskBase : ITask
     {
         public bool RequestCancel { get=>m_RequestCancel; set=>m_RequestCancel = value; }
-        public abstract int Layer { get; }
+        public virtual int Layer { get; } = 1;
 
         public void OnDestroy() {}
         public void OnTaskCancelled() { }

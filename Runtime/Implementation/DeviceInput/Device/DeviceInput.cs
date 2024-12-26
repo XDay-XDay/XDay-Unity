@@ -55,7 +55,7 @@ namespace XDay.InputAPI
             return m_MotionSystem.CreateDragMotion(validTouchName, touchMovingThreshold, this);
         }
 
-        public IScrollMotion CreateSlideMotion(float validInterval)
+        public IScrollMotion CreateScrollMotion(float validInterval)
         {
             return m_MotionSystem.CreateScrollMotion(validInterval, this);
         }
