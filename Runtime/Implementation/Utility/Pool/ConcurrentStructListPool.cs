@@ -23,36 +23,36 @@
 
 using System.Collections.Generic;
 
-
 namespace XDay.UtilityAPI
 {
-    internal class ValueListPool<T> : IValueListPool<T> where T : struct
+    internal class ConcurrentStructListPool<T> : IConcurrentStructListPool<T> where T : struct
     {
-        public ValueListPool(int capacity)
+        public ConcurrentStructListPool(int capacity)
         {
-            m_Pool = new(capacity);
+            m_Pool = IStructListPool<T>.Create(capacity);
         }
 
         public List<T> Get()
         {
-            if (m_Pool.Count > 0)
+            lock (m_Lock)
             {
-                var list = m_Pool[^1];
-                m_Pool.RemoveAt(m_Pool.Count - 1);
+                var list = m_Pool.Get();
                 return list;
             }
-
-            return new List<T>();
         }
 
         public void Release(List<T> list)
         {
-            list.Clear();
-            m_Pool.Add(list);
+            lock (m_Lock)
+            {
+                m_Pool.Release(list);
+            }
         }
 
-        private List<List<T>> m_Pool;
+        private IStructListPool<T> m_Pool;
+        private object m_Lock = new();
     }
 }
+
 
 //XDay

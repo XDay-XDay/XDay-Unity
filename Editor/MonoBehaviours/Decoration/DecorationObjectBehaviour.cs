@@ -34,76 +34,78 @@ namespace XDay.WorldAPI.Decoration.Editor
     [SelectionBase]
     public class DecorationObjectBehaviour : MonoBehaviour
     {
-        public Vector3 InitLocalPosition { get; private set; }
-        public Quaternion InitLocalRotation { get; private set; }
-        public Vector3 InitLocalScale { get; private set; }
         public int ObjectID => m_ObjectID;
+        public Vector3 RecordedScale { get; private set; }
+        public Quaternion RecordedRot { get; private set; }
+        public Vector3 RecordedPos { get; private set; }
 
-        public void Init(int objectID, Action<int> onTransformChange)
+        public void Init(int objectID, Action<int> transformChangeCallback)
         {
             m_ObjectID = objectID;
-            m_OnTransformChange = onTransformChange;
+            m_TransformChangedCallback = transformChangeCallback;
         }
 
-        public void RecordTransform()
+        public void UpdateTranfsorm()
         {
-            InitLocalPosition = transform.localPosition;
-            InitLocalRotation = transform.localRotation;
-            InitLocalScale = transform.localScale;
+            if (transform.localScale != RecordedScale)
+            {
+                m_TransformChangedCallback?.Invoke(m_ObjectID);
+                RecordedScale = transform.localScale;
+            }
+
+            if (transform.localRotation != RecordedRot)
+            {
+                m_TransformChangedCallback?.Invoke(m_ObjectID);
+                RecordedRot = transform.localRotation;
+            }
+
+            if (transform.localPosition != RecordedPos)
+            {
+                m_TransformChangedCallback?.Invoke(m_ObjectID);
+                RecordedPos = transform.localPosition;
+            }
         }
 
-        public void Check()
+        public void Record()
         {
-            if (transform.localPosition != InitLocalPosition)
-            {
-                m_OnTransformChange?.Invoke(m_ObjectID);
-                InitLocalPosition = transform.localPosition;
-            }
-
-            if (transform.localRotation != InitLocalRotation)
-            {
-                m_OnTransformChange?.Invoke(m_ObjectID);
-                InitLocalRotation = transform.localRotation;
-            }
-
-            if (transform.localScale != InitLocalScale)
-            {
-                m_OnTransformChange?.Invoke(m_ObjectID);
-                InitLocalScale = transform.localScale;
-            }
+            RecordedPos = transform.localPosition;
+            RecordedRot = transform.localRotation;
+            RecordedScale = transform.localScale;
         }
 
         private int m_ObjectID;
-        Action<int> m_OnTransformChange;
+        private Action<int> m_TransformChangedCallback;
     }
 
-    [CustomEditor(typeof(DecorationObjectBehaviour))]
     [CanEditMultipleObjects]
-    class FreeObjectEventListenerEditor : UnityEditor.Editor
+    [CustomEditor(typeof(DecorationObjectBehaviour))]
+    class DecorationObjectBehaviourEditor : UnityEditor.Editor
     {
         private void OnEnable()
         {
            foreach (var target in targets)
             {
-                var obj = target as DecorationObjectBehaviour;
-                obj.RecordTransform();
+                var behaviour = target as DecorationObjectBehaviour;
+                behaviour.Record();
             }
-        }
-
-        public override void OnInspectorGUI()
-        {
-            var obj = target as DecorationObjectBehaviour;
-            EditorGUILayout.LabelField($"ID: {obj.ObjectID}");
         }
 
         private void OnSceneGUI()
         {
-            var obj = target as DecorationObjectBehaviour;
-            obj.Check();
+            var behaviour = target as DecorationObjectBehaviour;
+            behaviour.UpdateTranfsorm();
 
             SceneView.RepaintAll();
+        }
+
+        public override void OnInspectorGUI()
+        {
+            var behaviour = target as DecorationObjectBehaviour;
+            EditorGUILayout.LabelField($"Object ID: {behaviour.ObjectID}");
         }
     }
 }
 
 #endif
+
+//XDay

@@ -29,55 +29,55 @@ using UnityEditor;
 namespace XDay.WorldAPI.Decoration.Editor
 {
     [ExecuteInEditMode]
-    public class SubObject : MonoBehaviour
+    public class DecorationObjectChild : MonoBehaviour
     {
-        public void Init()
-        {
-            InitLocalPosition = transform.localPosition;
-            InitLocalRotation = transform.localRotation;
-            InitLocalScale = transform.localScale;
-        }
+        public Vector3 InitScale { get; private set; }
+        public Quaternion InitRot { get; private set; }
+        public Vector3 InitPos { get; private set; }
 
-        public void Check()
+        public void UpdateTransform()
         {
-            if (transform.localPosition != InitLocalPosition)
+            if (transform.localScale != InitScale)
             {
-                transform.localPosition = InitLocalPosition;
+                transform.localScale = InitScale;
             }
 
-            if (transform.localRotation != InitLocalRotation)
+            if (transform.localRotation != InitRot)
             {
-                transform.localRotation = InitLocalRotation;
+                transform.localRotation = InitRot;
             }
 
-            if (transform.localScale != InitLocalScale)
+            if (transform.localPosition != InitPos)
             {
-                transform.localScale = InitLocalScale;
+                transform.localPosition = InitPos;
             }
         }
 
-        public Vector3 InitLocalPosition { get; private set; }
-        public Quaternion InitLocalRotation { get; private set; }
-        public Vector3 InitLocalScale { get; private set; }
+        public void Record()
+        {
+            InitPos = transform.localPosition;
+            InitRot = transform.localRotation;
+            InitScale = transform.localScale;
+        }
     }
 
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(SubObject))]
-    internal class SubObjectEditor : UnityEditor.Editor
+    [CustomEditor(typeof(DecorationObjectChild))]
+    internal class DecorationObjectChildEditor : UnityEditor.Editor
     {
         private void OnEnable()
         {
             foreach (var target in targets)
             {
-                var obj = target as SubObject;
-                obj.Init();
+                var child = target as DecorationObjectChild;
+                child.Record();
             }
         }
 
         private void OnSceneGUI()
         {
-            var obj = target as SubObject;
-            obj.Check();
+            var child = target as DecorationObjectChild;
+            child.UpdateTransform();
 
             SceneView.RepaintAll();
         }

@@ -110,7 +110,7 @@ namespace XDay.NavigationAPI
                 PathFlags flags,
                 System.Action<List<Vector3>> onTaskCompleted,
                 Func<int, float> costOverride,
-                IConcurrentValueListPool<Vector3> pathPool)
+                IConcurrentStructListPool<Vector3> pathPool)
             {
                 m_PathFinder = pathFinder;
                 m_Source = source;
@@ -138,7 +138,7 @@ namespace XDay.NavigationAPI
             private PathFlags m_PathFlags;
             private IGridBasedPathFinder m_PathFinder;
             private Action<List<Vector3>> m_OnTaskCompleted;
-            private IConcurrentValueListPool<Vector3> m_PathPool;
+            private IConcurrentStructListPool<Vector3> m_PathPool;
             private List<Vector3> m_Path;
             private Vector3 m_Source;
             private Vector3 m_Target;

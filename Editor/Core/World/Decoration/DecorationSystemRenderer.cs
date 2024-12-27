@@ -124,7 +124,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 Helper.Traverse(gameObject.transform, true, (obj) =>
                 {
-                    obj.gameObject.DestroyComponent<SubObject>();
+                    obj.gameObject.DestroyComponent<DecorationObjectChild>();
                 });
 
                 if (destroyGameObject)
@@ -161,7 +161,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             });
             Helper.Traverse(gameObject.transform, true, (obj) =>
             {
-                obj.gameObject.AddComponent<SubObject>();
+                obj.gameObject.AddComponent<DecorationObjectChild>();
             });
 
             UpdateObjectLOD(decoration.ID, m_System.ActiveLOD);

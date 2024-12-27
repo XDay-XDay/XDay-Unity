@@ -27,7 +27,7 @@ using UnityEngine;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    internal class FreeObjectGroup : MonoBehaviour
+    internal class DecorationObjectGroup : MonoBehaviour
     {
     }
 }

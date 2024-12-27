@@ -256,7 +256,7 @@ namespace XDay.NavigationAPI
             m_ContextManager.ReleaseContext(context);
         }
 
-        private IConcurrentValueListPool<Vector3> m_PathPool = IConcurrentValueListPool<Vector3>.Create();
+        private IConcurrentStructListPool<Vector3> m_PathPool = IConcurrentStructListPool<Vector3>.Create();
         private ITaskSystem m_TaskSystem;
         private int m_HorizontalResolution;
         private ContextManager m_ContextManager;
