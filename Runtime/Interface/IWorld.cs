@@ -32,7 +32,7 @@ namespace XDay.WorldAPI
 {
     public enum WorldObjectVisibility
     {
-        Unknown,
+        Undefined,
         Invisible,
         Visible,
     }
@@ -49,7 +49,6 @@ namespace XDay.WorldAPI
         int ID { get; }
         int WorldID { get; }
         int ObjectIndex { get; }
-        int ContainerID { get; }
         IWorld World { get; }
     }
 
@@ -67,13 +66,16 @@ namespace XDay.WorldAPI
         string Name { get; }
         float Width { get; }
         float Height { get; }
-        Rect Bounds { get; }
+        Bounds Bounds { get; }
         int PluginCount { get; }
         ICameraManipulator CameraManipulator { get; set; }
         GameObject Root { get; }
         IGameObjectPool GameObjectPool { get; }
+        ICameraVisibleAreaCalculator CameraVisibleAreaCalculator { get; }
+        IWorldLODSystem WorldLODSystem { get; }
 
-        IWorldObject QueryObject(int objectID);
+        int AllocateObjectID();
+        T QueryObject<T>(int objectID) where T : class, IWorldObject;
         T QueryPlugin<T>() where T : class, IWorldPlugin;
         T QueryPlugin<T>(string name) where T : class, IWorldPlugin;
         List<T> QueryPlugins<T>() where T : class, IWorldPlugin;

@@ -93,7 +93,11 @@ namespace XDay.WorldAPI
 
         public static bool ImageButton(string name, string tooltip, int imageSize = 18)
         {
-            return GUILayout.Button(new GUIContent(GetIconPath(name), tooltip), GUILayout.MaxWidth(imageSize), GUILayout.MaxHeight(imageSize));
+#if UNITY_EDITOR
+            return GUILayout.Button(new GUIContent(AssetDatabase.LoadAssetAtPath<Texture2D>(GetIconPath(name)), tooltip), GUILayout.MaxWidth(imageSize), GUILayout.MaxHeight(imageSize));
+#else
+            return false;
+#endif
         }
 
         private static string m_ResourceDir;

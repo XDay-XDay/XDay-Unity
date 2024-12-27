@@ -62,7 +62,7 @@ namespace XDay.WorldAPI
             }
             get => m_Manipulator;
         }
-        public Rect Bounds => new(0, 0, m_Width, m_Height);
+        public Bounds Bounds => new(new Vector3(m_Width * 0.5f, 0, m_Height * 0.5f), new Vector3(m_Width, 0, m_Height));
         public string GameFolder => Setup.GameFolder;
         public string EditorFolder => Setup.EditorFolder;
         public abstract string TypeName { get; }
@@ -98,7 +98,7 @@ namespace XDay.WorldAPI
             return --m_NextObjectID;
         }
 
-        public IWorldObject QueryObject(int id)
+        public T QueryObject<T>(int id) where T : class, IWorldObject
         {
             if (id == 0)
             {
@@ -106,7 +106,7 @@ namespace XDay.WorldAPI
             }
 
             m_Objects.TryGetValue(id, out var obj);
-            return obj;
+            return obj as T;
         }
 
         public async UniTask InitAsync(CancellationToken token)

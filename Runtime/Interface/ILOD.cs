@@ -58,6 +58,8 @@ namespace XDay.WorldAPI
             return new PluginLODSystem(lodCount);
         }
 
+        void Init(IWorldLODSystem lodSystem);
+
         int LODCount { get; set; }
         int PreviousLOD { get; }
         int CurrentLOD { get; }

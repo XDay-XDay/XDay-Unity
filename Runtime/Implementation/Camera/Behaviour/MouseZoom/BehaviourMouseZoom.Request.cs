@@ -35,10 +35,10 @@ namespace XDay.CameraAPI
             public Vector2 TouchPosition => m_TouchPosition;
             public override BehaviourType Type => BehaviourType.MouseZoom;
 
-            public static Request Create(int layer, int priority, RequestQueueType method, Vector2 touchPosition, MotionState phase)
+            public static Request Create(int layer, int priority, RequestQueueType method, Vector2 touchPosition, MotionState state)
             {
                 var request = m_Pool.Get();
-                request.Init(layer, priority, method, touchPosition, phase);
+                request.Init(layer, priority, method, touchPosition, state);
                 return request;
             }
 

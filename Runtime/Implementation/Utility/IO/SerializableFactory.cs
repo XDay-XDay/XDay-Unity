@@ -52,7 +52,7 @@ namespace XDay.SerializationAPI
             m_TypeMapping.TryGetValue(typeName, out var type);
             if (type == null)
             {
-                Debug.LogError($"alias {typeName} not found!");
+                Debug.LogError($"typeName {typeName} not found!");
             }
 
             var obj = Activator.CreateInstance(type) as ISerializable;

@@ -24,6 +24,7 @@
 using UnityEngine;
 using XDay.CameraAPI;
 using XDay.InputAPI;
+using XDay.NavigationAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
 
@@ -34,6 +35,7 @@ namespace XDay.API
         public IDeviceInput DeviceInput => m_Input;
         public IWorldManager WorldSystem => m_WorldSystem;
         public ITaskSystem TaskSystem => m_TaskSystem;
+        public INavigationManager NavigationManager => m_NavigationManager;
 
         public XDayContext(string worldSetupFilePath, IWorldAssetLoader loader)
         {
@@ -48,11 +50,13 @@ namespace XDay.API
             m_AssetLoader = loader;
 
             m_WorldSystem.Init(worldSetupFilePath, m_AssetLoader, m_TaskSystem, m_Input);
+            m_NavigationManager = INavigationManager.Create();
         }
 
         public void OnDestroy()
         {
             m_WorldSystem?.Uninit();
+            m_NavigationManager?.OnDestroy();
         }
 
         public void Update()
@@ -81,6 +85,7 @@ namespace XDay.API
         private readonly WorldManager m_WorldSystem;
         private readonly IDeviceInput m_Input;
         private readonly ITaskSystem m_TaskSystem;
+        private readonly INavigationManager m_NavigationManager;
     }
 }
 

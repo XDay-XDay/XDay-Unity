@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -339,7 +340,7 @@ namespace XDay.UtilityAPI
             return AppDomain.CurrentDomain.GetAssemblies().SelectMany(asm => asm.GetTypes()).Where(type => typeof(T).IsAssignableFrom(type) && type.IsAbstract == isAbstract).ToArray();
         }
 
-        public static Bounds GetBounds(this GameObject gameObject, bool setIdentity = true)
+        public static Bounds QueryBounds(this GameObject gameObject, bool setIdentity = true)
         {
             var bounds = new Bounds();
             var transform = gameObject.transform;
@@ -353,6 +354,18 @@ namespace XDay.UtilityAPI
             }
 
             foreach (var renderer in gameObject.GetComponentsInChildren<MeshRenderer>(includeInactive: true))
+            {
+                if (bounds.size != Vector3.zero)
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+                else
+                {
+                    bounds = renderer.bounds;
+                }
+            }
+
+            foreach (var renderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive: true))
             {
                 if (bounds.size != Vector3.zero)
                 {
@@ -393,7 +406,7 @@ namespace XDay.UtilityAPI
             return bounds;
         }
 
-        public static Rect GetRectWithRotation(this GameObject gameObject, Quaternion rotation)
+        public static Rect QueryRectWithRotation(this GameObject gameObject, Quaternion rotation)
         {
             if (gameObject == null)
             {
@@ -406,12 +419,12 @@ namespace XDay.UtilityAPI
             var oldRot = transform.rotation;
             transform.SetPositionAndRotation(Vector3.zero, rotation);
 
-            var rect = GetRect(gameObject, setIdentity: false);
+            var rect = QueryRect(gameObject, setIdentity: false);
             transform.SetPositionAndRotation(oldPos, oldRot);
             return rect;
         }
 
-        public static Rect GetRectWithLocalScaleAndRotation(this GameObject gameObject, Quaternion rotation, Vector3 localScale)
+        public static Rect QueryRectWithLocalScaleAndRotation(this GameObject gameObject, Quaternion rotation, Vector3 localScale)
         {
             if (gameObject == null)
             {
@@ -426,13 +439,34 @@ namespace XDay.UtilityAPI
             transform.SetPositionAndRotation(Vector3.zero, rotation);
             transform.localScale = localScale;
 
-            var rect = GetRect(gameObject, setIdentity: false);
+            var rect = QueryRect(gameObject, setIdentity: false);
             transform.SetPositionAndRotation(oldPos, oldRot);
             transform.localScale = oldScale;
             return rect;
         }
 
-        public static Rect GetRectWithTransform(this GameObject gameObject, Vector3 pos, Quaternion rot, Vector3 scale)
+        public static Rect QueryRectWithLocalTransform(this GameObject gameObject, Vector3 pos, Quaternion rot, Vector3 scale)
+        {
+            if (gameObject == null)
+            {
+                Debug.LogError("game object is null!");
+                return new();
+            }
+
+            var transform = gameObject.transform;
+            var oldPos = transform.localPosition;
+            var oldRot = transform.localRotation;
+            var oldScale = transform.localScale;
+            transform.SetLocalPositionAndRotation(pos, rot);
+            transform.localScale = scale;
+
+            var rect = QueryRect(gameObject, setIdentity: false);
+            transform.SetLocalPositionAndRotation(oldPos, oldRot);
+            transform.localScale = oldScale;
+            return rect;
+        }
+
+        public static Rect QueryRectWithTransform(this GameObject gameObject, Vector3 pos, Quaternion rot, Vector3 scale)
         {
             if (gameObject == null)
             {
@@ -447,13 +481,13 @@ namespace XDay.UtilityAPI
             transform.SetPositionAndRotation(pos, rot);
             transform.localScale = scale;
 
-            var rect = GetRect(gameObject, setIdentity: false);
+            var rect = QueryRect(gameObject, setIdentity: false);
             transform.SetPositionAndRotation(oldPos, oldRot);
             transform.localScale = oldScale;
             return rect;
         }
 
-        public static Rect GetRect(this GameObject gameObject, bool setIdentity = true)
+        public static Rect QueryRect(this GameObject gameObject, bool setIdentity = true)
         {
             if (gameObject == null)
             {
@@ -461,7 +495,7 @@ namespace XDay.UtilityAPI
                 return new();
             }
 
-            var bounds = gameObject.GetBounds(setIdentity);
+            var bounds = gameObject.QueryBounds(setIdentity);
             var min = bounds.min;
             var max = bounds.max;
             return new Rect(min.x, min.z, bounds.size.x, bounds.size.z);
@@ -494,6 +528,85 @@ namespace XDay.UtilityAPI
         public static Bounds Transform(this Bounds bounds, Transform transform)
         {
             return bounds.Transform(transform.localToWorldMatrix);
+        }
+
+        public static Vector3 Mult(this Vector3 v, Vector3 other)
+        {
+            return new Vector3(v.x * other.x, v.y * other.y, v.z * other.z);
+        }
+
+        public static Vector3 Div(this Vector3 v, Vector3 other)
+        {
+            return new Vector3(v.x / other.x, v.y / other.y, v.z / other.z);
+        }
+
+        public static Rect ToRect(this Bounds b)
+        {
+            return new Rect(b.min.x, b.min.z, b.size.x, b.size.z);
+        }
+
+        public static Bounds ToBounds(this Rect r)
+        {
+            return new Bounds(r.center.ToVector3XZ(), r.size.ToVector3XZ());
+        }
+
+        public static bool CheckOverlap(List<Vector3> coordinates, Vector3 pos, float space)
+        {
+            foreach (var coordinate in coordinates)
+            {
+                if ((pos - coordinate).sqrMagnitude <= space * space)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static float GetSignedPolygonArea(Vector3[] polygon)
+        {
+            var n = polygon.Length;
+            float area = 0;
+            for (var i = 0; i < n; i++)
+            {
+                area += (polygon[(i + 1) % n].x - polygon[i].x) * (polygon[(i + 1) % n].z + polygon[i].z) / 2;
+            }
+            return area;
+        }
+
+        public static float GetPolygonArea(Vector3[] polygon)
+        {
+            return Mathf.Abs(GetSignedPolygonArea(polygon));
+        }
+
+        public static void Traverse(Transform root, bool startFromChildren, Action<Transform> callback)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Stack<Transform> stack = new();
+            if (startFromChildren)
+            {
+                foreach (Transform child in root)
+                {
+                    stack.Push(child);
+                }
+            }
+            else
+            {
+                stack.Push(root);
+            }
+            while (stack.Count > 0)
+            {
+                var cur = stack.Pop();
+                callback(cur);
+
+                foreach (Transform child in cur.transform)
+                {
+                    stack.Push(child);
+                }
+            }
         }
 
         private const double m_DegToRad = 0.0174532924;

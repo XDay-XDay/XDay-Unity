@@ -52,7 +52,12 @@ namespace XDay.UtilityAPI
 
         public void ClearAll()
         {
+            List<string> keys = new();
             foreach (var key in m_Pool.Keys)
+            {
+                keys.Add(key);
+            }
+            foreach (var key in keys)
             {
                 Clear(key);
             }

@@ -42,7 +42,6 @@ namespace XDay.RenderingAPI.BRG
         int DataSize { get; }
         bool IsPerInstance { get; }
 
-
         static IShaderPropertyDeclaration Create(string name, ShaderPropertyType type, bool perInstance = true)
         {
             return new ShaderPropertyDeclaration(name, perInstance, type);

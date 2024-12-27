@@ -57,30 +57,32 @@ namespace XDay.SerializationAPI
 
         void Uninit();
 
-        void WriteInt32(int value, string mark);
-        void WriteUInt32(uint value, string mark);
-        void WriteInt64(long value, string mark);
-        void WriteUInt64(ulong value, string mark);
-        void WriteInt32Array(int[] value, string mark);
-        void WriteSingleArray(float[] value, string mark);
-        void WriteStringArray(string[] value, string mark);
-        void WriteInt32List(List<int> value, string mark);
-        void WriteStringList(List<string> value, string mark);
-        void WriteSingleList(List<float> value, string mark);
-        void WriteSingle(float value, string mark);
-        void WriteBoolean(bool value, string mark);
-        void WriteString(string value, string mark);
+        void WriteInt32(int value, string label);
+        void WriteUInt32(uint value, string label);
+        void WriteInt64(long value, string label);
+        void WriteUInt64(ulong value, string label);
+        void WriteInt32Array(int[] value, string label);
+        void WriteSingleArray(float[] value, string label);
+        void WriteStringArray(string[] value, string label);
+        void WriteInt32List(List<int> value, string label);
+        void WriteStringList(List<string> value, string label);
+        void WriteSingleList(List<float> value, string label);
+        void WriteSingle(float value, string label);
+        void WriteBoolean(bool value, string label);
+        void WriteString(string value, string label);
         
-        void WriteVector2(Vector2 value, string mark);
-        void WriteVector3(Vector3 value, string mark);
-        void WriteVector4(Vector4 value, string mark);
-        void WriteQuaternion(Quaternion value, string mark);
-        void WriteColor(Color color, string mark);
-        void WriteColor32(Color32 color, string mark);
-        void WriteEnum<T>(T value, string mark) where T : System.Enum;
-        void WriteList<T>(List<T> values, string mark, System.Action<T, int> writeListElement);
-        void WriteArray<T>(T[] values, string mark, System.Action<T, int> writeArrayElement);
-        void WriteStructure(string mark, System.Action writeFunc);
+        void WriteVector2(Vector2 value, string label);
+        void WriteVector3(Vector3 value, string label);
+        void WriteVector4(Vector4 value, string label);
+        void WriteQuaternion(Quaternion value, string label);
+        void WriteBounds(Bounds bounds, string label);
+        void WriteRect(Rect rect, string label);
+        void WriteColor(Color color, string label);
+        void WriteColor32(Color32 color, string label);
+        void WriteEnum<T>(T value, string label) where T : System.Enum;
+        void WriteList<T>(List<T> values, string label, System.Action<T, int> writeListElement);
+        void WriteArray<T>(T[] values, string label, System.Action<T, int> writeArrayElement);
+        void WriteStructure(string label, System.Action writeFunc);
         void WriteObjectID(int id, string label, IObjectIDConverter converter);
         void WriteSerializable(ISerializable serializable, string label, IObjectIDConverter converter, bool gameData);
     }
@@ -104,6 +106,8 @@ namespace XDay.SerializationAPI
         Vector3 ReadVector3(string label, Vector3 missingValue = default);
         Vector4 ReadVector4(string label, Vector4 missingValue = default);
         Quaternion ReadQuaternion(string label, Quaternion missingValue = default);
+        Bounds ReadBounds(string label, Bounds missingValue = default);
+        Rect ReadRect(string label, Rect missingValue = default);
         Color ReadColor(string label, Color missingValue = default);
         Color32 ReadColor32(string label, Color32 missingValue = default);
         T ReadEnum<T>(string label, T missingValue = default) where T : System.Enum;
@@ -125,21 +129,20 @@ namespace XDay.SerializationAPI
 
         void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
-            throw new System.NotImplementedException();
+            throw new System.NotImplementedException("EditorSerialize");
         }
-
         void EditorDeserialize(IDeserializer deserializer, string label)
         {
-            throw new System.NotImplementedException();
+            throw new System.NotImplementedException("EditorDeserialize");
         }
 
         void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
-            throw new System.NotImplementedException();
+            throw new System.NotImplementedException("GameSerialize");
         }
         void GameDeserialize(IDeserializer deserializer, string label)
         {
-            throw new System.NotImplementedException();
+            throw new System.NotImplementedException("GameDeserialize");
         }
     }
 

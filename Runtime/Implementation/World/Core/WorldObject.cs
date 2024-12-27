@@ -38,10 +38,9 @@ namespace XDay.WorldAPI
         public int ObjectIndex => m_Index;
         public int WorldID => m_World.ID;
         public IWorld World => m_World;
-        public Vector3 Position { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
-        public Vector3 Scale { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
-        public Quaternion Rotation { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
-        public virtual int ContainerID => 0;
+        public virtual Vector3 Position { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public virtual Vector3 Scale { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public virtual Quaternion Rotation { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public abstract string TypeName { get; }
 
         public WorldObject()

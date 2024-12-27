@@ -52,10 +52,10 @@ namespace XDay.CameraAPI
 
     public class FocusParam
     {
-        public FocusParam(Vector3 focusPoint, float targetHeight)
+        public FocusParam(Vector3 focusPoint, float targetAltitude)
         {
             FocusPoint = focusPoint;
-            TargetAltitude = targetHeight;
+            TargetAltitude = targetAltitude;
         }
 
         public Vector3 FocusPoint;

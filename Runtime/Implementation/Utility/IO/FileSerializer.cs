@@ -179,6 +179,16 @@ namespace XDay.SerializationAPI
             m_Serializer.WriteStringArray(value, label);
         }
 
+        public void WriteBounds(Bounds bounds, string label)
+        {
+            m_Serializer.WriteBounds(bounds, label);
+        }
+
+        public void WriteRect(Rect rect, string label)
+        {
+            m_Serializer.WriteRect(rect, label);
+        }
+
         private ISerializer m_Serializer;
         private string m_FilePath;
     }

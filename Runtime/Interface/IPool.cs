@@ -27,6 +27,17 @@ using UnityEngine;
 
 namespace XDay.UtilityAPI
 {
+    public interface IValueListPool<T> where T : struct
+    {
+        static IValueListPool<T> Create(int capacity)
+        {
+            return new ValueListPool<T>(capacity);
+        }
+
+        List<T> Get();
+        void Release(List<T> list);
+    }
+
     public interface IConcurrentObjectPool<T> where T : class
     {
         static IConcurrentObjectPool<T> Create(
@@ -50,17 +61,6 @@ namespace XDay.UtilityAPI
         static IConcurrentValueListPool<T> Create(int capacity = 100)
         {
             return new ConcurrentValueListPool<T>(capacity);
-        }
-
-        List<T> Get();
-        void Release(List<T> list);
-    }
-
-    public interface IValueListPool<T> where T : struct
-    {
-        static IValueListPool<T> Create(int capacity)
-        {
-            return new ValueListPool<T>(capacity);
         }
 
         List<T> Get();

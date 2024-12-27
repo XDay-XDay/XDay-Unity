@@ -287,6 +287,15 @@ namespace XDay.SerializationAPI
             return "";
         }
 
+        public Rect ReadRect(string label, Rect missingValue = default)
+        {
+            var minX = m_Reader.ReadFloat();
+            var minY = m_Reader.ReadFloat();
+            var maxX = m_Reader.ReadFloat();
+            var maxY = m_Reader.ReadFloat();
+            return new Rect(minX, minY, maxX - minX, maxY - minY);
+        }
+
         public string[] ReadStringArray(string label)
         {
             int n = m_Reader.ReadInt32();
@@ -296,6 +305,19 @@ namespace XDay.SerializationAPI
                 ret[i] = ReadString();
             }
             return ret;
+        }
+
+        public Bounds ReadBounds(string label, Bounds missingValue = default)
+        {
+            var bounds = new Bounds();
+            var minX = m_Reader.ReadFloat();
+            var minY = m_Reader.ReadFloat();
+            var minZ = m_Reader.ReadFloat();
+            var maxX = m_Reader.ReadFloat();
+            var maxY = m_Reader.ReadFloat();
+            var maxZ = m_Reader.ReadFloat();
+            bounds.SetMinMax(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
+            return bounds;
         }
 
         private BinaryReader m_Reader;

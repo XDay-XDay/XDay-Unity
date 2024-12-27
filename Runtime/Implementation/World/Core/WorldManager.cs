@@ -155,12 +155,12 @@ namespace XDay.WorldAPI
             }
         }
 
-        internal IWorldObject QueryWorldObject(int worldID, int objectID)
+        internal T QueryWorldObject<T>(int worldID, int objectID) where T : class, IWorldObject
         {
             var world = QueryWorld(worldID);
             if (world != null)
             {
-                return world.QueryObject(objectID);
+                return world.QueryObject<T>(objectID);
             }
             Debug.Assert(false, $"Query object {objectID} failed!");
             return null;

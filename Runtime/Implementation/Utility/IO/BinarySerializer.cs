@@ -308,6 +308,14 @@ namespace XDay.SerializationAPI
             m_Writer.Stream.Seek(offset, origin);
         }
 
+        public void WriteRect(Rect rect, string label)
+        {
+            m_Writer.Write(rect.xMin);
+            m_Writer.Write(rect.yMin);
+            m_Writer.Write(rect.xMax);
+            m_Writer.Write(rect.yMax);
+        }
+
         private void WritePureString(string val)
         {
             byte[] bytes;
@@ -325,6 +333,16 @@ namespace XDay.SerializationAPI
             {
                 m_Writer.Write(bytes);
             }
+        }
+
+        public void WriteBounds(Bounds bounds, string label)
+        {
+            m_Writer.Write(bounds.min.x);
+            m_Writer.Write(bounds.min.y);
+            m_Writer.Write(bounds.min.z);
+            m_Writer.Write(bounds.max.x);
+            m_Writer.Write(bounds.max.y);
+            m_Writer.Write(bounds.max.z);
         }
 
         private void SeekWriteRestore(long seekToOffset, long writeValue)

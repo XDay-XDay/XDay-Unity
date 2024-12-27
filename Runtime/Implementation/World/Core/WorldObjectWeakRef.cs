@@ -31,6 +31,7 @@ namespace XDay.WorldAPI
     [XDaySerializableClass("World Object Weak Ref")]
     public partial class WorldObjectWeakRef : ISerializable
     {
+        public int ObjectID => m_ObjectID;
         public string TypeName => "WorldObjectWeakRef";
 
         public WorldObjectWeakRef()
@@ -41,6 +42,11 @@ namespace XDay.WorldAPI
         {
             m_World = obj.World;
             m_ObjectID = obj.ID;
+        }
+
+        public WorldObjectWeakRef(int objectID)
+        {
+            m_ObjectID = objectID;
         }
 
         public void Init(IWorld world)
@@ -78,7 +84,7 @@ namespace XDay.WorldAPI
 
         public T ToObject<T>() where T : WorldObject
         {
-            var obj = m_World.QueryObject(m_ObjectID) as T;
+            var obj = m_World.QueryObject<T>(m_ObjectID);
             if (obj == null)
             {
                 Debug.LogError("Invalid ref");

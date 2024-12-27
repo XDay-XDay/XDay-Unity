@@ -33,7 +33,6 @@ namespace XDay.WorldAPI
     public abstract class WorldPlugin : WorldObject, IWorldPlugin
     {
         public abstract string Name { get; set; }
-        public override int ContainerID => 0;
         public virtual bool Inited { get => m_Inited; set => m_Inited = value; }
         public virtual IPluginLODSystem LODSystem => null;
         public abstract List<string> GameFileNames { get; }
@@ -132,7 +131,11 @@ namespace XDay.WorldAPI
         protected virtual void InitRendererInternal() { }
         protected virtual void UninitRendererInternal() { }
         protected virtual void UpdateInternal() { }
-        protected abstract UniTask InitAsyncInternal(CancellationToken token);
+        protected virtual async UniTask InitAsyncInternal(CancellationToken token)
+        {
+            InitInternal();
+            await UniTask.CompletedTask;
+        }
 
         private bool m_Inited = false;
     }

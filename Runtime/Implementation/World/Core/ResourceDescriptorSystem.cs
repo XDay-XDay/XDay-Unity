@@ -39,8 +39,8 @@ namespace XDay.WorldAPI
             m_Descriptors = new(m_UninitedDescriptors.Count);
             foreach (var d in m_UninitedDescriptors)
             {
-                m_Descriptors.Add(d.GetPath(0), d);
                 d.Init(world);
+                m_Descriptors.Add(d.GetPath(0), d);
             }
             m_UninitedDescriptors = null;
         }
@@ -78,6 +78,10 @@ namespace XDay.WorldAPI
         {
             return new ResourceDescriptor(id, index, path);
         }
+
+        public virtual void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter) { }
+        public virtual void EditorDeserialize(IDeserializer deserializer, string label) { }
+        public virtual void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter) {}
 
         protected Dictionary<string, ResourceDescriptor> m_Descriptors = new();
         protected List<ResourceDescriptor> m_UninitedDescriptors = new();

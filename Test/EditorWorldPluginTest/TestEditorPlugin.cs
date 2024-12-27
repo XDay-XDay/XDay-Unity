@@ -151,7 +151,7 @@ namespace XDay.Test.EditorWorldPluginTest
         protected override void CreateInternal()
         {
             var plugin = new TestEditorPlugin(World.AllocateObjectID(), World.PluginCount);
-            UndoSystem.CreateObject(0, plugin, World.ID, "Create Test Editor Plugin", 0);
+            UndoSystem.CreateObject(plugin, World.ID, "Create Test Editor Plugin");
         }
 
         protected override string ValidateInternal()
@@ -168,7 +168,7 @@ namespace XDay.Test.EditorWorldPluginTest
         protected override void CreateInternal()
         {
             var plugin = new TestEditorPlugin(World.AllocateObjectID(), World.PluginCount);
-            UndoSystem.CreateObject(0, plugin, World.ID, "Create Test Editor Plugin", 0);
+            UndoSystem.CreateObject(plugin, World.ID, "Create Test Editor Plugin");
         }
 
         protected override string ValidateInternal()
