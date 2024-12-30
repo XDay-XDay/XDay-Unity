@@ -37,7 +37,7 @@ namespace XDay.API
         }
 
         IDeviceInput DeviceInput { get; }
-        IWorldManager WorldSystem { get; }
+        IWorldManager WorldManager { get; }
         ITaskSystem TaskSystem { get; }
 
         void OnDestroy();

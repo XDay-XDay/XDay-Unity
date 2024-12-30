@@ -131,13 +131,13 @@ namespace XDay.RenderingAPI.BRG
             return null;
         }
 
-        public GPUBatch QueryRenderableBatch(Mesh mesh, Material material)
+        public T QueryRenderableBatch<T>(Mesh mesh, Material material) where T : GPUBatch
         {
             foreach (var batch in m_Batches)
             {
                 if (batch.IsRenderable(mesh, material))
                 {
-                    return batch;
+                    return batch as T;
                 }
             }
 

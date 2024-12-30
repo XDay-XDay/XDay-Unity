@@ -43,7 +43,12 @@ namespace XDay.SerializationAPI
                     Debug.LogError($"{type} type name missing");
                     continue;
                 }
-                m_TypeMapping[serializable.TypeName] = type;
+                else if (m_TypeMapping.ContainsKey(serializable.TypeName))
+                {
+                    Debug.LogError($"{type} already added");
+                    continue;
+                }
+                m_TypeMapping.Add(serializable.TypeName, type);
             }
         }
 

@@ -94,7 +94,7 @@ namespace XDay.WorldAPI
                 {
                     var plugin = m_SerializableFactory.CreateObject(QueryTypeName(info.FileNames)) as WorldPlugin;
                     plugins.Add(plugin);
-                    plugin.LoadGameData(world, info.PluginName);
+                    plugin.LoadGameData(info.PluginName, world);
                 }
             }
 

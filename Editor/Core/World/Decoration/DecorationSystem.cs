@@ -49,7 +49,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
         public override Bounds Bounds => m_Bounds;
-        public override string TypeName => "DecorationSystem";
+        public override string TypeName => "EditorDecorationSystem";
 
         public DecorationSystem()
         {
@@ -70,7 +70,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             UndoSystem.AddUndoRedoCallback(UndoRedo);
 
             m_ResourceDescriptorSystem.Init(World);
-            foreach (var kv in m_Objects)
+            foreach (var kv in m_Decorations)
             {
                 kv.Value.Init(World);
             }
@@ -91,7 +91,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_Indicator.OnDestroy();
             m_ResourceDescriptorSystem.Uninit();
             m_Renderer.OnDestroy();
-            foreach (var kv in m_Objects)
+            foreach (var kv in m_Decorations)
             {
                 kv.Value.Uninit();
             }
@@ -202,7 +202,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private void AddObjectInternal(DecorationObject decoration)
         {
-            m_Objects.Add(decoration.ID, decoration);
+            m_Decorations.Add(decoration.ID, decoration);
 
             if (decoration.GetVisibility() == WorldObjectVisibility.Undefined)
             {
@@ -218,7 +218,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private int QueryObjectCountInLOD(int lod)
         {
             var count = 0;
-            foreach (var obj in m_Objects.Values)
+            foreach (var obj in m_Decorations.Values)
             {
                 if (obj.ExistsInLOD(lod))
                 {
@@ -231,7 +231,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private List<DecorationObject> QueryObjectsInRectangle(Vector3 center, float width, float height)
         {
             var objects = new List<DecorationObject>();
-            foreach (var kv in m_Objects)
+            foreach (var kv in m_Decorations)
             {
                 var freeObject = kv.Value;
                 var positionDelta = center - freeObject.Position;
@@ -246,11 +246,11 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private bool DestroyObject(int objectID)
         {
-            var ok = m_Objects.TryGetValue(objectID, out var decoration);
+            var ok = m_Decorations.TryGetValue(objectID, out var decoration);
             if (decoration != null)
             {
                 decoration.Uninit();
-                m_Objects.Remove(objectID);
+                m_Decorations.Remove(objectID);
             }
             return ok;
         }
@@ -258,7 +258,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private DecorationObject CreateObject(int id, string assetPath, Vector3 userPosition, Quaternion userRotation, Vector3 userScale)
         {
             var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(assetPath, World);
-            var obj = new DecorationObject(id, m_Objects.Count, false, LODLayerMask.AllLOD, userPosition, userRotation, userScale, descriptor);
+            var obj = new DecorationObject(id, m_Decorations.Count, false, LODLayerMask.AllLOD, userPosition, userRotation, userScale, descriptor);
             return obj;
         }
 
@@ -281,8 +281,8 @@ namespace XDay.WorldAPI.Decoration.Editor
         private IPluginLODSystem m_PluginLODSystem;
         private Bounds m_Bounds;
         private ICameraVisibleAreaUpdater m_AreaUpdater;
-        private CoordinateGenerateSetting m_PointGenerateSetting = new();
-        private Dictionary<int, DecorationObject> m_Objects = new();
+        private CoordinateGenerateSetting m_CoordinateGenerateSetting = new();
+        private Dictionary<int, DecorationObject> m_Decorations = new();
         private int m_ActiveLOD = -1;
         private EditorResourceDescriptorSystem m_ResourceDescriptorSystem;
         private float m_RemoveRange = 5;

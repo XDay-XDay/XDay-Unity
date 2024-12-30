@@ -23,6 +23,7 @@
 
 #if UNITY_EDITOR
 
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -37,6 +38,7 @@ namespace XDay.WorldAPI
     {
         public Camera Camera;
         public float MoveOffset = 10;
+        public float Radius = 5;
 
         private async void Start()
         {
@@ -44,7 +46,7 @@ namespace XDay.WorldAPI
 
             m_XDay = IXDayContext.Create(EditorHelper.QueryAssetFilePath<WorldSetupManager>(), new EditorWorldAssetLoader());
 
-            await m_XDay.WorldSystem.LoadWorldAsync("");
+            await m_XDay.WorldManager.LoadWorldAsync("");
         }
 
         private void OnDestroy()
@@ -57,6 +59,8 @@ namespace XDay.WorldAPI
             m_XDay.Update();
 
             MoveCamera();
+
+            DecorationSystemTest();
         }
 
         private void LateUpdate()
@@ -73,14 +77,17 @@ namespace XDay.WorldAPI
             }
 
             
-            if (m_XDay.WorldSystem != null)
+            if (m_XDay.WorldManager != null)
             {
-                var world = m_XDay.WorldSystem.FirstWorld;
-                foreach (var plugin in world.QueryPlugins<WorldPlugin>())
+                var world = m_XDay.WorldManager.FirstWorld;
+                if (world != null)
                 {
-                    if (plugin.LODSystem != null)
+                    foreach (var plugin in world.QueryPlugins<WorldPlugin>())
                     {
-                        GUILayout.Label($"{plugin.Name} LOD: {plugin.LODSystem.CurrentLOD}", m_Style);
+                        if (plugin.LODSystem != null)
+                        {
+                            GUILayout.Label($"{plugin.Name} LOD: {plugin.LODSystem.CurrentLOD}", m_Style);
+                        }
                     }
                 }
             }
@@ -88,12 +95,31 @@ namespace XDay.WorldAPI
 
         private void MoveCamera()
         {
-            if (m_XDay.WorldSystem == null)
+            if (m_XDay.WorldManager == null)
             {
                 return;
             }
 
-            var manipulator = m_XDay.WorldSystem.FirstWorld.CameraManipulator;
+            var world = m_XDay.WorldManager.FirstWorld;
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (world == null)
+                {
+                    m_XDay.WorldManager.LoadWorld("");
+                }
+                else
+                {
+                    m_XDay.WorldManager.UnloadWorld(world.Name);
+                }
+            }
+
+            if (world == null)
+            {
+                return;
+            }
+
+            var manipulator = world.CameraManipulator;
 
             if (Input.GetKey(KeyCode.LeftControl))
             {
@@ -132,6 +158,29 @@ namespace XDay.WorldAPI
             }
         }
 
+        private void DecorationSystemTest()
+        {
+            if (Input.GetMouseButtonDown(1))
+            {
+                var world = m_XDay.WorldManager.FirstWorld;
+                if (world != null)
+                {
+                    var pos = Helper.RayCastWithXZPlane(Input.mousePosition, world.CameraManipulator.Camera);
+                    var decorationSystem = world.QueryPlugin<IDecorationSystem>();
+                    List<int> decorationIDs = new();
+                    decorationSystem.QueryDecorationIDsInCircle(pos, Radius, decorationIDs);
+                    var circle = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    circle.transform.localScale = Vector3.one * Radius * 2;
+                    circle.transform.position = pos;
+                    foreach (var id in decorationIDs)
+                    {
+                        //decorationSystem.ShowDecoration(id, false);
+                        decorationSystem.PlayAnimation(id, "Drunk Walk");
+                    }
+                }
+            }
+        }
+
         [MenuItem("XDay/World/Preview", false, 1)]
         static void Open()
         {
@@ -149,7 +198,6 @@ namespace XDay.WorldAPI
                 }
             }
         }
-
         
         private GUIStyle m_Style;
         private IXDayContext m_XDay;

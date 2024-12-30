@@ -99,6 +99,11 @@ namespace XDay.SerializationAPI
             m_Serializer.WriteInt32Array(value, label);
         }
 
+        public void WriteByteArray(byte[] value, string label)
+        {
+            m_Serializer.WriteByteArray(value, label);
+        }
+
         public void WriteInt32List(List<int> value, string label)
         {
             m_Serializer.WriteInt32List(value, label);
@@ -187,6 +192,21 @@ namespace XDay.SerializationAPI
         public void WriteRect(Rect rect, string label)
         {
             m_Serializer.WriteRect(rect, label);
+        }
+
+        public void WriteVector2Array(Vector2[] value, string label)
+        {
+            m_Serializer.WriteVector2Array(value, label);
+        }
+
+        public void WriteVector3Array(Vector3[] value, string label)
+        {
+            m_Serializer.WriteVector3Array(value, label);
+        }
+
+        public void WriteVector4Array(Vector4[] value, string label)
+        {
+            m_Serializer.WriteVector4Array(value, label);
         }
 
         private ISerializer m_Serializer;

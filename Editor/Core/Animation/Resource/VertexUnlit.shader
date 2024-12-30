@@ -26,7 +26,7 @@ Shader "Unlit/VertexUnlit"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _AnimFrameData)
             UNITY_INSTANCING_BUFFER_END(_Buffer)
 
-            #include "../../../Runtime/Implementation/Animation/Resource/Include/VertexAnimation.cginc"
+            #include "../../../../Runtime/Implementation/Animation/Resource/Include/VertexAnimation.cginc"
 
             struct appdata
             {

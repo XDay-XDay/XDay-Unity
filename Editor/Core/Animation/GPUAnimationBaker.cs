@@ -118,7 +118,7 @@ namespace XDay.AnimationAPI.Editor
             {
                 data = ScriptableObject.CreateInstance<InstanceAnimatorData>();
                 data.AnimType = GetAnimationType();
-                setting.Prefab.GetComponent<GPUAnimationBakeSetting>().Setting.AdvancedSetting.BatchRendererGroupData = data;
+                setting.Prefab.GetComponent<GPUAnimationBakeSetting>().Setting.AdvancedSetting.InstanceAnimatorData = data;
                 EditorUtility.SetDirty(setting.Prefab);
             }
             return data;

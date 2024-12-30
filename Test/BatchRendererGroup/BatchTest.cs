@@ -65,7 +65,7 @@ public class BatchTest : MonoBehaviour
 
     private void CreateStaticBatch()
     {
-        IGPUBatchCreateInfo createInfo = IGPUBatchCreateInfo.Create(Mesh, Material, properties: null, maxInstanceCount: 1024, subMeshIndex: 0);
+        IGPUBatchCreateInfo createInfo = IGPUBatchCreateInfo.Create(1024, Mesh, 0, Material, properties: null);
         var batch = m_GPUBatchManager.CreateBatch<GPUStaticBatch>(createInfo);
 
         for (var i = 0; i < 10; ++i)
@@ -77,7 +77,7 @@ public class BatchTest : MonoBehaviour
 
     private void CreateDynamicBatch()
     {
-        IGPUBatchCreateInfo createInfo = IGPUBatchCreateInfo.Create(Mesh, Material, properties: null, maxInstanceCount: 1024, subMeshIndex: 0);
+        IGPUBatchCreateInfo createInfo = IGPUBatchCreateInfo.Create(1024, Mesh, 0, Material, properties: null);
         var batch = m_GPUBatchManager.CreateBatch<GPUDynamicBatch>(createInfo);
 
         for (var i = 0; i < 10; ++i)

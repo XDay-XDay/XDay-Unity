@@ -58,7 +58,7 @@ namespace XDay.AnimationAPI
 
     public interface IInstanceAnimatorManager
     {
-        static IInstanceAnimatorManager Create(Func<string, InstanceAnimatorData> creator)
+        static IInstanceAnimatorManager Create(Func<string, InstanceAnimatorData> creator = null)
         {
             return new InstanceAnimatorManager(creator);
         }
@@ -67,6 +67,7 @@ namespace XDay.AnimationAPI
         void Update();
         IInstanceAnimator QueryInstance(int id);
         IInstanceAnimator CreateInstance(string path, Vector3 pos, Vector3 scale, Quaternion rot);
+        IInstanceAnimator CreateInstance(InstanceAnimatorData data, Vector3 pos, Vector3 scale, Quaternion rot);
         IInstanceAnimator CreateInstance(string path);
         void DestroyInstance(int id);
     }

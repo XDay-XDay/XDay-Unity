@@ -97,7 +97,7 @@ namespace XDay.WorldAPI
             m_PluginLoader.Load(gameWorld.ID, config.GameFolder);
             gameWorld.LoadGame();
 
-            OnLoadFinished(world, camera);
+            OnLoadFinished(gameWorld, camera);
 
             return gameWorld;
         }
@@ -114,7 +114,7 @@ namespace XDay.WorldAPI
             manipulator.SetActive(true);
 
             world.CameraManipulator = manipulator;
-            manipulator.SetFocusPointBounds(world.Bounds.min, world.Bounds.max);
+            manipulator.SetFocusPointBounds(world.Bounds.min.ToVector2(), world.Bounds.max.ToVector2());
             manipulator.EnableFocusPointClampXZ = true;
         }
 

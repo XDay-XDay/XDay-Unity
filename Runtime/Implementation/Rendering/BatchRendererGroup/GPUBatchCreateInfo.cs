@@ -47,7 +47,7 @@ namespace XDay.RenderingAPI.BRG
         public int SubMeshIndex => m_SubMeshIndex;
         public int PropertyCount => m_ShaderProperties.Length;
 
-        public GPUBatchCreateInfo(Mesh mesh, Material material, IShaderPropertyDeclaration[] properties, int maxInstanceCount, int subMeshIndex)
+        public GPUBatchCreateInfo(int maxInstanceCount, Mesh mesh, int subMeshIndex, Material material, IShaderPropertyDeclaration[] properties)
         {
             Debug.Assert(mesh != null, "GPUBatchCreateInfo: Invalid mesh");
             Debug.Assert(material != null, "GPUBatchCreateInfo: Invalid material");
@@ -64,8 +64,8 @@ namespace XDay.RenderingAPI.BRG
                 m_ShaderProperties = new IShaderPropertyDeclaration[2];
             }
 
-            m_ShaderProperties[0] = IShaderPropertyDeclaration.Create("unity_ObjectToWorld", ShaderPropertyType.PackedMatrix);
-            m_ShaderProperties[1] = IShaderPropertyDeclaration.Create("unity_WorldToObject", ShaderPropertyType.PackedMatrix);
+            m_ShaderProperties[0] = IShaderPropertyDeclaration.Create(ShaderPropertyType.PackedMatrix, "unity_ObjectToWorld");
+            m_ShaderProperties[1] = IShaderPropertyDeclaration.Create(ShaderPropertyType.PackedMatrix, "unity_WorldToObject");
 
             if (properties != null)
             {

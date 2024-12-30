@@ -64,6 +64,7 @@ namespace XDay.WorldAPI
         int PreviousLOD { get; }
         int CurrentLOD { get; }
         IWorldLODSystem WorldLODSystem { get; }
+        bool Update(float altitude);
 
         void ChangeLODName(string oldName, string newName);
         IPluginLODSetup QueryLOD(string name);

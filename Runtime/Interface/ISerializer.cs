@@ -62,6 +62,7 @@ namespace XDay.SerializationAPI
         void WriteInt64(long value, string label);
         void WriteUInt64(ulong value, string label);
         void WriteInt32Array(int[] value, string label);
+        void WriteByteArray(byte[] value, string label);
         void WriteSingleArray(float[] value, string label);
         void WriteStringArray(string[] value, string label);
         void WriteInt32List(List<int> value, string label);
@@ -85,6 +86,9 @@ namespace XDay.SerializationAPI
         void WriteStructure(string label, System.Action writeFunc);
         void WriteObjectID(int id, string label, IObjectIDConverter converter);
         void WriteSerializable(ISerializable serializable, string label, IObjectIDConverter converter, bool gameData);
+        void WriteVector2Array(Vector2[] value, string label);
+        void WriteVector3Array(Vector3[] value, string label);
+        void WriteVector4Array(Vector4[] value, string label);
     }
 
     public interface IDeserializer
@@ -112,6 +116,7 @@ namespace XDay.SerializationAPI
         Color32 ReadColor32(string label, Color32 missingValue = default);
         T ReadEnum<T>(string label, T missingValue = default) where T : System.Enum;
         int[] ReadInt32Array(string label);
+        byte[] ReadByteArray(string label);
         float[] ReadSingleArray(string label);
         string[] ReadStringArray(string label);
         List<int> ReadInt32List(string label);
@@ -121,11 +126,15 @@ namespace XDay.SerializationAPI
         T[] ReadArray<T>(string label, System.Func<int, T> readArrayElement);
         void ReadStructure(string label, System.Action readFunc);
         T ReadSerializable<T>(string label, bool gameData) where T : class, ISerializable;
+        Vector2[] ReadVector2Array(string label);
+        Vector3[] ReadVector3Array(string label);
+        Vector4[] ReadVector4Array(string label);
     }
 
     public interface ISerializable
     {
         string TypeName { get; }
+        string GameTypeName => TypeName;
 
         void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {

@@ -65,6 +65,7 @@ namespace XDay.WorldAPI
         public Bounds Bounds => new(new Vector3(m_Width * 0.5f, 0, m_Height * 0.5f), new Vector3(m_Width, 0, m_Height));
         public string GameFolder => Setup.GameFolder;
         public string EditorFolder => Setup.EditorFolder;
+        public IWorldAssetLoader AssetLoader => m_AssetLoader;
         public abstract string TypeName { get; }
 
         public World()
@@ -297,7 +298,7 @@ namespace XDay.WorldAPI
             m_Manipulator?.LateUpdate();
         }
 
-        public virtual IDeserializer GetDataDeserializer(int worldID, string runtimeDataFileName)
+        public virtual IDeserializer QueryGameDataDeserializer(int worldID, string gameDataFileName)
         {
             throw new System.NotImplementedException();
         }

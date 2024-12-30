@@ -31,8 +31,9 @@ namespace XDay.WorldAPI
     {
         public List<int> LODs => m_LODs;
         public string[] LODPaths => m_LODPaths;
-        public int LODCount => m_LODs == null ? 0 : m_LODs.Count;
+        public int LODCount => m_LODs == null ? 1 : m_LODs.Count;
         public override string TypeName => "ResourceDescriptor";
+        public override string GameTypeName => "ResourceDescriptor";
 
         public ResourceDescriptor()
         {

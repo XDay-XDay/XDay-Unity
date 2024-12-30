@@ -99,17 +99,18 @@ namespace XDay.WorldAPI.Editor
                 return null;
             }
 
+            var path = EditorPrefs.GetString(WorldDefine.LAST_OPEN_FILE_PATH);
+
             var selectedFolder = EditorUtility.OpenFolderPanel(
                 "Select World",
-                string.IsNullOrEmpty(m_LastOpenFilePath) ? "EditorWorld" : m_LastOpenFilePath, 
+                string.IsNullOrEmpty(path) ? "EditorWorld" : path, 
                 "");
-            if (selectedFolder != null)
+            if (!string.IsNullOrEmpty(selectedFolder))
             {
                 var name = Path.GetFileNameWithoutExtension(selectedFolder);
                 var setup = setupManager.QuerySetup(name);
 
-                EditorPrefs.SetString(WorldDefine.LAST_OPEN_FILE_PATH, selectedFolder);
-                m_LastOpenFilePath = selectedFolder;
+                EditorPrefs.SetString(WorldDefine.LAST_OPEN_FILE_PATH, selectedFolder); 
 
                 return setup;
             }
@@ -125,8 +126,6 @@ namespace XDay.WorldAPI.Editor
             EditorSceneManager.sceneClosed += OnSceneClosed;
 
             m_IsCreatingEditorScene = true;
-
-            m_LastOpenFilePath = EditorPrefs.GetString(WorldDefine.LAST_OPEN_FILE_PATH);
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = WorldDefine.WORLD_EDITOR_NAME;
@@ -162,7 +161,6 @@ namespace XDay.WorldAPI.Editor
         }
 
         private static bool m_IsCreatingEditorScene = false;
-        private static string m_LastOpenFilePath;
         private static CancellationTokenSource m_Cancel;
     }
 }

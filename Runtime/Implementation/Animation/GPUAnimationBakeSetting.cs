@@ -48,7 +48,7 @@ namespace XDay.AnimationAPI
         public bool DeleteRigs = true;
         public float SampleFrameInterval = 1;
         [HideInInspector]
-        public InstanceAnimatorData BatchRendererGroupData;
+        public InstanceAnimatorData InstanceAnimatorData;
     }
 
     [Serializable]

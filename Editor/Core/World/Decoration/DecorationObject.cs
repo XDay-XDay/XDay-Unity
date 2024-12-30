@@ -32,6 +32,7 @@ namespace XDay.WorldAPI.Decoration.Editor
     internal class DecorationObject : WorldObject
     {
         public LODLayerMask LODLayerMask => m_LODLayerMask;
+        public int RuntimeObjectIndex { get; set; }
         public EditorResourceDescriptor ResourceDescriptor => m_ResourceDescriptor.ToObject<EditorResourceDescriptor>();
         public override Vector3 Scale => m_OverridePrefabTransform ? m_EditScale : m_EditScale.Mult(PrefabScale);
         public override Quaternion Rotation => m_OverridePrefabTransform ? m_EditRotation : m_EditRotation * PrefabRotation;
@@ -39,14 +40,14 @@ namespace XDay.WorldAPI.Decoration.Editor
         public Vector3 PrefabScale => ResourceDescriptor.Prefab != null ? ResourceDescriptor.Prefab.transform.localScale : Vector3.one;
         public Quaternion PrefabRotation => ResourceDescriptor.Prefab != null ? ResourceDescriptor.Prefab.transform.rotation : Quaternion.identity;
         public Vector3 PrefabPosition => ResourceDescriptor.Prefab != null ? ResourceDescriptor.Prefab.transform.position : Vector3.zero;
-        public override string TypeName => "DecorationObject";
+        public override string TypeName => "EditorDecorationObject";
 
         public DecorationObject()
         {
         }
 
         public DecorationObject(int objectID, int objectIndex, bool overridePrefabTransform, LODLayerMask lodLayerMask, Vector3 editPosition, Quaternion editRotation, Vector3 editScale, IResourceDescriptor descriptor)
-            : base (objectID, objectIndex)
+            : base(objectID, objectIndex)
         {
             m_OverridePrefabTransform = overridePrefabTransform;
             m_LODLayerMask = lodLayerMask;

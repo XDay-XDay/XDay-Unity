@@ -42,6 +42,7 @@ namespace XDay.WorldAPI
         public virtual Vector3 Scale { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public virtual Quaternion Rotation { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public abstract string TypeName { get; }
+        public virtual string GameTypeName => TypeName;
 
         public WorldObject()
         {
@@ -49,26 +50,32 @@ namespace XDay.WorldAPI
 
         public WorldObject(int id, int index)
         {
-            Debug.Assert(id != 0 && index >= 0);
             m_ID = id;
             m_Index = index;
         }
 
         public virtual void Init(IWorld world)
         {
-            m_World = world as World;
-            m_World.RegisterObject(this);
+            if (m_ID != 0)
+            {
+                m_World = world as World;
+                m_World.RegisterObject(this);
+            }
         }
 
-        public virtual void InitNewID(IWorld world, int id)
+        public virtual void InitNewID(IWorld world, int id, int index)
         {
             m_ID = id;
+            m_Index = index;
             Init(world);
         }
 
         public virtual void Uninit()
         {
-            m_World?.UnregisterObject(ID);
+            if (m_ID != 0)
+            {
+                m_World?.UnregisterObject(m_ID);
+            }
         }
 
         public virtual bool SetAspect(int objectID, string name, IAspect aspect)

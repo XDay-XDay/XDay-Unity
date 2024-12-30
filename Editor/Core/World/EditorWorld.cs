@@ -198,13 +198,14 @@ namespace XDay.WorldAPI.Editor
             var gamePlugins = new List<WorldPlugin>();
             foreach (var plugin in m_Plugins)
             {
-                if (plugin.Usage == WorldPluginUsage.BothInEditorAndGame ||
-                    plugin.Usage == WorldPluginUsage.OnlyGenerateData)
+                var editorPlugin = plugin as EditorWorldPlugin;
+                if (editorPlugin.Usage == WorldPluginUsage.BothInEditorAndGame ||
+                    editorPlugin.Usage == WorldPluginUsage.OnlyGenerateData)
                 {
-                    (plugin as EditorWorldPlugin).GenerateGameData(converter);
+                    editorPlugin.GenerateGameData(converter);
                 }
 
-                if (plugin.Usage == WorldPluginUsage.BothInEditorAndGame)
+                if (editorPlugin.Usage == WorldPluginUsage.BothInEditorAndGame)
                 {
                     gamePlugins.Add(plugin);
                 }
@@ -223,10 +224,10 @@ namespace XDay.WorldAPI.Editor
             }
 
             var setup = ScriptableObject.CreateInstance<WorldPluginSetup>();
-            foreach (var type in Helper.QueryTypes<EditorWorldPlugin>(false))
+            foreach (var type in Helper.QueryTypes<WorldPlugin>(false))
             {
-                var plugin = Activator.CreateInstance(type) as EditorWorldPlugin;
-                if (plugin.Usage == WorldPluginUsage.BothInEditorAndGame)
+                var plugin = Activator.CreateInstance(type) as WorldPlugin;
+                if (plugin is not EditorWorldPlugin)
                 {
                     var metadata = new WorldPluginMetadata
                     {

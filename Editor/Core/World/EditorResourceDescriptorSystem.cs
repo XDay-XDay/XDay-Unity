@@ -87,9 +87,9 @@ namespace XDay.WorldAPI.Editor
             serializer.WriteInt32(m_RuntimeVersion, "ResourceDescriptorSystem.Version");
 
             var descriptors = new List<ResourceDescriptor>();
-            foreach (var kv in m_Descriptors)
+            foreach (var descriptor in m_Descriptors.Values)
             {
-                descriptors.Add(kv.Value);
+                descriptors.Add(descriptor);
             }
 
             serializer.WriteList(descriptors, "Resource Descriptors", (descriptor, index) =>

@@ -106,7 +106,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                         Debug.Assert(false, "todo");
                     }
 
-                    CreateObjects(points, m_PointGenerateSetting.Random);
+                    CreateObjects(points, m_CoordinateGenerateSetting.Random);
                 }
             }
         }
@@ -218,7 +218,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_Controls.Add(m_ButtonQueryObjectCountInActiveLOD);
 
                 m_ButtonRandom = EditorWorldHelper.CreateToggleImageButton(false, "random.png", "Use random object in resource group");
-                m_ButtonRandom.Active = m_PointGenerateSetting.Random;
+                m_ButtonRandom.Active = m_CoordinateGenerateSetting.Random;
                 m_Controls.Add(m_ButtonRandom);
 
                 m_ButtonShowObjectsNotInActiveLOD = EditorWorldHelper.CreateImageButton("show.png", "Show objects not in current lod");
@@ -246,7 +246,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_Controls.Add(m_ButtonHideObjectsNotInActiveLOD);
 
                 m_ButtonEqualSpace = EditorWorldHelper.CreateToggleImageButton(false, "equal.png", "Generate equal distance objects");
-                m_ButtonEqualSpace.Active = m_PointGenerateSetting.LineEquidistant;
+                m_ButtonEqualSpace.Active = m_CoordinateGenerateSetting.LineEquidistant;
                 m_Controls.Add(m_ButtonEqualSpace);
 
                 m_RadiusField = new FloatField("Radius", "", 65);
@@ -275,7 +275,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 var oldLOD = m_ActiveLOD;
                 m_ActiveLOD = lod;
-                foreach (var decoration in m_Objects.Values)
+                foreach (var decoration in m_Decorations.Values)
                 {
                     var oldLODPath = decoration.ResourceDescriptor.GetPath(oldLOD);
                     var newLODPath = decoration.ResourceDescriptor.GetPath(lod);
@@ -370,7 +370,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private void ShowObjects()
         {
-            foreach (var decoration in m_Objects.Values)
+            foreach (var decoration in m_Decorations.Values)
             {
                 if (decoration.SetVisibility(WorldObjectVisibility.Visible))
                 {
@@ -386,7 +386,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             UndoSystem.NextGroupAndJoin();
 
             var aspect = IAspect.FromBoolean(show);
-            foreach (var decoration in m_Objects.Values)
+            foreach (var decoration in m_Decorations.Values)
             {
                 if (!decoration.ExistsInLOD(m_ActiveLOD))
                 {
@@ -447,7 +447,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             if (type != m_GeometryType)
             {
                 m_GeometryType = type;
-                m_ButtonRandom.Active = m_PointGenerateSetting.Random;
+                m_ButtonRandom.Active = m_CoordinateGenerateSetting.Random;
             }
         }
 
@@ -464,17 +464,17 @@ namespace XDay.WorldAPI.Decoration.Editor
             serializer.WriteSingle(m_RemoveRange, "Remove Range");
             serializer.WriteBounds(m_Bounds, "Bounds");
 
-            serializer.WriteSingle(m_PointGenerateSetting.CircleRadius, "Circle Radius");
-            serializer.WriteSingle(m_PointGenerateSetting.RectWidth, "Rect Width");
-            serializer.WriteSingle(m_PointGenerateSetting.RectHeight, "Rect Height");
-            serializer.WriteInt32(m_PointGenerateSetting.Count, "Object Count");
-            serializer.WriteSingle(m_PointGenerateSetting.Space, "Space");
-            serializer.WriteBoolean(m_PointGenerateSetting.Random, "Random");
-            serializer.WriteSingle(m_PointGenerateSetting.BorderSize, "Border Size");
-            serializer.WriteBoolean(m_PointGenerateSetting.LineEquidistant, "Line Equidistant");
+            serializer.WriteSingle(m_CoordinateGenerateSetting.CircleRadius, "Circle Radius");
+            serializer.WriteSingle(m_CoordinateGenerateSetting.RectWidth, "Rect Width");
+            serializer.WriteSingle(m_CoordinateGenerateSetting.RectHeight, "Rect Height");
+            serializer.WriteInt32(m_CoordinateGenerateSetting.Count, "Object Count");
+            serializer.WriteSingle(m_CoordinateGenerateSetting.Space, "Space");
+            serializer.WriteBoolean(m_CoordinateGenerateSetting.Random, "Random");
+            serializer.WriteSingle(m_CoordinateGenerateSetting.BorderSize, "Border Size");
+            serializer.WriteBoolean(m_CoordinateGenerateSetting.LineEquidistant, "Line Equidistant");
 
             var allObjects = new List<DecorationObject>();
-            foreach (var p in m_Objects)
+            foreach (var p in m_Decorations)
             {
                 allObjects.Add(p.Value);
             }
@@ -502,14 +502,14 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_RemoveRange = deserializer.ReadSingle("Remove Range");
             m_Bounds = deserializer.ReadBounds("Bounds");
 
-            m_PointGenerateSetting.CircleRadius = deserializer.ReadSingle("Circle Radius");
-            m_PointGenerateSetting.RectWidth = deserializer.ReadSingle("Rect Width");
-            m_PointGenerateSetting.RectHeight = deserializer.ReadSingle("Rect Height");
-            m_PointGenerateSetting.Count = deserializer.ReadInt32("Object Count");
-            m_PointGenerateSetting.Space = deserializer.ReadSingle("Space");
-            m_PointGenerateSetting.Random = deserializer.ReadBoolean("Random");
-            m_PointGenerateSetting.BorderSize = deserializer.ReadSingle("Border Size");
-            m_PointGenerateSetting.LineEquidistant = deserializer.ReadBoolean("Line Equidistant");
+            m_CoordinateGenerateSetting.CircleRadius = deserializer.ReadSingle("Circle Radius");
+            m_CoordinateGenerateSetting.RectWidth = deserializer.ReadSingle("Rect Width");
+            m_CoordinateGenerateSetting.RectHeight = deserializer.ReadSingle("Rect Height");
+            m_CoordinateGenerateSetting.Count = deserializer.ReadInt32("Object Count");
+            m_CoordinateGenerateSetting.Space = deserializer.ReadSingle("Space");
+            m_CoordinateGenerateSetting.Random = deserializer.ReadBoolean("Random");
+            m_CoordinateGenerateSetting.BorderSize = deserializer.ReadSingle("Border Size");
+            m_CoordinateGenerateSetting.LineEquidistant = deserializer.ReadBoolean("Line Equidistant");
 
             var allObjects = deserializer.ReadList("Objects", (index) =>
             {
@@ -517,7 +517,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             });
             foreach (var obj in allObjects)
             {
-                m_Objects.Add(obj.ID, obj);
+                m_Decorations.Add(obj.ID, obj);
             }
 
             m_GameGridSize = deserializer.ReadVector2("Game Grid Size");
@@ -534,7 +534,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_LabelStyle = new GUIStyle(GUI.skin.label);
             }
 
-            EditorGUILayout.LabelField($"Object Count: {m_Objects.Count}, Range: {m_Bounds.min:F0} to {m_Bounds.max:F0} meters");
+            EditorGUILayout.LabelField($"Object Count: {m_Decorations.Count}, Range: {m_Bounds.min:F0} to {m_Bounds.max:F0} meters");
             if (m_ActiveOperation == Operation.CreateObject)
             {
                 EditorGUILayout.LabelField("Use R key to redo last generation");
@@ -567,11 +567,11 @@ namespace XDay.WorldAPI.Decoration.Editor
             Handles.color = Color.green;
             if (m_GeometryType == GeometryType.Rectangle)
             {
-                Handles.DrawWireCube(worldPosition, new Vector3(m_PointGenerateSetting.RectWidth, 0, m_PointGenerateSetting.RectHeight));
+                Handles.DrawWireCube(worldPosition, new Vector3(m_CoordinateGenerateSetting.RectWidth, 0, m_CoordinateGenerateSetting.RectHeight));
             }
             else if (m_GeometryType == GeometryType.Circle)
             {
-                Handles.DrawWireDisc(worldPosition, Vector3.up, m_PointGenerateSetting.CircleRadius);
+                Handles.DrawWireDisc(worldPosition, Vector3.up, m_CoordinateGenerateSetting.CircleRadius);
             }
             Handles.color = oldColor;
         }
@@ -584,38 +584,38 @@ namespace XDay.WorldAPI.Decoration.Editor
             SetGeometryType(shape);
 
             var enabled = true;
-            if (m_GeometryType == GeometryType.Line && m_PointGenerateSetting.LineEquidistant)
+            if (m_GeometryType == GeometryType.Line && m_CoordinateGenerateSetting.LineEquidistant)
             {
                 enabled = false;
             }
 
             var old = GUI.enabled;
             GUI.enabled = enabled;
-            m_PointGenerateSetting.Count = m_ObjectCountField.Render(m_PointGenerateSetting.Count, 25);
+            m_CoordinateGenerateSetting.Count = m_ObjectCountField.Render(m_CoordinateGenerateSetting.Count, 25);
             GUI.enabled = old;
 
             if (m_GeometryType == GeometryType.Circle)
             {
-                m_PointGenerateSetting.CircleRadius = m_RadiusField.Render(m_PointGenerateSetting.CircleRadius, 25);
+                m_CoordinateGenerateSetting.CircleRadius = m_RadiusField.Render(m_CoordinateGenerateSetting.CircleRadius, 25);
             }
             else if (m_GeometryType == GeometryType.Rectangle)
             {
-                m_PointGenerateSetting.RectWidth = m_WidthField.Render(m_PointGenerateSetting.RectWidth, 15);
-                m_PointGenerateSetting.RectHeight = m_WidthField.Render(m_PointGenerateSetting.RectHeight, 15);
+                m_CoordinateGenerateSetting.RectWidth = m_WidthField.Render(m_CoordinateGenerateSetting.RectWidth, 15);
+                m_CoordinateGenerateSetting.RectHeight = m_WidthField.Render(m_CoordinateGenerateSetting.RectHeight, 15);
             }
             else if (m_GeometryType == GeometryType.Line)
             {
                 if (m_ButtonEqualSpace.Render(true, GUI.enabled))
                 {
-                    m_PointGenerateSetting.LineEquidistant = m_ButtonEqualSpace.Active;
+                    m_CoordinateGenerateSetting.LineEquidistant = m_ButtonEqualSpace.Active;
                 }
             }
-            m_PointGenerateSetting.Space = m_SpaceField.Render(m_PointGenerateSetting.Space, 50);
-            m_PointGenerateSetting.BorderSize = m_BorderSizeField.Render(m_PointGenerateSetting.BorderSize, 50);
+            m_CoordinateGenerateSetting.Space = m_SpaceField.Render(m_CoordinateGenerateSetting.Space, 50);
+            m_CoordinateGenerateSetting.BorderSize = m_BorderSizeField.Render(m_CoordinateGenerateSetting.BorderSize, 50);
 
             if (m_ButtonRandom.Render(true, GUI.enabled))
             {
-                m_PointGenerateSetting.Random = m_ButtonRandom.Active;
+                m_CoordinateGenerateSetting.Random = m_ButtonRandom.Active;
             }
 
             GUI.enabled = true;
@@ -795,7 +795,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 UndoSystem.NextGroup();
             }
-            return GeometryCoordinateGenerator.GenerateInLine(m_PointGenerateSetting.Count, start, end, m_PointGenerateSetting.BorderSize, m_PointGenerateSetting.Space, m_PointGenerateSetting.LineEquidistant);
+            return GeometryCoordinateGenerator.GenerateInLine(m_CoordinateGenerateSetting.Count, start, end, m_CoordinateGenerateSetting.BorderSize, m_CoordinateGenerateSetting.Space, m_CoordinateGenerateSetting.LineEquidistant);
         }
 
         private List<Vector3> GeneratePolygonCoordinates(List<Vector3> polygon, bool nextGroup = true)
@@ -804,7 +804,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 UndoSystem.NextGroup();
             }
-            return GeometryCoordinateGenerator.GenerateInPolygon(m_PointGenerateSetting.Count, polygon, m_PointGenerateSetting.BorderSize, m_PointGenerateSetting.Space);
+            return GeometryCoordinateGenerator.GenerateInPolygon(m_CoordinateGenerateSetting.Count, polygon, m_CoordinateGenerateSetting.BorderSize, m_CoordinateGenerateSetting.Space);
         }
 
         private List<Vector3> GenerateCircleCoordinates(Vector3 center, bool nextGroup = true)
@@ -813,7 +813,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 UndoSystem.NextGroup();
             }
-            return GeometryCoordinateGenerator.GenerateInCircle(m_PointGenerateSetting.Count, m_PointGenerateSetting.CircleRadius, center, m_PointGenerateSetting.BorderSize, m_PointGenerateSetting.Space);
+            return GeometryCoordinateGenerator.GenerateInCircle(m_CoordinateGenerateSetting.Count, m_CoordinateGenerateSetting.CircleRadius, center, m_CoordinateGenerateSetting.BorderSize, m_CoordinateGenerateSetting.Space);
         }
 
         private List<Vector3> GenerateRectangleCoordinates(Vector3 center, bool nextGroup = true)
@@ -822,7 +822,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 UndoSystem.NextGroup();
             }
-            return GeometryCoordinateGenerator.GenerateInRectangle(m_PointGenerateSetting.Count, center, m_PointGenerateSetting.RectWidth, m_PointGenerateSetting.RectHeight, m_PointGenerateSetting.BorderSize, m_PointGenerateSetting.Space);
+            return GeometryCoordinateGenerator.GenerateInRectangle(m_CoordinateGenerateSetting.Count, center, m_CoordinateGenerateSetting.RectWidth, m_CoordinateGenerateSetting.RectHeight, m_CoordinateGenerateSetting.BorderSize, m_CoordinateGenerateSetting.Space);
         }
 
         private void CreateObjects(List<Vector3> coordinates, bool random)
@@ -862,12 +862,12 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                     if (m_GeometryType == GeometryType.Rectangle)
                     {
-                        m_LastOperation = new CoordinateGenerateOperation(center, m_PointGenerateSetting.RectWidth, m_PointGenerateSetting.RectHeight);
+                        m_LastOperation = new CoordinateGenerateOperation(center, m_CoordinateGenerateSetting.RectWidth, m_CoordinateGenerateSetting.RectHeight);
                         coordinates = GenerateRectangleCoordinates(center);
                     }
                     else if (m_GeometryType == GeometryType.Circle)
                     {
-                        m_LastOperation = new CoordinateGenerateOperation(center, m_PointGenerateSetting.CircleRadius);
+                        m_LastOperation = new CoordinateGenerateOperation(center, m_CoordinateGenerateSetting.CircleRadius);
                         coordinates = GenerateCircleCoordinates(center);
                     }
                 }
@@ -908,7 +908,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 coordinates = ActionClickCreate();
             }
 
-            CreateObjects(coordinates, m_PointGenerateSetting.Random);
+            CreateObjects(coordinates, m_CoordinateGenerateSetting.Random);
         }
 
         internal void SyncObjectTransforms()

@@ -33,7 +33,7 @@ namespace XDay.RenderingAPI.BRG
         public bool IsPerInstance => m_PerInstance;
         public int DataSize => m_DataSize;
 
-        public ShaderPropertyDeclaration(string name, bool perInstance, ShaderPropertyType type)
+        public ShaderPropertyDeclaration(ShaderPropertyType type, string name, bool perInstance)
         {
             m_Name = name;
             m_PerInstance = perInstance;

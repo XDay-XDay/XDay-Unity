@@ -695,4 +695,4 @@ MonoBehaviour:
       DeleteOutputFolder: 1
       DeleteRigs: 1
       SampleFrameInterval: 1
-      BatchRendererGroupData: {fileID: 11400000, guid: eda4456ecf78f4f46b13e05f221fc3e3, type: 2}
+      InstanceAnimatorData: {fileID: 11400000, guid: 14896b022e67d2741810596f551219a7, type: 2}

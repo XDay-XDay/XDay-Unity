@@ -115,6 +115,24 @@ namespace XDay.AnimationAPI
             }
         }
 
+        public IInstanceAnimator CreateInstance(InstanceAnimatorData animatorData, Vector3 pos, Vector3 scale, Quaternion rot)
+        {
+            Dirty();
+
+            var meshesDataManager = new AnimatedInstanceMeshDataManager[animatorData.Meshes.Length];
+            for (var i = 0; i < meshesDataManager.Length; i++)
+            {
+                List<AnimatedInstanceMeshData> meshes = CreateSubMeshesData(i, animatorData);
+                meshesDataManager[i] = new AnimatedInstanceMeshDataManager(meshes);
+            }
+
+            InstanceAnimator instance = animatorData.AnimType == AnimationType.Rig ? m_RigInstancePool.Get() : m_VertexInstancePool.Get();
+            instance.Init(++m_NextInstanceID, meshesDataManager, this, animatorData.Metadata, m_GPUBatchManager, pos, rot, scale);
+            m_Instances.Add(instance.ID, instance);
+
+            return instance;
+        }
+
         private InstanceAnimatorData QueryInstanceAnimatorData(string path)
         {
             m_InstanceAnimatorData.TryGetValue(path, out var data);
@@ -133,40 +151,21 @@ namespace XDay.AnimationAPI
             return data;
         }
 
-        private IInstanceAnimator CreateInstance(InstanceAnimatorData animatorData, Vector3 pos, Vector3 scale, Quaternion rot)
-        {
-            Dirty();
-
-            var meshesDataManager = new AnimatedInstanceMeshDataManager[animatorData.Meshes.Length];
-            for (var i = 0; i < meshesDataManager.Length; i++)
-            {
-                List<AnimatedInstanceMeshData> meshes = CreateSubMeshesData(i, animatorData, ref pos, ref scale, ref rot);
-                meshesDataManager[i] = new AnimatedInstanceMeshDataManager(meshes);
-            }
-
-            InstanceAnimator instance = animatorData.AnimType == AnimationType.Rig ? m_RigInstancePool.Get() : m_VertexInstancePool.Get();
-            instance.Init(++m_NextInstanceID, meshesDataManager, this, animatorData.Metadata, m_GPUBatchManager);
-            m_Instances.Add(instance.ID, instance);
-
-            return instance;
-        }
-
         private GPUDynamicBatch CreateBatch(Mesh mesh, Material material, ushort submeshIndex)
         {
             var properties = new IShaderPropertyDeclaration[2]
             {
-                IShaderPropertyDeclaration.Create(AnimationDefine.ANIM_FRAME_NAME, ShaderPropertyType.Vector),
-                IShaderPropertyDeclaration.Create(AnimationDefine.ANIM_PLAY_NAME, ShaderPropertyType.Vector),
+                IShaderPropertyDeclaration.Create(ShaderPropertyType.Vector, AnimationDefine.ANIM_FRAME_NAME),
+                IShaderPropertyDeclaration.Create(ShaderPropertyType.Vector, AnimationDefine.ANIM_PLAY_NAME),
             };
 
-            var batchCreateInfo = IGPUBatchCreateInfo.Create(mesh, material, properties, m_MaxInstanceCountInOneBatch, submeshIndex);
+            var batchCreateInfo = IGPUBatchCreateInfo.Create(m_MaxInstanceCountInOneBatch, mesh, submeshIndex, material, properties);
             return m_GPUBatchManager.CreateBatch<GPUDynamicBatch>(batchCreateInfo);
         }
 
         private List<AnimatedInstanceMeshData> CreateSubMeshesData(
             int index, 
-            InstanceAnimatorData animatorData,
-            ref Vector3 pos, ref Vector3 scale, ref Quaternion rot)
+            InstanceAnimatorData animatorData)
         {
             List<AnimatedInstanceMeshData> meshes = new();
             var mesh = animatorData.Meshes[index];
@@ -174,9 +173,9 @@ namespace XDay.AnimationAPI
             //create data foreach submesh
             foreach (var material in animatorData.Materials[index].Materials)
             {
-                var batch = m_GPUBatchManager.QueryRenderableBatch(mesh, material) as GPUDynamicBatch;
+                var batch = m_GPUBatchManager.QueryRenderableBatch<GPUDynamicBatch>(mesh, material);
                 batch ??= CreateBatch(mesh, material, submesh);
-                var instanceIndex = batch.AddInstance(pos, rot, scale);
+                var instanceIndex = batch.AddInstance();
 
                 var meshData = m_MeshDataPool.Get();
                 meshData.Init(mesh, instanceIndex, batch, m_MeshDataPool);

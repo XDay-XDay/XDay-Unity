@@ -67,7 +67,7 @@ class SerializationTest : MonoBehaviour
         byte[] data;
         //save
         {
-            IWriter writer = IWriter.CreateBinary();
+            ISerializer writer = ISerializer.CreateBinary();
 
             TestObject obj1 = new TestObject();
             obj1.m_StringField = "this is obj1";
@@ -94,7 +94,7 @@ class SerializationTest : MonoBehaviour
 
         //load
         {
-            IReader reader = IReader.CreateBinary(data);
+            IDeserializer reader = IDeserializer.CreateBinary(data);
 
             Test test = new Test();
             test.Load(reader, "");

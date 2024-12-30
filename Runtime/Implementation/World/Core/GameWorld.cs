@@ -62,7 +62,7 @@ namespace XDay.WorldAPI
             debugger.Init(this);
         }
 
-        public override IDeserializer GetDataDeserializer(int worldID, string dataFileName)
+        public override IDeserializer QueryGameDataDeserializer(int worldID, string dataFileName)
         {
             return m_PluginLoader.GetPluginDeserializer(worldID, dataFileName);
         }

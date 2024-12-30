@@ -88,6 +88,10 @@ namespace XDay.WorldAPI
             {
                 UnloadWorldRender(world.ID);
             }
+            else
+            {
+                Debug.LogError($"Unload world renderer failed: {name}");
+            }
         }
 
         public void LoadWorldRenderer(string name)
@@ -97,6 +101,10 @@ namespace XDay.WorldAPI
             {
                 LoadWorldRender(world.ID);
             }
+            else
+            {
+                Debug.LogError($"Unload world renderer failed: {name}");
+            }
         }
 
         public void UnloadWorld(string name)
@@ -105,6 +113,10 @@ namespace XDay.WorldAPI
             if (world != null)
             {
                 UnloadWorld(world.ID);
+            }
+            else
+            {
+                Debug.LogError($"Unload world failed: {name}");
             }
         }
 
@@ -123,6 +135,10 @@ namespace XDay.WorldAPI
                         break;
                     }
                 }
+            }
+            else
+            {
+                Debug.LogError($"Unload world failed: {id}");
             }
         }
 

@@ -33,7 +33,7 @@ namespace XDay.API
     internal class XDayContext : IXDayContext
     {
         public IDeviceInput DeviceInput => m_Input;
-        public IWorldManager WorldSystem => m_WorldSystem;
+        public IWorldManager WorldManager => m_WorldSystem;
         public ITaskSystem TaskSystem => m_TaskSystem;
         public INavigationManager NavigationManager => m_NavigationManager;
 

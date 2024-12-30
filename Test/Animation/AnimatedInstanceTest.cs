@@ -38,12 +38,13 @@ public class AnimatedInstanceTest : MonoBehaviour
             return AssetDatabase.LoadAssetAtPath<InstanceAnimatorData>(path);
         });
 
-        var instance = m_AnimatedInstanceManager.CreateInstance(AnimationDataPath, Vector3.zero, Vector3.one, Quaternion.identity);
-        instance.PlayAnimation("Drunk Walk");
+        //var instance = m_AnimatedInstanceManager.CreateInstance(AnimationDataPath, Vector3.zero, Vector3.one, Quaternion.identity);
+        //instance.PlayAnimation("Drunk Walk");
 
-        m_AnimatedInstanceManager.DestroyInstance(instance.ID);
+        //m_AnimatedInstanceManager.DestroyInstance(instance.ID);
 
-        instance = m_AnimatedInstanceManager.CreateInstance(AnimationDataPath, Vector3.zero, Vector3.one, Quaternion.identity);
+        var instance = m_AnimatedInstanceManager.CreateInstance(AnimationDataPath);
+        instance.LocalPosition = new Vector3(3, 0, 0);
         instance.PlayAnimation("Drunk Walk");
     }
 

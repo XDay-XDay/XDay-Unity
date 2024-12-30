@@ -84,6 +84,17 @@ namespace XDay.SerializationAPI
             return ret;
         }
 
+        public byte[] ReadByteArray(string label = null)
+        {
+            int n = m_Reader.ReadInt32();
+            byte[] ret = new byte[n];
+            for (int i = 0; i < n; ++i)
+            {
+                ret[i] = m_Reader.ReadByte();
+            }
+            return ret;
+        }
+
         public float[] ReadSingleArray(string label = null)
         {
             int n = m_Reader.ReadInt32();
@@ -178,12 +189,12 @@ namespace XDay.SerializationAPI
             return m_Reader.ReadBoolean();
         }
 
-        public Vector2 ReadVector2(string label, Vector2 missingValue = default)
+        public Vector2 ReadVector2(string label = null, Vector2 missingValue = default)
         {
             return new Vector2(m_Reader.ReadFloat(), m_Reader.ReadFloat());
         }
 
-        public Vector4 ReadVector4(string label, Vector4 missingValue = default)
+        public Vector4 ReadVector4(string label = null, Vector4 missingValue = default)
         {
             return new Vector4(
                 m_Reader.ReadFloat(), 
@@ -192,7 +203,7 @@ namespace XDay.SerializationAPI
                 m_Reader.ReadFloat());
         }
 
-        public Quaternion ReadQuaternion(string label, Quaternion missingValue = default)
+        public Quaternion ReadQuaternion(string label = null, Quaternion missingValue = default)
         {
             return new Quaternion(
                 m_Reader.ReadFloat(),
@@ -201,7 +212,7 @@ namespace XDay.SerializationAPI
                 m_Reader.ReadFloat());
         }
 
-        public Color ReadColor(string label, Color missingValue = default)
+        public Color ReadColor(string label = null, Color missingValue = default)
         {
             return new Color(
                 m_Reader.ReadFloat(),
@@ -210,7 +221,7 @@ namespace XDay.SerializationAPI
                 m_Reader.ReadFloat());
         }
 
-        public Color32 ReadColor32(string label, Color32 missingValue = default)
+        public Color32 ReadColor32(string label = null, Color32 missingValue = default)
         {
             return new Color32(
                 m_Reader.ReadByte(),
@@ -219,18 +230,18 @@ namespace XDay.SerializationAPI
                 m_Reader.ReadByte());
         }
 
-        public T ReadEnum<T>(string label, T missingValue = default) where T : Enum
+        public T ReadEnum<T>(string label = null, T missingValue = default) where T : Enum
         {
             long val = m_Reader.ReadInt64();
             return (T)Enum.ToObject(typeof(T), val);
         }
 
-        public long ReadInt64(string label, long missingValue = default)
+        public long ReadInt64(string label = null, long missingValue = default)
         {
             return m_Reader.ReadInt64();
         }
 
-        public ulong ReadUInt64(string label, ulong missingValue = default)
+        public ulong ReadUInt64(string label = null, ulong missingValue = default)
         {
             return m_Reader.ReadUInt64();
         }
@@ -318,6 +329,39 @@ namespace XDay.SerializationAPI
             var maxZ = m_Reader.ReadFloat();
             bounds.SetMinMax(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
             return bounds;
+        }
+
+        public Vector2[] ReadVector2Array(string label)
+        {
+            var n = m_Reader.ReadInt32();
+            var ret = new Vector2[n];
+            for (var i = 0; i < n; ++i)
+            {
+                ret[i] = ReadVector2();
+            }
+            return ret;
+        }
+
+        public Vector3[] ReadVector3Array(string label)
+        {
+            var n = m_Reader.ReadInt32();
+            var ret = new Vector3[n];
+            for (var i = 0; i < n; ++i)
+            {
+                ret[i] = ReadVector3();
+            }
+            return ret;
+        }
+
+        public Vector4[] ReadVector4Array(string label)
+        {
+            var n = m_Reader.ReadInt32();
+            var ret = new Vector4[n];
+            for (var i = 0; i < n; ++i)
+            {
+                ret[i] = ReadVector4();
+            }
+            return ret;
         }
 
         private BinaryReader m_Reader;

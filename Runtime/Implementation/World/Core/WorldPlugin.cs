@@ -36,7 +36,6 @@ namespace XDay.WorldAPI
         public virtual bool Inited { get => m_Inited; set => m_Inited = value; }
         public virtual IPluginLODSystem LODSystem => null;
         public abstract List<string> GameFileNames { get; }
-        public virtual WorldPluginUsage Usage { get; } = WorldPluginUsage.BothInEditorAndGame;
         public string FileName => Name.Replace(" ", "_");
         public virtual Bounds Bounds => throw new NotImplementedException();
 
@@ -83,12 +82,12 @@ namespace XDay.WorldAPI
             Debug.Assert(false, "WorldPlugin import: todo");
         }
 
-        public void LoadGameData(World world, string pluginName)
+        public void LoadGameData(string pluginName, World world)
         {
             m_ID = world.AllocateObjectID();
             m_Index = world.PluginCount;
 
-            LoadGameDataInternal(world, pluginName);
+            LoadGameDataInternal(pluginName, world);
         }
 
         public void Update()
@@ -121,7 +120,7 @@ namespace XDay.WorldAPI
             PostInitInternal();
         }
 
-        protected virtual void LoadGameDataInternal(IWorld world, string pluginName)
+        protected virtual void LoadGameDataInternal(string pluginName, IWorld world)
         {
             throw new NotImplementedException();
         }

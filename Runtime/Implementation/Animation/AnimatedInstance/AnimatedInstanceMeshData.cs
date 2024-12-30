@@ -118,7 +118,10 @@ namespace XDay.AnimationAPI
             AnimatedInstanceMeshDataManager[] meshesDataManager, 
             InstanceAnimatorManager animatorManager, 
             AnimationBakeMetadata metadata, 
-            IGPUBatchManager batchManager)
+            IGPUBatchManager batchManager, 
+            Vector3 localPos, 
+            Quaternion localRot,
+            Vector3 localScale)
         {
             m_ID = id;
             m_Dirty = true;
@@ -126,6 +129,9 @@ namespace XDay.AnimationAPI
             m_MeshesDataManager = meshesDataManager;
             m_AnimatorManager = animatorManager;
             m_BakeMetadata = metadata;
+            LocalPosition = localPos;
+            LocalRotation = localRot;
+            LocalScale = localScale;
         }
 
         public void Uninit()

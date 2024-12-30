@@ -96,11 +96,11 @@ namespace XDay.WorldAPI
             }
         }
 
-        public int QueryLOD(float height)
+        public int QueryLOD(float altitude)
         {
             for (var i = m_LODs.Length - 1; i >= 0; --i)
             {
-                if (height >= m_LODs[i].Altitude)
+                if (altitude >= m_LODs[i].Altitude)
                 {
                     return i;
                 }
@@ -120,9 +120,9 @@ namespace XDay.WorldAPI
             return null;
         }
 
-        public int TryChangeLOD(int curLOD, float height)
+        public int TryChangeLOD(int curLOD, float altitude)
         {
-            if (IsTolerant(curLOD, height))
+            if (IsTolerant(curLOD, altitude))
             {
                 return curLOD;
             }
@@ -130,12 +130,12 @@ namespace XDay.WorldAPI
             var nextLOD = curLOD;
             for (var lod = m_LODs.Length - 1; lod >= 0; --lod)
             {
-                if (height >= m_LODs[lod].Altitude)
+                if (altitude >= m_LODs[lod].Altitude)
                 {
                     if (lod != curLOD)
                     {
                         if (curLOD == -1 ||
-                            height - m_LODs[lod].Altitude >= m_LODs[lod].Tolerance)
+                            altitude - m_LODs[lod].Altitude >= m_LODs[lod].Tolerance)
                         {
                             nextLOD = lod;
                         }
@@ -151,14 +151,14 @@ namespace XDay.WorldAPI
             return Mathf.Clamp(nextLOD, 0, m_LODs.Length - 1);
         }
 
-        public bool Update(float cameraHeight)
+        public bool Update(float cameraAltitude)
         {
             var changed = false;
-            if (!Mathf.Approximately(m_PreviousCheckHeight, cameraHeight))
+            if (!Mathf.Approximately(m_PreviousCheckAltitude, cameraAltitude))
             {
-                m_PreviousCheckHeight = cameraHeight;
+                m_PreviousCheckAltitude = cameraAltitude;
 
-                var newLOD = TryChangeLOD(m_CurrentLOD, cameraHeight);
+                var newLOD = TryChangeLOD(m_CurrentLOD, cameraAltitude);
                 if (newLOD != m_CurrentLOD)
                 {
                     changed = true;
@@ -223,18 +223,18 @@ namespace XDay.WorldAPI
                     newLODs[i] = new PluginLODSetup(m_LODs[i].Name, m_LODs[i].Altitude, m_LODs[i].Tolerance);
                 }
 
-                var prevLODHeight = 0.0f;
+                var prevLODAltitude = 0.0f;
                 if (oldCount > 0)
                 {
-                    prevLODHeight = m_LODs[oldCount - 1].Altitude;
+                    prevLODAltitude = m_LODs[oldCount - 1].Altitude;
                 }
 
                 var worldLODSystem = m_WorldLODSystem as WorldLODSystem;
                 for (var i = 0; i < addedCount; ++i)
                 {
                     var lod = oldCount + i;
-                    newLODs[lod] = new PluginLODSetup(worldLODSystem.GetLODName(lod), prevLODHeight + 100, 0);
-                    prevLODHeight = newLODs[lod].Altitude;
+                    newLODs[lod] = new PluginLODSetup(worldLODSystem.GetLODName(lod), prevLODAltitude + 100, 0);
+                    prevLODAltitude = newLODs[lod].Altitude;
                 }
             }
             else
@@ -250,7 +250,7 @@ namespace XDay.WorldAPI
             EventLODCountChanged?.Invoke(oldCount, newCount);
         }
 
-        private bool IsTolerant(int lod, float height)
+        private bool IsTolerant(int lod, float altitude)
         {
             if (lod < 0)
             {
@@ -258,7 +258,7 @@ namespace XDay.WorldAPI
             }
             
             var lodSetup = m_LODs[lod];
-            var delta = height - lodSetup.Altitude;
+            var delta = altitude - lodSetup.Altitude;
             return
                 delta >= 0 &&
                 delta <= lodSetup.Tolerance;
@@ -268,7 +268,7 @@ namespace XDay.WorldAPI
         protected IPluginLODSetup[] m_LODs;
         private int m_CurrentLOD = 0;
         private int m_PreviousLOD = 0;
-        private float m_PreviousCheckHeight = 0;
+        private float m_PreviousCheckAltitude = 0;
         protected WorldLODSystem m_WorldLODSystem;
 
         private const int m_Version = 1;

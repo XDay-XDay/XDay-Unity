@@ -28,7 +28,7 @@ Shader "Unlit/RigUnlit"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _AnimFrameData)
             UNITY_INSTANCING_BUFFER_END(_Buffer)
 
-            #include "../../../Runtime/Implementation/Animation/Resource/Include/RigAnimation.cginc"
+            #include "../../../../Runtime/Implementation/Animation/Resource/Include/RigAnimation.cginc"
 
             struct appdata
             {

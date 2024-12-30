@@ -43,6 +43,17 @@ namespace XDay.RenderingAPI.BRG
             return freeIndex;
         }
 
+        public unsafe int AddInstance()
+        {
+            var freeIndex = NextIndex();
+            if (freeIndex < 0)
+            {
+                return -1;
+            }
+
+            return freeIndex;
+        }
+
         public override void SetData<T>(NativeArray<T> data, int instanceIndex, int propertyIndex) where T : struct
         {
             Debug.LogError("not implemented, use SetVector and SetMatrix to set property!");

@@ -113,6 +113,16 @@ namespace XDay.SerializationAPI
             }
         }
 
+        public void WriteByteArray(byte[] value, string label = null)
+        {
+            int n = value != null ? value.Length : 0;
+            m_Writer.Write(n);
+            for (int i = 0; i < n; ++i)
+            {
+                m_Writer.Write(value[i]);
+            }
+        }
+
         public void WriteSingleArray(float[] value, string label = null)
         {
             int n = value != null ? value.Length : 0;
@@ -208,7 +218,7 @@ namespace XDay.SerializationAPI
             }
         }
 
-        public void WriteVector2(Vector2 value, string label)
+        public void WriteVector2(Vector2 value, string label = null)
         {
             m_Writer.Write(value.x);
             m_Writer.Write(value.y);
@@ -221,7 +231,7 @@ namespace XDay.SerializationAPI
             m_Writer.Write(value.z);
         }
 
-        public void WriteVector4(Vector4 value, string label)
+        public void WriteVector4(Vector4 value, string label = null)
         {
             m_Writer.Write(value.x);
             m_Writer.Write(value.y);
@@ -229,7 +239,7 @@ namespace XDay.SerializationAPI
             m_Writer.Write(value.w);
         }
 
-        public void WriteQuaternion(Quaternion value, string label)
+        public void WriteQuaternion(Quaternion value, string label = null)
         {
             m_Writer.Write(value.x);
             m_Writer.Write(value.y);
@@ -237,7 +247,7 @@ namespace XDay.SerializationAPI
             m_Writer.Write(value.w);
         }
 
-        public void WriteColor32(Color32 color, string label)
+        public void WriteColor32(Color32 color, string label = null)
         {
             m_Writer.Write(color.r);
             m_Writer.Write(color.g);
@@ -245,7 +255,7 @@ namespace XDay.SerializationAPI
             m_Writer.Write(color.a);
         }
 
-        public void WriteColor(Color color, string label)
+        public void WriteColor(Color color, string label = null)
         {
             m_Writer.Write(color.r);
             m_Writer.Write(color.g);
@@ -258,7 +268,7 @@ namespace XDay.SerializationAPI
             m_Writer.Write(value);
         }
 
-        public void WriteUInt64(ulong value, string label)
+        public void WriteUInt64(ulong value, string label = null)
         {
             m_Writer.Write(value);
         }
@@ -283,14 +293,14 @@ namespace XDay.SerializationAPI
 
             if (serializable != null)
             {
-                WriteString(serializable.TypeName);
-
                 if (gameData)
                 {
+                    WriteString(serializable.GameTypeName);
                     serializable.GameSerialize(this, label, converter);
                 }
                 else
                 {
+                    WriteString(serializable.TypeName);
                     serializable.EditorSerialize(this, label, converter);
                 }
             }
@@ -351,6 +361,33 @@ namespace XDay.SerializationAPI
             Seek(seekToOffset, SeekOrigin.Begin);
             WriteInt64(writeValue);
             Position = curPos;
+        }
+
+        public void WriteVector2Array(Vector2[] value, string label)
+        {
+            WriteInt32(value.Length);
+            foreach (var v in value)
+            {
+                WriteVector2(v);
+            }
+        }
+
+        public void WriteVector3Array(Vector3[] value, string label)
+        {
+            WriteInt32(value.Length);
+            foreach (var v in value)
+            {
+                WriteVector3(v);
+            }
+        }
+
+        public void WriteVector4Array(Vector4[] value, string label)
+        {
+            WriteInt32(value.Length);
+            foreach (var v in value)
+            {
+                WriteVector4(v);
+            }
         }
 
         private BinaryWriter m_Writer;

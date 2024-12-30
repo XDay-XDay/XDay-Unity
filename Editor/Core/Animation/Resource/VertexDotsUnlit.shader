@@ -55,7 +55,7 @@ Shader "Unlit/VertexDotsUnlit"
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
 
-            #include "../../../Runtime/Implementation/Animation/Resource/Include/VertexAnimationDots.cginc"
+            #include "../../../../Runtime/Implementation/Animation/Resource/Include/VertexAnimationDots.cginc"
 
             Varyings vert (Attributes input)
             {

@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -35,6 +36,11 @@ namespace XDay.UtilityAPI
 {
     public static class EditorHelper
     {
+        public static bool SpanEqual(ReadOnlySpan<byte> span1, ReadOnlySpan<byte> span2)
+        {
+            return span1.SequenceEqual(span2);
+        }
+
         public static bool IsIdentity(GameObject obj)
         {
             return obj.transform.position == Vector3.zero &&
@@ -275,6 +281,37 @@ namespace XDay.UtilityAPI
                 return array[0] as T;
             }
             return null;
+        }
+
+        public static void WriteFile(string text, string path)
+        {
+            if (!File.Exists(path))
+            {
+                File.WriteAllText(path, text);
+                return;
+            }
+
+            var existedText = File.ReadAllText(path);
+            if (existedText != text)
+            {
+                File.WriteAllText(path, text);
+            }
+        }
+
+        public static void WriteFile(byte[] bytes, string path)
+        {
+            if (!File.Exists(path))
+            {
+                File.WriteAllBytes(path, bytes);
+                return;
+            }
+
+            var existedData = File.ReadAllBytes(path);
+            if (existedData.Length != bytes.Length ||
+                !SpanEqual(bytes, existedData))
+            {
+                File.WriteAllBytes(path, bytes);
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ using XDay.UtilityAPI;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using XDay.SerializationAPI;
 
 namespace XDay.WorldAPI
 {
@@ -68,6 +69,9 @@ namespace XDay.WorldAPI
         float Height { get; }
         Bounds Bounds { get; }
         int PluginCount { get; }
+        string GameFolder { get; }
+        string EditorFolder { get; }
+        IWorldAssetLoader AssetLoader { get; }
         ICameraManipulator CameraManipulator { get; set; }
         GameObject Root { get; }
         IGameObjectPool GameObjectPool { get; }
@@ -79,6 +83,7 @@ namespace XDay.WorldAPI
         T QueryPlugin<T>() where T : class, IWorldPlugin;
         T QueryPlugin<T>(string name) where T : class, IWorldPlugin;
         List<T> QueryPlugins<T>() where T : class, IWorldPlugin;
+        IDeserializer QueryGameDataDeserializer(int worldID, string gameDataFileName);
     }
 
     public interface IWorldManager
@@ -87,6 +92,7 @@ namespace XDay.WorldAPI
         IWorldAssetLoader WorldAssetLoader { get; }
 
         UniTask<IWorld> LoadWorldAsync(string name, Camera camera = null);
+        IWorld LoadWorld(string name, Camera camera = null);
         void UnloadWorld(string name);
         void LoadWorldRenderer(string name);
         void UnloadWorldRenderer(string name);
@@ -143,6 +149,13 @@ namespace XDay.WorldAPI
         void AddObjectUndo(IWorldObject obj, int lod, int objectIndex);
         void DestroyObjectUndo(int objectID);
         IWorldObject QueryObjectUndo(int objectID);
+    }
+
+    public interface IDecorationSystem : IWorldPlugin
+    {
+        void PlayAnimation(int decorationID, string animationName, bool alwaysPlay = false);
+        void QueryDecorationIDsInCircle(Vector3 center, float radius, List<int> decorationIDs);
+        void ShowDecoration(int decorationID, bool show);
     }
 }
 

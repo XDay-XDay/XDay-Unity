@@ -42,17 +42,17 @@ namespace XDay.RenderingAPI.BRG
         int DataSize { get; }
         bool IsPerInstance { get; }
 
-        static IShaderPropertyDeclaration Create(string name, ShaderPropertyType type, bool perInstance = true)
+        static IShaderPropertyDeclaration Create(ShaderPropertyType type, string name, bool perInstance = true)
         {
-            return new ShaderPropertyDeclaration(name, perInstance, type);
+            return new ShaderPropertyDeclaration(type, name, perInstance);
         }
     }
 
     public interface IGPUBatchCreateInfo
     {
-        static IGPUBatchCreateInfo Create(Mesh mesh, Material material, IShaderPropertyDeclaration[] properties, int maxInstanceCount, int subMeshIndex)
+        static IGPUBatchCreateInfo Create(int maxInstanceCount, Mesh mesh, int subMeshIndex, Material material, IShaderPropertyDeclaration[] properties)
         {
-            return new GPUBatchCreateInfo(mesh, material, properties, maxInstanceCount, subMeshIndex);
+            return new GPUBatchCreateInfo(maxInstanceCount, mesh, subMeshIndex, material, properties);
         }
 
         Mesh Mesh { get; }
@@ -82,7 +82,7 @@ namespace XDay.RenderingAPI.BRG
 
         T QueryBatch<T>(int id) where T : GPUBatch;
 
-        GPUBatch QueryRenderableBatch(Mesh mesh, Material material);
+        T QueryRenderableBatch<T>(Mesh mesh, Material material) where T : GPUBatch;
 
         void Sync();
     }
