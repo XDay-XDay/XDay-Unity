@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -84,16 +84,6 @@ namespace XDay.WorldAPI.Decoration
             return m_Ref == 0;
         }
 
-        public override bool IsEnabled()
-        {
-            return m_Enabled;
-        }
-
-        public override WorldObjectVisibility GetVisibility()
-        {
-            return m_Visibility;
-        }
-
         public bool IntersectWith(float visibleAreaMinX, float visibleAreaMinZ, float visibleAreaWidth, float visibleAreaHeight)
         {
             var worldBoundsMinX = m_PositionInGrid.x + m_ResourceMetadata.Bounds.xMin;
@@ -113,14 +103,16 @@ namespace XDay.WorldAPI.Decoration
             return true;
         }
 
-        protected override void OnSetEnabled(bool enabled)
+        protected override WorldObjectVisibility VisibilityInternal
         {
-            m_Enabled = enabled;
+            set => m_Visibility = value;
+            get => m_Visibility;
         }
 
-        protected override void OnSetVisibility(WorldObjectVisibility visibility)
+        protected override bool EnabledInternal
         {
-            m_Visibility = visibility;
+            set => m_Enabled = value;
+            get => m_Enabled;
         }
 
         private int m_GridX;

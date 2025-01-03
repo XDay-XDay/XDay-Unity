@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,7 +26,7 @@ using System.Collections.Generic;
 
 namespace XDay.WorldAPI
 {
-    public class ResourceDescriptorSystem : ISerializable, IResourceDescriptorSystem
+    public class ResourceDescriptorSystem : IResourceDescriptorSystem
     {
         public virtual string TypeName => "ResourceDescriptorSystem";
 
@@ -60,7 +60,7 @@ namespace XDay.WorldAPI
 
             m_UninitedDescriptors = deserializer.ReadList("Resource Descriptors", (index) =>
             {
-                return deserializer.ReadSerializable<ResourceDescriptor>($"Resource Descriptor {index}", true);
+                return deserializer.ReadSerializable<IResourceDescriptor>($"Resource Descriptor {index}", true);
             });
         }
 
@@ -74,7 +74,7 @@ namespace XDay.WorldAPI
             return descriptor;
         }
 
-        protected virtual ResourceDescriptor CreateDescriptor(int id, int index, string path)
+        protected virtual IResourceDescriptor CreateDescriptor(int id, int index, string path)
         {
             return new ResourceDescriptor(id, index, path);
         }
@@ -83,8 +83,8 @@ namespace XDay.WorldAPI
         public virtual void EditorDeserialize(IDeserializer deserializer, string label) { }
         public virtual void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter) {}
 
-        protected Dictionary<string, ResourceDescriptor> m_Descriptors = new();
-        protected List<ResourceDescriptor> m_UninitedDescriptors = new();
+        protected Dictionary<string, IResourceDescriptor> m_Descriptors = new();
+        protected List<IResourceDescriptor> m_UninitedDescriptors = new();
     }
 }
 

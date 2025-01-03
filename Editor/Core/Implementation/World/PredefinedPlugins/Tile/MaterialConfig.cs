@@ -1,0 +1,265 @@
+/*
+ * Copyright (c) 2024-2025 XDay
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+using System.Linq;
+using System.Collections.Generic;
+using XDay.SerializationAPI;
+using UnityEngine;
+
+namespace XDay.WorldAPI.Tile.Editor
+{
+    internal class MaterialConfig : WorldObject
+    {
+        public string Name { set => m_Name = value; get => m_Name; }
+        public string ShaderGUID => m_ShaderGUID;
+        public bool ShowInInspector { set => m_Show = value; get => m_Show; }
+        public List<FloatParam> Floats => m_Floats;
+        public List<TextureParam> Textures => m_Textures;
+        public List<Vector4Param> Vector4s => m_Vector4s;
+        public override string TypeName => "MaterialConfig";
+
+        public MaterialConfig()
+        {
+        }
+
+        public MaterialConfig(int id, int objectIndex, string shaderGUID, string name)
+            : base(id, objectIndex)
+        {
+            m_ShaderGUID = shaderGUID;
+            m_Name = name;
+        }
+
+        public void Combine(MaterialConfig other)
+        {
+            CombineFloats(other);
+            CombineTextures(other);
+            CombineVectors(other);
+        }
+
+        public void AddTexture(string name)
+        {
+            m_Textures.Add(new TextureParam
+            {
+                Name = name,
+            });
+        }
+
+        public void AddVector(string name)
+        {
+            m_Vector4s.Add(new Vector4Param
+            {
+                Name = name,
+            });
+        }
+
+        public void AddFloat(string name)
+        {
+            m_Floats.Add(new FloatParam
+            {
+                Name = name,
+            });
+        }
+
+        public override void EditorDeserialize(IDeserializer deserializer, string label)
+        {
+            deserializer.ReadInt32("MaterialConfig.Version");
+
+            base.EditorDeserialize(deserializer, label);
+
+            m_ShaderGUID = deserializer.ReadString("Shader");
+            m_Show = deserializer.ReadBoolean("Show");
+            m_Name = deserializer.ReadString("Name");
+            m_Floats = deserializer.ReadList($"Floats", (index) => {
+                var param = new FloatParam();
+                deserializer.ReadStructure($"Float {index}", () =>
+                {
+                    var hasValue = deserializer.ReadBoolean("Has Value");
+                    var value = deserializer.ReadSingle("Value");
+                    if (hasValue)
+                    {
+                        param.Value = value;
+                    }
+                    param.Name = deserializer.ReadString("Name");
+                });
+                return param;
+            });
+            m_Vector4s = deserializer.ReadList($"Vector4 Parameters", (index) => {
+                var param = new Vector4Param();
+                deserializer.ReadStructure($"Vector4 {index}", () =>
+                {
+                    var hasValue = deserializer.ReadBoolean("Has Value");
+                    var value = deserializer.ReadVector4("Value");
+                    if (hasValue)
+                    {
+                        param.Value = value;
+                    }
+                    param.Name = deserializer.ReadString("Name");
+                });
+                return param;
+            });
+            m_Textures = deserializer.ReadList($"Textures", (index) => {
+                var param = new TextureParam();
+                deserializer.ReadStructure($"Texture {index}", () =>
+                {
+                    var hasValue = deserializer.ReadBoolean("Has UV Transform");
+                    var uvTransform = deserializer.ReadVector4("UV Transform");
+                    if (hasValue)
+                    {
+                        param.UVTransform = uvTransform;
+                    }
+                    param.TextureGUID = deserializer.ReadString("Texture");
+                    param.Name = deserializer.ReadString("Name");
+                });
+                return param;
+            });
+        }
+
+        public override void EditorSerialize(ISerializer writer, string label, IObjectIDConverter converter)
+        {
+            writer.WriteInt32(m_Version, "MaterialConfig.Version");
+
+            base.EditorSerialize(writer, label, converter);
+
+            writer.WriteString(m_ShaderGUID, "Shader GUID");
+            writer.WriteBoolean(m_Show, "Show");
+            writer.WriteString(m_Name, "Name");
+            writer.WriteList(m_Floats, $"Floats", (param, index) => {
+                writer.WriteStructure($"Float {index}", () =>
+                {
+                    writer.WriteBoolean(param.Value.HasValue, "Has Value");
+                    writer.WriteSingle(param.Value.GetValueOrDefault(), "Value");
+                    writer.WriteString(param.Name, "Name");
+                });
+            });
+            writer.WriteList(m_Vector4s, $"Vector4s", (param, index) => {
+                writer.WriteStructure($"Vector4 {index}", () =>
+                {
+                    writer.WriteBoolean(param.Value.HasValue, "Has Value");
+                    writer.WriteVector4(param.Value.GetValueOrDefault(), "Value");
+                    writer.WriteString(param.Name, "Name");
+                });
+            });
+            writer.WriteList(m_Textures, $"Textures", (param, index) => {
+                writer.WriteStructure($"Texture {index}", () =>
+                {
+                    writer.WriteBoolean(param.UVTransform.HasValue, "Has UV Transform");
+                    writer.WriteVector4(param.UVTransform.GetValueOrDefault(), "UV Transform");
+                    writer.WriteString(param.TextureGUID, "Texture");
+                    writer.WriteString(param.Name, "Name");
+                });
+            });
+        }   
+
+        private void CombineFloats(MaterialConfig other)
+        {
+            var deletedFloats = m_Floats.Where(a => !other.Floats.Any(b => b.Name == a.Name)).ToArray();
+            var addedFloats = other.Floats.Where(b => !m_Floats.Any(a => a.Name == b.Name)).ToArray();
+            foreach (var setting in deletedFloats)
+            {
+                for (var i = m_Floats.Count - 1; i >= 0; --i)
+                {
+                    if (m_Floats[i].Name == setting.Name)
+                    {
+                        m_Floats.RemoveAt(i);
+                    }
+                }
+            }
+            foreach (var setting in addedFloats)
+            {
+                AddFloat(setting.Name);
+            }
+        }
+
+        private void CombineVectors(MaterialConfig other)
+        {
+            var deletedVectors = m_Vector4s.Where(a => !other.Vector4s.Any(b => b.Name == a.Name)).ToArray();
+            var addedVectors = other.Vector4s.Where(b => !m_Vector4s.Any(a => a.Name == b.Name)).ToArray();
+            foreach (var setting in deletedVectors)
+            {
+                for (var i = m_Vector4s.Count - 1; i >= 0; --i)
+                {
+                    if (m_Vector4s[i].Name == setting.Name)
+                    {
+                        m_Vector4s.RemoveAt(i);
+                    }
+                }
+            }
+            foreach (var setting in addedVectors)
+            {
+                AddVector(setting.Name);
+            }
+        }
+
+        private void CombineTextures(MaterialConfig other)
+        {
+            var deletedTextures = m_Textures.Where(a => !other.Textures.Any(b => b.Name == a.Name)).ToArray();
+            var addedTextures = other.Textures.Where(b => !m_Textures.Any(a => a.Name == b.Name)).ToArray();
+            foreach (var setting in deletedTextures)
+            {
+                for (var i = m_Textures.Count - 1; i >= 0; --i)
+                {
+                    if (m_Textures[i].Name == setting.Name)
+                    {
+                        m_Textures.RemoveAt(i);
+                    }
+                }
+            }
+            foreach (var setting in addedTextures)
+            {
+                AddTexture(setting.Name);
+            }
+        }
+
+        public class ParamBase
+        {
+            public string Name { get; set; }
+        }
+
+        public class Vector4Param : ParamBase
+        {
+            public Vector4? Value { get; set; }
+        }
+
+        public class FloatParam : ParamBase
+        {
+            public float? Value { get; set; }
+        }
+
+        public class TextureParam : ParamBase
+        {
+            public Vector4? UVTransform { get; set; }
+            public string TextureGUID { get; set; }
+        }
+
+        private bool m_Show = true;
+        private List<FloatParam> m_Floats = new();
+        private List<Vector4Param> m_Vector4s = new();
+        private List<TextureParam> m_Textures = new();
+        private string m_Name;
+        private string m_ShaderGUID;
+        private const int m_Version = 1;
+    }
+}
+
+
+//XDay

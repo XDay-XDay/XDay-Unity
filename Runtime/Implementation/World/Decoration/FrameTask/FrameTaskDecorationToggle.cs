@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -28,7 +28,7 @@ namespace XDay.WorldAPI.Decoration
 {
     internal class FrameTaskDecorationToggle : FrameTask
     {
-        public override bool End => m_NextIndex == m_ObjectCount;
+        public override bool End => m_NextObjectIndex == m_ObjectCount;
         public override int Order => m_Type == Type.Activate ? 0 : 1;
 
         public FrameTaskDecorationToggle(DecorationSystem system, int objectCount, int lod, int gridX, int gridY)
@@ -44,7 +44,7 @@ namespace XDay.WorldAPI.Decoration
         {
             m_PrevLOD = -1;
             m_Type = Type.Undefined;
-            m_NextIndex = 0;
+            m_NextObjectIndex = 0;
         }
 
         public void Init(int prevLOD, Type type)
@@ -63,7 +63,7 @@ namespace XDay.WorldAPI.Decoration
                     m_System.ShowGrid(gridData);
                 }
                 m_Type = type;
-                m_NextIndex = 0;
+                m_NextObjectIndex = 0;
             }
         }
 
@@ -85,14 +85,14 @@ namespace XDay.WorldAPI.Decoration
             Debug.Assert(!End);
             var gridData = m_System.GetGrid(m_GridX, m_GridY);
             var objectCount = gridData.GetObjectCount(m_LOD);
-            while (m_NextIndex < objectCount)
+            while (m_NextObjectIndex < objectCount)
             {
-                var obj = m_System.QueryVisibleObject(m_GridX, m_GridY, m_LOD, m_NextIndex);
+                var obj = m_System.QueryVisibleObject(m_GridX, m_GridY, m_LOD, m_NextObjectIndex);
                 if (obj != null)
                 {
                     m_System.DestroyDecoration(obj, m_PrevLOD, m_LOD);
                 }
-                ++m_NextIndex;
+                ++m_NextObjectIndex;
                 if (watch.ElapsedSeconds > GameDefine.MAX_TASK_TIME_SECONDS_PER_FRAME)
                 {
                     return true;
@@ -106,10 +106,10 @@ namespace XDay.WorldAPI.Decoration
             Debug.Assert(!End);
             var gridData = m_System.GetGrid(m_GridX, m_GridY);
             var objectCount = gridData.GetObjectCount(m_LOD);
-            while (m_NextIndex < objectCount)
+            while (m_NextObjectIndex < objectCount)
             {
-                m_System.CreateDecoration(m_NextIndex, m_GridX, m_GridY, m_PrevLOD, m_LOD);
-                ++m_NextIndex;
+                m_System.CreateDecoration(m_NextObjectIndex, m_GridX, m_GridY, m_PrevLOD, m_LOD);
+                ++m_NextObjectIndex;
                 if (watch.ElapsedSeconds > GameDefine.MAX_TASK_TIME_SECONDS_PER_FRAME)
                 {
                     return true;
@@ -131,7 +131,7 @@ namespace XDay.WorldAPI.Decoration
         private readonly int m_ObjectCount;
         private int m_PrevLOD;
         private readonly int m_LOD;
-        private int m_NextIndex = 0;
+        private int m_NextObjectIndex = 0;
         private readonly int m_GridX;
         private readonly int m_GridY;
     }

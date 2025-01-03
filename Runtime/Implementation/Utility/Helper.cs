@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -31,6 +31,16 @@ namespace XDay.UtilityAPI
 {
     public static class Helper
     {
+        public static Rect Rotate(this Rect rect, Quaternion rot)
+        {
+            var bounds = new Bounds();
+            bounds.Encapsulate(rot * new Vector3(rect.xMin, 0, rect.yMin));
+            bounds.Encapsulate(rot * new Vector3(rect.xMax, 0, rect.yMin));
+            bounds.Encapsulate(rot * new Vector3(rect.xMin, 0, rect.yMax));
+            bounds.Encapsulate(rot * new Vector3(rect.xMax, 0, rect.yMax));
+            return bounds.ToRect();
+        }
+
         public static void DestroyUnityObject(UnityEngine.Object obj)
         {
             if (obj != null)
@@ -115,7 +125,7 @@ namespace XDay.UtilityAPI
             return path.Replace('\\', '/');
         }
 
-        public static void HideGameObject(GameObject obj, bool hide)
+        public static void HideGameObject(GameObject obj, bool hide = true)
         {
 #if UNITY_EDITOR
             if (obj != null)
@@ -612,6 +622,24 @@ namespace XDay.UtilityAPI
                     stack.Push(child);
                 }
             }
+        }
+
+        public static bool IsPOT(int n)
+        {
+            if (n <= 0)
+            {
+                return false;
+            }
+
+            return (n & (n - 1)) == 0;
+        }
+
+        public static Color Lerp(this Color a, Color b, float t)
+        {
+            return new Color(Mathf.Lerp(a.r, b.r, t),
+                             Mathf.Lerp(a.g, b.g, t),
+                             Mathf.Lerp(a.b, b.b, t),
+                             Mathf.Lerp(a.a, b.a, t));
         }
 
         private const double m_DegToRad = 0.0174532924;

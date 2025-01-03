@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -30,10 +30,9 @@ using UnityEngine;
 namespace XDay.WorldAPI
 {
     [XDaySerializableClass("World Object")]
-    public abstract partial class WorldObject : IWorldObject, ISerializable
+    public abstract partial class WorldObject : IWorldObject
     {
-        public virtual bool IsActive => 
-            IsEnabled() && GetVisibility() == WorldObjectVisibility.Visible;
+        public virtual bool IsActive => EnabledInternal && VisibilityInternal == WorldObjectVisibility.Visible;
         public int ID => m_ID;
         public int ObjectIndex => m_Index;
         public int WorldID => m_World.ID;
@@ -120,48 +119,49 @@ namespace XDay.WorldAPI
             m_Index = deserializer.ReadInt32("Index");
         }
 
-        public virtual bool IsEnabled()
+        public bool SetVisibility(WorldObjectVisibility visibility)
         {
-            throw new System.NotImplementedException();
-        }
-
-        public virtual WorldObjectVisibility GetVisibility()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public virtual bool SetVisibility(WorldObjectVisibility visibility)
-        {
-            if (GetVisibility() != visibility)
+            if (VisibilityInternal != visibility)
             {
                 var oldState = IsActive;
-                OnSetVisibility(visibility);
+                VisibilityInternal = visibility;
                 return oldState != IsActive;
             }
 
             return false;
         }
 
-        public virtual bool SetEnabled(bool enabled)
+        public WorldObjectVisibility GetVisibility()
         {
-            if (IsEnabled() != enabled)
+            return VisibilityInternal;
+        }
+
+        public bool SetEnabled(bool enabled)
+        {
+            if (EnabledInternal != enabled)
             {
                 var oldState = IsActive;
-                OnSetEnabled(enabled);
+                EnabledInternal = enabled;
                 return oldState != IsActive;
             }
 
             return false;
         }
 
-        protected virtual void OnSetVisibility(WorldObjectVisibility visibility)
+        public bool IsEnabled()
         {
-            throw new System.NotImplementedException();
+            return EnabledInternal;
         }
 
-        protected virtual void OnSetEnabled(bool enabled)
+        protected virtual WorldObjectVisibility VisibilityInternal
         {
-            throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
+            get => throw new System.NotImplementedException();
+        }
+        protected virtual bool EnabledInternal
+        {
+            set => throw new System.NotImplementedException();
+            get => throw new System.NotImplementedException();
         }
 
         [XDaySerializableField(1, "ID")]

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -137,7 +137,6 @@ namespace XDay.SerializationAPI
             
             int id = m_Reader.ReadInt32();
             var str = m_StringTable.GetString(id);
-            Debug.Assert(!string.IsNullOrEmpty(str));
             return str;   
         }
 
@@ -187,6 +186,11 @@ namespace XDay.SerializationAPI
         public bool ReadBoolean(string label = null, bool missingValue = default)
         {
             return m_Reader.ReadBoolean();
+        }
+
+        public byte ReadByte(string label = null, byte missingValue = default)
+        {
+            return m_Reader.ReadByte();
         }
 
         public Vector2 ReadVector2(string label = null, Vector2 missingValue = default)

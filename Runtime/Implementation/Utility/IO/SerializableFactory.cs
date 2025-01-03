@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -54,6 +54,12 @@ namespace XDay.SerializationAPI
 
         public ISerializable CreateObject(string typeName)
         {
+            if (string.IsNullOrEmpty(typeName))
+            {
+                Debug.LogError($"typeName is null!");
+                return null;
+            }
+
             m_TypeMapping.TryGetValue(typeName, out var type);
             if (type == null)
             {

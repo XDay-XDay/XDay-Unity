@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -71,6 +71,7 @@ namespace XDay.SerializationAPI
         void WriteSingle(float value, string label);
         void WriteBoolean(bool value, string label);
         void WriteString(string value, string label);
+        void WriteByte(byte value, string label);
         
         void WriteVector2(Vector2 value, string label);
         void WriteVector3(Vector3 value, string label);
@@ -105,6 +106,7 @@ namespace XDay.SerializationAPI
         ulong ReadUInt64(string label, ulong missingValue = default);
         float ReadSingle(string label, float missingValue = default);
         bool ReadBoolean(string label, bool missingValue = default);
+        byte ReadByte(string label, byte missingValue = default);
         string ReadString(string label, string missingValue = default);
         Vector2 ReadVector2(string label, Vector2 missingValue = default);
         Vector3 ReadVector3(string label, Vector3 missingValue = default);

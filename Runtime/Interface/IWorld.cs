@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -45,7 +45,7 @@ namespace XDay.WorldAPI
         OnlyInEditor,
     }
 
-    public interface IWorldObject
+    public interface IWorldObject : ISerializable
     {
         int ID { get; }
         int WorldID { get; }
@@ -133,11 +133,15 @@ namespace XDay.WorldAPI
 
     public interface IResourceDescriptor : IWorldObject
     {
+        int LODCount { get; }
+
+        void Init(IWorld world);
+        void Uninit();
         string GetPath(int lod);
         int QueryLODGroup(int lod);
     }
 
-    public interface IResourceDescriptorSystem
+    public interface IResourceDescriptorSystem : ISerializable
     {
         IResourceDescriptor QueryDescriptor(string prefabPath);
     }

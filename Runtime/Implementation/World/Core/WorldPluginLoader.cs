@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -92,9 +92,11 @@ namespace XDay.WorldAPI
 
                 if (found)
                 {
-                    var plugin = m_SerializableFactory.CreateObject(QueryTypeName(info.FileNames)) as WorldPlugin;
-                    plugins.Add(plugin);
-                    plugin.LoadGameData(info.PluginName, world);
+                    if (m_SerializableFactory.CreateObject(QueryTypeName(info.FileNames)) is WorldPlugin plugin)
+                    {
+                        plugins.Add(plugin);
+                        plugin.LoadGameData(info.PluginName, world);
+                    }
                 }
             }
 

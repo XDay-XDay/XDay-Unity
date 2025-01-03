@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -69,7 +69,31 @@ namespace XDay.WorldAPI
             return lod;
         }
 
+        public static bool ImageButton(string name, string tooltip, int imageSize = 18)
+        {
+#if UNITY_EDITOR
+            return GUILayout.Button(new GUIContent(AssetDatabase.LoadAssetAtPath<Texture2D>(GetIconPath(name)), tooltip), GUILayout.MaxWidth(imageSize), GUILayout.MaxHeight(imageSize));
+#else
+            return false;
+#endif
+        }
+
         public static string GetIconPath(string name)
+        {
+            return GetResourcePath(name, "Icon");
+        }
+
+        public static string GetShaderPath(string name)
+        {
+            return GetResourcePath(name, "Shader");
+        }
+
+        public static string GetBrushPath()
+        {
+            return GetResourcePath("", "Brush");
+        }
+
+        private static string GetResourcePath(string name, string type)
         {
 #if UNITY_EDITOR
             if (string.IsNullOrEmpty(m_ResourceDir))
@@ -85,20 +109,12 @@ namespace XDay.WorldAPI
                     }
                 }
             }
-            return $"{m_ResourceDir}/Icon/{name}";
+            return Path.Combine($"{m_ResourceDir}/{type}", name);
 #else
             return "";
 #endif
         }
 
-        public static bool ImageButton(string name, string tooltip, int imageSize = 18)
-        {
-#if UNITY_EDITOR
-            return GUILayout.Button(new GUIContent(AssetDatabase.LoadAssetAtPath<Texture2D>(GetIconPath(name)), tooltip), GUILayout.MaxWidth(imageSize), GUILayout.MaxHeight(imageSize));
-#else
-            return false;
-#endif
-        }
 
         private static string m_ResourceDir;
     }

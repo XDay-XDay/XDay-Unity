@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -62,6 +62,11 @@ namespace XDay.SerializationAPI
         public void WriteBoolean(bool value, string label)
         {
             m_Serializer.WriteBoolean(value, label);
+        }
+
+        public void WriteByte(byte value, string label)
+        {
+            m_Serializer.WriteByte(value, label);
         }
 
         public void WriteColor(Color color, string label)

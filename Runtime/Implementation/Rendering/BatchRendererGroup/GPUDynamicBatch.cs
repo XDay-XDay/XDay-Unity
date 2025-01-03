@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,10 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using XDay.UtilityAPI;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using XDay.UtilityAPI.Math;
 
 namespace XDay.RenderingAPI.BRG
 {

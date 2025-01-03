@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -36,6 +36,11 @@ namespace XDay.UtilityAPI
 {
     public static class EditorHelper
     {
+        public static void HorizontalLine()
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        }
+
         public static bool SpanEqual(ReadOnlySpan<byte> span1, ReadOnlySpan<byte> span2)
         {
             return span1.SequenceEqual(span2);
@@ -312,6 +317,112 @@ namespace XDay.UtilityAPI
             {
                 File.WriteAllBytes(path, bytes);
             }
+        }
+
+        public static string GetObjectGUID(UnityEngine.Object obj)
+        {
+            return AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(obj));
+        }
+
+        public static string QueryPlatformName()
+        {
+            var name = "StandaloneWindows";
+            if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
+            {
+                name = "Android";
+            }
+            else if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS)
+            {
+                name = "iPhone";
+            }
+            return name;
+        }
+
+        public static bool DrawImageWithSelection(Texture2D texture, bool selected, int size)
+        {
+            EditorGUILayout.LabelField(new GUIContent(texture), GUILayout.Width(size), GUILayout.Height(size));
+            var lastRect = GUILayoutUtility.GetLastRect();
+            var evt = Event.current;
+
+            if (selected)
+            {
+                var oldColor = GUI.backgroundColor;
+                GUI.backgroundColor = Color.yellow;
+                GUI.Box(lastRect, GUIContent.none);
+                GUI.backgroundColor = oldColor;
+            }
+
+            if (lastRect.Contains(evt.mousePosition) &&
+                evt.type == EventType.MouseDown)
+            {
+                selected = !selected;
+                evt.Use();
+            }
+
+            return selected;
+        }
+
+        public static Texture2D CreateReadableTexture(Texture2D texture)
+        {
+            if (texture.isReadable)
+            {
+                return UnityEngine.Object.Instantiate(texture);
+            }
+
+            var renderTexture = new RenderTexture(texture.width, texture.height, depth: 24);
+            RenderTexture.active = renderTexture;
+            Graphics.Blit(texture, renderTexture);
+            var copy = new Texture2D(texture.width, texture.height)
+            {
+                name = $"{texture.name}_readable"
+            };
+            copy.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
+            copy.Apply();
+            RenderTexture.active = null;
+            UnityEngine.Object.DestroyImmediate(renderTexture);
+            return copy;
+        }
+
+        public static bool IsEmptyDirectory(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                return true;
+            }
+    
+            foreach (var _ in Directory.EnumerateFileSystemEntries(path, "*.*", SearchOption.TopDirectoryOnly))
+            {
+                return false;
+            }            
+
+            return true;
+        }
+
+        public static void SaveTextureToFile(Texture2D texture, string filePath)
+        {
+            if (!texture.isReadable)
+            {
+                UnityEngine.Debug.LogError("texture is not readable!");
+                return;
+            }
+            var ext = Helper.GetPathExtension(filePath);
+            if (ext == "png")
+            {
+                File.WriteAllBytes(filePath, texture.EncodeToPNG());
+            }
+            else if (ext == "tga")
+            {
+                File.WriteAllBytes(filePath, texture.EncodeToTGA());
+            }
+            else if (ext == "jpg")
+            {
+                File.WriteAllBytes(filePath, texture.EncodeToJPG());
+            }
+            else
+            {
+                UnityEngine.Debug.Assert(false, $"unknown format {filePath}");
+            }
+            AssetDatabase.Refresh();
         }
     }
 }

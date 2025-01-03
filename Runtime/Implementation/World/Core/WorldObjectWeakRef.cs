@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 XDay
+ * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -82,7 +82,7 @@ namespace XDay.WorldAPI
             serializer.WriteObjectID(m_ObjectID, "Object ID", converter);
         }
 
-        public T ToObject<T>() where T : WorldObject
+        public T ToObject<T>() where T : class, IWorldObject
         {
             var obj = m_World.QueryObject<T>(m_ObjectID);
             if (obj == null)
@@ -92,7 +92,7 @@ namespace XDay.WorldAPI
             return obj;
         }
 
-        public void FromObject<T>(T obj) where T : WorldObject
+        public void FromObject<T>(T obj) where T : IWorldObject
         {
             m_ObjectID = obj != null ? obj.ID : 0;
         }
