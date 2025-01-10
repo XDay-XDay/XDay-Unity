@@ -99,15 +99,19 @@ namespace XDay.WorldAPI
         IWorld QueryWorld(int worldID);
     }
 
+    //load assets in world system
     public interface IWorldAssetLoader
     {
-        void Uninit();
+        void OnDestroy();
         T Load<T>(string path) where T : UnityEngine.Object;
+        UniTask<T> LoadAsync<T>(string path) where T : UnityEngine.Object;
         GameObject LoadGameObject(string path);
+        UniTask<GameObject> LoadGameObjectAsync(string path);
         byte[] LoadBytes(string path);
         string LoadText(string path);
         Stream LoadTextStream(string path);
         bool Exists(string path);
+        bool UnloadAsset(string path);
     }
 
     public interface ICameraVisibleAreaCalculator
@@ -126,6 +130,9 @@ namespace XDay.WorldAPI
             return new CameraVisibleAreaUpdater(calculator);
         }
 
+        Rect CurrentArea { get; }
+        Rect PreviousArea { get; }
+
         void Reset();
         bool BeginUpdate();
         void EndUpdate();
@@ -143,22 +150,37 @@ namespace XDay.WorldAPI
 
     public interface IResourceDescriptorSystem : ISerializable
     {
+        void Init(IWorld world);
+        void Uninit();
         IResourceDescriptor QueryDescriptor(string prefabPath);
     }
 
-    public interface IWorldObjectContainer
-    {
-        int ID { get; }
-
-        void AddObjectUndo(IWorldObject obj, int lod, int objectIndex);
-        void DestroyObjectUndo(int objectID);
-        IWorldObject QueryObjectUndo(int objectID);
-    }
-
+    /// <summary>
+    /// decoration system interface
+    /// </summary>
     public interface IDecorationSystem : IWorldPlugin
     {
+        /// <summary>
+        /// play animation on decoration object
+        /// </summary>
+        /// <param name="decorationID"></param>
+        /// <param name="animationName"></param>
+        /// <param name="alwaysPlay"></param>
         void PlayAnimation(int decorationID, string animationName, bool alwaysPlay = false);
+
+        /// <summary>
+        /// find decorations in a circle
+        /// </summary>
+        /// <param name="center"></param>
+        /// <param name="radius"></param>
+        /// <param name="decorationIDs"></param>
         void QueryDecorationIDsInCircle(Vector3 center, float radius, List<int> decorationIDs);
+
+        /// <summary>
+        /// show/hide decoration
+        /// </summary>
+        /// <param name="decorationID"></param>
+        /// <param name="show"></param>
         void ShowDecoration(int decorationID, bool show);
     }
 }

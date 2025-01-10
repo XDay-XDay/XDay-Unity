@@ -61,7 +61,7 @@ namespace XDay.InputAPI
             m_Tracker.Track(position);
         }
 
-        public Vector2 GetTouchPosition(int index)
+        public Vector2 GetTouchTrackedPosition(int index)
         {
             return m_Tracker.GetTouchPosition(index);
         }

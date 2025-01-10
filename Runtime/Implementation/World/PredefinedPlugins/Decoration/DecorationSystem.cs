@@ -552,6 +552,58 @@ namespace XDay.WorldAPI.Decoration
             return enabled;
         }
 
+        protected override void LoadGameDataInternal(string pluginName, IWorld world)
+        {
+            var deserializer = world.QueryGameDataDeserializer(world.ID, $"decoration@{pluginName}");
+
+            deserializer.ReadInt32("GridData.Version");
+
+            m_GridWidth = deserializer.ReadSingle("Grid Width");
+            m_GridHeight = deserializer.ReadSingle("Grid Height");
+            m_XGridCount = deserializer.ReadInt32("X Grid Count");
+            m_YGridCount = deserializer.ReadInt32("Y Grid Count");
+            m_Bounds = deserializer.ReadBounds("Bounds");
+            m_Name = deserializer.ReadString("Name");
+            m_ID = deserializer.ReadInt32("ID");
+            m_ResourceDescriptorSystem = deserializer.ReadSerializable<ResourceDescriptorSystem>("Resource Descriptor System", true);
+            m_LODSystem = deserializer.ReadSerializable<IPluginLODSystem>("Plugin LOD System", true);
+            m_MaxLODObjectCount = deserializer.ReadInt32("Max LOD0 Object Count");
+
+            var gridCount = m_XGridCount * m_YGridCount;
+            m_GridData = new GridData[gridCount];
+            for (var i = 0; i < gridCount; ++i)
+            {
+                var x = i % m_XGridCount;
+                var y = i / m_XGridCount;
+                m_GridData[i] = new GridData(m_LODSystem.LODCount, x, y);
+                for (var lod = 0; lod < m_LODSystem.LODCount; ++lod)
+                {
+                    m_GridData[i].LODs[lod].ObjectGlobalIndices = deserializer.ReadInt32List("Object Index");
+                }
+            }
+
+            m_DecorationMetaData = new DecorationMetaData
+            {
+                LODResourceChangeMasks = deserializer.ReadByteArray("LOD Resource Change Masks"),
+                ResourceMetadataIndex = deserializer.ReadInt32Array("Resource Metadata Index"),
+                Position = deserializer.ReadVector2Array("Position XZ"),
+            };
+
+            var resourceMetadataCount = deserializer.ReadInt32("Resource Metadata Count");
+            m_ResourceMetadata = new List<ResourceMetadata>(resourceMetadataCount);
+            for (var i = 0; i < resourceMetadataCount; ++i)
+            {
+                var batchIndex = deserializer.ReadInt32("GPU Batch ID");
+                var rotation = deserializer.ReadQuaternion("Rotation");
+                var scale = deserializer.ReadVector3("Scale");
+                var bounds = deserializer.ReadRect("Bounds");
+                var assetPath = deserializer.ReadString("Resource Path");
+                m_ResourceMetadata.Add(new ResourceMetadata(batchIndex, rotation, scale, bounds, assetPath));
+            }
+
+            deserializer.Uninit();
+        }
+
         private DecorationSystemRenderer m_Renderer;
         private Bounds m_Bounds;
         private CameraVisibleAreaUpdater m_VisibleAreaUpdater;

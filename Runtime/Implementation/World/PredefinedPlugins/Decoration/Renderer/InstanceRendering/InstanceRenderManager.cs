@@ -100,7 +100,7 @@ namespace XDay.WorldAPI.Decoration
             {
                 var data = m_AnimationPrefabManager.GetBatchData(decoration.GPUBatchID, decoration.LOD);
                 var animator = m_AnimatorManager.CreateInstance(data, decoration.Position, decoration.Scale, decoration.Rotation);
-                animator.PlayAnimation(m_DefaultAnimName);
+                animator.Play(m_DefaultAnimName);
                 m_Animators.Add(decoration.ID, animator);
             }
         }
@@ -114,7 +114,7 @@ namespace XDay.WorldAPI.Decoration
         {
             if (m_Animators.TryGetValue(id, out var animator))
             {
-                animator.PlayAnimation(name, alwaysPlay);
+                animator.Play(name, alwaysPlay);
             }
         }
 

@@ -26,12 +26,24 @@ using UnityEngine;
 
 namespace XDay.InputAPI
 {
+    /// <summary>
+    /// touch button id
+    /// </summary>
     [Flags]
     public enum TouchID
     {
         Unknown = -1,
+        /// <summary>
+        /// middle button
+        /// </summary>
         Middle = 1,
+        /// <summary>
+        /// left button
+        /// </summary>
         Left = 2,
+        /// <summary>
+        /// right button
+        /// </summary>
         Right = 4,
 
         All = Middle | Left | Right,
@@ -39,7 +51,14 @@ namespace XDay.InputAPI
 
     public enum DeviceType
     {
-        Touch,
+        /// <summary>
+        /// used on touch devices
+        /// </summary>
+        Touch,  
+        
+        /// <summary>
+        /// used on pc
+        /// </summary>
         Mouse,
     }
 
@@ -61,30 +80,131 @@ namespace XDay.InputAPI
             return new DeviceInput();
         }
 
+        /// <summary>
+        /// event triggered when any touch happens
+        /// </summary>
         event Action EventAnyTouchBegin;
 
+        /// <summary>
+        /// number of touches
+        /// </summary>
         int TouchCount { get; }
+
+        /// <summary>
+        /// number of touches which are on scene elements now
+        /// </summary>
         int SceneTouchCount { get; }
+
+        /// <summary>
+        /// touch currently on UI elements
+        /// </summary>
         int UITouchCount { get; }
+
+        /// <summary>
+        /// number of touches which are not start from UI elements
+        /// </summary>
         int TouchCountNotStartFromUI { get; }
+
+        /// <summary>
+        /// number of touches which are on scene elements but not start from UI elements
+        /// </summary>
         int SceneTouchCountNotStartFromUI { get; }
 
-        void AddVoidSpaceClickCallback(Action callback);
-        void RemoveVoidSpaceClickCallback(Action callback);
+        /// <summary>
+        /// add scene click callbacks
+        /// </summary>
+        /// <param name="callback"></param>
+        void AddSceneClickCallback(Action callback);
 
+        /// <summary>
+        /// remove scene click callbacks
+        /// </summary>
+        /// <param name="callback"></param>
+        void RemoveSceneClickCallback(Action callback);
+
+        /// <summary>
+        /// remove motion by motion id
+        /// </summary>
+        /// <param name="id"></param>
         void RemoveMotion(int id);
+
+        /// <summary>
+        /// remove motion by instance
+        /// </summary>
+        /// <param name="motion"></param>
         void RemoveMotion(IMotion motion);
+
+        /// <summary>
+        /// create a pinch gesture motion
+        /// </summary>
+        /// <param name="minHeight">min height which enables camera rotation</param>
+        /// <param name="maxHeight">max height which enables camera rotation</param>
+        /// <param name="range">camera rotation range</param>
+        /// <param name="camera">camera</param>
+        /// <param name="enableRotate">whether rotation is enabled</param>
+        /// <returns></returns>
         IPinchMotion CreatePinchMotion(float minHeight, float maxHeight, float range, Camera camera, bool enableRotate);
+
+        /// <summary>
+        /// create a mouse scroll gesture motion
+        /// </summary>
+        /// <returns></returns>
         IMouseScrollMotion CreateMouseScrollMotion();
+
+        /// <summary>
+        /// create a long press gesture motion
+        /// </summary>
+        /// <param name="pressDuration">press time when long press action should be triggered</param>
+        /// <returns></returns>
         ILongPressMotion CreateLongPressMotion(float pressDuration);
+
+        /// <summary>
+        /// create inertial drag gesture motion
+        /// </summary>
+        /// <param name="validTouchName">valid button</param>
+        /// <param name="camera">camera</param>
+        /// <returns></returns>
         IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Camera camera);
+
+        /// <summary>
+        /// create a one finger scroll gesture motion
+        /// </summary>
+        /// <param name="validInterval"></param>
+        /// <returns></returns>
         IScrollMotion CreateScrollMotion(float validInterval = 0.2f);
+
+        /// <summary>
+        /// create a double click gesture motion
+        /// </summary>
+        /// <param name="validClickInterval">min time interval when double click take effects</param>
+        /// <returns></returns>
         IDoubleClickMotion CreateDoubleClickMotion(float validClickInterval);
+
+        /// <summary>
+        /// create a single click gesture motion
+        /// </summary>
+        /// <returns></returns>
         IClickMotion CreateClickMotion();
+
+        /// <summary>
+        /// create a drag gesture motion
+        /// </summary>
+        /// <param name="validTouchName"></param>
+        /// <param name="touchMovingThreshold"></param>
+        /// <returns></returns>
         IDragMotion CreateDragMotion(TouchID validTouchName, float touchMovingThreshold);
 
+        /// <summary>
+        /// set touch device type
+        /// </summary>
+        /// <param name="type"></param>
         void SetDeviceType(DeviceType type);
 
+        /// <summary>
+        /// get touch at position
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
         ITouch QueryTouchAtPosition(Vector2 position);
         ITouch GetSceneTouchNotStartFromUI(int index);
         ITouch GetSceneTouch(int index);
@@ -104,15 +224,53 @@ namespace XDay.InputAPI
 
     public interface ITouch
     {
+        /// <summary>
+        /// touch id
+        /// </summary>
         int ID { get; }
+
+        /// <summary>
+        /// if start from ui
+        /// </summary>
         bool StartFromUI { get; }
+
+        /// <summary>
+        /// mouse scroll
+        /// </summary>
         float Scroll { get; }
+
+        /// <summary>
+        /// touch start position
+        /// </summary>
         Vector2 Start { get; }
+
+        /// <summary>
+        /// touch previous position
+        /// </summary>
         Vector2 Previous { get; }
+
+        /// <summary>
+        /// touch current position
+        /// </summary>
         Vector2 Current { get; }
+
+        /// <summary>
+        /// touch current state
+        /// </summary>
         TouchState State { get; }
 
-        Vector2 GetTouchPosition(int index);
+        /// <summary>
+        /// get touch history position 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        Vector2 GetTouchTrackedPosition(int index);
+
+        /// <summary>
+        /// if touch moved more than specified distance
+        /// </summary>
+        /// <param name="distanceSquare">square distance to test</param>
+        /// <returns></returns>
         bool MovedMoreThan(float distanceSquare);
     }
 
@@ -123,32 +281,111 @@ namespace XDay.InputAPI
         End,
     }
 
+    /// <summary>
+    /// motion base interface
+    /// </summary>
     public interface IMotion
     {
         int ID { get; }
         bool Enabled { get; set; }
 
+        /// <summary>
+        /// add triggers when motion pattern match
+        /// </summary>
+        /// <param name="trigger"></param>
         void AddMatchCallback(Action<IMotion, MotionState> trigger);
         void RemoveMatchCallback(Action<IMotion, MotionState> trigger);
     }
 
+    /// <summary>
+    /// a scroll gesture motion
+    /// </summary>
     public interface IScrollMotion : IMotion
     {
+        /// <summary>
+        /// scrolled distance
+        /// </summary>
         float MoveDistance { get; }
+
+        /// <summary>
+        /// scroll direction
+        /// </summary>
         Vector2 MoveDirection { get; }
     }
 
+    /// <summary>
+    /// mouse middle button scroll
+    /// </summary>
     public interface IMouseScrollMotion : IMotion
     {
+        /// <summary>
+        /// mouse position
+        /// </summary>
         Vector2 Position { get; }
+
+        /// <summary>
+        /// scroll delta
+        /// </summary>
         float Delta { get; }
     }
 
+    /// <summary>
+    /// a drag gesture motion
+    /// </summary>
     public interface IDragMotion : IMotion
     {
+        /// <summary>
+        /// touch start position
+        /// </summary>
         Vector2 Start { get; }
+
+        /// <summary>
+        /// touch previous position
+        /// </summary>
         Vector2 Previous { get; }
+
+        /// <summary>
+        /// touch current position
+        /// </summary>
         Vector2 Current { get; }
+    }
+
+    /// <summary>
+    /// single click gesture motion
+    /// </summary>
+    public interface IClickMotion : IMotion
+    {
+        /// <summary>
+        /// touch start position
+        /// </summary>
+        Vector2 Start { get; }
+    }
+
+    /// <summary>
+    /// long press gesture motion
+    /// </summary>
+    public interface ILongPressMotion : IMotion
+    {
+        /// <summary>
+        /// touch start position
+        /// </summary>
+        Vector2 Start { get; }
+
+        /// <summary>
+        /// touch last time
+        /// </summary>
+        float Duration { get; }
+    }
+
+    /// <summary>
+    /// double click gesture motion
+    /// </summary>
+    public interface IDoubleClickMotion : IMotion
+    {
+        /// <summary>
+        /// touch start position
+        /// </summary>
+        Vector2 Start { get; }
     }
 
     public interface IInertialDragMotion : IMotion
@@ -160,11 +397,6 @@ namespace XDay.InputAPI
         Vector3 SlideDirection { get; }
     }
 
-    public interface IClickMotion : IMotion
-    {
-        Vector2 Start { get; }
-    }
-
     public interface IPinchMotion : IMotion
     {
         float SlideDirection { get; }
@@ -172,16 +404,5 @@ namespace XDay.InputAPI
         bool IsRotating { get; }
         float ZoomRate { get; }
         Vector2 Center { get; }
-    }
-
-    public interface ILongPressMotion : IMotion
-    {
-        float Duration { get; }
-        Vector2 Start { get; }
-    }
-
-    public interface IDoubleClickMotion : IMotion
-    {
-        Vector2 Start { get; }
     }
 }

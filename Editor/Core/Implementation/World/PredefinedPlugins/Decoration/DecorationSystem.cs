@@ -30,7 +30,7 @@ using XDay.WorldAPI.Editor;
 namespace XDay.WorldAPI.Decoration.Editor
 {
     [WorldPluginMetadata("DecorationSystem", "decoration_editor_data", typeof(DecorationSystemCreateWindow), true)]
-    internal partial class DecorationSystem : EditorWorldPlugin, IWorldObjectContainer
+    internal partial class DecorationSystem : EditorWorldPlugin
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "decoration" };
@@ -97,12 +97,12 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
-        public IWorldObject QueryObjectUndo(int objectID)
+        public override IWorldObject QueryObjectUndo(int objectID)
         {
             return World.QueryObject<IWorldObject>(objectID);
         }
 
-        public void DestroyObjectUndo(int objectID)
+        public override void DestroyObjectUndo(int objectID)
         {
             var obj = World.QueryObject<DecorationObject>(objectID);
             if (obj != null &&
@@ -113,7 +113,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             DestroyObject(objectID);
         }
 
-        public void AddObjectUndo(IWorldObject obj, int lod, int objectIndex)
+        public override void AddObjectUndo(IWorldObject obj, int lod, int objectIndex)
         {
             AddObjectInternal(obj as DecorationObject);
 

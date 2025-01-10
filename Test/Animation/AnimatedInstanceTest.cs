@@ -45,7 +45,7 @@ public class AnimatedInstanceTest : MonoBehaviour
 
         var instance = m_AnimatedInstanceManager.CreateInstance(AnimationDataPath);
         instance.LocalPosition = new Vector3(3, 0, 0);
-        instance.PlayAnimation("Drunk Walk");
+        instance.Play("Drunk Walk");
     }
 
     private void OnDestroy()

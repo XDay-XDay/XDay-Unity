@@ -37,6 +37,9 @@ namespace XDay.NavigationAPI
         TargetSearchNearestCoordinate = 2,
     }
 
+    /// <summary>
+    /// grid based path finder
+    /// </summary>
     public interface IGridBasedPathFinder
     {
         UniTask CalculatePathAsync(Vector3 source, 
@@ -52,24 +55,9 @@ namespace XDay.NavigationAPI
             PathFlags flags = PathFlags.SourceSearchNearestCoordinate | PathFlags.TargetSearchNearestCoordinate);
     }
 
-    public interface IGridNavigationAgent
-    {
-        void OnDestroy();
-        void MoveTo(Vector3 target);
-    }
-
-    public interface INavigationManager
-    {
-        static INavigationManager Create()
-        {
-            return new NavigationManager();
-        }
-
-        void OnDestroy();
-
-        IGridBasedPathFinder CreateGridPathFinder(ITaskSystem taskSystem, IGridData gridData, int neighbourCount);
-    }
-
+    /// <summary>
+    /// grid data needed by path finder
+    /// </summary>
     public interface IGridData
     {
         int HorizontalResolution { get; }
@@ -87,5 +75,31 @@ namespace XDay.NavigationAPI
         Vector2Int FindNearestWalkableCoordinate(int x, int y, Vector2Int referencePoint, int searchDistance);
         Vector2Int FindNearestWalkableCoordinate(int x, int y, int searchDistance);
     }
+
+    public interface INavigationManager
+    {
+        static INavigationManager Create()
+        {
+            return new NavigationManager();
+        }
+
+        void OnDestroy();
+
+        /// <summary>
+        /// create a grid based path finder
+        /// </summary>
+        /// <param name="taskSystem"></param>
+        /// <param name="gridData"></param>
+        /// <param name="neighbourCount"></param>
+        /// <returns></returns>
+        IGridBasedPathFinder CreateGridPathFinder(ITaskSystem taskSystem, IGridData gridData, int neighbourCount);
+    }
+
+    public interface IGridNavigationAgent
+    {
+        void OnDestroy();
+        void MoveTo(Vector3 target);
+    }
 }
 
+//XDay

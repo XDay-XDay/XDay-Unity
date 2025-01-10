@@ -29,9 +29,12 @@ using UnityEngine;
 
 namespace XDay.UtilityAPI
 {
+    /// <summary>
+    /// any value container
+    /// </summary>
     public interface IAspect
     {
-        static IAspect CreateArray<T>(T[] val, bool makeCopy)
+        static IAspect FromArray<T>(T[] val, bool makeCopy)
         {
             return Aspect.FromArray(val, makeCopy);
         }
@@ -61,6 +64,11 @@ namespace XDay.UtilityAPI
             return Aspect.FromUInt32(val);
         }
 
+        static IAspect FromUInt64(ulong val)
+        {
+            return Aspect.FromUInt64(val);
+        }
+
         static IAspect FromBoolean(bool val)
         {
             return Aspect.FromBoolean(val);
@@ -70,7 +78,12 @@ namespace XDay.UtilityAPI
         {
             return Aspect.FromInt32(val);
         }
-        
+
+        static IAspect FromInt64(long val)
+        {
+            return Aspect.FromInt64(val);
+        }
+
         static IAspect FromSingle(float val)
         {
             return Aspect.FromSingle(val);
@@ -114,6 +127,10 @@ namespace XDay.UtilityAPI
         uint GetUInt32();
         void SetInt32(int value);
         int GetInt32();
+        void SetUInt64(ulong value);
+        ulong GetUInt64();
+        void SetInt64(long value);
+        long GetInt64();
         void SetBoolean(bool value);
         bool GetBoolean();
         void SetColor(Color value);
@@ -126,6 +143,9 @@ namespace XDay.UtilityAPI
         object GetObject();
     }
 
+    /// <summary>
+    /// aspect with a name
+    /// </summary>
     public interface INamedAspect
     {
         static INamedAspect Create(IAspect aspect, string name)
@@ -135,17 +155,59 @@ namespace XDay.UtilityAPI
 
         string Name { get; set; }
         IAspect Value { get; }
-
-        INamedAspect Clone();
     }
 
+    /// <summary>
+    /// manage a bunch of aspects
+    /// </summary>
     public interface IAspectContainer
     {
-        bool IsVisible { get; set; }
-        List<INamedAspect> Aspects { get; }
+        /// <summary>
+        /// create an instance
+        /// </summary>
+        /// <param name="keyValues"></param>
+        /// <returns></returns>
+        static IAspectContainer Create(Dictionary<string, object> keyValues = null)
+        {
+            return new AspectContainer(keyValues);
+        }
 
+        /// <summary>
+        /// find aspect by name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         INamedAspect QueryAspect(string name);
+
+        /// <summary>
+        /// add aspect
+        /// </summary>
+        /// <param name="aspect"></param>
         void AddAspect(INamedAspect aspect);
+        
+        /// <summary>
+        /// remove aspect by name
+        /// </summary>
+        /// <param name="name"></param>
         void RemoveAspect(string name);
+
+        /// <summary>
+        /// get string aspect
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="missingValue">value if not exists</param>
+        /// <returns></returns>
+        string GetString(string name, string missingValue);
+        Quaternion GetQuaternion(string name, Quaternion missingValue);
+        Color GetColor(string name, Color missingValue);
+        Vector2 GetVector2(string name, Vector2 missingValue);
+        Vector3 GetVector3(string name, Vector3 missingValue);
+        Vector4 GetVector4(string name, Vector4 missingValue);
+        float GetSingle(string name, float missingValue);
+        bool GetBoolean(string name, bool missingValue);
+        int GetInt32(string name, int missingValue);
+        long GetInt64(string name, long missingValue);
+        uint GetUInt32(string name, uint missingValue);
+        ulong GetUInt64(string name, ulong missingValue);
     }
 }

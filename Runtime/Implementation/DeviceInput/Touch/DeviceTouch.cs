@@ -54,7 +54,7 @@ namespace XDay.InputAPI
             return (Current - Previous).sqrMagnitude >= distanceSqr;
         }
 
-        public Vector2 GetTouchPosition(int index)
+        public Vector2 GetTouchTrackedPosition(int index)
         {
             return m_Tracker.GetTouchPosition(index);
         }

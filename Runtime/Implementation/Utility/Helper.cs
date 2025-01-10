@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace XDay.UtilityAPI
@@ -640,6 +641,17 @@ namespace XDay.UtilityAPI
                              Mathf.Lerp(a.g, b.g, t),
                              Mathf.Lerp(a.b, b.b, t),
                              Mathf.Lerp(a.a, b.a, t));
+        }
+
+        public static void InterlockedSet(ref int target, int value)
+        {
+            int initial, computed;
+            do
+            {
+                initial = target;
+                computed = value;
+            }
+            while (Interlocked.CompareExchange(ref target, computed, initial) != initial);
         }
 
         private const double m_DegToRad = 0.0174532924;

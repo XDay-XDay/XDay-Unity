@@ -30,14 +30,77 @@ namespace XDay.UtilityAPI
 {
     internal class AspectContainer : IAspectContainer
     {
-        public bool IsVisible { get => m_IsVisible; set => m_IsVisible = value; }
-        public List<INamedAspect> Aspects => m_Aspects;
-
-        public void AddAspect(INamedAspect property)
+        public AspectContainer(Dictionary<string, object> keyValues = null)
         {
-            if (QueryAspect(property.Name) == null)
+            if (keyValues != null)
             {
-                m_Aspects.Add(property);
+                foreach (var kv in keyValues)
+                {
+                    if (kv.Value is string s)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromString(s), kv.Key));
+                    }
+                    else if (kv.Value is Vector2 v2)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromVector2(v2), kv.Key));
+                    }
+                    else if (kv.Value is Vector2 v3)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromVector3(v3), kv.Key));
+                    }
+                    else if (kv.Value is Vector2 v4)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromVector4(v4), kv.Key));
+                    }
+                    else if (kv.Value is Color color)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromColor(color), kv.Key));
+                    }
+                    else if (kv.Value is int i)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromInt32(i), kv.Key));
+                    }
+                    else if (kv.Value is uint ui)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromUInt32(ui), kv.Key));
+                    }
+                    else if (kv.Value is bool b)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromBoolean(b), kv.Key));
+                    }
+                    else if (kv.Value is Quaternion q)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromQuaternion(q), kv.Key));
+                    }
+                    else if (kv.Value is float f)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromSingle(f), kv.Key));
+                    }
+                    else if (kv.Value is ulong ul)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromUInt64(ul), kv.Key));
+                    }
+                    else if (kv.Value is long l)
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromInt64(l), kv.Key));
+                    }
+                    else
+                    {
+                        AddAspect(INamedAspect.Create(IAspect.FromObject(kv.Value), kv.Key));
+                    }
+                }
+            }
+        }
+
+        public void AddAspect(INamedAspect aspect)
+        {
+            if (QueryAspect(aspect.Name) == null)
+            {
+                m_Aspects.Add(aspect as NamedAspect);
+            }
+            else
+            {
+                Debug.LogError($"add aspect {aspect.Name} failed");
             }
         }
 
@@ -55,33 +118,153 @@ namespace XDay.UtilityAPI
 
         public INamedAspect QueryAspect(string name)
         {
-            foreach (var prop in m_Aspects)
+            foreach (var aspect in m_Aspects)
             {
-                if (prop.Name == name)
+                if (aspect.Name == name)
                 {
-                    return prop;
+                    return aspect;
                 }
             }
             return null;
         }
 
+        public string GetString(string name, string missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetString();
+        }
+
+        public Vector2 GetVector2(string name, Vector2 missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetVector2();
+        }
+
+        public Vector3 GetVector3(string name, Vector3 missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetVector3();
+        }
+
+        public Vector4 GetVector4(string name, Vector4 missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetVector4();
+        }
+
+        public Color GetColor(string name, Color missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetColor();
+        }
+
+        public Quaternion GetQuaternion(string name, Quaternion missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetQuaternion();
+        }
+
+        public float GetSingle(string name, float missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetSingle();
+        }
+
+        public bool GetBoolean(string name, bool missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetBoolean();
+        }
+
+        public int GetInt32(string name, int missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetInt32();
+        }
+
+        public long GetInt64(string name, long missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetInt64();
+        }
+
+        public uint GetUInt32(string name, uint missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetUInt32();
+        }
+
+        public ulong GetUInt64(string name, ulong missingValue)
+        {
+            var aspect = QueryAspect(name);
+            if (aspect == null)
+            {
+                return missingValue;
+            }
+            return aspect.Value.GetUInt64();
+        }
+
         public AspectContainer Clone()
         {
             var cloned = new AspectContainer();
-            foreach (var prop in m_Aspects)
+            foreach (var aspect in m_Aspects)
             {
-                cloned.AddAspect(prop.Clone());
+                cloned.AddAspect(aspect.Clone());
             }
             return cloned;
         }
 
-        public void RenameProperty(string oldName, string newName)
+        public void RenameAspect(string oldName, string newName)
         {
-            foreach (var prop in m_Aspects)
+            foreach (var aspect in m_Aspects)
             {
-                if (prop.Name == oldName)
+                if (aspect.Name == oldName)
                 {
-                    prop.Name = newName;
+                    aspect.Name = newName;
                     break;
                 }
             }
@@ -93,7 +276,7 @@ namespace XDay.UtilityAPI
             serializer.WriteList(m_Aspects, "Aspects", (aspect, index) => {
                 serializer.WriteStructure($"Aspect {index}", () =>
                 {
-                    (aspect as NamedAspect).Serialize(serializer);
+                    aspect.Serialize(serializer);
                 });
             });
         }
@@ -107,12 +290,11 @@ namespace XDay.UtilityAPI
                 {
                     aspect.Deserialize(deserializer);
                 });
-                return aspect as INamedAspect;
+                return aspect;
             });
         }
 
-        private bool m_IsVisible = true;
-        private List<INamedAspect> m_Aspects = new();
+        private List<NamedAspect> m_Aspects = new();
         private const int m_Version = 1;
     }
 
@@ -154,10 +336,24 @@ namespace XDay.UtilityAPI
             return aspect;
         }
 
+        internal static Aspect FromInt64(long value)
+        {
+            var aspect = new Aspect();
+            aspect.SetInt64(value);
+            return aspect;
+        }
+
         internal static Aspect FromUInt32(uint value)
         {
             var aspect = new Aspect();
             aspect.SetUInt32(value);
+            return aspect;
+        }
+
+        internal static Aspect FromUInt64(ulong value)
+        {
+            var aspect = new Aspect();
+            aspect.SetUInt64(value);
             return aspect;
         }
 
@@ -282,9 +478,19 @@ namespace XDay.UtilityAPI
             m_Value = Union.FromUInt32(value);
         }
 
+        public void SetUInt64(ulong value)
+        {
+            m_Value = Union.FromUInt64(value);
+        }
+
         public uint GetUInt32()
         {
             return m_Value.GetUInt32();
+        }
+
+        public ulong GetUInt64()
+        {
+            return m_Value.GetUInt64();
         }
 
         public void SetInt32(int value)
@@ -292,9 +498,19 @@ namespace XDay.UtilityAPI
             m_Value = Union.FromInt32(value);
         }
 
+        public void SetInt64(long value)
+        {
+            m_Value = Union.FromInt64(value);
+        }
+
         public int GetInt32()
         {
             return m_Value.GetInt32();
+        }
+
+        public long GetInt64()
+        {
+            return m_Value.GetInt64();
         }
 
         public void SetBoolean(bool value)

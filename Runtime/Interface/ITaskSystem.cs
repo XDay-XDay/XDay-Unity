@@ -25,6 +25,39 @@ using System.Collections.Generic;
 
 namespace XDay.UtilityAPI
 {
+    public interface ITaskSystem
+    {
+        static ITaskSystem Create(TaskSystemCreateInfo createInfo)
+        {
+            return new TaskSystem(createInfo);
+        }
+
+        /// <summary>
+        /// enqueue task
+        /// </summary>
+        /// <param name="task"></param>
+        void ScheduleTask(ITask task);
+
+        /// <summary>
+        /// get task object from pool
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        T GetTask<T>() where T : class, ITask, new();
+        
+        /// <summary>
+        /// release task to pool
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="task"></param>
+        void ReleaseTask<T>(T task) where T : class, ITask;
+
+        /// <summary>
+        /// running tasks in worker thread
+        /// </summary>
+        void Update();
+    }
+
     public interface ITask
     {
         bool RequestCancel { get; }
@@ -59,19 +92,5 @@ namespace XDay.UtilityAPI
     public class TaskSystemCreateInfo
     {
         public List<TaskLayerInfo> LayerInfo { get; set; } = new();
-    }
-
-    public interface ITaskSystem
-    {
-        static ITaskSystem Create(TaskSystemCreateInfo createInfo)
-        {
-            return new TaskSystem(createInfo);
-        }
-
-        void ScheduleTask(ITask task);
-        T GetTask<T>() where T : class, ITask, new();
-        void ReleaseTask<T>(T task) where T : class, ITask;
-
-        void Update();
     }
 }

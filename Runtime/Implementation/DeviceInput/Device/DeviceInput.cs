@@ -140,12 +140,12 @@ namespace XDay.InputAPI
             UpdateVoidSpaceClickCallbacks();
         }
 
-        public void AddVoidSpaceClickCallback(Action callback)
+        public void AddSceneClickCallback(Action callback)
         {
             m_VoidSpaceClickCallbacks.Add(callback);
         }
 
-        public void RemoveVoidSpaceClickCallback(Action callback)
+        public void RemoveSceneClickCallback(Action callback)
         {
             m_VoidSpaceClickCallbacks.Remove(callback);
         }

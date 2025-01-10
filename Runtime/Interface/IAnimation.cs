@@ -33,16 +33,41 @@ namespace XDay.AnimationAPI
         Vertex,
     }
 
+    /// <summary>
+    /// baked animation using mesh renderer
+    /// </summary>
     public interface IGameObjectAnimator
     {
         IGameObjectAnimator Create(GameObject gameObject);
+
+        /// <summary>
+        /// play animation
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="alwaysPlay">always play animation no matter what current animation is</param>
         void Play(string name, bool alwaysPlay = false);
+
+        /// <summary>
+        /// is playing animation
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         bool IsPlaying(string name);
     }
 
+    /// <summary>
+    /// baked animation using batch renderer group
+    /// </summary>
     public interface IInstanceAnimator
     {
+        /// <summary>
+        /// unique id
+        /// </summary>
         int ID { get; }
+
+        /// <summary>
+        /// a set of animators can be transformed together
+        /// </summary>
         IInstanceAnimatorSet Set { set; }
         Vector3 WorldPosition { get; set; }
         Vector3 WorldScale { get; }
@@ -51,11 +76,17 @@ namespace XDay.AnimationAPI
         Vector3 LocalScale { get; set; }
         Quaternion LocalRotation { get; set; }
 
-        void Update();
-        void PlayAnimation(string name, bool alwaysPlay = false);
-        void Dirty();
+        /// <summary>
+        /// play animation
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="alwaysPlay"></param>
+        void Play(string name, bool alwaysPlay = false);
     }
 
+    /// <summary>
+    /// manage instanced animators
+    /// </summary>
     public interface IInstanceAnimatorManager
     {
         static IInstanceAnimatorManager Create(Func<string, InstanceAnimatorData> creator = null)
@@ -65,13 +96,51 @@ namespace XDay.AnimationAPI
 
         void OnDestroy();
         void Update();
+
+        /// <summary>
+        /// get instance animator
+        /// </summary>
+        /// <param name="id">animator id</param>
+        /// <returns></returns>
         IInstanceAnimator QueryInstance(int id);
+
+        /// <summary>
+        /// create instance animator
+        /// </summary>
+        /// <param name="path">path to InstanceAnimatorData object</param>
+        /// <param name="pos">world position</param>
+        /// <param name="scale">world scale</param>
+        /// <param name="rot">world rotation</param>
+        /// <returns></returns>
         IInstanceAnimator CreateInstance(string path, Vector3 pos, Vector3 scale, Quaternion rot);
+
+        /// <summary>
+        /// create instance animator
+        /// </summary>
+        /// <param name="data">baked animator data</param>
+        /// <param name="pos">world position</param>
+        /// <param name="scale">world scale</param>
+        /// <param name="rot">world rotation</param>
+        /// <returns></returns>
         IInstanceAnimator CreateInstance(InstanceAnimatorData data, Vector3 pos, Vector3 scale, Quaternion rot);
+
+        /// <summary>
+        /// create instance animator
+        /// </summary>
+        /// <param name="path">path to InstanceAnimatorData object</param>
+        /// <returns></returns>
         IInstanceAnimator CreateInstance(string path);
+
+        /// <summary>
+        /// destroy instance animator
+        /// </summary>
+        /// <param name="id">animator id</param>
         void DestroyInstance(int id);
     }
 
+    /// <summary>
+    /// group a bunch of animators together, these animators can be transformed together
+    /// </summary>
     public interface IInstanceAnimatorSet
     {
         static IInstanceAnimatorSet Create()
@@ -79,14 +148,14 @@ namespace XDay.AnimationAPI
             return new InstanceAnimatorSet();
         }
 
+        /// <summary>
+        /// set world position
+        /// </summary>
         Vector3 WorldPosition { set; }
-        Quaternion WorldRotation { set; }
 
-        Vector3 InverseTransform(Vector3 worldPos);
-        Quaternion InverseTransform(Quaternion worldRot);
-        Vector3 Transform(Vector3 localPos);
-        Quaternion Transform(Quaternion localRot);
-        void RemoveAnimator(IInstanceAnimator animator);
-        void AddAnimator(IInstanceAnimator animator);
+        /// <summary>
+        /// set world rotation
+        /// </summary>
+        Quaternion WorldRotation { set; }
     }
 }

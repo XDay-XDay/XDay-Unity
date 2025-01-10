@@ -36,18 +36,24 @@ namespace XDay.RenderingAPI.BRG
         PackedMatrix,
     }
 
+    /// <summary>
+    /// custom shader properties used in batch renderer group
+    /// </summary>
     public interface IShaderPropertyDeclaration
     {
-        string Name { get; }
-        int DataSize { get; }
-        bool IsPerInstance { get; }
-
         static IShaderPropertyDeclaration Create(ShaderPropertyType type, string name, bool perInstance = true)
         {
             return new ShaderPropertyDeclaration(type, name, perInstance);
         }
+
+        string Name { get; }
+        int DataSize { get; }
+        bool IsPerInstance { get; }
     }
 
+    /// <summary>
+    /// parameter when create a GPUBatch
+    /// </summary>
     public interface IGPUBatchCreateInfo
     {
         static IGPUBatchCreateInfo Create(int maxInstanceCount, Mesh mesh, int subMeshIndex, Material material, IShaderPropertyDeclaration[] properties)
@@ -62,9 +68,17 @@ namespace XDay.RenderingAPI.BRG
         int MaxInstanceCount { get; }
         int SubMeshIndex { get; }
 
+        /// <summary>
+        /// get shader property declaration
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         IShaderPropertyDeclaration GetProperty(int index);
     }
-
+    
+    /// <summary>
+    /// manage GPUBatches
+    /// </summary>
     public interface IGPUBatchManager
     {
         static IGPUBatchManager Create()
@@ -72,18 +86,35 @@ namespace XDay.RenderingAPI.BRG
             return new GPUBatchManager();
         }
 
+        /// <summary>
+        /// number of active batches
+        /// </summary>
         int BatchCount { get; }
 
         void OnDestroy();
 
+        /// <summary>
+        /// create batch
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="createInfo"></param>
+        /// <returns></returns>
         T CreateBatch<T>(IGPUBatchCreateInfo createInfo) where T : GPUBatch, new();
-
         GPUBatch GetBatch(int index);
-
         T QueryBatch<T>(int id) where T : GPUBatch;
 
+        /// <summary>
+        /// find batch using specified mesh and material
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="mesh"></param>
+        /// <param name="material"></param>
+        /// <returns></returns>
         T QueryRenderableBatch<T>(Mesh mesh, Material material) where T : GPUBatch;
 
+        /// <summary>
+        /// upload batch data to GPU
+        /// </summary>
         void Sync();
     }
 }

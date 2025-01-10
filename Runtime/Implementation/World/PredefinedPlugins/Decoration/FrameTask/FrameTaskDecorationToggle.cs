@@ -82,7 +82,6 @@ namespace XDay.WorldAPI.Decoration
 
         private bool Deactivate(SimpleTimer watch)
         {
-            Debug.Assert(!End);
             var gridData = m_System.GetGrid(m_GridX, m_GridY);
             var objectCount = gridData.GetObjectCount(m_LOD);
             while (m_NextObjectIndex < objectCount)
@@ -103,7 +102,6 @@ namespace XDay.WorldAPI.Decoration
 
         private bool Activate(SimpleTimer watch)
         {
-            Debug.Assert(!End);
             var gridData = m_System.GetGrid(m_GridX, m_GridY);
             var objectCount = gridData.GetObjectCount(m_LOD);
             while (m_NextObjectIndex < objectCount)

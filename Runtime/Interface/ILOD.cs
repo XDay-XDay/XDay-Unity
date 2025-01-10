@@ -26,6 +26,9 @@ using UnityEngine;
 
 namespace XDay.WorldAPI
 {
+    /// <summary>
+    /// lod setting
+    /// </summary>
     public interface IWorldLODSetup
     {
         string Name { get; set; }
@@ -33,17 +36,38 @@ namespace XDay.WorldAPI
         Vector2 WorldDataRange { get; set; }
     }
 
+    /// <summary>
+    /// world lod system
+    /// </summary>
     public interface IWorldLODSystem : ISerializable
     {
         int LODCount { get; set; }
 
         IWorldLODSetup GetLOD(int index);
         IWorldLODSetup QueryLOD(string name);
+
+        /// <summary>
+        /// check if lod is sorted from low to high
+        /// </summary>
+        /// <returns></returns>
         bool CheckIfLODIsSorted();
+
+        /// <summary>
+        /// sort lod
+        /// </summary>
         void Sort();
+
+        /// <summary>
+        /// get altitude of lod
+        /// </summary>
+        /// <param name="lod"></param>
+        /// <returns></returns>
         float GetLODAltitude(int lod);
     }
 
+    /// <summary>
+    /// world plugin lod setting
+    /// </summary>
     public interface IPluginLODSetup : ISerializable
     {
         string Name { get; set; }
@@ -51,6 +75,9 @@ namespace XDay.WorldAPI
         float Tolerance { get; set; }
     }
 
+    /// <summary>
+    /// world plugin lod system
+    /// </summary>
     public interface IPluginLODSystem : ISerializable
     {
         static IPluginLODSystem Create(int lodCount)
@@ -58,14 +85,13 @@ namespace XDay.WorldAPI
             return new PluginLODSystem(lodCount);
         }
 
-        void Init(IWorldLODSystem lodSystem);
-
         int LODCount { get; set; }
         int PreviousLOD { get; }
         int CurrentLOD { get; }
         IWorldLODSystem WorldLODSystem { get; }
-        bool Update(float altitude);
 
+        void Init(IWorldLODSystem lodSystem);
+        bool Update(float altitude);
         void ChangeLODName(string oldName, string newName);
         IPluginLODSetup QueryLOD(string name);
         IPluginLODSetup GetLOD(int index);

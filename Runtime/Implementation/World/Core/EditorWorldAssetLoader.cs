@@ -23,6 +23,7 @@
 
 #if UNITY_EDITOR
 
+using Cysharp.Threading.Tasks;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -31,7 +32,7 @@ namespace XDay.WorldAPI
 {
     public class EditorWorldAssetLoader : IWorldAssetLoader
     {
-        public void Uninit()
+        public void OnDestroy()
         {
         }
 
@@ -80,6 +81,23 @@ namespace XDay.WorldAPI
             }
             Debug.Assert(false, $"load text {path} failed");
             return null;
+        }
+
+        public async UniTask<T> LoadAsync<T>(string path) where T : Object
+        {
+            var ret = Load<T>(path);
+            return await UniTask.FromResult(ret);
+        }
+
+        public async UniTask<GameObject> LoadGameObjectAsync(string path)
+        {
+            var ret = LoadGameObject(path);
+            return await UniTask.FromResult(ret);
+        }
+
+        public bool UnloadAsset(string path)
+        {
+            return true;
         }
     }
 }

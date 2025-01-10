@@ -45,7 +45,7 @@ namespace XDay.WorldAPI.Tile.Editor
     }
 
     [WorldPluginMetadata("TileSystem", "tile_editor_data", typeof(TileSystemCreateWindow), true)]
-    internal sealed partial class TileSystem : EditorWorldPlugin, IWorldObjectContainer
+    internal sealed partial class TileSystem : EditorWorldPlugin
     {
         public override string Name { set => throw new System.NotImplementedException(); get => m_Name; }
         public Vector2 Origin => m_Origin;
@@ -202,12 +202,12 @@ namespace XDay.WorldAPI.Tile.Editor
             return true;
         }
 
-        public IWorldObject QueryObjectUndo(int tileID)
+        public override IWorldObject QueryObjectUndo(int tileID)
         {
             return World.QueryObject<WorldObject>(tileID);
         }
 
-        public void DestroyObjectUndo(int tileID)
+        public override void DestroyObjectUndo(int tileID)
         {
             if (QueryObjectUndo(tileID) is TileObject tile)
             {
@@ -231,7 +231,7 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
-        public void AddObjectUndo(IWorldObject worldObject, int lod, int objectIndex)
+        public override void AddObjectUndo(IWorldObject worldObject, int lod, int objectIndex)
         {
             var tile = worldObject as TileObject;
             var tileCoord = UnrotatedPositionToCoordinate(tile.Position.x, tile.Position.z);

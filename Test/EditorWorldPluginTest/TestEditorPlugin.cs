@@ -127,6 +127,21 @@ namespace XDay.Test.EditorWorldPluginTest
             return false;
         }
 
+        public override void AddObjectUndo(IWorldObject obj, int lod, int objectIndex)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void DestroyObjectUndo(int objectID)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override IWorldObject QueryObjectUndo(int objectID)
+        {
+            throw new System.NotImplementedException();
+        }
+
         protected override void SceneGUIInternal() { }
         protected override void SceneGUISelectedInternal() { }
         protected override void SceneViewControlInternal(Rect sceneViewRect) { }

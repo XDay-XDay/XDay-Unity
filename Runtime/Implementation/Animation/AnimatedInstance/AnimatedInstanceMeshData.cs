@@ -106,7 +106,7 @@ namespace XDay.AnimationAPI
                 if (m_Set != value)
                 {
                     m_Set?.RemoveAnimator(this);
-                    m_Set = value;
+                    m_Set = value as InstanceAnimatorSet;
                     m_Set?.AddAnimator(this);
                     m_AnimatorManager.Dirty();
                 }
@@ -159,7 +159,7 @@ namespace XDay.AnimationAPI
             m_Dirty = true;
         }
 
-        public void PlayAnimation(string name, bool alwaysPlay = false)
+        public void Play(string name, bool alwaysPlay = false)
         {
             if (m_CurAnim == name && 
                 !alwaysPlay)
@@ -210,7 +210,7 @@ namespace XDay.AnimationAPI
         private Vector3 m_LocalScale = Vector3.one;
         private Quaternion m_LocalRot = Quaternion.identity;
         private bool m_Dirty = true;
-        private IInstanceAnimatorSet m_Set;
+        private InstanceAnimatorSet m_Set;
         private InstanceAnimatorManager m_AnimatorManager;
         private AnimatedInstanceMeshDataManager[] m_MeshesDataManager;
         protected AnimationBakeMetadata m_BakeMetadata;

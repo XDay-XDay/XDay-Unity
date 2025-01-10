@@ -109,7 +109,7 @@ namespace XDay.WorldAPI
 
         public void LoadGame()
         {
-            Uninit();
+            OnDestroy();
 
             LoadData();
 

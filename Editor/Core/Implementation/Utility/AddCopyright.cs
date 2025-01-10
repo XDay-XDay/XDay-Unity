@@ -63,6 +63,8 @@ namespace XDay.UtilityAPI.Editor
         {
             return filePath.IndexOf("MiniJSON") >= 0 ||
                 filePath.IndexOf("Triangle.Net") >= 0 ||
+                filePath.IndexOf("CsprojModifier") >= 0 ||
+                filePath.IndexOf("ThirdParty") >= 0 ||
                 filePath.IndexOf("FastPriorityQueue") >= 0;
         }
 

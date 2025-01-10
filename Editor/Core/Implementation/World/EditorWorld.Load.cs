@@ -34,7 +34,7 @@ namespace XDay.WorldAPI.Editor
     {
         public void Load(string filePath)
         {
-            Uninit();
+            OnDestroy();
 
             var ok = LoadData(filePath);
 

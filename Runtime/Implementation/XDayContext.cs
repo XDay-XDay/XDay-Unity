@@ -27,6 +27,7 @@ using XDay.InputAPI;
 using XDay.NavigationAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
+using XDay.LogAPI;
 
 namespace XDay.API
 {
@@ -36,12 +37,15 @@ namespace XDay.API
         public IWorldManager WorldManager => m_WorldSystem;
         public ITaskSystem TaskSystem => m_TaskSystem;
         public INavigationManager NavigationManager => m_NavigationManager;
+        public IWorldAssetLoader WorldAssetLoader => m_WorldSystem?.WorldAssetLoader;
+        public ILogSystem LogSystem => m_LogSystem;
 
-        public XDayContext(string worldSetupFilePath, IWorldAssetLoader loader)
+        public XDayContext(string worldSetupFilePath, IWorldAssetLoader loader, bool enableLog)
         {
             Debug.Assert(!string.IsNullOrEmpty(worldSetupFilePath));
             Debug.Assert(loader != null);
 
+            m_LogSystem = enableLog ? ILogSystem.Create(Debug.isDebugBuild) : null;
             var createInfo = new TaskSystemCreateInfo();
             createInfo.LayerInfo.Add(new TaskLayerInfo(1, 1));
             m_TaskSystem = ITaskSystem.Create(createInfo);
@@ -55,8 +59,9 @@ namespace XDay.API
 
         public void OnDestroy()
         {
-            m_WorldSystem?.Uninit();
+            m_WorldSystem?.OnDestroy();
             m_NavigationManager?.OnDestroy();
+            m_LogSystem?.OnDestroy();
         }
 
         public void Update()
@@ -81,11 +86,17 @@ namespace XDay.API
             return manipulator;
         }
 
+        public IGridBasedPathFinder CreateGridBasedPathFinder(IGridData gridData, int neighbourCount = 8)
+        {
+            return m_NavigationManager.CreateGridPathFinder(m_TaskSystem, gridData, neighbourCount);
+        }
+
         private readonly IWorldAssetLoader m_AssetLoader;
         private readonly WorldManager m_WorldSystem;
         private readonly IDeviceInput m_Input;
         private readonly ITaskSystem m_TaskSystem;
         private readonly INavigationManager m_NavigationManager;
+        private readonly ILogSystem m_LogSystem;
     }
 }
 

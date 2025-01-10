@@ -33,7 +33,7 @@ namespace XDay.CameraAPI
         public Vector3 Position => m_Position;
         public bool EnableRestore { get => m_EnableRestore; set => m_EnableRestore = value; }
         public bool EnableClampXZ { get => m_EnableClampXZ; set => m_EnableClampXZ = value; }
-        public float RestoreEdge { get => m_RestoreEdge; set => m_RestoreEdge = value; }
+        public float PenetrationDistance { get => m_PenetrationDistance; set => m_PenetrationDistance = value; }
 
         public PositionClamp(string name, Transform parent)
         {
@@ -61,7 +61,7 @@ namespace XDay.CameraAPI
             var pos = cameraPos;
             if (m_EnableClampXZ)
             {
-                var offset = m_EnableRestore ? new Vector2(m_RestoreEdge, m_RestoreEdge) : Vector2.zero;
+                var offset = m_EnableRestore ? new Vector2(m_PenetrationDistance, m_PenetrationDistance) : Vector2.zero;
 
                 var boundsMin = m_AreaMin - offset;
                 var boundsMax = m_AreaMax + offset;
@@ -96,7 +96,7 @@ namespace XDay.CameraAPI
 
         private Vector3 m_Position;
         private GameObject m_FocusObject;
-        private float m_RestoreEdge = 1.0f;
+        private float m_PenetrationDistance = 1.0f;
         private bool m_EnableRestore = false;
         private bool m_EnableClampXZ = false;
         private Vector2 m_AreaMin;

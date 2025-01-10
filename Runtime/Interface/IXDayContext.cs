@@ -21,24 +21,33 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using UnityEngine;
 using XDay.CameraAPI;
 using XDay.InputAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
+using XDay.LogAPI;
+using UnityEngine;
 
 namespace XDay.API
 {
+    /// <summary>
+    /// XDay framework entrance, check WorldPreview.cs file as an example usecase
+    /// </summary>
     public interface IXDayContext
     {
-        static IXDayContext Create(string worldSetupFilePath, IWorldAssetLoader loader)
+        static IXDayContext Create(
+            string worldSetupFilePath, 
+            IWorldAssetLoader loader, 
+            bool enableLog)
         {
-            return new XDayContext(worldSetupFilePath, loader);
+            return new XDayContext(worldSetupFilePath, loader, enableLog);
         }
 
         IDeviceInput DeviceInput { get; }
         IWorldManager WorldManager { get; }
         ITaskSystem TaskSystem { get; }
+        IWorldAssetLoader WorldAssetLoader { get; }
+        ILogSystem LogSystem { get; }
 
         void OnDestroy();
         void Update();

@@ -33,6 +33,7 @@ namespace XDay.WorldAPI.Editor
     internal class EditorResourceDescriptorSystem : ResourceDescriptorSystem, IEditorResourceDescriptorSystem
     {
         public override string TypeName => "EditorResourceDescriptorSystem";
+        public string GameTypeName => "ResourceDescriptorSystem";
 
         public IEditorResourceDescriptor CreateDescriptorIfNotExists(string path, IWorld world)
         {

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2024-2025 XDay
  *
- * Permission is hereby granted, free of charge, to any person obtaining
+ * Permission is hereby granted, free of charge, to union person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
@@ -42,6 +42,8 @@ namespace XDay.UtilityAPI
         String,
         UInt32,
         Int32,
+        UInt64,
+        Int64,
     }
 
     public class Union
@@ -59,98 +61,112 @@ namespace XDay.UtilityAPI
 
         public static Union FromColor(Color value)
         {
-            var any = new Union();
-            any.SetColor(value);
-            return any;
+            var union = new Union();
+            union.SetColor(value);
+            return union;
         }
 
         public static Union FromQuaternion(Quaternion value)
         {
-            var any = new Union();
-            any.SetQuaternion(value);
-            return any;
+            var union = new Union();
+            union.SetQuaternion(value);
+            return union;
         }
 
         public static Union FromVector2(Vector2 value)
         {
-            var any = new Union();
-            any.SetVector2(value);
-            return any;
+            var union = new Union();
+            union.SetVector2(value);
+            return union;
         }
 
         public static Union FromVector3(Vector3 value)
         {
-            var any = new Union();
-            any.SetVector3(value);
-            return any;
+            var union = new Union();
+            union.SetVector3(value);
+            return union;
         }
 
         public static Union FromVector4(Vector4 value)
         {
-            var any = new Union();
-            any.SetVector4(value);
-            return any;
+            var union = new Union();
+            union.SetVector4(value);
+            return union;
         }
 
         public static Union FromEnum<T>(T value) where T : System.Enum
         {
-            var any = new Union();
-            any.SetEnum(value);
-            return any;
+            var union = new Union();
+            union.SetEnum(value);
+            return union;
         }
 
         public static Union FromArray<T>(T[] value, bool makeCopy)
         {
-            var any = new Union();
+            var union = new Union();
             if (makeCopy)
             {
                 var copy = value.Clone() as T[];
                 value = copy;
             }
-            any.SetArray(value);
-            return any;
+            union.SetArray(value);
+            return union;
         }
 
         public static Union FromBoolean(bool value)
         {
-            var any = new Union();
-            any.SetBoolean(value);
-            return any;
+            var union = new Union();
+            union.SetBoolean(value);
+            return union;
         }
 
         public static Union FromObject(object value)
         {
-            var any = new Union();
-            any.SetObject(value);
-            return any;
+            var union = new Union();
+            union.SetObject(value);
+            return union;
         }
 
         public static Union FromSingle(float value)
         {
-            var any = new Union();
-            any.SetSingle(value);
-            return any;
+            var union = new Union();
+            union.SetSingle(value);
+            return union;
         }
 
         public static Union FromUInt32(uint value)
         {
-            var any = new Union();
-            any.SetUInt32(value);
-            return any;
+            var union = new Union();
+            union.SetUInt32(value);
+            return union;
+        }
+
+        public static Union FromUInt64(ulong value)
+        {
+            var union = new Union();
+            union.SetUInt64(value);
+            return union;
         }
 
         public static Union FromInt32(int value)
         {
-            var any = new Union();
-            any.SetInt32(value);
-            return any;
+            var union = new Union();
+            union.SetInt32(value);
+            return union;
+        }
+
+        public static Union FromInt64(long value)
+        {
+            var union = new Union();
+            union.SetInt64(value);
+            return union;
         }
 
         public static Union FromString(string value)
         {
-            var any = new Union();
-            any.SetString(value);
-            return any;
+            var union = new Union();
+            union.SetString(value);
+            return union;
         }
 
         public void SetColor(Color value)
@@ -337,6 +353,12 @@ namespace XDay.UtilityAPI
             m_Value = value;
         }
 
+        public void SetUInt64(ulong value)
+        {
+            m_Type = UnionType.UInt64;
+            m_Value = value;
+        }
+
         public uint GetUInt32()
         {
             if (m_Type == UnionType.Int32)
@@ -347,9 +369,25 @@ namespace XDay.UtilityAPI
             return 0;
         }
 
+        public ulong GetUInt64()
+        {
+            if (m_Type == UnionType.Int64)
+            {
+                return System.Convert.ToUInt64(m_Value);
+            }
+            Debug.LogError("GetUInt64 failed");
+            return 0;
+        }
+
         public void SetInt32(int value)
         {
             m_Type = UnionType.Int32;
+            m_Value = value;
+        }
+
+        public void SetInt64(long value)
+        {
+            m_Type = UnionType.Int64;
             m_Value = value;
         }
 
@@ -360,6 +398,16 @@ namespace XDay.UtilityAPI
                 return System.Convert.ToInt32(m_Value);
             }
             Debug.LogError("GetInt32 failed");
+            return 0;
+        }
+
+        public long GetInt64()
+        {
+            if (m_Type == UnionType.Int64)
+            {
+                return System.Convert.ToInt64(m_Value);
+            }
+            Debug.LogError("GetInt64 failed");
             return 0;
         }
 

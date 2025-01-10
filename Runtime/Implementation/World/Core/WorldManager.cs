@@ -50,11 +50,11 @@ namespace XDay.WorldAPI
             InitSetup(setupFilePath);
         }
 
-        public void Uninit()
+        public void OnDestroy()
         {
             UnloadWorlds();
 
-            m_AssetLoader.Uninit();
+            m_AssetLoader.OnDestroy();
         }
 
         public IWorld QueryWorld(string name)
@@ -130,7 +130,7 @@ namespace XDay.WorldAPI
                     if (m_Worlds[i].ID == id)
                     {
                         UnloadWorldInternal(id);
-                        (m_Worlds[i] as World).Uninit();
+                        m_Worlds[i].OnDestroy();
                         m_Worlds.RemoveAt(i);
                         break;
                     }
@@ -146,7 +146,7 @@ namespace XDay.WorldAPI
         {
             foreach (var world in m_Worlds)
             {
-                world.Uninit();
+                world.OnDestroy();
             }
             m_Worlds.Clear();
 

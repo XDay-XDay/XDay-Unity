@@ -36,6 +36,15 @@ namespace XDay.WorldAPI.Editor
         Both = 3,
     }
 
+    public interface IWorldObjectContainer
+    {
+        int ID { get; }
+
+        void AddObjectUndo(IWorldObject obj, int lod, int objectIndex);
+        void DestroyObjectUndo(int objectID);
+        IWorldObject QueryObjectUndo(int objectID);
+    }
+
     public delegate IWorldObjectContainer DelegateQueryRelay(int worldID, int containerID);
     public delegate IWorldObject DelegateQueryObject(int worldID, int objectID);
 

@@ -76,13 +76,14 @@ namespace XDay.AnimationAPI
 
         public void RemoveAnimator(IInstanceAnimator instance)
         {
-            m_Animators.Remove(instance);
+            m_Animators.Remove(instance as InstanceAnimator);
         }
 
         public void AddAnimator(IInstanceAnimator instance)
         {
-            Debug.Assert(!m_Animators.Contains(instance));
-            m_Animators.Add(instance);
+            var animator = instance as InstanceAnimator;
+            Debug.Assert(!m_Animators.Contains(animator));
+            m_Animators.Add(animator);
         }
 
         private void Dirty()
@@ -95,7 +96,7 @@ namespace XDay.AnimationAPI
 
         private Vector3 m_Pos;
         private Quaternion m_Rot = Quaternion.identity;
-        private List<IInstanceAnimator> m_Animators = new();
+        private readonly List<InstanceAnimator> m_Animators = new();
     }
 }
 

@@ -30,7 +30,7 @@ using UnityEngine;
 
 namespace XDay.WorldAPI.Editor
 {
-    public abstract class EditorWorldPlugin : WorldPlugin
+    public abstract class EditorWorldPlugin : WorldPlugin, IWorldObjectContainer
     {
         public override bool IsActive => Root == null ? false : Root.activeSelf;
         public virtual WorldPluginUsage Usage { get; } = WorldPluginUsage.BothInEditorAndGame;
@@ -197,6 +197,10 @@ namespace XDay.WorldAPI.Editor
         {
             ValidateExportInternal(errorMessage);
         }
+
+        public abstract void AddObjectUndo(IWorldObject obj, int lod, int objectIndex);
+        public abstract void DestroyObjectUndo(int objectID);
+        public abstract IWorldObject QueryObjectUndo(int objectID);
 
         protected string GetGameFilePath(string name)
         {

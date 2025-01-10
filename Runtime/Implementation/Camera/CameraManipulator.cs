@@ -105,11 +105,11 @@ namespace XDay.CameraAPI
             AddRequest(BehaviourFocus.Request.Create(param));
         }
 
-        public void SetPosition(Vector3 position, Action onCameraReachTarget, int sortLayer)
+        public void SetPosition(Vector3 position, Action onCameraReachTarget)
         {
             var request = BehaviourSetPosition.Request.Create(
                 layer:0, 
-                sortLayer, 
+                priority:0,
                 RequestQueueType.Replace, 
                 position,
                 overrideMovement:true,
@@ -124,9 +124,9 @@ namespace XDay.CameraAPI
             m_FocusPointClamp.SetArea(min, max);
         }
 
-        public void SetRestoreEdgeLength(float distance)
+        public void SetPenetrationDistance(float distance)
         {
-            m_FocusPointClamp.RestoreEdge = distance;
+            m_FocusPointClamp.PenetrationDistance = distance;
         }
 
         public void Shake(float duration, float frequency, float amplitude, bool changeAltitude)

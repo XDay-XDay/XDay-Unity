@@ -242,7 +242,7 @@ namespace XDay.WorldAPI
             return false;
         }
 
-        public virtual void Uninit()
+        public virtual void OnDestroy()
         {
             m_Inited = false;
 

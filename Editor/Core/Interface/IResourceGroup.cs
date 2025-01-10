@@ -80,8 +80,6 @@ namespace XDay.WorldAPI.Editor
             return new EditorResourceDescriptorSystem();
         }
 
-        void Init(IWorld world);
-        void Uninit();
         IEditorResourceDescriptor CreateDescriptorIfNotExists(string path, IWorld world);
     }
 }
