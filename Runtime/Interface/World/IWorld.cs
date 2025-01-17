@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using XDay.SerializationAPI;
+using XDay.AssetAPI;
 
 namespace XDay.WorldAPI
 {
@@ -71,7 +72,7 @@ namespace XDay.WorldAPI
         int PluginCount { get; }
         string GameFolder { get; }
         string EditorFolder { get; }
-        IWorldAssetLoader AssetLoader { get; }
+        IAssetLoader AssetLoader { get; }
         ICameraManipulator CameraManipulator { get; set; }
         GameObject Root { get; }
         IGameObjectPool GameObjectPool { get; }
@@ -89,7 +90,7 @@ namespace XDay.WorldAPI
     public interface IWorldManager
     {
         IWorld FirstWorld { get; }
-        IWorldAssetLoader WorldAssetLoader { get; }
+        IAssetLoader WorldAssetLoader { get; }
 
         UniTask<IWorld> LoadWorldAsync(string name, Camera camera = null);
         IWorld LoadWorld(string name, Camera camera = null);
@@ -97,21 +98,6 @@ namespace XDay.WorldAPI
         void LoadWorldRenderer(string name);
         void UnloadWorldRenderer(string name);
         IWorld QueryWorld(int worldID);
-    }
-
-    //load assets in world system
-    public interface IWorldAssetLoader
-    {
-        void OnDestroy();
-        T Load<T>(string path) where T : UnityEngine.Object;
-        UniTask<T> LoadAsync<T>(string path) where T : UnityEngine.Object;
-        GameObject LoadGameObject(string path);
-        UniTask<GameObject> LoadGameObjectAsync(string path);
-        byte[] LoadBytes(string path);
-        string LoadText(string path);
-        Stream LoadTextStream(string path);
-        bool Exists(string path);
-        bool UnloadAsset(string path);
     }
 
     public interface ICameraVisibleAreaCalculator

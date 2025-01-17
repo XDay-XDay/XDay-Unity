@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 
@@ -72,7 +73,7 @@ namespace XDay.UtilityAPI
             {
                 return path;
             }
-            return path.Substring(0, idx);
+            return path[..idx];
         }
 
         public static string ToRelativePath(string absPath, string workingDir)
@@ -431,8 +432,7 @@ namespace XDay.UtilityAPI
             }
 
             var transform = gameObject.transform;
-            var oldPos = transform.position;
-            var oldRot = transform.rotation;
+            transform.GetPositionAndRotation(out var oldPos, out var oldRot);
             transform.SetPositionAndRotation(Vector3.zero, rotation);
 
             var rect = QueryRect(gameObject, setIdentity: false);
@@ -449,8 +449,7 @@ namespace XDay.UtilityAPI
             }
 
             var transform = gameObject.transform;
-            var oldPos = transform.position;
-            var oldRot = transform.rotation;
+            transform.GetPositionAndRotation(out var oldPos, out var oldRot);
             var oldScale = transform.localScale;
             transform.SetPositionAndRotation(Vector3.zero, rotation);
             transform.localScale = localScale;
@@ -652,6 +651,111 @@ namespace XDay.UtilityAPI
                 computed = value;
             }
             while (Interlocked.CompareExchange(ref target, computed, initial) != initial);
+        }
+
+        public static void Int32ToBytes(int value, byte[] array)
+        {
+            array[0] = (byte)(value & 0xff);
+            array[1] = (byte)((value >> 8) & 0xff);
+            array[2] = (byte)((value >> 16) & 0xff);
+            array[3] = (byte)((value >> 24) & 0xff);
+        }
+
+        public static unsafe int BytesToInt32(byte[] array, int offset)
+        {
+            return
+                array[offset + 3] |
+                (array[offset + 2] << 8) |
+                (array[offset + 1] << 16) |
+                (array[offset + 0] << 24);
+        }
+
+        public static GameObject FindChildInHierarchy(this GameObject obj, string hierarchyPath, bool includeRoot)
+        {
+            if (string.IsNullOrEmpty(hierarchyPath) || obj == null)
+            {
+                return null;
+            }
+
+            var paths = hierarchyPath.Split('/');
+            return obj.FindChildInHierarchyInternal(0, paths, includeRoot);
+        }
+
+        public static string GetPathInHierarchy(this GameObject go, bool includeRoot)
+        {
+            if (go == null)
+            {
+                return "";
+            }
+
+            var root = go.GetRoot(includeRoot);
+            if (root.name.EndsWith("(Environment)") ||
+                root.name.EndsWith("Prefab Mode in Context"))
+            {
+                root = root.GetChild(0);
+            }
+            var builder = new StringBuilder();
+            while (true)
+            {
+                builder.Insert(0, go.name);
+                if (go.transform == root)
+                {
+                    break;
+                }
+                var parent = go.transform.parent;
+                if (parent != null)
+                {
+                    builder.Insert(0, "/");
+                    go = parent.gameObject;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return builder.ToString();
+        }
+
+        public static Transform GetRoot(this GameObject go, bool includeRoot)
+        {
+            if (go == null)
+            {
+                return null;
+            }
+
+            if (includeRoot)
+            {
+                return go.transform.root;
+            }
+
+            var cur = go.transform;
+            if (cur.parent == null)
+            {
+                return cur;
+            }
+            while (cur.parent.parent != null)
+            {
+                cur = cur.parent;
+            }
+            return cur;
+        }
+
+        private static GameObject FindChildInHierarchyInternal(this GameObject obj, int index, string[] paths, bool includeRoot)
+        {
+            var child = obj.transform.Find(paths[index]);
+            if (child == null && obj.name == paths[index] && includeRoot)
+            {
+                child = obj.transform;
+            }
+            if (child == null)
+            {
+                return null;
+            }
+            if (index < paths.Length - 1)
+            {
+                return child.gameObject.FindChildInHierarchyInternal(index + 1, paths, includeRoot);
+            }
+            return child.gameObject;
         }
 
         private const double m_DegToRad = 0.0174532924;

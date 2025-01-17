@@ -24,6 +24,7 @@
 
 using System;
 using UnityEngine;
+using XDay.UtilityAPI;
 
 namespace XDay.NetworkAPI
 {
@@ -89,7 +90,7 @@ namespace XDay.NetworkAPI
                     if (m_IsReadingHeader)
                     {
                         m_IsReadingHeader = false;
-                        m_BlockReader.SetSize(NetHelper.BytesToInt32(m_BlockReader.Buffer, 0));
+                        m_BlockReader.SetSize(Helper.BytesToInt32(m_BlockReader.Buffer, 0));
                     }
                     else
                     {

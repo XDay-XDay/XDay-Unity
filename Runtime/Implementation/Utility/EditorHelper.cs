@@ -58,6 +58,16 @@ namespace XDay.UtilityAPI
             return PrefabStageUtility.GetCurrentPrefabStage() != null;
         }
 
+        public static GameObject GetEditingPrefab()
+        {
+            if (!IsPrefabMode())
+            {
+                return null;
+            }
+            var assetPath = PrefabStageUtility.GetCurrentPrefabStage().assetPath;
+            return AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+        }
+
         public static bool IsPrefab(GameObject prefab)
         {
             if (prefab == null)
@@ -143,25 +153,23 @@ namespace XDay.UtilityAPI
 
             try
             {
-                using (Process process = new Process())
+                using Process process = new();
+                process.StartInfo = startInfo;
+
+                // Shake the process
+                process.Start();
+
+                // Read output and error streams
+                output = process.StandardOutput.ReadToEnd();
+                error = process.StandardError.ReadToEnd();
+
+                if (waitForExit)
                 {
-                    process.StartInfo = startInfo;
-
-                    // Shake the process
-                    process.Start();
-
-                    // Read output and error streams
-                    output = process.StandardOutput.ReadToEnd();
-                    error = process.StandardError.ReadToEnd();
-
-                    if (waitForExit)
-                    {
-                        process.WaitForExit();
-                    }
-
-                    // Get the return code (exit code)
-                    int exitCode = process.ExitCode;
+                    process.WaitForExit();
                 }
+
+                // Get the return code (exit code)
+                int exitCode = process.ExitCode;
             }
             catch (Exception ex)
             {
@@ -264,7 +272,7 @@ namespace XDay.UtilityAPI
 
         public static List<string> EnumerateFiles(string folder, bool recursively, bool convertToUnityAssetPath)
         {
-            List<string> files = new List<string>();
+            List<string> files = new();
             foreach (var filePath in Directory.EnumerateFiles(folder, "*.*", recursively ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly))
             {
                 string validFilePath = Helper.ToNixSlash(filePath);
@@ -321,7 +329,22 @@ namespace XDay.UtilityAPI
 
         public static string GetObjectGUID(UnityEngine.Object obj)
         {
-            return AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(obj));
+            if (obj == null)
+            {
+                return "";
+            }
+            var path = AssetDatabase.GetAssetPath(obj);
+            return AssetDatabase.AssetPathToGUID(path);
+        }
+
+        public static long GetObjectLocalID(UnityEngine.Object obj)
+        {
+            if (obj == null)
+            {
+                return 0;
+            }
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj.GetInstanceID(), out _, out var localID);
+            return localID;
         }
 
         public static string QueryPlatformName()

@@ -27,10 +27,11 @@ using Cysharp.Threading.Tasks;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using XDay.AssetAPI;
 
 namespace XDay.WorldAPI
 {
-    public class EditorWorldAssetLoader : IWorldAssetLoader
+    public class EditorWorldAssetLoader : IAssetLoader
     {
         public void OnDestroy()
         {
@@ -93,6 +94,12 @@ namespace XDay.WorldAPI
         {
             var ret = LoadGameObject(path);
             return await UniTask.FromResult(ret);
+        }
+
+        public void LoadGameObjectAsync(string path, System.Action<GameObject> onLoaded)
+        {
+            var ret = LoadGameObject(path);
+            onLoaded?.Invoke(ret);
         }
 
         public bool UnloadAsset(string path)

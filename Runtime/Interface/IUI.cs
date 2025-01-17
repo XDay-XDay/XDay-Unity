@@ -21,29 +21,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 
-namespace XDay.NetworkAPI
+
+using XDay.AssetAPI;
+
+namespace XDay.GUIAPI
 {
-    public static class NetHelper
+    public interface IUIWindowManager
     {
-        public static void Int32ToBytes(int value, byte[] array)
+        static IUIWindowManager Create(IAssetLoader loader)
         {
-            array[0] = (byte)(value & 0xff);
-            array[1] = (byte)((value >> 8) & 0xff);
-            array[2] = (byte)((value >> 16) & 0xff);
-            array[3] = (byte)((value >> 24) & 0xff);
+            return new UIWindowManager(loader);
         }
 
-        public static unsafe int BytesToInt32(byte[] array, int offset)
-        {
-            return 
-                array[offset + 3] | 
-                (array[offset + 2] << 8) | 
-                (array[offset + 1] << 16) | 
-                (array[offset + 0] << 24);
-        }
+        void OnDestroy();
+        T Open<T>() where T : UIWindowBase, new();
+        void Close(UIWindowBase window);
     }
 }
-
-//XDay

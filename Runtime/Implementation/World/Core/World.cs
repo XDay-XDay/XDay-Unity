@@ -30,6 +30,7 @@ using XDay.UtilityAPI;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using XDay.AssetAPI;
 
 namespace XDay.WorldAPI
 {
@@ -65,7 +66,7 @@ namespace XDay.WorldAPI
         public Bounds Bounds => new(new Vector3(m_Width * 0.5f, 0, m_Height * 0.5f), new Vector3(m_Width, 0, m_Height));
         public string GameFolder => Setup.GameFolder;
         public string EditorFolder => Setup.EditorFolder;
-        public IWorldAssetLoader AssetLoader => m_AssetLoader;
+        public IAssetLoader AssetLoader => m_AssetLoader;
         public abstract string TypeName { get; }
 
         public World()
@@ -75,7 +76,7 @@ namespace XDay.WorldAPI
         public World(
             WorldSetup setup, 
             ICameraVisibleAreaCalculator calculator, 
-            IWorldAssetLoader assetLoader, 
+            IAssetLoader assetLoader, 
             ICameraManipulator manipulator, 
             ISerializableFactory serialzableFactory, 
             float width, 
@@ -331,7 +332,7 @@ namespace XDay.WorldAPI
         private WorldSetup m_Setup;
         private Dictionary<int, IWorldObject> m_Objects;
         private ICameraVisibleAreaCalculator m_CameraVisibleAreaCalculator;
-        protected IWorldAssetLoader m_AssetLoader;
+        protected IAssetLoader m_AssetLoader;
         protected ICameraManipulator m_Manipulator;
         protected ISerializableFactory m_SerializableFactory;
         protected WorldRenderer m_WorldRenderer;

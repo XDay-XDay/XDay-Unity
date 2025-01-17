@@ -27,6 +27,8 @@ using XDay.UtilityAPI;
 using XDay.WorldAPI;
 using XDay.LogAPI;
 using UnityEngine;
+using XDay.AssetAPI;
+using XDay.GUIAPI;
 
 namespace XDay.API
 {
@@ -36,8 +38,8 @@ namespace XDay.API
     public interface IXDayContext
     {
         static IXDayContext Create(
-            string worldSetupFilePath, 
-            IWorldAssetLoader loader, 
+            string worldSetupFilePath,
+            IAssetLoader loader,
             bool enableLog)
         {
             return new XDayContext(worldSetupFilePath, loader, enableLog);
@@ -46,8 +48,9 @@ namespace XDay.API
         IDeviceInput DeviceInput { get; }
         IWorldManager WorldManager { get; }
         ITaskSystem TaskSystem { get; }
-        IWorldAssetLoader WorldAssetLoader { get; }
+        IAssetLoader WorldAssetLoader { get; }
         ILogSystem LogSystem { get; }
+        IUIWindowManager WindowManager { get; }
 
         void OnDestroy();
         void Update();

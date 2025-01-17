@@ -28,6 +28,8 @@ using XDay.NavigationAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
 using XDay.LogAPI;
+using XDay.AssetAPI;
+using XDay.GUIAPI;
 
 namespace XDay.API
 {
@@ -37,10 +39,11 @@ namespace XDay.API
         public IWorldManager WorldManager => m_WorldSystem;
         public ITaskSystem TaskSystem => m_TaskSystem;
         public INavigationManager NavigationManager => m_NavigationManager;
-        public IWorldAssetLoader WorldAssetLoader => m_WorldSystem?.WorldAssetLoader;
+        public IAssetLoader WorldAssetLoader => m_WorldSystem?.WorldAssetLoader;
         public ILogSystem LogSystem => m_LogSystem;
+        public IUIWindowManager WindowManager => m_WindowManager;
 
-        public XDayContext(string worldSetupFilePath, IWorldAssetLoader loader, bool enableLog)
+        public XDayContext(string worldSetupFilePath, IAssetLoader loader, bool enableLog)
         {
             Debug.Assert(!string.IsNullOrEmpty(worldSetupFilePath));
             Debug.Assert(loader != null);
@@ -55,10 +58,12 @@ namespace XDay.API
 
             m_WorldSystem.Init(worldSetupFilePath, m_AssetLoader, m_TaskSystem, m_Input);
             m_NavigationManager = INavigationManager.Create();
+            m_WindowManager = IUIWindowManager.Create(loader);
         }
 
         public void OnDestroy()
         {
+            m_WindowManager.OnDestroy();
             m_WorldSystem?.OnDestroy();
             m_NavigationManager?.OnDestroy();
             m_LogSystem?.OnDestroy();
@@ -91,12 +96,13 @@ namespace XDay.API
             return m_NavigationManager.CreateGridPathFinder(m_TaskSystem, gridData, neighbourCount);
         }
 
-        private readonly IWorldAssetLoader m_AssetLoader;
+        private readonly IAssetLoader m_AssetLoader;
         private readonly WorldManager m_WorldSystem;
         private readonly IDeviceInput m_Input;
         private readonly ITaskSystem m_TaskSystem;
         private readonly INavigationManager m_NavigationManager;
         private readonly ILogSystem m_LogSystem;
+        private readonly IUIWindowManager m_WindowManager;
     }
 }
 

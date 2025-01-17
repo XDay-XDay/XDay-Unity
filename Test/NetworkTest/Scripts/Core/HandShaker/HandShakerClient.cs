@@ -81,7 +81,7 @@ internal class HandShakerClient : IHandShaker
         {
             //read header
             m_IsReadingHeader = false;
-            int bodySize = NetHelper.BytesToInt32(block.Buffer, 0);
+            int bodySize = XDay.UtilityAPI.Helper.BytesToInt32(block.Buffer, 0);
             m_Block.SetSize(bodySize);
         }
         else

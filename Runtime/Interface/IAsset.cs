@@ -24,10 +24,26 @@
 
 
 using Cysharp.Threading.Tasks;
+using System.IO;
 using UnityEngine;
 
 namespace XDay.AssetAPI
 {
+    public interface IAssetLoader
+    {
+        void OnDestroy();
+        T Load<T>(string path) where T : Object;
+        UniTask<T> LoadAsync<T>(string path) where T : Object;
+        GameObject LoadGameObject(string path);
+        UniTask<GameObject> LoadGameObjectAsync(string path);
+        void LoadGameObjectAsync(string path, System.Action<GameObject> onLoaded);
+        byte[] LoadBytes(string path);
+        string LoadText(string path);
+        Stream LoadTextStream(string path);
+        bool Exists(string path);
+        bool UnloadAsset(string path);
+    }
+
     /// <summary>
     /// addressable asset system wrapper
     /// </summary>
@@ -57,11 +73,26 @@ namespace XDay.AssetAPI
         UniTask<T> LoadAsync<T>(string address) where T : Object;
 
         /// <summary>
+        /// load asset async
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="address"></param>
+        /// <param name="onLoaded"></param>
+        void LoadAsync<T>(string address, System.Action<T> onLoaded) where T : Object;
+
+        /// <summary>
         /// load game object async
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
         UniTask<GameObject> LoadGameObjectAsync(string address);
+
+        /// <summary>
+        /// load game object async
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="onLoaded"></param>
+        void LoadGameObjectAsync(string address, System.Action<GameObject> onLoaded);
 
         /// <summary>
         /// unload asset

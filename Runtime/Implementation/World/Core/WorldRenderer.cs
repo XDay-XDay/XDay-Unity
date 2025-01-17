@@ -25,6 +25,7 @@
 
 using XDay.UtilityAPI;
 using UnityEngine;
+using XDay.AssetAPI;
 
 namespace XDay.WorldAPI
 {
@@ -33,7 +34,7 @@ namespace XDay.WorldAPI
         public GameObject Root => m_Root;
         public IGameObjectPool Cache => m_Cache;
 
-        public WorldRenderer(string name, IWorldAssetLoader assetLoader)
+        public WorldRenderer(string name, IAssetLoader assetLoader)
         {
             m_AssetLoader = assetLoader;
 
@@ -73,7 +74,7 @@ namespace XDay.WorldAPI
 
         private GameObject m_Root;
         private IGameObjectPool m_Cache;
-        private IWorldAssetLoader m_AssetLoader;
+        private IAssetLoader m_AssetLoader;
     }
 }
 

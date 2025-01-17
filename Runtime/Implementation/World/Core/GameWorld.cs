@@ -24,6 +24,7 @@
 using XDay.CameraAPI;
 using XDay.SerializationAPI;
 using UnityEngine;
+using XDay.AssetAPI;
 
 namespace XDay.WorldAPI
 {
@@ -40,7 +41,7 @@ namespace XDay.WorldAPI
             m_PluginLODSystem = new();
         }
 
-        public GameWorld(WorldSetup setup, IWorldAssetLoader assetLoader, ICameraManipulator manipulator, ISerializableFactory serializableFactory, WorldPluginLoader pluginLoader, float width = 0, float height = 0)
+        public GameWorld(WorldSetup setup, IAssetLoader assetLoader, ICameraManipulator manipulator, ISerializableFactory serializableFactory, WorldPluginLoader pluginLoader, float width = 0, float height = 0)
             : base(setup, new SLGCameraVisibleAreaCalculator(), assetLoader, manipulator, serializableFactory, width, height)
         {
             m_PluginLoader = pluginLoader;

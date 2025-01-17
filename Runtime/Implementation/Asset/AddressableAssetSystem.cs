@@ -75,15 +75,30 @@ namespace XDay.AssetAPI
         public async UniTask<T> LoadAsync<T>(string address) where T : Object
         {
 #if ENABLE_ADDRESSABLE
+            var completionSource = AutoResetUniTaskCompletionSource<T>.Create();
+            LoadAsync<T>(address, (asset) =>
+            {
+                completionSource.TrySetResult(asset);
+            });
+
+            return await completionSource.Task;
+#else
+            Debug.LogError("Addressable system not enabled!");
+            return await UniTask.FromResult<T>(null);
+#endif
+        }
+
+        public void LoadAsync<T>(string address, System.Action<T> onLoaded) where T : Object
+        {
+#if ENABLE_ADDRESSABLE
             if (m_Assets.TryGetValue(address, out var asset))
             {
-                return await UniTask.FromResult((T)asset.Asset);
+                onLoaded?.Invoke((T)asset.Asset);
+                return;
             }
 
-            var completionSource = AutoResetUniTaskCompletionSource<T>.Create();
-
             var operationHandle = Addressables.LoadAssetAsync<T>(address);
-            operationHandle.Completed += (handle)=> 
+            operationHandle.Completed += (handle) =>
             {
                 if (handle.Status == AsyncOperationStatus.Succeeded)
                 {
@@ -94,18 +109,15 @@ namespace XDay.AssetAPI
                     };
                     m_Assets.Add(address, asset);
 
-                    completionSource.TrySetResult(handle.Result);
+                    onLoaded?.Invoke(handle.Result);
                 }
                 else
                 {
                     Debug.LogError($"Load asset {address} failed!");
                 }
             };
-
-            return await completionSource.Task;
 #else
             Debug.LogError("Addressable system not enabled!");
-            return await UniTask.FromResult<T>(null);
 #endif
         }
 
@@ -114,9 +126,20 @@ namespace XDay.AssetAPI
             var prefab = await LoadAsync<GameObject>(address);
             if (prefab != null)
             {
-                return Object.Instantiate(prefab);
+                var obj = Object.Instantiate(prefab);
+                obj.name = prefab.name;
+                return obj;
             }
             return null;
+        }
+
+        public void LoadGameObjectAsync(string address, System.Action<GameObject> onLoaded)
+        {
+            LoadAsync<GameObject>(address, (prefab) => {
+                var obj = prefab != null ? Object.Instantiate(prefab) : null;
+                obj.name = prefab.name;
+                onLoaded?.Invoke(obj);
+            });
         }
 
         public bool UnloadAsset(string address)

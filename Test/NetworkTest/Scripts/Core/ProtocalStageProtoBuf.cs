@@ -45,7 +45,7 @@ internal class ProtocalStageProtoBuf : IProtocalStage
 
     public object Decode(ByteStream input)
     {
-        var typeID = NetHelper.BytesToInt32(input.Buffer, 0);
+        var typeID = XDay.UtilityAPI.Helper.BytesToInt32(input.Buffer, 0);
         input.Position += 4;
 
         var message = CreateProtocal((uint)typeID);
