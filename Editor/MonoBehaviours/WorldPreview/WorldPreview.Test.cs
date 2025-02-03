@@ -23,11 +23,8 @@
 
 #if UNITY_EDITOR
 
-
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using XDay;
 using XDay.CameraAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
@@ -44,7 +41,6 @@ internal partial class WorldPreview
         MoveCamera();
         DecorationSystemTest();
         AddressableTest();
-        LogTest();
     }
 
     private void MoveCamera()
@@ -151,26 +147,6 @@ internal partial class WorldPreview
             m_XDay.WorldAssetLoader.UnloadAsset(AssetPath);
         }
     }
-
-    private void LogTest()
-    {
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            int h = 3;
-            Log.Instance?.Info($"Log {h}");
-            Log.Instance?.Warning($"LogWarning");
-            Log.Instance?.Error($"LogError {1}");
-            try
-            {
-                throw new NotImplementedException("not impl");
-            }
-            catch (Exception e)
-            {
-                Log.Instance?.Exception(e);
-            }
-        }
-    }
-
 }
 
 
