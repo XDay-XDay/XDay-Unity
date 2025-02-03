@@ -96,7 +96,7 @@ namespace XDay.WorldAPI.Editor
 
         private static void RegisterPlugins()
         {
-            foreach (var type in Helper.QueryTypes<EditorWorldPlugin>(false))
+            foreach (var type in Common.QueryTypes<EditorWorldPlugin>(false))
             {
                 foreach (var attribute in type.GetCustomAttributes(false))
                 {

@@ -32,7 +32,7 @@ namespace XDay.WorldAPI.Tile.Editor
     {
         protected override void GenerateGameDataInternal(IObjectIDConverter converter)
         {
-            FileUtil.DeleteFileOrDirectory(GetGameFilePath("flat_tile"));
+            FileUtil.DeleteFileOrDirectory(GetGameFilePath("tile"));
             FileUtil.DeleteFileOrDirectory(GetGameFilePath("terrain_lod_tile"));
             
             if (m_GameTileType == GameTileType.FlatTile)
@@ -76,7 +76,7 @@ namespace XDay.WorldAPI.Tile.Editor
             }
 
             serializer.Uninit();
-            EditorHelper.WriteFile(serializer.Data, GetGameFilePath("flat_tile"));
+            EditorHelper.WriteFile(serializer.Data, GetGameFilePath("tile"));
         }
 
         private void GenerateTerrainLODTileData(IObjectIDConverter translator)

@@ -247,7 +247,7 @@ namespace XDay.WorldAPI.Decoration
             m_Renderer = null;
         }
 
-        private async UniTask UpdateDecorations(SimpleTimer timer)
+        private async UniTask UpdateDecorations(SimpleStopwatch timer)
         {
             while (true)
             {
@@ -619,7 +619,7 @@ namespace XDay.WorldAPI.Decoration
         private readonly DecorationObjectPool m_DecorationPool = new();
         private Action<DecorationObject> m_ToggleActiveState;
         private readonly Dictionary<int, DecorationObject> m_VisibleObjects = new(1800);
-        private readonly SimpleTimer m_Timer = new();
+        private readonly SimpleStopwatch m_Timer = new();
         private int m_MaxLODObjectCount;
         private readonly List<FrameTask> m_Tasks = new();
         private ResourceDescriptorSystem m_ResourceDescriptorSystem;

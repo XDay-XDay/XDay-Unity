@@ -447,6 +447,38 @@ namespace XDay.UtilityAPI
             }
             AssetDatabase.Refresh();
         }
+
+        //need call Handles.BeginGUI first
+        public static void DrawCubeBezier(Vector2 startPoint, Vector2 controlPoint1, Vector2 controlPoint2, Vector2 endPoint, Color color, float width)
+        {
+            var oldColor = Handles.color;
+            Handles.color = Color.green;
+            Handles.DrawBezier(startPoint, endPoint, controlPoint1, controlPoint2, Color.green, null, width);
+            Handles.color = oldColor;
+        }
+
+        public static void DrawLineRect(Rect r, Color color, float width)
+        {
+            EditorGUI.DrawRect(r, color);
+        }
+
+        public static void DrawCircle(float radius, Vector2 center, Color color)
+        {
+            Handles.BeginGUI();
+
+            Handles.DrawSolidArc(center, Vector3.forward, Vector3.right, 360, radius);
+
+            Handles.EndGUI();
+        }
+
+        public static void DrawLineCircle(float radius, Vector2 center, Color color, float width)
+        {
+            Handles.BeginGUI();
+
+            Handles.DrawWireArc(center, Vector3.forward, Vector3.right, 360, radius);
+
+            Handles.EndGUI();
+        }
     }
 }
 

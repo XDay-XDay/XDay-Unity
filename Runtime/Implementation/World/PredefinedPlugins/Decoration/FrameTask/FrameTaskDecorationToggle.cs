@@ -67,7 +67,7 @@ namespace XDay.WorldAPI.Decoration
             }
         }
 
-        public override bool Run(SimpleTimer timer)
+        public override bool Run(SimpleStopwatch timer)
         {
             Debug.Assert(m_Type != Type.Undefined);
             if (m_Type == Type.Activate)
@@ -80,7 +80,7 @@ namespace XDay.WorldAPI.Decoration
             }
         }
 
-        private bool Deactivate(SimpleTimer watch)
+        private bool Deactivate(SimpleStopwatch watch)
         {
             var gridData = m_System.GetGrid(m_GridX, m_GridY);
             var objectCount = gridData.GetObjectCount(m_LOD);
@@ -100,7 +100,7 @@ namespace XDay.WorldAPI.Decoration
             return false;
         }
 
-        private bool Activate(SimpleTimer watch)
+        private bool Activate(SimpleStopwatch watch)
         {
             var gridData = m_System.GetGrid(m_GridX, m_GridY);
             var objectCount = gridData.GetObjectCount(m_LOD);

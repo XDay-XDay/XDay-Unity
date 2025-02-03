@@ -31,7 +31,7 @@ namespace XDay.WorldAPI.Decoration
         public abstract bool End { get; }
         public abstract int Order { get; }
 
-        public abstract bool Run(SimpleTimer watch);
+        public abstract bool Run(SimpleStopwatch watch);
     }
 }
 

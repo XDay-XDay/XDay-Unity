@@ -97,7 +97,7 @@ namespace XDay.NavigationAPI
 
             public HashSet<int> ClosedSet = new();
             public FastPriorityQueue<PathNode> OpenSet = new(maxNodes: 10000);
-            public IObjectPool<PathNode> NodePool = new ObjectPool<PathNode>(() => { return new PathNode(); }, actionOnGet: null, actionOnRelease: (node) => { node.Clear(); });
+            public ObjectPool<PathNode> NodePool = new ObjectPool<PathNode>(() => { return new PathNode(); }, actionOnGet: null, actionOnRelease: (node) => { node.Clear(); });
             private Dictionary<int, PathNode> m_OpenNodes = new();
             private int m_HorizontalResolution;
         }

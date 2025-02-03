@@ -60,8 +60,25 @@ namespace XDay.GUIAPI
                     window.Show();
                 }
                 m_ActiveWindows.Add(window);
+                if (window.Updatable)
+                {
+                    m_UpdatableActiveWindows.Add(window);
+                }
             }
             return window;
+        }
+
+        public void Close<T>() where T : UIWindowBase, new()
+        {
+            for (var i = m_ActiveWindows.Count - 1; i >= 0; i--)
+            {
+                if (m_ActiveWindows[i].GetType() == typeof(T))
+                {
+                    Close(m_ActiveWindows[i]);
+                    return;
+                }
+            }
+            Debug.LogError($"Close window {typeof(T).Name} failed!");
         }
 
         public void Close(UIWindowBase window)
@@ -80,10 +97,24 @@ namespace XDay.GUIAPI
                         window.OnDestroy();
                     }
                     m_ActiveWindows.RemoveAt(i);
+
+                    if (window.Updatable)
+                    {
+                        bool removed = m_UpdatableActiveWindows.Remove(window);
+                        Debug.Assert(removed);
+                    }
                     return;
                 }
             }
             Debug.LogError("Close window failed!");
+        }
+
+        public void Update(float dt)
+        {
+            foreach (var window in m_UpdatableActiveWindows)
+            {
+                window.Update(dt);
+            }
         }
 
         private T GetActive<T>() where T : UIWindowBase, new()
@@ -112,6 +143,7 @@ namespace XDay.GUIAPI
 
         private readonly IAssetLoader m_Loader;
         private readonly List<UIWindowBase> m_ActiveWindows = new();
+        private readonly List<UIWindowBase> m_UpdatableActiveWindows = new();
         private readonly List<UIWindowBase> m_CachedWindows = new();
     }
 }

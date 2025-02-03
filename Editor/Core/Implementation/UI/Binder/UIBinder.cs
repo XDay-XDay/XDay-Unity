@@ -34,10 +34,16 @@ namespace XDay.GUIAPI.Editor
 
         private void OnEnable()
         {
-            m_Config = EditorHelper.QueryAsset<UIBinderConfig>();
+            var configSelector = EditorHelper.QueryAsset<UIConfigSelector>();
+            if (configSelector == null)
+            {
+                Debug.LogError("Create UIConfigSelector first!");
+                return;
+            }
+            m_Config = configSelector.ActiveConfig;
             if (m_Config == null)
             {
-                Debug.LogError("Create UIBuilderConfig first!");
+                Debug.LogError("No active config!");
                 return;
             }
 
@@ -47,13 +53,13 @@ namespace XDay.GUIAPI.Editor
                 return;
             }
 
-            if (EditorHelper.QueryAsset<UIMetadataManager>() == null)
+            if (configSelector.ActiveMetadataManager == null)
             {
-                Debug.LogError("Create UIMetadataManager first!");
+                Debug.LogError("No active metadata manager!");
                 return;
             }
 
-            m_MetadataManager = EditorHelper.QueryAsset<UIMetadataManager>();
+            m_MetadataManager = configSelector.ActiveMetadataManager;
 
             InitEvents(true);
             SetActiveMetadata();
@@ -141,8 +147,7 @@ namespace XDay.GUIAPI.Editor
         {
             m_EditingPrefab = EditorHelper.GetEditingPrefab();
             var guid = EditorHelper.GetObjectGUID(m_EditingPrefab);
-            var metadataManager = EditorHelper.QueryAsset<UIMetadataManager>();
-            foreach (var metadata in metadataManager.UIMetadatas)
+            foreach (var metadata in m_MetadataManager.UIMetadatas)
             {
                 if (metadata.PrefabGUID == guid)
                 {
@@ -160,9 +165,9 @@ namespace XDay.GUIAPI.Editor
                 PrefabGUID = EditorHelper.GetObjectGUID(prefab),
                 ViewClassName = prefab.name
             };
-            var metadataManager = EditorHelper.QueryAsset<UIMetadataManager>();
-            metadataManager.UIMetadatas.Add(m_Metadata);
-            EditorUtility.SetDirty(metadataManager);
+            Debug.Assert(!string.IsNullOrEmpty(m_Metadata.PrefabGUID), "Prefab guid is null!");
+            m_MetadataManager.UIMetadatas.Add(m_Metadata);
+            EditorUtility.SetDirty(m_MetadataManager);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -171,9 +176,28 @@ namespace XDay.GUIAPI.Editor
         {
             RemoveInvalidateData();
 
+            EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Generate", GUILayout.MaxWidth(100)))
             {
                 Generate();
+                AssetDatabase.SaveAssets();
+            }
+            if (GUILayout.Button("Save", GUILayout.MaxWidth(60)))
+            {
+                AssetDatabase.SaveAssets();
+            }
+
+            bool removed = false;
+            if (GUILayout.Button("Remove Binding", GUILayout.MaxWidth(120)))
+            {
+                RemoveBinding();
+                removed = true;
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (removed)
+            {
+                return;
             }
 
             m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
@@ -181,6 +205,7 @@ namespace XDay.GUIAPI.Editor
 
             m_Metadata.ViewClassName = EditorGUILayout.TextField("View Class Name", m_Metadata.ViewClassName);
             m_Metadata.ControllerClassName = EditorGUILayout.TextField("Controller Class Name", m_Metadata.ControllerClassName);
+            m_Metadata.Namespace = EditorGUILayout.TextField("Namespace", m_Metadata.Namespace);
 
             EditorHelper.HorizontalLine();
 
@@ -365,6 +390,8 @@ namespace XDay.GUIAPI.Editor
                 {
                     m_SelectedComponentType = 0;
                 }
+
+                m_SelectedComponentType = Mathf.Min(m_SelectedComponentType, m_ComponentNames.Length - 1);
             }
         }
 
@@ -382,12 +409,14 @@ namespace XDay.GUIAPI.Editor
 
         private void InitEvents(bool add)
         {
-            PrefabStage.prefabStageOpened -= OnPrefabStageEntered;
+            PrefabStage.prefabStageOpened -= OnPrefabStageOpened;
+            PrefabStage.prefabStageClosing -= OnPrefabStageClosing;
 
             if (add)
             {
                 Selection.selectionChanged = OnSelectionChanged;
-                PrefabStage.prefabStageOpened += OnPrefabStageEntered;
+                PrefabStage.prefabStageOpened += OnPrefabStageOpened;
+                PrefabStage.prefabStageClosing += OnPrefabStageClosing;
             }
             else
             {
@@ -401,7 +430,14 @@ namespace XDay.GUIAPI.Editor
             Repaint();
         }
 
-        private void OnPrefabStageEntered(PrefabStage stage)
+        private void OnPrefabStageClosing(PrefabStage stage)
+        {
+            Clear();
+            SetActiveMetadata();
+            OnSelectionChanged();
+        }
+
+        private void OnPrefabStageOpened(PrefabStage stage)
         {
             Clear();
             SetActiveMetadata();
@@ -430,7 +466,7 @@ namespace XDay.GUIAPI.Editor
 
         private void SaveMetadata()
         {
-            EditorUtility.SetDirty(EditorHelper.QueryAsset<UIMetadataManager>());
+            EditorUtility.SetDirty(m_MetadataManager);
         }
 
         private void RemoveInvalidateData()
@@ -478,6 +514,15 @@ namespace XDay.GUIAPI.Editor
             }
             
             EditorGUILayout.EndHorizontal();
+        }
+
+        private void RemoveBinding()
+        {
+            m_MetadataManager.UIMetadatas.Remove(m_Metadata);
+            m_Metadata = null;
+            Clear();
+            EditorUtility.SetDirty(m_MetadataManager);
+            AssetDatabase.SaveAssets();
         }
 
         private UIBinderConfig m_Config;

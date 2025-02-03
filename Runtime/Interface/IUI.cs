@@ -36,6 +36,8 @@ namespace XDay.GUIAPI
 
         void OnDestroy();
         T Open<T>() where T : UIWindowBase, new();
+        void Close<T>() where T : UIWindowBase, new();
         void Close(UIWindowBase window);
+        void Update(float dt);
     }
 }

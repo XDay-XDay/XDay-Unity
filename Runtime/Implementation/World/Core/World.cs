@@ -25,7 +25,6 @@
 
 using Cysharp.Threading.Tasks;
 using XDay.CameraAPI;
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 using System.Collections.Generic;
 using System.Threading;

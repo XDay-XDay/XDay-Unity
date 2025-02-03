@@ -79,7 +79,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 }
                 else if (m_GameTileType == GameTileType.FlatTile)
                 {
-                    return new() { "flat_tile" };
+                    return new() { "tile" };
                 }
                 Debug.Assert(false, "todo");
                 return null;

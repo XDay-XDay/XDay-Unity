@@ -1,0 +1,24 @@
+{
+    "name": "XDayUnity.Test",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8c65b8a09f93e5e4895ec638d2474679",
+        "GUID:57db19fe6bd20ff459ebdad159e02be2",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:fab6fbdf0fb114ca6b17ae0d5bef359e",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:bf54e5a7e2442604aa1feef0e78d0d9f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "XDay.dll",
+        "ZString.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

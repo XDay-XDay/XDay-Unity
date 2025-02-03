@@ -65,6 +65,7 @@ namespace XDay.UtilityAPI.Editor
                 filePath.IndexOf("Triangle.Net") >= 0 ||
                 filePath.IndexOf("CsprojModifier") >= 0 ||
                 filePath.IndexOf("ThirdParty") >= 0 ||
+                filePath.IndexOf("FastNoiseLite") >= 0 ||
                 filePath.IndexOf("CounterModeCryptoTransform") >= 0 ||
                 filePath.IndexOf("FastPriorityQueue") >= 0;
         }

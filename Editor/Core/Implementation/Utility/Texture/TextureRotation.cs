@@ -80,7 +80,7 @@ namespace XDay.UtilityAPI.Editor
 
             m_Quad = GameObject.CreatePrimitive(PrimitiveType.Plane);
             m_Quad.layer = LayerMask.NameToLayer(m_BakeObjectLayerName);
-            m_Quad.DestroyComponent<Collider>();
+            m_Quad.DestroyComponent<UnityEngine.Collider>();
             m_Quad.SetActive(false);
             Helper.HideGameObject(m_Quad);
         }

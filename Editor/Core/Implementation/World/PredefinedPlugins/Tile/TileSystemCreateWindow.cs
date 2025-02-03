@@ -32,7 +32,7 @@ namespace XDay.WorldAPI.Tile.Editor
 {
     public class TileSystemCreateWindow : GridBasedWorldPluginCreateWindow
     {
-        protected override bool SetGridCount => true;
+        protected override bool SetGridCount => !m_UseTerrainLOD;
         protected override string DisplayName => "Tile System";
 
         protected override void CreateInternal()

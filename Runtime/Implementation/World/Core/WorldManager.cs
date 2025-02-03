@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using XDay.SerializationAPI;
-using XDay.UtilityAPI;
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.InputAPI;

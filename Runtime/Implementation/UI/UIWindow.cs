@@ -31,12 +31,15 @@ namespace XDay.GUIAPI
     public abstract class UIWindowBase
     {
         public virtual bool CacheWhenClose => true;
+        public virtual bool Updatable => false;
 
         public abstract void Load(IAssetLoader loader);
         public abstract void OnDestroy();
         public abstract void SetData(object data);
         public abstract void Show();
         public abstract void Hide();
+        public abstract void Update(float dt);
+        public abstract T GetController<T>() where T : UIControllerBase;
     }
 
     public class UIWindow<View, Controller> : UIWindowBase
@@ -77,6 +80,16 @@ namespace XDay.GUIAPI
         public override void SetData(object data)
         {
             m_Controller.SetData(data);
+        }
+
+        public override void Update(float dt)
+        {
+            m_Controller.Update(dt);
+        }
+
+        public override T GetController<T>() 
+        {
+            return m_Controller as T;
         }
 
         private readonly View m_View;

@@ -23,9 +23,9 @@
 
 
 
-using XDay.SerializationAPI;
 using System.Collections.Generic;
 using UnityEngine;
+using XDay;
 
 [XDaySerializableClass("Test Object")]
 partial class TestObject

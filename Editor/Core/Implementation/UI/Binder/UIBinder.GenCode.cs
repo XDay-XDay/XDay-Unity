@@ -43,11 +43,19 @@ namespace XDay.GUIAPI.Editor
                 return;
             }
 
-            GenerateController();
-            GenerateView();
+            var fileName = $"{m_Config.CodeOutputPath}/{m_Metadata.ViewClassName}.cs";
+            Helper.CreateDirectory(m_Config.CodeOutputPath);
+
+            string viewContent = GenerateView();
+            string controllerContent = GenerateController();
+
+            File.WriteAllText(fileName, viewContent + controllerContent);
+            AssetDatabase.Refresh();
+
+            SerializationHelper.FormatCode(fileName);
         }
 
-        private void GenerateView()
+        private string GenerateView()
         {
             string template =
 @"
@@ -60,51 +68,54 @@ using UnityEngine.EventSystems;
 using TMPro;
 using XDay.GUIAPI;
 
-$EVENT_HANDLER_INTERFACE$
+$NAMESPACE_BEGIN$
 
-internal class $CLASS_NAME$ : UIView
-{
-    $PROPERTY$
+    $EVENT_HANDLER_INTERFACE$
 
-    public $CLASS_NAME$()
+    internal class $CLASS_NAME$ : UIView
     {
-    }
+        $PROPERTY$
 
-    public $CLASS_NAME$(GameObject root) : base(root)
-    {
-    }
+        public $CLASS_NAME$()
+        {
+        }
 
-    public override string GetPath()
-    {
-        return ""$PREFAB_PATH$"";
-    }
+        public $CLASS_NAME$(GameObject root) : base(root)
+        {
+        }
 
-    protected override void OnLoad()
-    {
-        $BIND_EVENTS$
+        public override string GetPath()
+        {
+            return ""$PREFAB_PATH$"";
+        }
 
-        $BIND_VARIABLES$
-    }
+        protected override void OnLoad()
+        {
+            $BIND_EVENTS$
 
-    protected override void OnShow()
-    {
-        $SHOW$
-    }
+            $BIND_VARIABLES$
+        }
 
-    protected override void OnHide()
-    {
-        $HIDE$
-    }
+        protected override void OnShow()
+        {
+            $SHOW$
+        }
 
-    protected override void OnDestroyInternal() 
-    {
-        $DESTROY$
-    }
+        protected override void OnHide()
+        {
+            $HIDE$
+        }
+
+        protected override void OnDestroyInternal() 
+        {
+            $DESTROY$
+        }
         
-    $FIELD$
+        $FIELD$
 
-    $EVENT_HANDLER$
-}
+        $EVENT_HANDLER$
+    }
+
 ";
             template = template.Replace("$CLASS_NAME$", m_Metadata.ViewClassName);
             template = template.Replace("$PROPERTY$", GenerateProperty());
@@ -118,70 +129,42 @@ internal class $CLASS_NAME$ : UIView
             template = template.Replace("$EVENT_HANDLER_INTERFACE$", GenerateEventHandlerInterface());
             template = template.Replace("$EVENT_HANDLER$", GenerateEventHandler());
 
-            Helper.CreateDirectory(m_Config.CodeOutputPath);
-
-            var fileName = $"{m_Config.CodeOutputPath}/{m_Metadata.ViewClassName}.cs";
-            File.WriteAllText(fileName, template);
-            AssetDatabase.Refresh();
-
-            SerializationHelper.FormatCode(fileName);
+            if (!string.IsNullOrEmpty(m_Metadata.Namespace))
+            {
+                template = template.Replace("$NAMESPACE_BEGIN$", $"namespace {m_Metadata.Namespace} {{");
+            }
+            else
+            {
+                template = template.Replace("$NAMESPACE_BEGIN$", "");
+            }
+            return template;
         }
 
-        private void GenerateController()
+        private string GenerateController()
         {
-            var fileName = $"{m_Config.CodeOutputPath}/{m_Metadata.ControllerClassName}.cs";
-            if (File.Exists(fileName))
-            {
-                return;
-            }
-
             string template =
 @"
-using XDay.GUIAPI;
-using UnityEngine.EventSystems;
 
-internal partial class $CONTROLLER_CLASS_NAME$ : UIController<$VIEW_CLASS_NAME$> $EVENT_HANDLER_INTERFACE$
-{
-    public $CONTROLLER_CLASS_NAME$($VIEW_CLASS_NAME$ view) : base(view)
+    internal partial class $CONTROLLER_CLASS_NAME$ : UIController<$VIEW_CLASS_NAME$> $EVENT_HANDLER_INTERFACE$
     {
+        public $CONTROLLER_CLASS_NAME$($VIEW_CLASS_NAME$ view) : base(view)
+        {
+        }
     }
-
-    public override void OnDestroy()
-    {
-        //destroy code here
-    }
-
-    protected override void OnLoad() 
-    { 
-    }
-
-    protected override void OnShow() 
-    {
-    }
-
-    protected override void OnHide() 
-    {
-    }
-
-    protected override void Refresh()
-    {
-        //fill ui content here
-    }
-
-    $EVENT_HANDLER$
-}
+$NAMESPACE_END$
 ";
             template = template.Replace("$CONTROLLER_CLASS_NAME$", m_Metadata.ControllerClassName);
             template = template.Replace("$VIEW_CLASS_NAME$", m_Metadata.ViewClassName);
             template = template.Replace("$EVENT_HANDLER_INTERFACE$", GenerateControllerEventHandlerInterface());
-            template = template.Replace("$EVENT_HANDLER$", GenerateControllerEventHandler());
-
-            Helper.CreateDirectory(m_Config.CodeOutputPath);
-
-            File.WriteAllText(fileName, template);
-            AssetDatabase.Refresh();
-
-            SerializationHelper.FormatCode(fileName);
+            if (!string.IsNullOrEmpty(m_Metadata.Namespace))
+            {
+                template = template.Replace("$NAMESPACE_END$", "}");
+            }
+            else
+            {
+                template = template.Replace("$NAMESPACE_END$", "");
+            }
+            return template;
         }
 
         private string GenerateProperty()

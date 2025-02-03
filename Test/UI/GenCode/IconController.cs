@@ -47,7 +47,7 @@ internal partial class IconController : UIController<IconView>
     {
     }
 
-    protected override void Refresh()
+    protected override void OnRefresh()
     {
         var data = m_Data as IconData;
         m_View.Text.text = data.text;

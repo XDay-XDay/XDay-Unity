@@ -23,9 +23,7 @@
 
 using XDay.CameraAPI;
 using XDay.InputAPI;
-using XDay.UtilityAPI;
 using XDay.WorldAPI;
-using XDay.LogAPI;
 using UnityEngine;
 using XDay.AssetAPI;
 using XDay.GUIAPI;
@@ -49,8 +47,10 @@ namespace XDay.API
         IWorldManager WorldManager { get; }
         ITaskSystem TaskSystem { get; }
         IAssetLoader WorldAssetLoader { get; }
-        ILogSystem LogSystem { get; }
         IUIWindowManager WindowManager { get; }
+        ITickTimer TickTimer { get; }
+        ITickTimer FrameTimer { get; }
+        IEventSystem EventSystem { get; }
 
         void OnDestroy();
         void Update();

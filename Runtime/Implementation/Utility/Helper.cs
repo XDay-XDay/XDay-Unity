@@ -24,9 +24,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
+using UnityEditor;
 using UnityEngine;
 
 namespace XDay.UtilityAPI
@@ -50,7 +50,10 @@ namespace XDay.UtilityAPI
 #if UNITY_EDITOR
                 if (!UnityEditor.EditorApplication.isPlaying)
                 {
-                    UnityEngine.Object.DestroyImmediate(obj);
+                    if (string.IsNullOrEmpty(AssetDatabase.GetAssetPath(obj)))
+                    {
+                        UnityEngine.Object.DestroyImmediate(obj);
+                    }
                     return;
                 }
 #endif
@@ -352,11 +355,6 @@ namespace XDay.UtilityAPI
             return "";
         }
 
-        public static Type[] QueryTypes<T>(bool isAbstract)
-        {
-            return AppDomain.CurrentDomain.GetAssemblies().SelectMany(asm => asm.GetTypes()).Where(type => typeof(T).IsAssignableFrom(type) && type.IsAbstract == isAbstract).ToArray();
-        }
-
         public static Bounds QueryBounds(this GameObject gameObject, bool setIdentity = true)
         {
             var bounds = new Bounds();
@@ -577,6 +575,63 @@ namespace XDay.UtilityAPI
             return false;
         }
 
+        public static bool SphereAABBIntersectSq(Vector3 center, float radiusSq, Vector3 min, Vector3 max)
+        {
+            return PointToAABBMinDistanceSq(center, min, max) <= radiusSq;
+        }
+
+        public static float PointToAABBMinDistanceSq(Vector3 point, Vector3 min, Vector3 max)
+        {
+            var distance = 0.0f;
+
+            if (point.x < min.x)
+            {
+                var d = point.x - min.x;
+                distance += d * d;
+            }
+            if (point.x > max.x)
+            {
+                var d = point.x - max.x;
+                distance += d * d;
+            }
+
+            if (point.y < min.y)
+            {
+                var d = point.y - min.y;
+                distance += d * d;
+            }
+            if (point.y > max.y)
+            {
+                var d = point.y - max.y;
+                distance += d * d;
+            }
+
+            if (point.z < min.z)
+            {
+                var d = point.z - min.z;
+                distance += d * d;
+            }
+            if (point.z > max.z)
+            {
+                var d = point.z - max.z;
+                distance += d * d;
+            }
+
+            return distance;
+        }
+
+        public static bool RectOverlap(float minX1, float minY1, float maxX1, float maxY1, float minX2, float minY2, float maxX2, float maxY2)
+        {
+            if (minX1 > maxX2 ||
+                minY1 > maxY2 ||
+                minX2 > maxX1 ||
+                minY2 > maxY1)
+            {
+                return false;
+            }
+            return true;
+        }
+
         public static float GetSignedPolygonArea(Vector3[] polygon)
         {
             var n = polygon.Length;
@@ -740,6 +795,35 @@ namespace XDay.UtilityAPI
             return cur;
         }
 
+        public static void Resize<T>(List<T> list, int n)
+        {
+            if (list == null)
+            {
+                Debug.LogError("List is null");
+            }
+            else
+            {
+                list.Clear();
+                list.Capacity = n;
+            }
+        }
+
+        public static bool PointInCircle(Vector2 p, Vector2 center, float radius)
+        {
+            var distanceSqr = (p - center).SqrMagnitude();
+            return distanceSqr <= radius * radius;
+        }
+
+        public static bool PointInRect(Vector2 p, Vector2 rectMin, Vector2 rectMax)
+        {
+            if (p.x >= rectMin.x && p.x <= rectMax.x &&
+                p.y >= rectMin.y && p.y <= rectMax.y)
+            {
+                return true;
+            }
+            return false;
+        }
+
         private static GameObject FindChildInHierarchyInternal(this GameObject obj, int index, string[] paths, bool includeRoot)
         {
             var child = obj.transform.Find(paths[index]);
@@ -756,6 +840,23 @@ namespace XDay.UtilityAPI
                 return child.gameObject.FindChildInHierarchyInternal(index + 1, paths, includeRoot);
             }
             return child.gameObject;
+        }
+
+        public static Vector3 FindClosestPointToSegement(Vector3 p, Vector3 segmentStart, Vector3 segmentEnd)
+        {
+            var dir = segmentEnd - segmentStart;
+            var ps = p - segmentStart;
+            var proj = Vector3.Dot(dir, ps);
+            proj /= dir.sqrMagnitude;
+            if (proj >= 1)
+            {
+                return segmentEnd;
+            }
+            if (proj <= 0)
+            {
+                return segmentStart;
+            }
+            return Vector3.Lerp(segmentStart, segmentEnd, proj);
         }
 
         private const double m_DegToRad = 0.0174532924;

@@ -27,57 +27,6 @@ using UnityEngine;
 
 namespace XDay.UtilityAPI
 {
-    public interface IStructListPool<T> where T : struct
-    {
-        static IStructListPool<T> Create(int capacity)
-        {
-            return new StructListPool<T>(capacity);
-        }
-
-        List<T> Get();
-        void Release(List<T> list);
-    }
-
-    public interface IStructArrayPool<T> where T : struct
-    {
-        public static IStructArrayPool<T> Create(int initialCapacity = 0)
-        {
-            return new StructArrayPool<T>(initialCapacity);
-        }
-
-        T[] Get(int arrayLength);
-        void Release(T[] array);
-    }
-
-    public interface IConcurrentObjectPool<T> where T : class
-    {
-        static IConcurrentObjectPool<T> Create(
-            Func<T> createFunc,
-            int capacity = 10,
-            Action<T> actionOnDestroy = null,
-            Action<T> actionOnGet = null,
-            Action<T> actionOnRelease = null)
-        {
-            return new ConcurrentObjectPool<T>(createFunc, capacity, actionOnDestroy, actionOnGet, actionOnRelease);
-        }
-
-        void OnDestroy();
-        void Clear();
-        T Get();
-        void Release(T obj);
-    }
-
-    public interface IConcurrentStructListPool<T> where T : struct
-    {
-        static IConcurrentStructListPool<T> Create(int capacity = 100)
-        {
-            return new ConcurrentStructListPool<T>(capacity);
-        }
-
-        List<T> Get();
-        void Release(List<T> list);
-    }
-
     public interface IGameObjectPool
     {
         static IGameObjectPool Create(Transform parent, Func<string, GameObject> createFunc, Action<string, GameObject> returnToPoolFunc = null, bool hideRoot = true)

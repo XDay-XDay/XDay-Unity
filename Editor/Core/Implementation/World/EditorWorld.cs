@@ -225,7 +225,7 @@ namespace XDay.WorldAPI.Editor
             }
 
             var setup = ScriptableObject.CreateInstance<WorldPluginSetup>();
-            foreach (var type in Helper.QueryTypes<WorldPlugin>(false))
+            foreach (var type in Common.QueryTypes<WorldPlugin>(false))
             {
                 var plugin = Activator.CreateInstance(type) as WorldPlugin;
                 if (plugin is not EditorWorldPlugin)

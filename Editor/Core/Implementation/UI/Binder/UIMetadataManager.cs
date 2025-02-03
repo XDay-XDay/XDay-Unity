@@ -69,6 +69,7 @@ namespace XDay.GUIAPI
     {
         public string ViewClassName;
         public string ControllerClassName;
+        public string Namespace;
         public string PrefabGUID;
         public List<UIGameObjectMetadata> GameObjects = new();
     }
@@ -91,4 +92,17 @@ namespace XDay.GUIAPI
             return "";
         }
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(UIMetadataManager))]
+    public class UIMetadataManagerEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            GUI.enabled = false;
+            base.OnInspectorGUI();
+            GUI.enabled = true;
+        }
+    }
+#endif
 }

@@ -27,9 +27,9 @@ using XDay.InputAPI;
 using XDay.NavigationAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
-using XDay.LogAPI;
 using XDay.AssetAPI;
 using XDay.GUIAPI;
+using System;
 
 namespace XDay.API
 {
@@ -40,15 +40,22 @@ namespace XDay.API
         public ITaskSystem TaskSystem => m_TaskSystem;
         public INavigationManager NavigationManager => m_NavigationManager;
         public IAssetLoader WorldAssetLoader => m_WorldSystem?.WorldAssetLoader;
-        public ILogSystem LogSystem => m_LogSystem;
         public IUIWindowManager WindowManager => m_WindowManager;
+        public ITickTimer TickTimer => m_TickTimer;
+        public ITickTimer FrameTimer => m_FrameTimer;
+        public IEventSystem EventSystem => m_EventSystem;
 
         public XDayContext(string worldSetupFilePath, IAssetLoader loader, bool enableLog)
         {
             Debug.Assert(!string.IsNullOrEmpty(worldSetupFilePath));
             Debug.Assert(loader != null);
 
-            m_LogSystem = enableLog ? ILogSystem.Create(Debug.isDebugBuild) : null;
+            Log.Init(true, () => {
+                Application.logMessageReceivedThreaded += OnUnityLogMessageReceived;
+            }, () => {
+                Application.logMessageReceivedThreaded -= OnUnityLogMessageReceived;
+            }, Application.persistentDataPath);
+
             var createInfo = new TaskSystemCreateInfo();
             createInfo.LayerInfo.Add(new TaskLayerInfo(1, 1));
             m_TaskSystem = ITaskSystem.Create(createInfo);
@@ -59,6 +66,14 @@ namespace XDay.API
             m_WorldSystem.Init(worldSetupFilePath, m_AssetLoader, m_TaskSystem, m_Input);
             m_NavigationManager = INavigationManager.Create();
             m_WindowManager = IUIWindowManager.Create(loader);
+            m_TickTimer = ITickTimer.Create(false, 0, () => {
+                return (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
+            });
+            m_FrameTimer = ITickTimer.Create(false, 0, () => {
+                return Time.frameCount;
+            });
+
+            m_EventSystem = IEventSystem.Create();
         }
 
         public void OnDestroy()
@@ -66,12 +81,15 @@ namespace XDay.API
             m_WindowManager.OnDestroy();
             m_WorldSystem?.OnDestroy();
             m_NavigationManager?.OnDestroy();
-            m_LogSystem?.OnDestroy();
+            Log.Uninit();
         }
 
         public void Update()
         {
+            m_TickTimer.Update();
+            m_FrameTimer.Update();
             m_Input.Update();
+            m_WindowManager.Update(Time.deltaTime);
             m_WorldSystem?.Update();
         }
 
@@ -96,13 +114,51 @@ namespace XDay.API
             return m_NavigationManager.CreateGridPathFinder(m_TaskSystem, gridData, neighbourCount);
         }
 
+        private void OnUnityLogMessageReceived(string message, string stackTrace, UnityEngine.LogType type)
+        {
+            Log.Instance?.LogMessage(message, stackTrace, ToUnityLogType(type));
+        }
+
+        private LogType ToUnityLogType(UnityEngine.LogType type)
+        {
+            if (type == UnityEngine.LogType.Log)
+            {
+                return LogType.Log;
+            }
+
+            if (type == UnityEngine.LogType.Error)
+            {
+                return LogType.Error;
+            }
+
+            if (type == UnityEngine.LogType.Warning)
+            {
+                return LogType.Warning;
+            }
+
+            if (type == UnityEngine.LogType.Assert)
+            {
+                return LogType.Assert;
+            }
+
+            if (type == UnityEngine.LogType.Exception)
+            {
+                return LogType.Exception;
+            }
+
+            Debug.Assert(false);
+            return LogType.Exception;
+        }
+
         private readonly IAssetLoader m_AssetLoader;
         private readonly WorldManager m_WorldSystem;
         private readonly IDeviceInput m_Input;
         private readonly ITaskSystem m_TaskSystem;
         private readonly INavigationManager m_NavigationManager;
-        private readonly ILogSystem m_LogSystem;
         private readonly IUIWindowManager m_WindowManager;
+        private readonly ITickTimer m_TickTimer;
+        private readonly ITickTimer m_FrameTimer;
+        private readonly IEventSystem m_EventSystem;
     }
 }
 

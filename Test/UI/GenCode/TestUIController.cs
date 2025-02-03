@@ -49,7 +49,7 @@ internal partial class TestUIController : UIController<TestUIView>, ITestUIViewE
     {
     }
 
-    protected override void Refresh()
+    protected override void OnRefresh()
     {
         var data = m_Data as TestUIData;
         Debug.Assert(data != null);

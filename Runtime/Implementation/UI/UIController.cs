@@ -48,11 +48,7 @@ namespace XDay.GUIAPI
         public override void Load()
         {
             OnLoad();
-
-            if (m_Data != null)
-            {
-                Refresh();
-            }
+            Refresh();
         }
 
         public override void Show()
@@ -70,17 +66,27 @@ namespace XDay.GUIAPI
         public override void SetData(object data)
         {
             m_Data = data;
+            Refresh();
+        }
 
+        public void Refresh()
+        {
             if (m_View.IsLoaded)
             {
-                Refresh();
+                OnRefresh();
             }
         }
 
-        protected virtual void Refresh() { }
+        public void Update(float dt)
+        {
+            OnUpdate(dt);
+        }
+
+        protected virtual void OnRefresh() { }
         protected virtual void OnLoad() { }
         protected virtual void OnShow() { }
         protected virtual void OnHide() { }
+        protected virtual void OnUpdate(float dt) { }
 
         protected View m_View;
         protected object m_Data;
