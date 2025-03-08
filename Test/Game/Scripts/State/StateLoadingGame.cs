@@ -30,7 +30,7 @@ namespace XDay.TestGame
 {
     internal class StateLoadingGame : State
     {
-        public override void OnEnter()
+        public override void OnEnter(object args)
         {
             var window = Global.XDayContext.WindowManager.Open<UILoadingWindow>();
             m_Controller = window.GetController<UILoadingController>();

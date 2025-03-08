@@ -35,7 +35,15 @@ namespace XDay.GUIAPI
         }
 
         void OnDestroy();
+        /// <summary>
+        /// only load window, but don't show it
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        void Load<T>() where T : UIWindowBase, new();
         T Open<T>() where T : UIWindowBase, new();
+        T GetActive<T>() where T : UIWindowBase, new();
+        bool IsOpen<T>() where T : UIWindowBase, new();
         void Close<T>() where T : UIWindowBase, new();
         void Close(UIWindowBase window);
         void Update(float dt);

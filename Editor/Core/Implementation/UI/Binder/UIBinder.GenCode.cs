@@ -67,6 +67,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using XDay.GUIAPI;
+using PolyAndCode.UI;
 
 $NAMESPACE_BEGIN$
 
@@ -106,6 +107,11 @@ $NAMESPACE_BEGIN$
             $HIDE$
         }
 
+        protected override void OnUpdate(float dt)
+        {
+            $UPDATE$
+        }
+
         protected override void OnDestroyInternal() 
         {
             $DESTROY$
@@ -126,6 +132,7 @@ $NAMESPACE_BEGIN$
             template = template.Replace("$DESTROY$", GenerateFunc("OnDestroy"));
             template = template.Replace("$SHOW$", GenerateFunc("Show"));
             template = template.Replace("$HIDE$", GenerateFunc("Hide"));
+            template = template.Replace("$UPDATE$", GenerateUpdateFunc());
             template = template.Replace("$EVENT_HANDLER_INTERFACE$", GenerateEventHandlerInterface());
             template = template.Replace("$EVENT_HANDLER$", GenerateEventHandler());
 
@@ -291,11 +298,18 @@ $NAMESPACE_END$
             {
                 if (EditorHelper.GetObjectLocalID(transform.gameObject) == localID)
                 {
-                    path = transform.gameObject.GetPathInHierarchy(false);
+                    if (Helper.IsRoot(transform))
+                    {
+                        //is root
+                        path = "";
+                    }
+                    else
+                    {
+                        path = transform.gameObject.GetPathInHierarchy(false);
+                    }
                 }
             });
 
-            Debug.Assert(!string.IsNullOrEmpty(path));
             return path;
         }
 
@@ -313,7 +327,14 @@ $NAMESPACE_END$
                 {
                     if (EditorHelper.GetObjectLocalID(components[i]) == localID)
                     {
-                        tempPath = components[i].gameObject.GetPathInHierarchy(false);
+                        if (Helper.IsRoot(components[i].transform))
+                        {
+                            tempPath = "";
+                        }
+                        else
+                        {
+                            tempPath = components[i].gameObject.GetPathInHierarchy(false);
+                        }
                         tempIndex = i;
                     }
                 }
@@ -321,7 +342,6 @@ $NAMESPACE_END$
 
             path = tempPath;
             index = tempIndex;
-            Debug.Assert(!string.IsNullOrEmpty(path));
         }
 
         private string GeneratePrefabPath()
@@ -336,7 +356,20 @@ $NAMESPACE_END$
             {
                 if (gameObjectMetadata.BindView)
                 {
-                    builder.AppendLine($"m_{gameObjectMetadata.ViewVariableName}.{funcName}();");
+                    builder.AppendLine($"m_{gameObjectMetadata.ViewVariableName}?.{funcName}();");
+                }
+            }
+            return builder.ToString();
+        }
+
+        private string GenerateUpdateFunc()
+        {
+            StringBuilder builder = new();
+            foreach (var gameObjectMetadata in m_Metadata.GameObjects)
+            {
+                if (gameObjectMetadata.BindView)
+                {
+                    builder.AppendLine($"m_{gameObjectMetadata.ViewVariableName}.Controller?.Update(dt);");
                 }
             }
             return builder.ToString();

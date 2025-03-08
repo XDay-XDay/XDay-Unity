@@ -26,7 +26,6 @@ using UnityEditor;
 using UnityEngine;
 using XDay.AnimationAPI;
 using XDay.RenderingAPI.BRG;
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Decoration.Editor
@@ -121,7 +120,6 @@ namespace XDay.WorldAPI.Decoration.Editor
                 decorationMetadata.LODResourceChangeMasks[i] = CalculateLODChangeMasks(decorations[i]);
                 decorationMetadata.Position[i] = decorations[i].Position.ToVector2();
                 decorationMetadata.ResourceMetadataIndex[i] = QueryResourceMetadataIndex(decorations[i], resourceMetadatas);
-
             }
 
             var grid = new Grid(LODCount, m_GameGridSize.x, m_GameGridSize.y, xGridCount, yGridCount, Bounds.ToRect());
@@ -287,13 +285,20 @@ namespace XDay.WorldAPI.Decoration.Editor
                     var childGameObject = decorationGameObject.transform.GetChild(i).gameObject;
                     var childPrefabInstance = decorationPrefab.transform.GetChild(i).gameObject;
                     var childPrefab = PrefabUtility.GetCorrespondingObjectFromSource(childPrefabInstance);
-                    var childPrefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(childPrefab);
-                    var childDescriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(childPrefabPath, World);
-                    //child object id is 0
-                    var childDecoration = new DecorationObject(0, -1, true, decoration.LODLayerMask, childGameObject.transform.position, childGameObject.transform.rotation, childGameObject.transform.lossyScale, childDescriptor);
-                    childDecoration.Init(World);
+                    if (childPrefab == null)
+                    {
+                        Debug.LogError($"decoration {childGameObject.name} is not prefab!");
+                    }
+                    else
+                    {
+                        var childPrefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(childPrefab);
+                        var childDescriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(childPrefabPath, World);
+                        //child object id is 0
+                        var childDecoration = new DecorationObject(0, -1, true, decoration.LODLayerMask, childGameObject.transform.position, childGameObject.transform.rotation, childGameObject.transform.lossyScale, childDescriptor);
+                        childDecoration.Init(World);
 
-                    GenerateDecorations(childDecoration, childPrefabInstance, childGameObject, decorations);
+                        GenerateDecorations(childDecoration, childPrefabInstance, childGameObject, decorations);
+                    }
                 }
             }
         }

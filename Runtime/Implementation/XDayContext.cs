@@ -50,11 +50,18 @@ namespace XDay.API
             Debug.Assert(!string.IsNullOrEmpty(worldSetupFilePath));
             Debug.Assert(loader != null);
 
-            Log.Init(true, () => {
-                Application.logMessageReceivedThreaded += OnUnityLogMessageReceived;
-            }, () => {
-                Application.logMessageReceivedThreaded -= OnUnityLogMessageReceived;
-            }, Application.persistentDataPath);
+            var logSetting = new LogSetting()
+            {
+                LogName = "Client",
+                ActionOnInit = () => {
+                    Application.logMessageReceivedThreaded += OnUnityLogMessageReceived;
+                },
+                ActionOnDestroy = () => {
+                    Application.logMessageReceivedThreaded -= OnUnityLogMessageReceived;
+                },
+                LogFileDirectory = Application.persistentDataPath,
+            };
+            Log.Init(logSetting);
 
             var createInfo = new TaskSystemCreateInfo();
             createInfo.LayerInfo.Add(new TaskLayerInfo(1, 1));

@@ -103,5 +103,3 @@ namespace XDay.WorldAPI
         private const int m_RuntimeVersion = 1;
     }
 }
-
-//XDay

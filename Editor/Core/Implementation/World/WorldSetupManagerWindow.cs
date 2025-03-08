@@ -211,7 +211,7 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawGameFolder()
         {
-            m_SetupManager.GameFolder = EditorHelper.ObjectField<DefaultAsset>("Game Folder", m_SetupManager.GameFolder, () => { EditorUtility.SetDirty(m_SetupManager); });
+            m_SetupManager.GameFolder = EditorHelper.ObjectField<DefaultAsset>("Game Folder", m_SetupManager.GameFolder, 0, () => { EditorUtility.SetDirty(m_SetupManager); });
         }
 
         private void DrawHeader()

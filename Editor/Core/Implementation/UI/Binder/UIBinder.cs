@@ -163,7 +163,9 @@ namespace XDay.GUIAPI.Editor
             m_Metadata = new UIMetadata
             {
                 PrefabGUID = EditorHelper.GetObjectGUID(prefab),
-                ViewClassName = prefab.name
+                ViewClassName = prefab.name + "View",
+                ControllerClassName = prefab.name + "Controller",
+                Namespace = m_Config.DefaultNamespace,
             };
             Debug.Assert(!string.IsNullOrEmpty(m_Metadata.PrefabGUID), "Prefab guid is null!");
             m_MetadataManager.UIMetadatas.Add(m_Metadata);

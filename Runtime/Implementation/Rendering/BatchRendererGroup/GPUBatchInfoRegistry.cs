@@ -61,7 +61,7 @@ namespace XDay.RenderingAPI.BRG
             var meshFilters = prefab.GetComponentsInChildren<MeshFilter>();
             if (meshFilters.Length != 1)
             {
-                Debug.LogError($"{prefab.name} can't use instance rendering because mesh filter count is {meshFilters.Length}");
+                Debug.LogWarning($"{prefab.name} can't use instance rendering because mesh filter count is {meshFilters.Length}");
                 return false;
             }
 

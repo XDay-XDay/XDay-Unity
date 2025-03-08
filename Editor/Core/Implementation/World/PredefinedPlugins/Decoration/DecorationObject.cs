@@ -24,7 +24,6 @@
 
 
 using UnityEngine;
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI.Editor;
 
@@ -60,8 +59,6 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         public override void Init(IWorld world)
         {
-            Debug.Assert(ID != 0);
-            
             base.Init(world);
 
             m_ResourceDescriptor.Init(world);

@@ -21,11 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using Cysharp.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 
@@ -67,6 +69,9 @@ namespace XDay.UtilityAPI
             {
                 Directory.CreateDirectory(path);
             }
+#if UNITY_EDITOR
+            AssetDatabase.Refresh();
+#endif
         }
 
         public static string RemoveExtension(string path)
@@ -736,6 +741,21 @@ namespace XDay.UtilityAPI
             return obj.FindChildInHierarchyInternal(0, paths, includeRoot);
         }
 
+        public static bool IsRoot(Transform transform)
+        {
+            var parent = transform.parent;
+            if (parent == null)
+            {
+                return true;
+            }
+            if (parent.name.EndsWith("(Environment)") ||
+                parent.name.EndsWith("Prefab Mode in Context"))
+            {
+                return true;
+            }
+            return false;
+        }
+
         public static string GetPathInHierarchy(this GameObject go, bool includeRoot)
         {
             if (go == null)
@@ -857,6 +877,73 @@ namespace XDay.UtilityAPI
                 return segmentStart;
             }
             return Vector3.Lerp(segmentStart, segmentEnd, proj);
+        }
+
+        public static Vector3 ToVector3(this FixedVector3 v)
+        {
+            return new Vector3(v.X.FloatValue, v.Y.FloatValue, v.Z.FloatValue);
+        }
+
+        public static Vector2 ToVector2(this FixedVector2 v)
+        {
+            return new Vector2(v.X.FloatValue, v.Y.FloatValue);
+        }
+
+        public static FixedVector3 FromVector3(Vector3 v)
+        {
+            return new FixedVector3(v.x, v.y, v.z);
+        }
+
+        public static FixedVector2 FromVector2(Vector3 v)
+        {
+            return new FixedVector2(v.x, v.y);
+        }
+
+        public static long GetTimeNow()
+        {
+            return (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
+        }
+
+        public static Type SearchTypeByName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return null;
+            }
+
+            name = $".{name}";
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    var pos = type.FullName.IndexOf(name);
+                    if (pos >= 0)
+                    {
+                        var end = pos + name.Length;
+                        if (end >= type.FullName.Length || 
+                            type.FullName[end] == '.')
+                        {
+                            return type;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public static string GetObjectGUID(UnityEngine.Object obj)
+        {
+#if UNITY_EDITOR
+            var path = AssetDatabase.GetAssetPath(obj);
+            return AssetDatabase.AssetPathToGUID(path);
+#else
+            return "";
+#endif
+        }
+
+        public static void SetTextNoGc(this TextMeshProUGUI textComp, ZStringInterpolatedStringHandler handler)
+        {
+            textComp.SetCharArray(handler.Builder.Buffer, 0, handler.Builder.Length);
         }
 
         private const double m_DegToRad = 0.0174532924;

@@ -23,6 +23,7 @@
 
 
 
+using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI;
 
@@ -33,6 +34,7 @@ namespace XDay.GUIAPI
         public GameObject Root => m_Root;
         public UIControllerBase Controller => m_Controller;
         public bool IsLoaded => Root != null;
+        public int SubViewCount => m_Subviews.Count;
 
         public UIView()
         {
@@ -51,7 +53,17 @@ namespace XDay.GUIAPI
 
         public void OnDestroy()
         {
+            if (m_Visible)
+            {
+                Hide();
+            }
+
             OnDestroyInternal();
+
+            foreach (var subView in m_Subviews)
+            {
+                subView.OnDestroy();
+            }
 
             m_Controller.OnDestroy();
 
@@ -61,16 +73,57 @@ namespace XDay.GUIAPI
 
         public void Show()
         {
+            if (m_Visible)
+            {
+                return;
+            }
+
+            m_Visible = true;
             Root.SetActive(true);
-            m_Controller.Show();
             OnShow();
+            foreach (var subView in m_Subviews)
+            {
+                subView.Show();
+            }
+            m_Controller.Show();
         }
 
         public void Hide()
         {
+            foreach (var subView in m_Subviews) 
+            {
+                subView.Hide();
+            }
             OnHide();
             m_Controller.Hide();
-            Root.SetActive(false);
+
+            if (Root != null)
+            {
+                Root.SetActive(false);
+            }
+
+            m_Visible = false;
+        }
+
+        public void Update(float dt)
+        {
+            foreach (var subView in m_Subviews)
+            {
+                subView.Update(dt);
+            }
+
+            OnUpdate(dt);
+
+            m_Controller?.Update(dt);
+        }
+
+        public void Refresh()
+        {
+            foreach (var subView in m_Subviews)
+            {
+                subView.Controller?.Refresh();
+                subView.Refresh();
+            }
         }
 
         public void SetController(UIControllerBase controller)
@@ -82,14 +135,88 @@ namespace XDay.GUIAPI
             }
         }
 
+        public ViewType AddSubView<ViewType, ControllerType>(GameObject subviewRoot) 
+            where ViewType : UIView
+            where ControllerType : UIControllerBase
+        {
+            var view = System.Activator.CreateInstance(typeof(ViewType), (object)subviewRoot) as ViewType;
+            var controller = System.Activator.CreateInstance(typeof(ControllerType), view) as ControllerType;
+            view.SetController(controller);
+            view.Show();
+            m_Subviews.Add(view);
+            return view;
+        }
+
+        public void RemoveSubView(int index)
+        {
+            if (index >= 0 && index < m_Subviews.Count)
+            {
+                m_Subviews[index].OnDestroy();
+                m_Subviews.RemoveAt(index);
+            }
+            else
+            {
+                Log.Instance?.Error($"Remove subview failed!");
+            }
+        }
+
+        public void RemoveSubView(UIView view)
+        {
+            var index = m_Subviews.IndexOf(view);
+            RemoveSubView(index);
+        }
+
+        public void RemoveAllSubViews()
+        {
+            foreach (var subView in m_Subviews) 
+            {
+                subView.OnDestroy(); 
+            }
+            m_Subviews.Clear();
+        }
+
+        public void RemoveSubViewsOfType<T>() where T : UIView
+        {
+            for (var i = m_Subviews.Count - 1; i >= 0; i--)
+            {
+                if (m_Subviews[i] is T)
+                {
+                    m_Subviews[i].OnDestroy();
+                    m_Subviews.RemoveAt(i);
+                }
+            }
+        }
+
+        public UIView GetSubView(int index)
+        {
+            if (index >= 0 && index < m_Subviews.Count)
+            {
+                return m_Subviews[index];
+            }
+            return null;
+        }
+
+        public T GetController<T>() where T : UIControllerBase
+        {
+            return Controller as T;
+        }
+
         protected GameObject QueryGameObject(string path)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                return Root;
+            }
             return Root.FindChildInHierarchy(path, false);
         }
 
         protected T QueryComponent<T>(string path, int index) where T : Component
         {
             var obj = QueryGameObject(path);
+            if (obj == null)
+            {
+                Log.Instance?.Error($"QueryComponent failed: {path}, {index}");
+            }
             return obj.GetComponentAtIndex<T>(index);
         }
 
@@ -97,6 +224,7 @@ namespace XDay.GUIAPI
         protected virtual void OnLoad() { }
         protected virtual void OnShow() { }
         protected virtual void OnHide() { }
+        protected virtual void OnUpdate(float dt) { }
         protected virtual void OnDestroyInternal() { }
 
         private void SetRoot(GameObject root)
@@ -109,7 +237,9 @@ namespace XDay.GUIAPI
             }
         }
 
+        private bool m_Visible = false;
         private GameObject m_Root;
+        private List<UIView> m_Subviews = new();
         protected UIControllerBase m_Controller;
     }
 }

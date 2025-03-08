@@ -34,12 +34,23 @@ namespace XDay.WorldAPI
         public async UniTask<IWorld> LoadWorldAsync(string name, Camera camera)
         {
             name = ConvertName(name);
-            var config = m_SetupManager.QuerySetup(name);
-            if (config != null)
+            var setup = m_SetupManager.QuerySetup(name);
+            if (setup != null)
             {
-                return await LoadWorldAsyncInternal(config, camera);
+                return await LoadWorldAsyncInternal(setup, camera);
             }
             Debug.LogError($"load world failed: {name}");
+            return null;
+        }
+
+        public async UniTask<IWorld> LoadWorldAsync(int worldID, Camera camera)
+        {
+            var setup = m_SetupManager.QuerySetup(worldID);
+            if (setup != null)
+            {
+                return await LoadWorldAsyncInternal(setup, camera);
+            }
+            Debug.LogError($"load world failed: {worldID}");
             return null;
         }
 
@@ -47,21 +58,21 @@ namespace XDay.WorldAPI
         {
             name = ConvertName(name);
 
-            var config = m_SetupManager.QuerySetup(name);
-            if (config == null)
+            var setup = m_SetupManager.QuerySetup(name);
+            if (setup == null)
             {
                 Debug.LogError($"load world {name} failed");
                 return null;
             }
 
-            return LoadWorldInternal(config, camera);
+            return LoadWorldInternal(setup, camera);
         }
 
-        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup config, Camera camera)
+        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup setup, Camera camera)
         {
             var source = new UniTaskCompletionSource<IWorld>();
 
-            LoadWorldAsyncInternal(config, (world) => {
+            LoadWorldAsyncInternal(setup, (world) => {
                 OnLoadFinished(world, camera);
 
                 source.TrySetResult(world);
@@ -70,31 +81,31 @@ namespace XDay.WorldAPI
             return await source.Task;
         }
 
-        private void LoadWorldAsyncInternal(WorldSetup config, Action<IWorld> onLoadingFinished)
+        private void LoadWorldAsyncInternal(WorldSetup setup, Action<IWorld> onLoadingFinished)
         {
-            var world = new GameWorld(config, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
+            var world = new GameWorld(setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
             m_Worlds.Add(world);
 
-            m_PluginLoader.Load(world.ID, config.GameFolder);
+            m_PluginLoader.Load(world.ID, setup.GameFolder);
 
             var job = m_TaskSystem.GetTask<GameWorldLoadTask>();
             job.Init(world, true, onLoadingFinished);
             m_TaskSystem.ScheduleTask(job);
         }
 
-        private IWorld LoadWorldInternal(WorldSetup config, Camera camera)
+        private IWorld LoadWorldInternal(WorldSetup setup, Camera camera)
         {
-            var world = QueryWorld(config.ID);
+            var world = QueryWorld(setup.ID);
             if (world != null)
             {
-                Debug.LogError($"world {config.Name} already loaded");
+                Debug.LogError($"world {setup.Name} already loaded");
                 return world;
             }
 
-            var gameWorld = new GameWorld(config, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
+            var gameWorld = new GameWorld(setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
             m_Worlds.Add(gameWorld);
 
-            m_PluginLoader.Load(gameWorld.ID, config.GameFolder);
+            m_PluginLoader.Load(gameWorld.ID, setup.GameFolder);
             gameWorld.LoadGame();
 
             OnLoadFinished(gameWorld, camera);

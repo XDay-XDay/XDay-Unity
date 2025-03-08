@@ -39,7 +39,7 @@ namespace XDay.TestGame
             public int b;
         }
 
-        public override void OnEnter()
+        public override void OnEnter(object args)
         {
             Debug.Log("Enter Game");
 #if false

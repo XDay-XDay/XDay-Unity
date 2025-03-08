@@ -37,12 +37,24 @@ namespace XDay.WorldAPI.Tile.Editor
 
         protected override void CreateInternal()
         {
+            float tileWidth = m_GridWidth;
+            float tileHeight = m_GridHeight;
+            int horizontalGridCount = Mathf.CeilToInt(m_Width / m_GridWidth);
+            int verticalGridCount = Mathf.CeilToInt(m_Height / m_GridHeight);
+            if (SetGridCount)
+            {
+                tileWidth = m_Width / m_GridCountX;
+                tileHeight = m_Height / m_GridCountY;
+                horizontalGridCount = m_GridCountX;
+                verticalGridCount = m_GridCountY;
+            }
+
             var createInfo = new TileSystemCreateInfo
             {
-                TileWidth = m_GridWidth,
-                TileHeight = m_GridHeight,
-                HorizontalTileCount = Mathf.CeilToInt(m_Width / m_GridWidth),
-                VerticalTileCount = Mathf.CeilToInt(m_Height / m_GridHeight),
+                TileWidth = tileWidth,
+                TileHeight = tileHeight,
+                HorizontalTileCount = horizontalGridCount,
+                VerticalTileCount = verticalGridCount,
                 Origin = CalculateOrigin(m_Width, m_Height),
                 Rotation = m_Rotation,
                 Name = DisplayName,
@@ -59,12 +71,12 @@ namespace XDay.WorldAPI.Tile.Editor
                 {
                     TileName = m_TileName,
                     Material = m_CustomMaterial,
-                    TileSize = m_GridWidth,
+                    TileSize = tileWidth,
                     OutputPath = GetAssetPath(),
                     MaskResolution = m_MaskTextureResolution,
                     MaskTextureChannelCount = m_MaskFormat == TextureFormat.RGB ? 3 : 4,
-                    XTileCount = Mathf.CeilToInt(m_Width / m_GridWidth),
-                    YTileCount = Mathf.CeilToInt(m_Height / m_GridHeight),
+                    XTileCount = horizontalGridCount,
+                    YTileCount = verticalGridCount,
                     CreateRoot = true,
                     MaskName = m_MaskName,
                 };

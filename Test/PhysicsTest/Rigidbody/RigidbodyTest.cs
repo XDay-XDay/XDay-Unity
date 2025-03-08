@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2024-2025 XDay
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 using XDay;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +36,7 @@ public class RigidbodyTest : MonoBehaviour
         m_World = new();
 
         {
-            var rect = XDay.Rigidbody.CreateBoxBody(10, 1, true, m_LedgeMaterial);
+            var rect = XDay.Rigidbody.CreateBoxBody("", 10, 1, true, m_LedgeMaterial);
             var entity = new Entity(rect, m_World);
             m_Entities.Add(entity);
             entity.SetPosition(new Vector3(0, 0, -10));
@@ -21,7 +44,7 @@ public class RigidbodyTest : MonoBehaviour
         }
 
         {
-            var rect =XDay.Rigidbody.CreateBoxBody(10, 1, true, m_LedgeMaterial);
+            var rect =XDay.Rigidbody.CreateBoxBody("", 10, 1, true, m_LedgeMaterial);
             var entity = new Entity(rect, m_World);
             m_Entities.Add(entity);
             entity.SetPosition(new Vector3(-8, 0, -15));
@@ -43,7 +66,7 @@ public class RigidbodyTest : MonoBehaviour
         var pos = Helper.RayCastWithXZPlane(Input.mousePosition, Camera.main);
         if (Input.GetMouseButtonDown(1))
         {
-            var circle = XDay.Rigidbody.CreateCircleBody(1, false, m_BallMaterial);
+            var circle = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial);
             var entity = new Entity(circle, m_World);
             entity.SetMaterial(SphereMaterial);
             m_Entities.Add(entity);
@@ -52,7 +75,7 @@ public class RigidbodyTest : MonoBehaviour
 
         if (Input.GetMouseButtonDown(2))
         {
-            var body = XDay.Rigidbody.CreateBoxBody(2, 2, false, m_CubeMaterial);
+            var body = XDay.Rigidbody.CreateBoxBody("", 2, 2, false, m_CubeMaterial);
             var entity = new Entity(body, m_World);
             entity.SetMaterial(SphereMaterial);
             m_Entities.Add(entity);

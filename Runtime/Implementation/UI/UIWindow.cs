@@ -24,6 +24,7 @@
 
 
 using System;
+using UnityEngine;
 using XDay.AssetAPI;
 
 namespace XDay.GUIAPI
@@ -32,10 +33,13 @@ namespace XDay.GUIAPI
     {
         public virtual bool CacheWhenClose => true;
         public virtual bool Updatable => false;
+        public abstract bool IsLoaded { get; }
 
-        public abstract void Load(IAssetLoader loader);
+        public abstract void LoadAsync(IAssetLoader loader, bool showWhenLoaded, GameObject uiRoot);
+        public abstract void Load(IAssetLoader loader, bool showWhenLoaded, GameObject uiRoot);
         public abstract void OnDestroy();
         public abstract void SetData(object data);
+        public abstract object GetData();
         public abstract void Show();
         public abstract void Hide();
         public abstract void Update(float dt);
@@ -46,6 +50,8 @@ namespace XDay.GUIAPI
         where View : UIView 
         where Controller : UIController<View>
     {
+        public override bool IsLoaded => m_View.IsLoaded;
+
         public UIWindow()
         {
             m_View = Activator.CreateInstance(typeof(View)) as View;
@@ -56,14 +62,25 @@ namespace XDay.GUIAPI
         public override void OnDestroy()
         {
             m_View.OnDestroy();
+            m_View = null;
+            m_IsLoading = false;
         }
 
-        public override void Load(IAssetLoader loader)
+        public override void Load(IAssetLoader loader, bool showWhenLoaded, GameObject uiRoot)
         {
+            m_IsLoading = true;
+            var gameObject = loader.LoadGameObject(m_View.GetPath());
+            gameObject.transform.SetParent(uiRoot.transform, false);
+            OnLoaded(gameObject, showWhenLoaded);
+        }
+
+        public override void LoadAsync(IAssetLoader loader, bool showWhenLoaded, GameObject uiRoot)
+        {
+            m_IsLoading = true;
             loader.LoadGameObjectAsync(m_View.GetPath(), (gameObject) =>
             {
-                m_View.Init(gameObject);
-                Show();
+                gameObject.transform.SetParent(uiRoot.transform, false);
+                OnLoaded(gameObject, showWhenLoaded);
             });
         }
 
@@ -75,6 +92,7 @@ namespace XDay.GUIAPI
         public override void Hide()
         {
             m_View.Hide();
+            m_IsLoading = false;
         }
 
         public override void SetData(object data)
@@ -82,9 +100,14 @@ namespace XDay.GUIAPI
             m_Controller.SetData(data);
         }
 
+        public override object GetData()
+        {
+            return m_Controller.GetData();
+        }
+
         public override void Update(float dt)
         {
-            m_Controller.Update(dt);
+            m_View.Update(dt);
         }
 
         public override T GetController<T>() 
@@ -92,7 +115,25 @@ namespace XDay.GUIAPI
             return m_Controller as T;
         }
 
-        private readonly View m_View;
-        private readonly Controller m_Controller;
+        private void OnLoaded(GameObject gameObject, bool showWhenLoaded)
+        {
+            if (m_View != null)
+            {
+                m_View.Init(gameObject);
+
+                if (m_IsLoading && showWhenLoaded)
+                {
+                    Show();
+                }
+                else
+                {
+                    gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private View m_View;
+        protected readonly Controller m_Controller;
+        private bool m_IsLoading = false;
     }
 }

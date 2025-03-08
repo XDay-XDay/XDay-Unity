@@ -26,7 +26,6 @@ using UnityEngine;
 using System;
 using System.Text.RegularExpressions;
 using System.IO;
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Editor
@@ -55,6 +54,10 @@ namespace XDay.WorldAPI.Editor
             base.Init(world);
 
             m_LOD0 = AssetDatabase.GUIDToAssetPath(m_LOD0GUID);
+            if (string.IsNullOrEmpty(m_LOD0))
+            {
+                Debug.LogError($"guid {m_LOD0GUID} path is null");
+            }
             m_Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_LOD0);
             m_Bounds = m_Prefab.QueryRect();
 
@@ -156,8 +159,7 @@ namespace XDay.WorldAPI.Editor
 
             base.EditorSerialize(serializer, label, converter);
 
-            var guid = AssetDatabase.AssetPathToGUID(GetPath(0));
-            serializer.WriteString(guid, "LOD0 GUID");
+            serializer.WriteString(m_LOD0GUID, "LOD0 GUID");
         }
 
         public override void EditorDeserialize(IDeserializer deserializer, string label)

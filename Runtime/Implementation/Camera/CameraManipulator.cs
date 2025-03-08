@@ -66,7 +66,7 @@ namespace XDay.CameraAPI
         {
             if (camera == null)
             {
-                Debug.LogError("Camera not set, will create default camera!");
+                Log.Instance?.Warning($"Camera not set, will create default camera!");
                 camera = CreateCameraObject(setup.Name);
                 m_NeedDestroyCamera = true;
             }
@@ -94,7 +94,7 @@ namespace XDay.CameraAPI
                 sender.OnDestroy();
             }
 
-            if (m_NeedDestroyCamera)
+            if (m_NeedDestroyCamera && m_Camera != null)
             {
                 UnityEngine.Object.Destroy(m_Camera.gameObject);
             }
@@ -401,6 +401,7 @@ namespace XDay.CameraAPI
         private Camera CreateCameraObject(string name)
         {
             var cameraObj = new GameObject(name);
+            cameraObj.AddComponent<AudioListener>();
             var camera = cameraObj.AddComponent<Camera>();
             camera.transform.position = new Vector3(0, 30, -30);
             return camera;

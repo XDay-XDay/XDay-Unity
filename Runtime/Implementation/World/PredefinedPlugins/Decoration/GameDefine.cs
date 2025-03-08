@@ -28,7 +28,7 @@ namespace XDay.WorldAPI.Decoration
     public static class GameDefine
     {
         public const int ANIMATOR_BATCH_START_ID = 100000;
-        public const double MAX_TASK_TIME_SECONDS_PER_FRAME = 1.0/1000 * 4;
+        public const double MAX_TASK_TIME_SECONDS_PER_FRAME = 1.0/1000 * 40;
     }
 }
 

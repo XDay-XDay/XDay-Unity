@@ -26,6 +26,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.AssetAPI;
+using XDay.UtilityAPI;
 
 namespace XDay.GUIAPI
 {
@@ -34,6 +35,8 @@ namespace XDay.GUIAPI
         public UIWindowManager(IAssetLoader loader)
         {
             m_Loader = loader;
+
+            m_UIRoot = new GameObject("UI Root");
         }
 
         public void OnDestroy()
@@ -41,6 +44,23 @@ namespace XDay.GUIAPI
             foreach (var window in m_ActiveWindows)
             {
                 window.OnDestroy();
+            }
+
+            Helper.DestroyUnityObject(m_UIRoot);
+        }
+
+        public void Load<T>() where T : UIWindowBase, new()
+        {
+            var window = GetActive<T>();
+            if (window == null)
+            {
+                window = GetCache<T>();
+                if (window == null)
+                {
+                    window = new T();
+                    window.Load(m_Loader, false, m_UIRoot);
+                    m_CachedWindows.Add(window);
+                }
             }
         }
 
@@ -53,7 +73,7 @@ namespace XDay.GUIAPI
                 if (window == null)
                 {
                     window = new T();
-                    window.Load(m_Loader);
+                    window.LoadAsync(m_Loader, true, m_UIRoot);
                 }
                 else
                 {
@@ -78,7 +98,7 @@ namespace XDay.GUIAPI
                     return;
                 }
             }
-            Debug.LogError($"Close window {typeof(T).Name} failed!");
+            Log.Instance?.Warning($"Close window {typeof(T).Name} failed!");
         }
 
         public void Close(UIWindowBase window)
@@ -95,6 +115,7 @@ namespace XDay.GUIAPI
                     else
                     {
                         window.OnDestroy();
+                        m_CachedWindows.Remove(window);
                     }
                     m_ActiveWindows.RemoveAt(i);
 
@@ -106,18 +127,21 @@ namespace XDay.GUIAPI
                     return;
                 }
             }
-            Debug.LogError("Close window failed!");
+            Log.Instance?.Warning($"Close window failed!");
         }
 
         public void Update(float dt)
         {
-            foreach (var window in m_UpdatableActiveWindows)
+            for (var i = m_UpdatableActiveWindows.Count - 1; i >= 0; --i)
             {
-                window.Update(dt);
+                if (m_UpdatableActiveWindows[i].IsLoaded)
+                {
+                    m_UpdatableActiveWindows[i].Update(dt);
+                }
             }
         }
 
-        private T GetActive<T>() where T : UIWindowBase, new()
+        public T GetActive<T>() where T : UIWindowBase, new()
         {
             foreach (var window in m_ActiveWindows)
             {
@@ -127,6 +151,11 @@ namespace XDay.GUIAPI
                 }
             }
             return null;
+        }
+
+        public bool IsOpen<T>() where T : UIWindowBase, new()
+        {
+            return GetActive<T>() != null;
         }
 
         private T GetCache<T>() where T : UIWindowBase, new()
@@ -145,5 +174,6 @@ namespace XDay.GUIAPI
         private readonly List<UIWindowBase> m_ActiveWindows = new();
         private readonly List<UIWindowBase> m_UpdatableActiveWindows = new();
         private readonly List<UIWindowBase> m_CachedWindows = new();
+        private GameObject m_UIRoot;
     }
 }

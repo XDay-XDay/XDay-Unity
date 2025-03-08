@@ -25,6 +25,7 @@
 
 using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 namespace XDay.UtilityAPI.Editor
 {
@@ -34,6 +35,33 @@ namespace XDay.UtilityAPI.Editor
         static void Add()
         {
             Run("Assets/XDay");
+            Run("Tools/XDay/XDay");
+        }
+
+        [MenuItem("XDay/Other/Recompile")]
+        static void Recompile()
+        {
+            UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation(UnityEditor.Compilation.RequestScriptCompilationOptions.CleanBuildCache);
+        }
+
+        [MenuItem("XDay/Other/Open Log Folder")]
+        static void OpenLogFolder()
+        {
+            EditorHelper.ShowInExplorer($"{Application.persistentDataPath}/XDayLog");
+        }
+
+        [MenuItem("XDay/Other/Show Selected Object World Position")]
+        static void ShowSelectedObjectWorldPosition()
+        {
+            var obj = Selection.activeGameObject;
+            if (obj == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Select game object!", "OK");
+            }
+            else
+            {
+                EditorUtility.DisplayDialog("", $"World position is {obj.transform.position}", "OK");
+            }
         }
 
         private static void Run(string dir)
@@ -67,7 +95,8 @@ namespace XDay.UtilityAPI.Editor
                 filePath.IndexOf("ThirdParty") >= 0 ||
                 filePath.IndexOf("FastNoiseLite") >= 0 ||
                 filePath.IndexOf("CounterModeCryptoTransform") >= 0 ||
-                filePath.IndexOf("FastPriorityQueue") >= 0;
+                filePath.IndexOf("FastPriorityQueue") >= 0 ||
+                filePath.IndexOf("KCP\\Protocal") >= 0;
         }
 
         private const string m_CopyrightText =

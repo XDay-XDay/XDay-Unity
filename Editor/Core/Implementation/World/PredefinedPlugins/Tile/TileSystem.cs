@@ -25,8 +25,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using XDay.WorldAPI.Editor;
-using XDay.UtilityAPI;
-using XDay.SerializationAPI;
 using System.Text;
 
 namespace XDay.WorldAPI.Tile.Editor

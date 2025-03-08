@@ -56,7 +56,7 @@ namespace XDay.InputAPI
                     return m_Touches[i];
                 }
             }
-            Debug.Assert(false, $"touch not found at position: {position}");
+            Debug.LogWarning($"touch not found at position: {position}");
             return null;
         }
 

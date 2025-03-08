@@ -34,6 +34,9 @@ namespace XDay.GUIAPI
         Up,
         Enter,
         Exit,
+        Drag,
+        BeginDrag,
+        EndDrag,
     }
 
     [Serializable]

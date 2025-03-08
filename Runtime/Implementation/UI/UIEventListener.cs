@@ -34,7 +34,10 @@ namespace XDay.GUIAPI
         IPointerDownHandler,
         IPointerUpHandler,
         IPointerEnterHandler,
-        IPointerExitHandler
+        IPointerExitHandler,
+        IDragHandler,
+        IBeginDragHandler,
+        IEndDragHandler
     {
         public void OnPointerClick(PointerEventData eventData)
         {
@@ -59,6 +62,21 @@ namespace XDay.GUIAPI
         public void OnPointerUp(PointerEventData eventData)
         {
             m_OnUp?.Invoke(eventData);
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            m_OnDrag?.Invoke(eventData);
+        }
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            m_OnBeginDrag?.Invoke(eventData);
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            m_OnEndDrag?.Invoke(eventData);
         }
 
         public void AddClickEvent(Action<PointerEventData> handler)
@@ -111,10 +129,43 @@ namespace XDay.GUIAPI
             m_OnExit -= handler;
         }
 
+        public void AddDragEvent(Action<PointerEventData> handler)
+        {
+            m_OnDrag += handler;
+        }
+
+        public void RemoveDragEvent(Action<PointerEventData> handler)
+        {
+            m_OnDrag -= handler;
+        }
+
+        public void AddBeginDragEvent(Action<PointerEventData> handler)
+        {
+            m_OnBeginDrag += handler;
+        }
+
+        public void RemoveBeginDragEvent(Action<PointerEventData> handler)
+        {
+            m_OnBeginDrag -= handler;
+        }
+
+        public void AddEndDragEvent(Action<PointerEventData> handler)
+        {
+            m_OnEndDrag += handler;
+        }
+
+        public void RemoveEndDragEvent(Action<PointerEventData> handler)
+        {
+            m_OnEndDrag -= handler;
+        }
+
         private event Action<PointerEventData> m_OnClick;
         private event Action<PointerEventData> m_OnUp;
         private event Action<PointerEventData> m_OnDown;
         private event Action<PointerEventData> m_OnEnter;
         private event Action<PointerEventData> m_OnExit;
+        private event Action<PointerEventData> m_OnDrag;
+        private event Action<PointerEventData> m_OnBeginDrag;
+        private event Action<PointerEventData> m_OnEndDrag;
     }
 }

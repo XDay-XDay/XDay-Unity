@@ -91,8 +91,10 @@ namespace XDay.WorldAPI
         IAssetLoader WorldAssetLoader { get; }
 
         UniTask<IWorld> LoadWorldAsync(string name, Camera camera = null);
+        UniTask<IWorld> LoadWorldAsync(int worldID, Camera camera = null);
         IWorld LoadWorld(string name, Camera camera = null);
         void UnloadWorld(string name);
+        void UnloadWorld(int worldID);
         void LoadWorldRenderer(string name);
         void UnloadWorldRenderer(string name);
         IWorld QueryWorld(int worldID);

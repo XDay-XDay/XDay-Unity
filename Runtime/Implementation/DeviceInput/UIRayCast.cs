@@ -36,13 +36,13 @@ namespace XDay.InputAPI
                 return true;
             }
 
-            if (EventSystem.current == null)
+            if (UnityEngine.EventSystems.EventSystem.current == null)
             {
                 Debug.LogError("No event system!");
                 return false;
             }
 
-            var module = EventSystem.current.currentInputModule as CustomInputModule;
+            var module = UnityEngine.EventSystems.EventSystem.current.currentInputModule as CustomInputModule;
             if (module == null)
             {
                 return RayCastInternal(pos) != null;
@@ -70,12 +70,14 @@ namespace XDay.InputAPI
 
         private static Transform RayCastInternal(Vector2 touchPos)
         {
-            Debug.LogError("Using RayCastInternal");
+#if UNITY_EDITOR
+            Debug.LogWarning("Using RayCastInternal");
+#endif
 
-            if (m_EventSystem != EventSystem.current)
+            if (m_EventSystem != UnityEngine.EventSystems.EventSystem.current)
             {
                 m_PointerData = null;
-                m_EventSystem = EventSystem.current;
+                m_EventSystem = UnityEngine.EventSystems.EventSystem.current;
             }
 
             if (m_EventSystem != null)
@@ -98,7 +100,7 @@ namespace XDay.InputAPI
             return null;
         }
 
-        private static EventSystem m_EventSystem;
+        private static UnityEngine.EventSystems.EventSystem m_EventSystem;
         private static List<RaycastResult> m_RayCastResults = new();
         private static PointerEventData m_PointerData;
     }

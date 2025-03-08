@@ -31,6 +31,7 @@ namespace XDay.GUIAPI.Editor
     public class UIBinderConfig : ScriptableObject
     {
         public string CodeOutputPath;
+        public string DefaultNamespace;
 
         public bool IsValid()
         {

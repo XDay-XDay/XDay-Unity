@@ -26,7 +26,7 @@ namespace XDay.TestGame
 {
     internal class StateMainMenu : State
     {
-        public override void OnEnter()
+        public override void OnEnter(object args)
         {
             Global.XDayContext.WindowManager.Open<UIMainMenuWindow>();
         }

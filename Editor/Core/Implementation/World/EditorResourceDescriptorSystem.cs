@@ -67,7 +67,7 @@ namespace XDay.WorldAPI.Editor
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
-            RemoveExpiredDescriptors();
+            //RemoveExpiredDescriptors();
 
             serializer.WriteInt32(m_Version, "EditorResourceDescriptorSystem.Version");
 

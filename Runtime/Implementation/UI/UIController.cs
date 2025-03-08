@@ -28,10 +28,13 @@ namespace XDay.GUIAPI
     public abstract class UIControllerBase
     {
         public abstract void SetData(object data);
+        public abstract object GetData();
         public abstract void Load();
         public abstract void OnDestroy();
         public abstract void Show();
         public abstract void Hide();
+        public abstract void Update(float dt);
+        public abstract void Refresh();
     }
 
     public class UIController<View> : UIControllerBase where View : UIView
@@ -48,12 +51,12 @@ namespace XDay.GUIAPI
         public override void Load()
         {
             OnLoad();
-            Refresh();
         }
 
         public override void Show()
         {
             OnShow();
+            Refresh();
         }
 
         public override void Hide()
@@ -69,15 +72,21 @@ namespace XDay.GUIAPI
             Refresh();
         }
 
-        public void Refresh()
+        public override object GetData()
+        {
+            return m_Data;
+        }
+
+        public override void Refresh()
         {
             if (m_View.IsLoaded)
             {
+                m_View.Refresh();
                 OnRefresh();
             }
         }
 
-        public void Update(float dt)
+        public override void Update(float dt)
         {
             OnUpdate(dt);
         }

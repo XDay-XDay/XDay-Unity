@@ -222,16 +222,30 @@ namespace XDay.UtilityAPI
             AssetDatabase.Refresh();
         }
 
-        public static string ObjectField<T>(string title, string assetPath, System.Action onValueChange = null, string tooltip = null, bool allowSceneObjects = false) where T : UnityEngine.Object
+        public static string ObjectField<T>(string title, string assetPath, float maxWidth = 0, System.Action onValueChange = null, string tooltip = null, bool allowSceneObjects = false) where T : UnityEngine.Object
         {
             T asset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
             if (string.IsNullOrEmpty(tooltip))
             {
-                asset = EditorGUILayout.ObjectField(title, asset, typeof(T), allowSceneObjects) as T;
+                if (maxWidth > 0)
+                {
+                    asset = EditorGUILayout.ObjectField(title, asset, typeof(T), allowSceneObjects, GUILayout.MinWidth(maxWidth)) as T;
+                }
+                else
+                {
+                    asset = EditorGUILayout.ObjectField(title, asset, typeof(T), allowSceneObjects) as T;
+                }
             }
             else
             {
-                asset = EditorGUILayout.ObjectField(new GUIContent(title, tooltip), asset, typeof(T), allowSceneObjects) as T;
+                if (maxWidth > 0)
+                {
+                    asset = EditorGUILayout.ObjectField(new GUIContent(title, tooltip), asset, typeof(T), allowSceneObjects, GUILayout.MinWidth(maxWidth)) as T;
+                }
+                else
+                {
+                    asset = EditorGUILayout.ObjectField(new GUIContent(title, tooltip), asset, typeof(T), allowSceneObjects) as T;
+                }
             }
             var newPath = AssetDatabase.GetAssetPath(asset);
             if (newPath != assetPath && onValueChange != null)
@@ -478,6 +492,30 @@ namespace XDay.UtilityAPI
             Handles.DrawWireArc(center, Vector3.forward, Vector3.right, 360, radius);
 
             Handles.EndGUI();
+        }
+
+        public static bool Foldout(bool state) 
+        {
+            return EditorGUILayout.Toggle(state, EditorStyles.foldout, GUILayout.Width(15));
+        }
+
+        public static void ImportTextureAsSprite(string texturePath)
+        {
+            TextureImporter textureImporter = AssetImporter.GetAtPath(texturePath) as TextureImporter;
+
+            if (textureImporter != null)
+            {
+                textureImporter.textureType = TextureImporterType.Sprite;
+                textureImporter.spriteImportMode = SpriteImportMode.Single;
+                textureImporter.spritePixelsPerUnit = 100;
+                textureImporter.mipmapEnabled = false;
+                textureImporter.filterMode = FilterMode.Bilinear;
+                AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceUpdate);
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("import failed!");
+            }
         }
     }
 }

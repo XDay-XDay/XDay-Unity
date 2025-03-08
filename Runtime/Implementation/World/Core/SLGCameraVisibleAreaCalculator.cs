@@ -50,7 +50,7 @@ namespace XDay.WorldAPI
                 {
                     m_LastCameraPos = cameraPos;
                     m_VisibleArea = GetVisibleAreas(camera);
-                    m_ExpandedArea = Helper.ExpandRect(m_VisibleArea, new Vector2(0, 0));
+                    m_ExpandedArea = Helper.ExpandRect(m_VisibleArea, new Vector2(10, 10));
                 }
             }
         }
