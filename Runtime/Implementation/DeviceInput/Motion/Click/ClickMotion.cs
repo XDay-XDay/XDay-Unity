@@ -42,14 +42,14 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            var touchCount = m_Device.SceneTouchCount;
+            var touchCount = m_Device.ConfigurableTouchCount;
             if (touchCount != 1)
             {
                 Reset(touchCount == 0);
                 return false;
             }
 
-            var touch = m_Device.GetSceneTouch(0);
+            var touch = m_Device.GetConfigurableTouch(0);
             if (touch.State == TouchState.Start)
             {
                 m_Start = touch.Current;

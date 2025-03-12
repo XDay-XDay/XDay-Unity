@@ -154,7 +154,12 @@ namespace XDay
             return new FixedPoint(v1.m_ScaledValue << bit);
         }
 
-        public override bool Equals(object obj)
+        public readonly int CompareTo(FixedPoint p)
+        {
+            return m_ScaledValue.CompareTo(p.m_ScaledValue);
+        }
+
+        public readonly override bool Equals(object obj)
         {
             if (obj == null || obj is not FixedPoint o)
             {
@@ -164,12 +169,12 @@ namespace XDay
             return o.m_ScaledValue == m_ScaledValue;
         }
 
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             return m_ScaledValue.GetHashCode();
         }
 
-        public override string ToString()
+        public readonly override string ToString()
         {
             return FloatValue.ToString();
         }

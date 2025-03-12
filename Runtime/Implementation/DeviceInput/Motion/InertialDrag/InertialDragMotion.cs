@@ -59,13 +59,13 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            if (m_Device.TouchCountNotStartFromUI != 1)
+            if (m_Device.ConfigurableTouchCount != 1)
             {
-                Reset(m_Device.TouchCountNotStartFromUI == 0);
+                Reset(m_Device.ConfigurableTouchCount == 0);
                 return false;
             }
 
-            var touch = m_Device.GetTouchNotStartFromUI(0);
+            var touch = m_Device.GetConfigurableTouch(0);
             if (m_Device.QueryTouchID(touch.ID) != m_TouchID)
             {
                 Reset(false);

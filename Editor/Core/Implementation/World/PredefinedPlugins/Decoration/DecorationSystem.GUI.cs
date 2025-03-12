@@ -44,6 +44,30 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_CreateMode = (ObjectCreateMode)(((int)m_CreateMode + 1) % 2);
             }
 
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Q)
+            {
+                m_Rotation += m_RotationDelta;
+            }
+
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.A)
+            {
+                m_Rotation -= m_RotationDelta;
+            }
+
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.W)
+            {
+                m_Scale += m_ScaleDelta;
+            }
+
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.E)
+            {
+                m_Scale -= m_ScaleDelta;
+                if (m_Scale < m_MinScale)
+                {
+                    m_Scale = m_MinScale;
+                }
+            }
+
             if (m_CreateMode == ObjectCreateMode.Multiple)
             {
                 ActionCreateMultipleObjects();
@@ -105,7 +129,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                         Debug.Assert(false, "todo");
                     }
 
-                    CreateObjects(points, m_CoordinateGenerateSetting.Random);
+                    CreateObjects(points, m_Rotation, m_Scale, m_CoordinateGenerateSetting.Random);
                 }
             }
         }
@@ -206,6 +230,9 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                 m_HeightField = new FloatField("Height", "", 80);
                 m_Controls.Add(m_HeightField);
+
+                m_RotationField = new FloatField("Rotation", "", 100);
+                m_Controls.Add(m_RotationField);
 
                 m_SpaceField = new FloatField("Space", "Minimum distance between objects", 90);
                 m_Controls.Add(m_SpaceField);
@@ -404,8 +431,9 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 m_Indicator.Prefab = AssetDatabase.GetAssetPath(gameObject);
                 m_Indicator.Visible = true;
-                m_Indicator.Rotation = gameObject.transform.rotation;
+                m_Indicator.Rotation = Quaternion.Euler(0, m_Rotation, 0) * gameObject.transform.rotation;
                 m_Indicator.Position = worldPosition;
+                m_Indicator.Scale = m_Scale * gameObject.transform.localScale;
             }
         }
 
@@ -581,6 +609,11 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             var shape = (GeometryType)m_GeometryPopup.Render(m_GeometryType, 40);
             SetGeometryType(shape);
+
+            if (m_CreateMode == ObjectCreateMode.Single)
+            {
+                m_Rotation = m_RotationField.Render(m_Rotation, 40);
+            }
 
             var enabled = true;
             if (m_GeometryType == GeometryType.Line && m_CoordinateGenerateSetting.LineEquidistant)
@@ -783,7 +816,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                         UndoSystem.NextGroup();
                     }
 
-                    CreateObjects(new List<Vector3>() { worldPosition}, false);
+                    CreateObjects(new List<Vector3>() { worldPosition}, m_Rotation, m_Scale, false);
                 }
             }
         }
@@ -824,7 +857,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             return GeometryCoordinateGenerator.GenerateInRectangle(m_CoordinateGenerateSetting.Count, center, m_CoordinateGenerateSetting.RectWidth, m_CoordinateGenerateSetting.RectHeight, m_CoordinateGenerateSetting.BorderSize, m_CoordinateGenerateSetting.Space);
         }
 
-        private void CreateObjects(List<Vector3> coordinates, bool random)
+        private void CreateObjects(List<Vector3> coordinates, float rotation, float scale, bool random)
         {
             if (coordinates != null)
             {
@@ -838,7 +871,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                     if (!string.IsNullOrEmpty(prefabPath))
                     {
-                        var decoration = CreateObject(World.AllocateObjectID(), prefabPath, position, Quaternion.identity, Vector3.one);
+                        var decoration = CreateObject(World.AllocateObjectID(), prefabPath, position, Quaternion.Euler(0, rotation, 0), Vector3.one * scale);
                         UndoSystem.CreateObject(decoration, World.ID, DecorationDefine.ADD_DECORATION_NAME, ID, CurrentLOD);
                     }
                 }
@@ -907,7 +940,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 coordinates = ActionClickCreate();
             }
 
-            CreateObjects(coordinates, m_CoordinateGenerateSetting.Random);
+            CreateObjects(coordinates, m_Rotation, m_Scale, m_CoordinateGenerateSetting.Random);
         }
 
         internal void SyncObjectTransforms()
@@ -976,6 +1009,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private FloatField m_WidthField;
         private PluginLODSystemEditor m_PluginLODSystemEditor = new();
         private FloatField m_HeightField;
+        private FloatField m_RotationField;
         private Action m_Action = Action.Select;
         private GUIStyle m_LabelStyle;
         private ImageButton m_ButtonAddObjectsToActiveLOD;
@@ -986,9 +1020,14 @@ namespace XDay.WorldAPI.Decoration.Editor
         private PolygonTool m_PolygonTool = new();
         private GeometryType m_GeometryType = GeometryType.Circle;
         private LineTool m_LineTool = new();
+        private float m_Rotation = 0;
+        private float m_Scale = 1;
         private bool m_Show = true;
         private Vector3 m_LastGenerationCenter = new(-1000, -1000, -1000);
         private const float m_MinSpace = 0.05f;
+        private float m_RotationDelta = 10f;
+        private float m_ScaleDelta = 0.2f;
+        private const float m_MinScale = 0.1f;
     }
 }
 

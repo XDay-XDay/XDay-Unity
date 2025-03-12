@@ -29,8 +29,20 @@ namespace XDay.InputAPI
 {
     internal class DeviceInput : IDeviceInput
     {
+        public bool UseConfigurableTouchAsSceneTouch { get => m_UseConfigurableTouchAsSceneTouch; set => m_UseConfigurableTouchAsSceneTouch = value; }
         public int TouchCount => m_Device.TouchCount;
         public int SceneTouchCount => m_Device.SceneTouchCount;
+        public int ConfigurableTouchCount
+        {
+            get
+            {
+                if (m_UseConfigurableTouchAsSceneTouch)
+                {
+                    return SceneTouchCount;
+                }
+                return UITouchCount;
+            }
+        }
         public int UITouchCount => m_Device.UITouchCount;
         public int TouchCountNotStartFromUI => m_Device.TouchCountNotStartFromUI;
         public int SceneTouchCountNotStartFromUI => m_Device.SceneTouchCountNotStartFromUI;
@@ -103,6 +115,15 @@ namespace XDay.InputAPI
         public ITouch GetSceneTouch(int index)
         {
             return m_Device.GetSceneTouch(index);
+        }
+
+        public ITouch GetConfigurableTouch(int index)
+        {
+            if (m_UseConfigurableTouchAsSceneTouch)
+            {
+                return GetSceneTouch(index);
+            }
+            return GetUITouch(index);
         }
 
         public TouchID QueryTouchID(int touchID)
@@ -181,6 +202,7 @@ namespace XDay.InputAPI
         private IDevice m_Device;
         private MotionSystem m_MotionSystem = new();
         private List<Action> m_VoidSpaceClickCallbacks = new();
+        private bool m_UseConfigurableTouchAsSceneTouch = true;
     }
 
     internal interface IDevice

@@ -30,6 +30,16 @@ namespace XDay
         public static FixedPoint Pi = new FixedPoint(MathF.PI);
         public static FixedPoint TwoPi = new FixedPoint(MathF.PI) * 2;
 
+        public static FixedPoint ToAngle(FixedPoint radian)
+        {
+            return radian * 180 / Pi;
+        }
+
+        public static FixedPoint ToRadian(FixedPoint angle)
+        {
+            return angle * Pi / 180;
+        }
+
         //v is between [-1, 1]
         public static FixedAngle ACos(FixedPoint v)
         {
@@ -67,6 +77,14 @@ namespace XDay
                 radian -= TwoPi;
             }
             return FixedSinTable.Sample(radian / TwoPi);
+        }
+
+        public static FixedVector3 Rotate(FixedVector3 pos, FixedPoint rotationYAngle)
+        {
+            rotationYAngle = ToRadian(rotationYAngle);
+            var x = pos.X * Cos(rotationYAngle) + pos.Z * Sin(rotationYAngle);
+            var z = -pos.X * Sin(rotationYAngle) + pos.Z * Cos(rotationYAngle);
+            return new FixedVector3(x, pos.Y, z);
         }
 
         public static FixedPoint Sqrt(FixedPoint v, int iterateCount = 10)

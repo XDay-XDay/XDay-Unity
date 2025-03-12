@@ -51,6 +51,7 @@ namespace XDay.WorldAPI.Editor
         }
         public Vector3 Position { get => m_Mesh.transform.position; set => m_Mesh.transform.position = value; }
         public Quaternion Rotation { get => m_Mesh.transform.rotation; set => m_Mesh.transform.rotation = value; }
+        public Vector3 Scale { get => m_Mesh.transform.localScale; set => m_Mesh.transform.localScale = value; }
         public bool Visible
         {
             get => m_Mesh == null ? false : m_Mesh.activeInHierarchy;

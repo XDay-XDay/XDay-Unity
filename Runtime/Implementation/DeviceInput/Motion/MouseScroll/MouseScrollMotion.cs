@@ -46,13 +46,13 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            if (m_Device.SceneTouchCount != 1)
+            if (m_Device.ConfigurableTouchCount != 1)
             {
                 Reset(true);
                 return false;
             }
 
-            var touch = m_Device.GetSceneTouch(0);
+            var touch = m_Device.GetConfigurableTouch(0);
             if (touch.State == TouchState.Start)
             {
                 m_Delta = touch.Scroll;

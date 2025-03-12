@@ -946,6 +946,11 @@ namespace XDay.UtilityAPI
             textComp.SetCharArray(handler.Builder.Buffer, 0, handler.Builder.Length);
         }
 
+        public static float EaseInExpo(float v)
+        {
+            return v == 0 ? 0 : Mathf.Pow(2, 10 * v - 10);
+        }
+
         private const double m_DegToRad = 0.0174532924;
     }
 }

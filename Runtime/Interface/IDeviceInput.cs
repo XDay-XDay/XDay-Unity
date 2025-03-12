@@ -85,6 +85,8 @@ namespace XDay.InputAPI
         /// </summary>
         event Action EventAnyTouchBegin;
 
+        bool UseConfigurableTouchAsSceneTouch { get; set; }
+
         /// <summary>
         /// number of touches
         /// </summary>
@@ -94,6 +96,11 @@ namespace XDay.InputAPI
         /// number of touches which are on scene elements now
         /// </summary>
         int SceneTouchCount { get; }
+
+        /// <summary>
+        /// scene touch or ui touch count
+        /// </summary>
+        int ConfigurableTouchCount { get; }
 
         /// <summary>
         /// touch currently on UI elements
@@ -208,6 +215,7 @@ namespace XDay.InputAPI
         ITouch QueryTouchAtPosition(Vector2 position);
         ITouch GetSceneTouchNotStartFromUI(int index);
         ITouch GetSceneTouch(int index);
+        ITouch GetConfigurableTouch(int index);
         ITouch GetTouchNotStartFromUI(int index);
         ITouch GetUITouch(int index);
         TouchID QueryTouchID(int touchID);
