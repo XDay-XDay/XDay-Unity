@@ -25,7 +25,6 @@ using UnityEngine;
 
 namespace XDay.WorldAPI
 {
-    public delegate void LODChangeCallback(int oldLOD, int newLOD);
     public delegate void LODCountChangeCallback(int oldCount, int newCount);
 
     [XDaySerializableClass("PluginLODSystem")]
@@ -162,7 +161,7 @@ namespace XDay.WorldAPI
                 {
                     changed = true;
 
-                    EventLODChanged?.Invoke(m_PreviousLOD, m_CurrentLOD);
+                    EventLODChanged?.Invoke(m_CurrentLOD, newLOD);
 
                     m_PreviousLOD = m_CurrentLOD;
                     m_CurrentLOD = newLOD;

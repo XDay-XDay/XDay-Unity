@@ -421,7 +421,7 @@ namespace XDay.UtilityAPI
 
             if (bounds.extents == Vector3.zero)
             {
-                Debug.LogError("bounds is empty");
+                Debug.LogWarning("bounds is empty");
             }
             return bounds;
         }

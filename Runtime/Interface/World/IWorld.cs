@@ -60,6 +60,8 @@ namespace XDay.WorldAPI
         void Update();
     }
 
+    public delegate void LODChangeCallback(int oldLOD, int newLOD);
+
     public interface IWorld
     {
         int ID { get; }
@@ -83,6 +85,8 @@ namespace XDay.WorldAPI
         T QueryPlugin<T>(string name) where T : class, IWorldPlugin;
         List<T> QueryPlugins<T>() where T : class, IWorldPlugin;
         IDeserializer QueryGameDataDeserializer(int worldID, string gameDataFileName);
+        void RegisterLODChangeEvent(LODChangeCallback callback);
+        void UnregisterLODChangeEvent(LODChangeCallback callback);
     }
 
     public interface IWorldManager

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -31,24 +31,29 @@ namespace XDay.WorldAPI.LogicObject.Editor
     internal class LogicObject : WorldObject
     {
         public IEditorResourceDescriptor ResourceDescriptor => m_ResourceDescriptor.ToObject<IEditorResourceDescriptor>();
-        public override Vector3 Scale => m_Scale;
-        public override Quaternion Rotation => m_Rotation;
-        public override Vector3 Position => m_Position;
+        public override Vector3 Scale => m_EditScale.Mult(PrefabScale);
+        public override Quaternion Rotation => m_EditRotation * PrefabRotation;
+        public override Vector3 Position => m_EditPosition + PrefabPosition;
+        public Vector3 PrefabScale => (ResourceDescriptor != null && ResourceDescriptor.Prefab != null) ? ResourceDescriptor.Prefab.transform.localScale : Vector3.one;
+        public Quaternion PrefabRotation => (ResourceDescriptor != null && ResourceDescriptor.Prefab != null) ? ResourceDescriptor.Prefab.transform.rotation : Quaternion.identity;
+        public Vector3 PrefabPosition => (ResourceDescriptor != null && ResourceDescriptor.Prefab != null) ? ResourceDescriptor.Prefab.transform.position : Vector3.zero;
         public override string TypeName => "EditorLogicObject";
         public string Name { get => m_Name; set => m_Name = value; }
+        public LogicObjectGroup Group => World.QueryObject<LogicObjectGroup>(m_Group.ObjectID);
 
         public LogicObject()
         {
         }
 
-        public LogicObject(int objectID, int objectIndex, Vector3 position, Quaternion rotation, Vector3 scale, IResourceDescriptor descriptor)
+        public LogicObject(int objectID, int objectIndex, Vector3 editPosition, Quaternion editRotation, Vector3 editScale, IResourceDescriptor descriptor, LogicObjectGroup group)
             : base(objectID, objectIndex)
         {
-            m_Position = position;
-            m_Rotation = rotation;
-            m_Scale = scale;
+            m_EditPosition = editPosition;
+            m_EditRotation = editRotation;
+            m_EditScale = editScale;
             m_ResourceDescriptor = new WorldObjectWeakRef(descriptor);
             m_Name = descriptor != null ? Helper.GetPathName(descriptor.GetPath(0),false) : "";
+            m_Group = new(group);
         }
 
         public override void Init(IWorld world)
@@ -67,6 +72,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
             base.Uninit();
 
             m_ResourceDescriptor = null;
+            m_Group = null;
         }
 
         public override void EditorDeserialize(IDeserializer deserializer, string label)
@@ -74,11 +80,15 @@ namespace XDay.WorldAPI.LogicObject.Editor
             base.EditorDeserialize(deserializer, label);
             var version = deserializer.ReadInt32("LogicObject.Version");
             m_Enabled = deserializer.ReadBoolean("Is Enabled");
-            m_Position = deserializer.ReadVector3("Position");
-            m_Rotation = deserializer.ReadQuaternion("Rotation");
-            m_Scale = deserializer.ReadVector3("Scale");
+            m_EditPosition = deserializer.ReadVector3("Edit Position");
+            m_EditRotation = deserializer.ReadQuaternion("Edit Rotation");
+            m_EditScale = deserializer.ReadVector3("Edit Scale");
             m_ResourceDescriptor = new WorldObjectWeakRef(deserializer.ReadInt32("Resource Descriptor"));
             m_Name = deserializer.ReadString("Name");
+            if (version >= 2)
+            {
+                m_Group = new WorldObjectWeakRef(deserializer.ReadInt32("Group"));
+            }
         }
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -86,11 +96,12 @@ namespace XDay.WorldAPI.LogicObject.Editor
             base.GameSerialize(serializer, label, converter);
             serializer.WriteInt32(m_Version, "LogicObject.Version");
             serializer.WriteBoolean(m_Enabled, "Is Enabled");
-            serializer.WriteVector3(m_Position, "Position");
-            serializer.WriteQuaternion(m_Rotation, "Rotation");
-            serializer.WriteVector3(m_Scale, "Scale");
+            serializer.WriteVector3(m_EditPosition, "Edit Position");
+            serializer.WriteQuaternion(m_EditRotation, "Edit Rotation");
+            serializer.WriteVector3(m_EditScale, "Edit Scale");
             serializer.WriteObjectID(m_ResourceDescriptor.ObjectID, "Resource Descriptor", converter);
             serializer.WriteString(m_Name, "Name");
+            serializer.WriteObjectID(m_Group.ObjectID, "Group", converter);
         }
 
         public override bool SetAspect(int objectID, string name, IAspect aspect)
@@ -108,19 +119,19 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
             if (name == LogicObjectDefine.ROTATION_NAME)
             {
-                m_Rotation = aspect.GetQuaternion();
+                m_EditRotation = aspect.GetQuaternion() * Quaternion.Inverse(PrefabRotation);
                 return true;
             }
 
             if (name == LogicObjectDefine.SCALE_NAME)
             {
-                m_Scale = aspect.GetVector3();
+                m_EditScale = aspect.GetVector3().Div(PrefabScale);
                 return true;
             }
 
             if (name == LogicObjectDefine.POSITION_NAME)
             {
-                m_Position = aspect.GetVector3();
+                m_EditPosition = aspect.GetVector3() - PrefabPosition;
                 return true;
             }
 
@@ -173,10 +184,11 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
         private bool m_Enabled = true;
         private WorldObjectWeakRef m_ResourceDescriptor;
-        private Vector3 m_Position;
-        private Quaternion m_Rotation;
-        private Vector3 m_Scale;
+        private Vector3 m_EditPosition;
+        private Quaternion m_EditRotation;
+        private Vector3 m_EditScale;
         private string m_Name;
-        private const int m_Version = 1;
+        private const int m_Version = 2;
+        private WorldObjectWeakRef m_Group;
     }
 }

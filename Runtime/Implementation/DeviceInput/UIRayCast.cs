@@ -71,7 +71,7 @@ namespace XDay.InputAPI
         private static Transform RayCastInternal(Vector2 touchPos)
         {
 #if UNITY_EDITOR
-            Debug.LogWarning("Using RayCastInternal");
+            //Debug.LogWarning("Using RayCastInternal");
 #endif
 
             if (m_EventSystem != UnityEngine.EventSystems.EventSystem.current)

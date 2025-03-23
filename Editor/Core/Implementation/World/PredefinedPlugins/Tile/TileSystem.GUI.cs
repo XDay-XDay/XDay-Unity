@@ -118,6 +118,28 @@ namespace XDay.WorldAPI.Tile.Editor
 
         protected override void SceneGUISelectedInternal()
         {
+            var evt = Event.current;
+            if (evt.type == EventType.KeyDown && evt.shift == false)
+            {
+                if (evt.keyCode == KeyCode.Alpha1)
+                {
+                    SetAction(Action.Select);
+                }
+                else if (evt.keyCode == KeyCode.Alpha2)
+                {
+                    SetAction(Action.PaintTexture);
+                }
+                else if (evt.keyCode == KeyCode.Alpha3)
+                {
+                    SetAction(Action.SetMaterial);
+                }
+                else if (evt.keyCode == KeyCode.Alpha4)
+                {
+                    SetAction(Action.SetTile);
+                }
+                evt.Use();
+            }
+
             m_Indicator.Visible = false;
             switch (m_Action)
             {

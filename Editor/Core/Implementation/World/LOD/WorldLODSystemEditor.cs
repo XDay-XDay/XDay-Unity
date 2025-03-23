@@ -78,6 +78,8 @@ namespace XDay.WorldAPI.Editor
                 }
 
                 EditorGUILayout.EndHorizontal();
+
+                lod.Altitude = EditorGUILayout.FloatField(new GUIContent("Altitude", "LOD Switch Altitude"), lod.Altitude);
             }
         }
 

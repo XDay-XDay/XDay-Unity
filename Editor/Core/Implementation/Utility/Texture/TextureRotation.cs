@@ -71,7 +71,7 @@ namespace XDay.UtilityAPI.Editor
             m_BakeCamera = gameObject.AddComponent<Camera>();
             m_BakeCamera.clearFlags = CameraClearFlags.SolidColor;
             m_BakeCamera.transform.position = new Vector3(0, 10.0f, 0);
-            m_BakeCamera.cullingMask = LayerMask.GetMask(m_BakeObjectLayerName);
+            //m_BakeCamera.cullingMask = LayerMask.GetMask(m_BakeObjectLayerName);
             m_BakeCamera.backgroundColor = new Color32(0, 0, 0, 0);
             m_BakeCamera.orthographic = true;
             m_BakeCamera.transform.LookAt(Vector3.zero, worldUp: new Vector3(0, 0, -1.0f));
@@ -79,7 +79,7 @@ namespace XDay.UtilityAPI.Editor
             Helper.HideGameObject(gameObject);
 
             m_Quad = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            m_Quad.layer = LayerMask.NameToLayer(m_BakeObjectLayerName);
+            //m_Quad.layer = LayerMask.NameToLayer(m_BakeObjectLayerName);
             m_Quad.DestroyComponent<UnityEngine.Collider>();
             m_Quad.SetActive(false);
             Helper.HideGameObject(m_Quad);
@@ -156,7 +156,7 @@ namespace XDay.UtilityAPI.Editor
         }
 
         private const int m_InvalidTextureSize = 16;
-        private const string m_BakeObjectLayerName = "Bake Texture";
+        //private const string m_BakeObjectLayerName = "Bake Texture";
         private Camera m_BakeCamera;
         private GameObject m_Quad;
         private Material m_AlphaMaterial;

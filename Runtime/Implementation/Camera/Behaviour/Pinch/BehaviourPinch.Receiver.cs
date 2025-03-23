@@ -35,6 +35,7 @@ namespace XDay.CameraAPI
             public Receiver(CameraManipulator manipulator)
                 : base(manipulator)
             {
+                m_ZoomFactorUpdater = new(manipulator);
             }
 
             protected override BehaviourState UpdateInternal(CameraTransform pos)

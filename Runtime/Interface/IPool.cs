@@ -22,21 +22,26 @@
  */
 
 using System;
-using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace XDay.UtilityAPI
 {
     public interface IGameObjectPool
     {
-        static IGameObjectPool Create(Transform parent, Func<string, GameObject> createFunc, Action<string, GameObject> returnToPoolFunc = null, bool hideRoot = true)
+        static IGameObjectPool Create(Transform parent, 
+            Func<string, GameObject> createFunc,
+            Func<string, UniTask<GameObject>> createFuncAsync,
+            Action<string, GameObject> returnToPoolFunc = null, bool hideRoot = true)
         {
-            return new GameObjectPool(parent, createFunc, returnToPoolFunc, hideRoot);
+            return new GameObjectPool(parent, createFunc, createFuncAsync, returnToPoolFunc, hideRoot);
         }
 
         void OnDestroy();
 
+        GameObject TryGet(string path);
         GameObject Get(string path);
+        UniTask<GameObject> GetAsync(string path);
         void Release(string path, GameObject obj);
     }
 }

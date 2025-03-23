@@ -131,6 +131,16 @@ namespace XDay.WorldAPI
             return false;
         }
 
+        public override void RegisterLODChangeEvent(LODChangeCallback callback)
+        {
+            m_PluginLODSystem.EventLODChanged += callback;
+        }
+
+        public override void UnregisterLODChangeEvent(LODChangeCallback callback)
+        {
+            m_PluginLODSystem.EventLODChanged -= callback;
+        }
+
         private PluginLODSystem m_PluginLODSystem;
         private WorldPluginLoader m_PluginLoader;
         private float m_LastCheckCameraAltitude;

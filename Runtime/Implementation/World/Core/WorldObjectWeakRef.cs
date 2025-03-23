@@ -86,7 +86,7 @@ namespace XDay.WorldAPI
             var obj = m_World.QueryObject<T>(m_ObjectID);
             if (obj == null)
             {
-                Debug.LogError("Invalid ref");
+                Debug.LogError($"Invalid ref: {m_ObjectID}");
             }
             return obj;
         }

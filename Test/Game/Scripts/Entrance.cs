@@ -33,7 +33,7 @@ namespace XDay.TestGame
         private void Start()
         {
             Application.runInBackground = true;
-            Global.XDayContext = IXDayContext.Create("Assets/Resource/World/WorldSetupManager.asset", new GameAssetLoader(), true);
+            Global.XDayContext = IXDayContext.Create("Assets/Resource/World/WorldSetupManager.asset", new GameAssetLoader(), true, true);
             Global.StateManager = IStateManager.Create();
             var stateMainMenu = Global.StateManager.CreateState<StateMainMenu>();
             var stateLoading = Global.StateManager.CreateState<StateLoadingGame>();

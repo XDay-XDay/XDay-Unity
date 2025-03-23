@@ -185,6 +185,8 @@ namespace XDay.CameraAPI
         /// </summary>
         float MaxAltitude { get; set; }
 
+        Vector3 Forward { get; }
+
         void OnDestroy();
 
         /// <summary>

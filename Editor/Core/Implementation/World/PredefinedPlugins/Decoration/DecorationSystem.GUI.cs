@@ -39,33 +39,38 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
             var evt = Event.current;
 
-            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.T)
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.T && evt.shift == false)
             {
                 m_CreateMode = (ObjectCreateMode)(((int)m_CreateMode + 1) % 2);
+                evt.Use();
             }
 
-            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Q)
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Q && evt.shift == false)
             {
                 m_Rotation += m_RotationDelta;
+                evt.Use();
             }
 
-            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.A)
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.W && evt.shift == false)
             {
                 m_Rotation -= m_RotationDelta;
+                evt.Use();
             }
 
-            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.W)
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.A && evt.shift == false)
             {
                 m_Scale += m_ScaleDelta;
+                evt.Use();
             }
 
-            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.E)
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.S && evt.shift == false)
             {
                 m_Scale -= m_ScaleDelta;
                 if (m_Scale < m_MinScale)
                 {
                     m_Scale = m_MinScale;
                 }
+                evt.Use();
             }
 
             if (m_CreateMode == ObjectCreateMode.Multiple)
@@ -136,17 +141,22 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private void ActionDeleteObject()
         {
+            DrawRemoveRange();
+
             var evt = Event.current;
 
             if (evt.button == 0 && (evt.type == EventType.MouseDown || evt.type == EventType.MouseDrag))
             {
-                UndoSystem.NextGroup();
-            }
+                if (evt.type == EventType.MouseDown)
+                {
+                    UndoSystem.NextGroup();
+                }
 
-            var worldPosition = Helper.GUIRayCastWithXZPlane(evt.mousePosition, World.CameraManipulator.Camera);
-            foreach (var obj in QueryObjectsInRectangle(worldPosition, m_RemoveRange * 2, m_RemoveRange * 2))
-            {
-                UndoSystem.DestroyObject(obj, DecorationDefine.REMOVE_DECORATION_NAME, ID);
+                var worldPosition = Helper.GUIRayCastWithXZPlane(evt.mousePosition, World.CameraManipulator.Camera);
+                foreach (var obj in QueryObjectsInRectangle(worldPosition, m_RemoveRange * 2, m_RemoveRange * 2))
+                {
+                    UndoSystem.DestroyObject(obj, DecorationDefine.REMOVE_DECORATION_NAME, ID);
+                }
             }
         }
 
@@ -166,6 +176,28 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         protected override void SceneViewControlInternal(Rect sceneViewRect)
         {
+            var evt = Event.current;
+            if (evt.type == EventType.KeyDown && evt.shift == false)
+            {
+                if (evt.keyCode == KeyCode.Alpha1)
+                {
+                    ChangeOperation(Action.Select);
+                }
+                else if (evt.keyCode == KeyCode.Alpha2)
+                {
+                    ChangeOperation(Action.EditLOD);
+                }
+                else if (evt.keyCode == KeyCode.Alpha3)
+                {
+                    ChangeOperation(Action.CreateObject);
+                }
+                else if (evt.keyCode == KeyCode.Alpha4)
+                {
+                    ChangeOperation(Action.DeleteObject);
+                }
+                evt.Use();
+            }
+
             CreateUIControls();
 
             EditorGUILayout.BeginHorizontal();
@@ -233,6 +265,9 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                 m_RotationField = new FloatField("Rotation", "", 100);
                 m_Controls.Add(m_RotationField);
+
+                m_ScaleField = new FloatField("Scale", "", 100);
+                m_Controls.Add(m_ScaleField);
 
                 m_SpaceField = new FloatField("Space", "Minimum distance between objects", 90);
                 m_Controls.Add(m_SpaceField);
@@ -566,6 +601,8 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 EditorGUILayout.LabelField("Use R key to redo last generation");
                 EditorGUILayout.LabelField("Use T key to toggle Multiple/Single mode");
+                EditorGUILayout.LabelField("Use Q/W key to rotate object");
+                EditorGUILayout.LabelField("Use A/S key to scale object");
             }
 
             if (GetDirtyObjectIDs().Count == 0)
@@ -603,17 +640,30 @@ namespace XDay.WorldAPI.Decoration.Editor
             Handles.color = oldColor;
         }
 
+        private void DrawRemoveRange()
+        {
+            var worldPosition = Helper.GUIRayCastWithXZPlane(Event.current.mousePosition, World.CameraManipulator.Camera);
+            var oldColor = Handles.color;
+            Handles.color = Color.red;
+            if (m_GeometryType == GeometryType.Circle)
+            {
+                Handles.DrawWireDisc(worldPosition, Vector3.up, m_RemoveRange);
+            }
+            Handles.color = oldColor;
+        }
+
         private void ActionAddObject()
         {
+            if (m_CreateMode == ObjectCreateMode.Single)
+            {
+                m_Rotation = m_RotationField.Render(m_Rotation, 50);
+                m_Scale = m_ScaleField.Render(m_Scale, 50);
+            }
+
             GUI.enabled = m_CreateMode == ObjectCreateMode.Multiple;
 
             var shape = (GeometryType)m_GeometryPopup.Render(m_GeometryType, 40);
             SetGeometryType(shape);
-
-            if (m_CreateMode == ObjectCreateMode.Single)
-            {
-                m_Rotation = m_RotationField.Render(m_Rotation, 40);
-            }
 
             var enabled = true;
             if (m_GeometryType == GeometryType.Line && m_CoordinateGenerateSetting.LineEquidistant)
@@ -1010,6 +1060,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private PluginLODSystemEditor m_PluginLODSystemEditor = new();
         private FloatField m_HeightField;
         private FloatField m_RotationField;
+        private FloatField m_ScaleField;
         private Action m_Action = Action.Select;
         private GUIStyle m_LabelStyle;
         private ImageButton m_ButtonAddObjectsToActiveLOD;

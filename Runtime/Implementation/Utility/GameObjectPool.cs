@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 
@@ -30,10 +31,15 @@ namespace XDay.UtilityAPI
 {
     internal class GameObjectPool : IGameObjectPool
     {
-        public GameObjectPool(Transform parent, Func<string, GameObject> createFunc, Action<string, GameObject> actionOnRelease, bool hideRoot)
+        public GameObjectPool(Transform parent, 
+            Func<string, GameObject> createFunc, 
+            Func<string, UniTask<GameObject>> createFuncAsync, 
+            Action<string, GameObject> actionOnRelease, 
+            bool hideRoot)
         {
             m_ActionOnRelease = actionOnRelease;
             m_CreateFunc = createFunc;
+            m_CreateFuncAsync = createFuncAsync;
             m_PoolRoot = new GameObject("GameObjectPool");
             m_PoolRoot.transform.SetParent(parent);
             if (hideRoot)
@@ -63,13 +69,30 @@ namespace XDay.UtilityAPI
             }
         }
 
+        public async UniTask<GameObject> GetAsync(string path)
+        {
+            GameObject result = TryGet(path);
+            if (result == null)
+            {
+                result = await m_CreateFuncAsync(path);
+                if (result != null)
+                {
+                    result.SetActive(true);
+                }
+            }
+            return result;
+        }
+
         public GameObject Get(string path)
         {
-            var result = GetOrCreate(path);
-
-            if (result != null)
+            GameObject result = TryGet(path);
+            if (result == null)
             {
-                result.SetActive(true);
+                result = m_CreateFunc(path);
+                if (result != null)
+                {
+                    result.SetActive(true);
+                }
             }
             return result;
         }
@@ -145,7 +168,7 @@ namespace XDay.UtilityAPI
             }
         }
 
-        private GameObject GetOrCreate(string path)
+        public GameObject TryGet(string path)
         {
             GameObject result = null;
 
@@ -165,7 +188,10 @@ namespace XDay.UtilityAPI
                 m_Pool[path] = objectList;
             }
 
-            result ??= m_CreateFunc(path);
+            if (result != null)
+            {
+                result.SetActive(true);
+            }
 
             return result;
         }
@@ -174,6 +200,7 @@ namespace XDay.UtilityAPI
         private Dictionary<string, List<GameObject>> m_Pool = new();
         private Action<string, GameObject> m_ActionOnRelease;
         private Func<string, GameObject> m_CreateFunc;
+        private Func<string, UniTask<GameObject>> m_CreateFuncAsync;
     }
 }
 

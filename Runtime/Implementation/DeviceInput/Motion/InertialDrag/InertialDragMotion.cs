@@ -24,7 +24,6 @@
 using XDay.UtilityAPI;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace XDay.InputAPI
 {
@@ -42,7 +41,10 @@ namespace XDay.InputAPI
         {
             m_TouchID = touchID;
             m_Camera = camera;
-            m_TouchPool = new ObjectPool<TouchData>(() => { return new TouchData(); }, null, null, null, true, 100);
+            m_TouchPool = IObjectPool<TouchData>.Create(
+                createFunc:() => { 
+                    return new TouchData();
+                }, capacity:100);
         }
 
         protected override void OnReset()
@@ -152,7 +154,7 @@ namespace XDay.InputAPI
         private float m_DragDistance = 0;
         private bool m_TouchStartCaptured = false;
         private List<TouchData> m_TrackedTouches = new(90);
-        private ObjectPool<TouchData> m_TouchPool;
+        private IObjectPool<TouchData> m_TouchPool;
         private float m_MaxTimeInterval = 0.1f;
     }
 }

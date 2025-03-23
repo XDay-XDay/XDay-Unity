@@ -113,6 +113,10 @@ namespace XDay.WorldAPI.Editor
             }
 
             var oldAspect = GetAspect(relayID, obj, aspectName);
+            if (oldAspect == null)
+            {
+                Debug.LogError($"Aspect {aspectName} not found");
+            }
             if (newAspect != oldAspect)
             {
                 var action = new UndoActionAspect(displayName, m_Group, obj.ID, aspectName, oldAspect, newAspect, obj.WorldID, relayID);

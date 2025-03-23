@@ -95,17 +95,4 @@ namespace XDay.GUIAPI
             return "";
         }
     }
-
-#if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(UIMetadataManager))]
-    public class UIMetadataManagerEditor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            GUI.enabled = false;
-            base.OnInspectorGUI();
-            GUI.enabled = true;
-        }
-    }
-#endif
 }

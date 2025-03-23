@@ -56,6 +56,7 @@ namespace XDay.CameraAPI
         public Vector3 RenderPosition => m_Transform.CurrentRenderPosition;
         public Vector3 LogicPosition => m_Transform.CurrentLogicPosition;
         public Vector3 FocusPoint => m_FocusPointClamp.Position;
+        public Vector3 Forward => m_Transform.CurrentRenderRotation * Vector3.forward;
         public float FocalLength => Vector3.Distance(m_Transform.CurrentLogicPosition, FocusPoint);
         public float ZoomFactor => m_Camera.fieldOfView * FocalLength;
         public CameraSetup Setup => m_Setup;

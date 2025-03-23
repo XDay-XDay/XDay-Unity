@@ -43,16 +43,27 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
         public void OnDestroy()
         {
-            foreach (var obj in m_GameObjects.Values)
+            foreach (var obj in m_Objects.Values)
+            {
+                Helper.DestroyUnityObject(obj);
+            }
+
+            foreach (var obj in m_Groups.Values)
             {
                 Helper.DestroyUnityObject(obj);
             }
             Helper.DestroyUnityObject(m_Root);
         }
 
-        public GameObject QueryGameObject(int objectID)
+        public GameObject QueryObject(int objectID)
         {
-            m_GameObjects.TryGetValue(objectID, out var gameObject);
+            m_Objects.TryGetValue(objectID, out var gameObject);
+            return gameObject;
+        }
+
+        public GameObject QueryGroup(int groupID)
+        {
+            m_Groups.TryGetValue(groupID, out var gameObject);
             return gameObject;
         }
 
@@ -71,19 +82,34 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
             if (name == LogicObjectDefine.ROTATION_NAME)
             {
-                QueryGameObject(objectID).transform.rotation = logicObject.Rotation;
+                QueryObject(objectID).transform.rotation = logicObject.Rotation;
                 return;
             }
 
             if (name == LogicObjectDefine.SCALE_NAME)
             {
-                QueryGameObject(objectID).transform.localScale = logicObject.Scale;
+                QueryObject(objectID).transform.localScale = logicObject.Scale;
                 return;
             }
 
             if (name == LogicObjectDefine.POSITION_NAME)
             {
-                QueryGameObject(objectID).transform.position = logicObject.Position;
+                QueryObject(objectID).transform.position = logicObject.Position;
+                return;
+            }
+
+            if (name == LogicObjectDefine.CHANGE_LOGIC_OBJECT_GROUP_NAME)
+            {
+                var group = m_System.World.QueryObject<LogicObjectGroup>(objectID);
+                var groupObject = QueryGroup(objectID);
+                groupObject.name = group.Name;
+                return;
+            }
+
+            if (name == LogicObjectDefine.CHANGE_LOGIC_OBJECT_GROUP_VISIBILITY)
+            {
+                var group = m_System.World.QueryObject<LogicObjectGroup>(objectID);
+                ToggleVisibility(group);
                 return;
             }
 
@@ -94,7 +120,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         {
             if (obj.IsActive)
             {
-                Create(obj, lod);
+                Create(obj, lod, -1);
             }
             else
             {
@@ -102,9 +128,15 @@ namespace XDay.WorldAPI.LogicObject.Editor
             }
         }
 
+        public void ToggleVisibility(LogicObjectGroup group)
+        {
+            var gameObject = QueryGroup(group.ID);
+            gameObject.SetActive(group.IsActive);
+        }
+
         public void Destroy(LogicObject data, int lod, bool destroyGameObject)
         {
-            if (m_GameObjects.TryGetValue(data.ID, out var gameObject))
+            if (m_Objects.TryGetValue(data.ID, out var gameObject))
             {
                 if (destroyGameObject)
                 {
@@ -114,13 +146,20 @@ namespace XDay.WorldAPI.LogicObject.Editor
                 {
                     ReleaseToPool(data, lod, gameObject);
                 }
-                m_GameObjects.Remove(data.ID);
+                m_Objects.Remove(data.ID);
             }
         }
 
-        public void Create(LogicObject obj, int lod)
+        public void DestroyGroup(int groupID)
         {
-            if (m_GameObjects.ContainsKey(obj.ID))
+            var obj = QueryGroup(groupID);
+            Object.DestroyImmediate(obj);
+            m_Groups.Remove(groupID);
+        }
+
+        public void Create(LogicObject obj, int lod, int objectIndex)
+        {
+            if (m_Objects.ContainsKey(obj.ID))
             {
                 return;
             }
@@ -130,15 +169,29 @@ namespace XDay.WorldAPI.LogicObject.Editor
             gameObject.name = obj.Name;
             var transform = gameObject.transform;
             transform.localScale = obj.Scale;
-            transform.localRotation = obj.Rotation;
-            transform.localPosition = obj.Position;
-            transform.SetParent(m_Root.transform, false);
+            transform.SetLocalPositionAndRotation(obj.Position, obj.Rotation);
+            var groupObject = QueryGroup(obj.Group.ID);
+            transform.SetParent(groupObject.transform, false);
+            if (objectIndex >= 0)
+            {
+                transform.SetSiblingIndex(objectIndex);
+            }
 
-            m_GameObjects.Add(obj.ID, gameObject);
+            m_Objects.Add(obj.ID, gameObject);
             var listener = gameObject.AddOrGetComponent<LogicObjectBehaviour>();
             listener.Init(obj.ID, (objectID) => {
                 m_System.NotifyObjectDirty(obj.ID);
             });
+        }
+
+        public void Create(LogicObjectGroup group, int objectIndex)
+        {
+            var obj = new GameObject(group.Name);
+            obj.AddComponent<NoKeyDeletion>();
+            obj.transform.SetParent(m_Root.transform, false);
+            obj.transform.SetSiblingIndex(objectIndex);
+            obj.SetActive(group.IsEnabled());
+            m_Groups.Add(group.ID, obj);
         }
 
         private GameObject GetFromPool(LogicObject obj, int lod)
@@ -168,8 +221,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         private LogicObjectSystem m_System;
         private GameObject m_Root;
         private IGameObjectPool m_Pool;
-        private Dictionary<int, GameObject> m_GameObjects = new();
+        private readonly Dictionary<int, GameObject> m_Objects = new();
+        private readonly Dictionary<int, GameObject> m_Groups = new();
     }
 }
-
-

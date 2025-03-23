@@ -62,11 +62,6 @@ public class PhysicsTest : MonoBehaviour
         inputDir.Normalize();
         m_Velocity = new FixedVector3(inputDir);
 
-        if (inputDir != Vector3.zero)
-        {
-            int a = 1;
-        }
-
         m_PlayerCollider.Position += m_Velocity * (FixedPoint)Speed * (FixedPoint)Time.deltaTime;
 
         FixedVector3 adjust = FixedVector3.Zero;

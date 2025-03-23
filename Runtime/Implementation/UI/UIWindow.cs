@@ -44,6 +44,7 @@ namespace XDay.GUIAPI
         public abstract void Hide();
         public abstract void Update(float dt);
         public abstract T GetController<T>() where T : UIControllerBase;
+        public abstract void SetCanvasOrder(int order);
     }
 
     public class UIWindow<View, Controller> : UIWindowBase
@@ -51,6 +52,7 @@ namespace XDay.GUIAPI
         where Controller : UIController<View>
     {
         public override bool IsLoaded => m_View.IsLoaded;
+        public View WindowView => m_View;
 
         public UIWindow()
         {
@@ -113,6 +115,11 @@ namespace XDay.GUIAPI
         public override T GetController<T>() 
         {
             return m_Controller as T;
+        }
+
+        public override void SetCanvasOrder(int order)
+        {
+            m_View.SetCanvasOrder(order);
         }
 
         private void OnLoaded(GameObject gameObject, bool showWhenLoaded)

@@ -38,9 +38,10 @@ namespace XDay.API
         static IXDayContext Create(
             string worldSetupFilePath,
             IAssetLoader loader,
-            bool enableLog)
+            bool enableLog,
+            bool enableUI)
         {
-            return new XDayContext(worldSetupFilePath, loader, enableLog);
+            return new XDayContext(worldSetupFilePath, loader, enableLog, enableUI);
         }
 
         IDeviceInput DeviceInput { get; }

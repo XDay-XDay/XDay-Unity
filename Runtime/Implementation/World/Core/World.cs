@@ -292,6 +292,9 @@ namespace XDay.WorldAPI
             m_Plugins.Insert(index, plugin as WorldPlugin);
         }
 
+        public virtual void RegisterLODChangeEvent(LODChangeCallback callback) { }
+        public virtual void UnregisterLODChangeEvent(LODChangeCallback callback) { }
+
         public abstract void Update();
 
         public virtual void LateUpdate() 

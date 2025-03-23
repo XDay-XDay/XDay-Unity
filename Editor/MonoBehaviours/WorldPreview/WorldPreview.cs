@@ -38,7 +38,7 @@ internal partial class WorldPreview : MonoBehaviour
     {
         Application.runInBackground = true;
 
-        m_XDay = IXDayContext.Create(EditorHelper.QueryAssetFilePath<WorldSetupManager>(), new EditorWorldAssetLoader(), true);
+        m_XDay = IXDayContext.Create(EditorHelper.QueryAssetFilePath<WorldSetupManager>(), new EditorWorldAssetLoader(), true, true);
         await m_XDay.WorldManager.LoadWorldAsync("");
     }
 

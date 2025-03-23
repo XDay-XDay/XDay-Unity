@@ -201,6 +201,14 @@ namespace XDay.GUIAPI
             return Controller as T;
         }
 
+        public void SetCanvasOrder(int order)
+        {
+            if (m_Canvas != null)
+            {
+                m_Canvas.sortingOrder = order;
+            }
+        }
+
         protected GameObject QueryGameObject(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -233,6 +241,8 @@ namespace XDay.GUIAPI
             m_Root = root;
             if (root != null)
             {
+                m_Canvas = root.GetComponentInChildren<Canvas>();
+
                 OnLoad();
             }
         }
@@ -241,5 +251,6 @@ namespace XDay.GUIAPI
         private GameObject m_Root;
         private List<UIView> m_Subviews = new();
         protected UIControllerBase m_Controller;
+        protected Canvas m_Canvas;
     }
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -28,8 +28,12 @@ namespace XDay.WorldAPI.LogicObject.Editor
     internal class LogicObjectDefine
     {
         public const string ADD_LOGIC_OBJECT_NAME = "Add Logic Object";
+        public const string ADD_LOGIC_OBJECT_GROUP_NAME = "Add Logic Object Group";
+        public const string REMOVE_LOGIC_OBJECT_GROUP_NAME = "Remove Logic Object Group";
         public const string REMOVE_LOGIC_OBJECT_NAME = "Remove Logic Object";
         public const string ENABLE_LOGIC_OBJECT_NAME = "Enable Logic Object";
+        public const string CHANGE_LOGIC_OBJECT_GROUP_NAME = "Change Logic Object Group Name";
+        public const string CHANGE_LOGIC_OBJECT_GROUP_VISIBILITY = "Change Logic Object Group Visibility";
         public const string ROTATION_NAME = "Logic Object Rotation";
         public const string SCALE_NAME = "Logic Object Scale";
         public const string POSITION_NAME = "Logic Object Position";

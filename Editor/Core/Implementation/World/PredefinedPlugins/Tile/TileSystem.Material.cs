@@ -194,7 +194,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 for (var x = 0; x < m_XTileCount; ++x)
                 {
                     var renderer = m_Renderer.GetTileMeshRenderer(x, y);
-                    if (renderer.sharedMaterial != null)
+                    if (renderer != null && renderer.sharedMaterial != null)
                     {
                         var shader = renderer.sharedMaterial.shader;
                         if (shader != null && 

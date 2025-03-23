@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -60,19 +60,31 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
         protected override void InitInternal()
         {
+            if (m_Groups.Count == 0)
+            {
+                var group = new LogicObjectGroup(World.AllocateObjectID(), 0, "Default Group");
+                m_Groups.Add(group);
+                SetCurrentGroup(group.ID);
+            }
+
             UndoSystem.AddUndoRedoCallback(UndoRedo);
 
             m_ResourceDescriptorSystem.Init(World);
-            foreach (var kv in m_Objects)
-            {
-                kv.Value.Init(World);
-            }
-
             m_Indicator = IMeshIndicator.Create(World);
             m_Renderer = new LogicObjectSystemRenderer(World.Root.transform, World.GameObjectPool, this);
             m_ResourceGroupSystem.Init(null);
 
+            foreach (var group in m_Groups)
+            {
+                group.Init(World);
+            }
+
             ShowObjects();
+
+            if (m_Groups.Count > 0)
+            {
+                SetCurrentGroup(m_Groups[0].ID);
+            }
         }
 
         protected override void UninitInternal()
@@ -82,9 +94,9 @@ namespace XDay.WorldAPI.LogicObject.Editor
             m_Indicator.OnDestroy();
             m_ResourceDescriptorSystem.Uninit();
             m_Renderer.OnDestroy();
-            foreach (var kv in m_Objects)
+            foreach (var group in m_Groups)
             {
-                kv.Value.Uninit();
+                group.Uninit();
             }
         }
 
@@ -95,18 +107,49 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
         public override void DestroyObjectUndo(int objectID)
         {
-            var obj = World.QueryObject<LogicObject>(objectID);
-            if (obj != null &&
-                obj.IsActive)
+            var obj = World.QueryObject<WorldObject>(objectID);
+            if (obj != null)
             {
-                m_Renderer.Destroy(obj, 0, true);
+                if (obj is LogicObject logicObject)
+                {
+                    m_Renderer.Destroy(logicObject, 0, true);
+                    DestroyObject(objectID);
+                }
+                else if (obj is LogicObjectGroup logicObjectGroup)
+                {
+                    m_Renderer.DestroyGroup(logicObjectGroup.ID);
+                    logicObjectGroup.Uninit();
+                    m_Groups.Remove(logicObjectGroup);
+                    if (m_Groups.Count > 0)
+                    {
+                        SetCurrentGroup(m_Groups[0].ID);
+                    }
+                    else
+                    {
+                        SetCurrentGroup(0);
+                    }
+                }
+                else
+                {
+                    Debug.Assert(false, "todo");
+                }
             }
-            DestroyObject(objectID);
         }
 
         public override void AddObjectUndo(IWorldObject obj, int lod, int objectIndex)
         {
-            AddObjectInternal(obj as LogicObject);
+            if (obj is LogicObject)
+            {
+                AddLogicObjectInternal(obj as LogicObject, objectIndex);
+            }
+            else if (obj is LogicObjectGroup)
+            {
+                AddLogicObjectGroupInternal(obj as LogicObjectGroup, objectIndex);
+            }
+            else
+            {
+                Debug.Assert(false, $"todo {obj.GetType()}");
+            }
         }
 
         public void SetEnabled(int objectID, bool enabled, int lod, bool forceSet)
@@ -150,6 +193,18 @@ namespace XDay.WorldAPI.LogicObject.Editor
                     if (ok)
                     {
                         m_Renderer.SetAspect(objectID, name);
+                        return true;
+                    }
+                }
+
+                var group = World.QueryObject<LogicObjectGroup>(objectID);
+                if (group != null)
+                {
+                    var ok = group.SetAspect(objectID, name, aspect);
+                    if (ok)
+                    {
+                        m_Renderer.SetAspect(objectID, name);
+                        return true;
                     }
                 }
             }
@@ -170,12 +225,18 @@ namespace XDay.WorldAPI.LogicObject.Editor
                 return obj.GetAspect(objectID, name);
             }
 
+            var group = World.QueryObject<LogicObjectGroup>(objectID);
+            if (group != null)
+            {
+                return group.GetAspect(objectID, name);
+            }
+
             return null;
         }
 
-        private void AddObjectInternal(LogicObject obj)
+        private void AddLogicObjectInternal(LogicObject obj, int objectIndex)
         {
-            m_Objects.Add(obj.ID, obj);
+            obj.Group.AddObject(obj, objectIndex);
 
             if (obj.GetVisibility() == WorldObjectVisibility.Undefined)
             {
@@ -184,21 +245,30 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
             if (obj.IsActive)
             {
-                m_Renderer.Create(obj, 0);
+                m_Renderer.Create(obj, 0, objectIndex);
             }
+        }
+
+        private void AddLogicObjectGroupInternal(LogicObjectGroup group, int objectIndex)
+        {
+            m_Groups.Add(group);
+            m_Renderer.Create(group, objectIndex);
+            SetCurrentGroup(group.ID);
         }
 
         private List<LogicObject> QueryObjectsInRectangle(Vector3 center, float width, float height)
         {
             var objects = new List<LogicObject>();
-            foreach (var kv in m_Objects)
+            foreach (var group in m_Groups)
             {
-                var freeObject = kv.Value;
-                var positionDelta = center - freeObject.Position;
-                if (Mathf.Abs(positionDelta.x) <= width * 0.5f &&
-                    Mathf.Abs(positionDelta.z) <= height * 0.5f)
+                foreach (var obj in group.Objects)
                 {
-                    objects.Add(freeObject);
+                    var positionDelta = center - obj.Position;
+                    if (Mathf.Abs(positionDelta.x) <= width * 0.5f &&
+                        Mathf.Abs(positionDelta.z) <= height * 0.5f)
+                    {
+                        objects.Add(obj);
+                    }
                 }
             }
             return objects;
@@ -206,25 +276,62 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
         private bool DestroyObject(int objectID)
         {
-            var ok = m_Objects.TryGetValue(objectID, out var obj);
-            if (obj != null)
+            foreach (var group in m_Groups)
             {
-                obj.Uninit();
-                m_Objects.Remove(objectID);
+                if (group.DestroyObject(objectID))
+                {
+                    return true;
+                }
             }
-            return ok;
+            return false;
         }
 
-        private LogicObject CreateObject(int id, string assetPath, Vector3 userPosition, Quaternion userRotation, Vector3 userScale)
+        private LogicObject CreateObject(int id, string assetPath, Vector3 userPosition, Quaternion userRotation, Vector3 userScale, LogicObjectGroup group)
         {
             var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(assetPath, World);
-            var obj = new LogicObject(id, m_Objects.Count, userPosition, userRotation, userScale, descriptor);
+            var obj = new LogicObject(id, group.ObjectCount, userPosition, userRotation, userScale, descriptor, group);
             return obj;
         }
 
         private List<int> GetDirtyObjectIDs()
         {
             return m_DirtyObjectIDs;
+        }
+
+        private LogicObjectGroup GetCurrentGroup()
+        {
+            for (var i = 0; i < m_Groups.Count; i++)
+            {
+                if (m_Groups[i].ID == m_CurrentGroupID)
+                {
+                    return m_Groups[i];
+                }
+            }
+            return null;
+        }
+
+        private int GetCurrentGroupIndex()
+        {
+            for (var i = 0; i < m_Groups.Count; i++)
+            {
+                if (m_Groups[i].ID == m_CurrentGroupID)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private bool HasGroup(string name)
+        {
+            foreach (var group in m_Groups)
+            {
+                if (group.Name == name)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private enum ObjectCreateMode
@@ -239,11 +346,12 @@ namespace XDay.WorldAPI.LogicObject.Editor
         private IMeshIndicator m_Indicator;
         private Bounds m_Bounds;
         private CoordinateGenerateSetting m_CoordinateGenerateSetting = new();
-        private Dictionary<int, LogicObject> m_Objects = new();
+        private List<LogicObjectGroup> m_Groups = new();
         private IEditorResourceDescriptorSystem m_ResourceDescriptorSystem;
         private float m_RemoveRange = 5;
         private List<int> m_DirtyObjectIDs = new();
-        private const int m_Version = 1;
+        private const int m_Version = 2;
+        private int m_CurrentGroupID = 0;
     }
 }
 

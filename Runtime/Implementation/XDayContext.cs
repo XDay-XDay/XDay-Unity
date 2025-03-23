@@ -45,7 +45,7 @@ namespace XDay.API
         public ITickTimer FrameTimer => m_FrameTimer;
         public IEventSystem EventSystem => m_EventSystem;
 
-        public XDayContext(string worldSetupFilePath, IAssetLoader loader, bool enableLog)
+        public XDayContext(string worldSetupFilePath, IAssetLoader loader, bool enableLog, bool enableUI)
         {
             Debug.Assert(!string.IsNullOrEmpty(worldSetupFilePath));
             Debug.Assert(loader != null);
@@ -72,7 +72,10 @@ namespace XDay.API
 
             m_WorldSystem.Init(worldSetupFilePath, m_AssetLoader, m_TaskSystem, m_Input);
             m_NavigationManager = INavigationManager.Create();
-            m_WindowManager = IUIWindowManager.Create(loader);
+            if (enableUI)
+            {
+                m_WindowManager = IUIWindowManager.Create(loader);
+            }
             m_TickTimer = ITickTimer.Create(false, 0, () => {
                 return (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
             });
@@ -85,7 +88,7 @@ namespace XDay.API
 
         public void OnDestroy()
         {
-            m_WindowManager.OnDestroy();
+            m_WindowManager?.OnDestroy();
             m_WorldSystem?.OnDestroy();
             m_NavigationManager?.OnDestroy();
             Log.Uninit();
@@ -96,7 +99,7 @@ namespace XDay.API
             m_TickTimer.Update();
             m_FrameTimer.Update();
             m_Input.Update();
-            m_WindowManager.Update(Time.deltaTime);
+            m_WindowManager?.Update(Time.deltaTime);
             m_WorldSystem?.Update();
         }
 

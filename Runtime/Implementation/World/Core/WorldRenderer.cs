@@ -26,6 +26,7 @@
 using XDay.UtilityAPI;
 using UnityEngine;
 using XDay.AssetAPI;
+using Cysharp.Threading.Tasks;
 
 namespace XDay.WorldAPI
 {
@@ -41,7 +42,10 @@ namespace XDay.WorldAPI
             m_Root = new GameObject(name);
             m_Root.tag = WorldDefine.EDITOR_ONLY_TAG;
 
-            m_Cache = IGameObjectPool.Create(m_Root.transform, (prefabPath) => { return CreateNew(prefabPath); });
+            m_Cache = IGameObjectPool.Create(m_Root.transform, 
+                (prefabPath) => { return CreateNew(prefabPath); },
+                (prefabPath) => { return CreateNewAsync(prefabPath); }
+                );
         }
 
         public void OnDestroy()
@@ -64,11 +68,31 @@ namespace XDay.WorldAPI
             }
             if (result == null)
             {
-                result = new GameObject(prefabPath);
-                var primitive = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                primitive.transform.SetParent(result.transform, true);
-                primitive.transform.localScale = 10.0f * Vector3.one;
+                result = CreatePlaceholder(prefabPath);
             }
+            return result;
+        }
+
+        private async UniTask<GameObject> CreateNewAsync(string prefabPath)
+        {
+            GameObject result = null;
+            if (!string.IsNullOrEmpty(prefabPath))
+            {
+                result = await m_AssetLoader.LoadGameObjectAsync(prefabPath);
+            }
+            if (result == null)
+            {
+                result = CreatePlaceholder(prefabPath);
+            }
+            return result;
+        }
+
+        private GameObject CreatePlaceholder(string prefabPath)
+        {
+            var result = new GameObject(prefabPath);
+            var primitive = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            primitive.transform.SetParent(result.transform, true);
+            primitive.transform.localScale = 10.0f * Vector3.one;
             return result;
         }
 
