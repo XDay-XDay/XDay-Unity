@@ -30,7 +30,7 @@ namespace XDay.UtilityAPI
 {
     [CustomEditor(typeof(NoKeyDeletion))]
     [CanEditMultipleObjects]
-    public class NoKeyDeletionEditor : Editor
+    public class NoKeyDeletionEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

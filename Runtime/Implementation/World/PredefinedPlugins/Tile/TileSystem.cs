@@ -28,7 +28,7 @@ using UnityEngine.Scripting;
 namespace XDay.WorldAPI.Tile
 {
     [Preserve]
-    internal partial class TileSystem : WorldPlugin
+    internal partial class TileSystem : WorldPlugin, ITileSystem
     {
         public override List<string> GameFileNames => new() { "tile" };
         public override string TypeName => "TileSystem";
@@ -73,7 +73,9 @@ namespace XDay.WorldAPI.Tile
         protected override void InitRendererInternal()
         {
             m_CameraVisibleAreaUpdater.Reset();
-            m_Renderer = new TileSystemRenderer(this);
+
+            m_Renderer = new TileSystemRenderer(this, m_UsedTilePrefabPaths);
+            m_UsedTilePrefabPaths = null;
         }
 
         protected override void UninitRendererInternal()
@@ -167,13 +169,22 @@ namespace XDay.WorldAPI.Tile
                 for (var x = 0; x < m_XTileCount; ++x)
                 {
                     var path = reader.ReadString("");
+                    bool hasHeight = reader.ReadBoolean("Has Height");
+                    bool exportHeight = reader.ReadBoolean("Export Height");
+                    float[] vertexHeights = null;
+                    if (exportHeight)
+                    {
+                        vertexHeights = reader.ReadSingleArray("Vertex Heights");
+                    }
                     if (!string.IsNullOrEmpty(path))
                     {
                         var index = y * m_XTileCount + x;
-                        m_Tiles[index] = new TileData(path);
+                        m_Tiles[index] = new TileData(path, vertexHeights, hasHeight);
                     }
                 }
             }
+
+            m_UsedTilePrefabPaths = reader.ReadStringArray("Used Tile Prefab Paths");
 
             reader.Uninit();
         }
@@ -258,6 +269,23 @@ namespace XDay.WorldAPI.Tile
             }
         }
 
+        public Vector2Int UnrotatedPositionToCoordinate(float x, float z)
+        {
+            return new Vector2Int(Mathf.FloorToInt(x / m_TileWidth), Mathf.FloorToInt(z / m_TileHeight));
+        }
+
+        public Vector3 CoordinateToUnrotatedPosition(int x, int y)
+        {
+            return new Vector3(x * m_TileWidth, 0, y * m_TileHeight);
+        }
+
+        public Vector2Int RotatedPositionToCoordinate(float x, float z)
+        {
+            var center = Center;
+            var unrotatedPos = Quaternion.Inverse(m_Rotation) * new Vector3(x - center.x, 0, z - center.z) + new Vector3(center.x, 0, center.z);
+            return new Vector2Int(Mathf.FloorToInt((unrotatedPos.x - m_Origin.x) / m_TileWidth), Mathf.FloorToInt((unrotatedPos.z - m_Origin.y) / m_TileHeight));
+        }
+
         private TileData[] m_Tiles;
         private TileSystemRenderer m_Renderer;
         private IResourceDescriptorSystem m_DescriptorSystem;
@@ -272,6 +300,7 @@ namespace XDay.WorldAPI.Tile
         private string m_Name;
         private ICameraVisibleAreaUpdater m_CameraVisibleAreaUpdater;
         private Vector2 m_Origin;
+        private string[] m_UsedTilePrefabPaths;
     }
 }
 

@@ -64,6 +64,7 @@ namespace XDay.GUIAPI.Editor
             InitEvents(true);
             SetActiveMetadata();
             OnSelectionChanged();
+            RemoveInvalidateData();
         }
 
         private void OnDestroy()
@@ -176,7 +177,7 @@ namespace XDay.GUIAPI.Editor
 
         private void DrawMetadataEditor()
         {
-            RemoveInvalidateData();
+            //RemoveInvalidateData();
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Generate", GUILayout.MaxWidth(100)))
@@ -195,6 +196,12 @@ namespace XDay.GUIAPI.Editor
                 RemoveBinding();
                 removed = true;
             }
+
+            if (GUILayout.Button("Remove Invalidate Metadata"))
+            {
+                RemoveInvalidateData();
+            }
+
             EditorGUILayout.EndHorizontal();
 
             if (removed)
@@ -473,6 +480,10 @@ namespace XDay.GUIAPI.Editor
 
         private void RemoveInvalidateData()
         {
+            if (m_Metadata == null)
+            {
+                return;
+            }
             for (var i = m_Metadata.GameObjects.Count - 1; i >= 0; --i)
             {
                 var metadata = m_Metadata.GameObjects[i];

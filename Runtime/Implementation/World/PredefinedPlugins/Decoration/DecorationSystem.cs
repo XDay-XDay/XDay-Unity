@@ -70,7 +70,7 @@ namespace XDay.WorldAPI.Decoration
                         var objectIndex = grid.GetObjectIndex(i, lod);
                         var position = m_DecorationMetaData.Position[objectIndex];
                         var deltaX = center.x - position.x;
-                        var deltaZ = center.z - position.y;
+                        var deltaZ = center.z - position.z;
                         if (deltaX * deltaX + deltaZ * deltaZ <= radiusSqr)
                         {
                             var objectID = CalculateObjectID(lod, objectIndex);
@@ -167,7 +167,7 @@ namespace XDay.WorldAPI.Decoration
                 var position = m_DecorationMetaData.Position[objectIndex];
                 
                 var boundsMinX = resourceMetadata.Bounds.xMin + position.x;
-                var boundsMinZ = resourceMetadata.Bounds.yMin + position.y;
+                var boundsMinZ = resourceMetadata.Bounds.yMin + position.z;
 
                 var invisible = false;
                 if (boundsMinZ > visibleArea.yMax ||
@@ -178,7 +178,7 @@ namespace XDay.WorldAPI.Decoration
                     invisible = true;
                 }
 
-                decoration = m_DecorationPool.Get(objectID, IsSetEnabled(objectID), objectIndex, World, grid.X, grid.Y, curLOD, indexInGrid, position.x, position.y, resourceMetadata, invisible);
+                decoration = m_DecorationPool.Get(objectID, IsSetEnabled(objectID), objectIndex, World, grid.X, grid.Y, curLOD, indexInGrid, position.x, position.y, position.z, resourceMetadata, invisible);
                 m_VisibleObjects.Add(objectID, decoration);
                 m_ToggleActiveState?.Invoke(decoration);
             }
@@ -331,6 +331,10 @@ namespace XDay.WorldAPI.Decoration
 
         private bool ModelChanged(int prevLOD, int curLOD, byte changeMasks)
         {
+#if true
+            //有bug,暂时关闭model changed功能
+            return true;
+#else
             if (prevLOD == curLOD)
             {
                 return true;
@@ -341,6 +345,7 @@ namespace XDay.WorldAPI.Decoration
                 return true;
             }
             return false;
+#endif
         }
 
         private void DestroyVisibleObjects()
@@ -447,16 +452,7 @@ namespace XDay.WorldAPI.Decoration
             var prevLOD = changeLOD ? m_LODSystem.PreviousLOD : m_LODSystem.CurrentLOD;
             var grid = GetGrid(x, y);
 
-            if (!visible)
-            {
-                var task = grid.GetFrameTask(prevLOD);
-                if (!m_Tasks.Contains(task))
-                {
-                    m_Tasks.Add(task);
-                }
-                task.Init(m_LODSystem.CurrentLOD, FrameTaskDecorationToggle.Type.Deactivate);
-            }
-            else
+            if (visible)
             {
                 var task = grid.GetFrameTask(m_LODSystem.CurrentLOD);
                 if (!m_Tasks.Contains(task))
@@ -464,6 +460,15 @@ namespace XDay.WorldAPI.Decoration
                     m_Tasks.Add(task);
                 }
                 task.Init(prevLOD, FrameTaskDecorationToggle.Type.Activate);
+            }
+            else
+            {
+                var task = grid.GetFrameTask(prevLOD);
+                if (!m_Tasks.Contains(task))
+                {
+                    m_Tasks.Add(task);
+                }
+                task.Init(m_LODSystem.CurrentLOD, FrameTaskDecorationToggle.Type.Deactivate);
             }
         }
 
@@ -585,7 +590,7 @@ namespace XDay.WorldAPI.Decoration
             {
                 LODResourceChangeMasks = deserializer.ReadByteArray("LOD Resource Change Masks"),
                 ResourceMetadataIndex = deserializer.ReadInt32Array("Resource Metadata Index"),
-                Position = deserializer.ReadVector2Array("Position XZ"),
+                Position = deserializer.ReadVector3Array("Position"),
             };
 
             var resourceMetadataCount = deserializer.ReadInt32("Resource Metadata Count");

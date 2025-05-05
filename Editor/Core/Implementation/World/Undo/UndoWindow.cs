@@ -28,7 +28,7 @@ namespace XDay.WorldAPI.Editor
 {
     internal class UndoWindow : EditorWindow
     {
-        [MenuItem("XDay/World/Undo History")]
+        [MenuItem("XDay/地图/Undo命令历史")]
         private static void Open()
         {
             var window = GetWindow<UndoWindow>("Undo History");

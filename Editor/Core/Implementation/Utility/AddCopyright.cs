@@ -96,6 +96,8 @@ namespace XDay.UtilityAPI.Editor
                 filePath.IndexOf("FastNoiseLite") >= 0 ||
                 filePath.IndexOf("CounterModeCryptoTransform") >= 0 ||
                 filePath.IndexOf("FastPriorityQueue") >= 0 ||
+                filePath.IndexOf("RecyclableScrollRect") >= 0 ||
+                filePath.IndexOf("RVO2") >= 0 ||
                 filePath.IndexOf("KCP\\Protocal") >= 0;
         }
 

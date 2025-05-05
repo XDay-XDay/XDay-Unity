@@ -83,6 +83,14 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
+        private void ActionCloneObject(Vector3 offset)
+        {
+            UndoSystem.NextGroupAndJoin();
+
+            var objectIDs = QueryRootObjectSelection();
+            CloneObjects(new List<int>(objectIDs), offset);
+        }
+
         protected override void InspectorGUIInternal()
         {
             m_Show = EditorGUILayout.Foldout(m_Show, "Decoration");
@@ -179,23 +187,26 @@ namespace XDay.WorldAPI.Decoration.Editor
             var evt = Event.current;
             if (evt.type == EventType.KeyDown && evt.shift == false)
             {
-                if (evt.keyCode == KeyCode.Alpha1)
+                if (evt.keyCode == KeyCode.Alpha1 && evt.control)
                 {
                     ChangeOperation(Action.Select);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha2)
+                else if (evt.keyCode == KeyCode.Alpha2 && evt.control)
                 {
                     ChangeOperation(Action.EditLOD);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha3)
+                else if (evt.keyCode == KeyCode.Alpha3 && evt.control)
                 {
                     ChangeOperation(Action.CreateObject);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha4)
+                else if (evt.keyCode == KeyCode.Alpha4 && evt.control)
                 {
                     ChangeOperation(Action.DeleteObject);
+                    evt.Use();
                 }
-                evt.Use();
             }
 
             CreateUIControls();
@@ -211,6 +222,10 @@ namespace XDay.WorldAPI.Decoration.Editor
                 DrawObjectTransformSync();
 
                 DrawDeleteObjects();
+
+                DrawCloneObjects();
+
+                DrawAdjustObjectHeight();
 
                 GUILayout.Space(30);
 
@@ -251,66 +266,72 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 m_Controls = new();
 
-                m_PopupOperation = new EnumPopup("Operation", "", 160);
+                m_PopupOperation = new Popup("操作", "", 130);
                 m_Controls.Add(m_PopupOperation);
 
-                m_ObjectCountField = new IntField("Count", "", 80);
+                m_ObjectCountField = new IntField("个数", "", 80);
                 m_Controls.Add(m_ObjectCountField);
 
                 m_PopupActiveLOD = new Popup("LOD", "", 80);
                 m_Controls.Add(m_PopupActiveLOD);
 
-                m_HeightField = new FloatField("Height", "", 80);
+                m_HeightField = new FloatField("高", "", 80);
                 m_Controls.Add(m_HeightField);
 
-                m_RotationField = new FloatField("Rotation", "", 100);
+                m_RotationField = new FloatField("旋转角度", "", 100);
                 m_Controls.Add(m_RotationField);
 
-                m_ScaleField = new FloatField("Scale", "", 100);
+                m_ScaleField = new FloatField("缩放", "", 100);
                 m_Controls.Add(m_ScaleField);
 
-                m_SpaceField = new FloatField("Space", "Minimum distance between objects", 90);
+                m_SpaceField = new FloatField("间隔", "物体之间的最小间隔", 90);
                 m_Controls.Add(m_SpaceField);
 
-                m_BorderSizeField = new FloatField("Border", "Generate objects along edge of shape", 90);
+                m_BorderSizeField = new FloatField("边界", "沿形状边界生成物体", 90);
                 m_Controls.Add(m_BorderSizeField);
 
-                m_ButtonQueryObjectCountInActiveLOD = EditorWorldHelper.CreateImageButton("number.png", "Show object count in current lod");
+                m_ButtonQueryObjectCountInActiveLOD = EditorWorldHelper.CreateImageButton("number.png", "显示当前LOD中的物体数量");
                 m_Controls.Add(m_ButtonQueryObjectCountInActiveLOD);
 
-                m_ButtonRandom = EditorWorldHelper.CreateToggleImageButton(false, "random.png", "Use random object in resource group");
+                m_ButtonRandom = EditorWorldHelper.CreateToggleImageButton(false, "random.png", "使用所选模型组中的随机模型");
                 m_ButtonRandom.Active = m_CoordinateGenerateSetting.Random;
                 m_Controls.Add(m_ButtonRandom);
 
-                m_ButtonShowObjectsNotInActiveLOD = EditorWorldHelper.CreateImageButton("show.png", "Show objects not in current lod");
+                m_ButtonShowObjectsNotInActiveLOD = EditorWorldHelper.CreateImageButton("show.png", "显示不在当前LOD中的物体");
                 m_Controls.Add(m_ButtonShowObjectsNotInActiveLOD);
 
-                m_ButtonAddObjectsToActiveLOD = EditorWorldHelper.CreateImageButton("add.png", "Add object to current lod");
+                m_ButtonAddObjectsToActiveLOD = EditorWorldHelper.CreateImageButton("add.png", "将选中物体加入到当前LOD中");
                 m_Controls.Add(m_ButtonAddObjectsToActiveLOD);
 
-                m_WidthField = new FloatField("Width", "", 80);
+                m_ButtonAdjustObjectHeight = EditorWorldHelper.CreateImageButton("adjust.png", "物体自适应地形高度");
+                m_Controls.Add(m_ButtonAdjustObjectHeight);
+
+                m_WidthField = new FloatField("宽", "", 80);
                 m_Controls.Add(m_WidthField);
 
-                m_ButtonRemoveObjectFromActiveLOD = EditorWorldHelper.CreateImageButton("remove.png", "Remove object from current lod");
+                m_ButtonRemoveObjectFromActiveLOD = EditorWorldHelper.CreateImageButton("remove.png", "将选中物体从当前LOD中删除");
                 m_Controls.Add(m_ButtonRemoveObjectFromActiveLOD);
 
-                m_GeometryPopup = new EnumPopup("Shape", "", 130);
+                m_GeometryPopup = new Popup("形状", "", 130);
                 m_Controls.Add(m_GeometryPopup);
 
-                m_ButtonSycnObjectTransforms = EditorWorldHelper.CreateImageButton("refresh.png", "Sync object transform");
+                m_ButtonSycnObjectTransforms = EditorWorldHelper.CreateImageButton("refresh.png", "同步物体坐标");
                 m_Controls.Add(m_ButtonSycnObjectTransforms);
 
-                m_ButtonDeleteObjects = EditorWorldHelper.CreateImageButton("delete.png", "Delete objects");
+                m_ButtonDeleteObjects = EditorWorldHelper.CreateImageButton("delete.png", "删除物体");
                 m_Controls.Add(m_ButtonDeleteObjects);
 
-                m_ButtonHideObjectsNotInActiveLOD = EditorWorldHelper.CreateImageButton("hide.png", "Hide objects not in current lod");
+                m_ButtonCloneObjects = EditorWorldHelper.CreateImageButton("clone.png", "复制物体");
+                m_Controls.Add(m_ButtonCloneObjects);
+
+                m_ButtonHideObjectsNotInActiveLOD = EditorWorldHelper.CreateImageButton("hide.png", "隐藏不在当前LOD的物体");
                 m_Controls.Add(m_ButtonHideObjectsNotInActiveLOD);
 
-                m_ButtonEqualSpace = EditorWorldHelper.CreateToggleImageButton(false, "equal.png", "Generate equal distance objects");
+                m_ButtonEqualSpace = EditorWorldHelper.CreateToggleImageButton(false, "equal.png", "生成等距的物体");
                 m_ButtonEqualSpace.Active = m_CoordinateGenerateSetting.LineEquidistant;
                 m_Controls.Add(m_ButtonEqualSpace);
 
-                m_RadiusField = new FloatField("Radius", "", 80);
+                m_RadiusField = new FloatField("半径", "", 80);
                 m_Controls.Add(m_RadiusField);
             }
         }
@@ -596,14 +617,15 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_LabelStyle = new GUIStyle(GUI.skin.label);
             }
 
-            EditorGUILayout.LabelField($"Object Count: {m_Decorations.Count}, Range: {m_Bounds.min:F0} to {m_Bounds.max:F0} meters");
+            EditorGUILayout.LabelField($"物体总数: {m_Decorations.Count}, 范围: {m_Bounds.min:F0}到{m_Bounds.max:F0}米");
             if (m_Action == Action.CreateObject)
             {
-                EditorGUILayout.LabelField("Use R key to redo last generation");
-                EditorGUILayout.LabelField("Use T key to toggle Multiple/Single mode");
-                EditorGUILayout.LabelField("Use Q/W key to rotate object");
-                EditorGUILayout.LabelField("Use A/S key to scale object");
+                EditorGUILayout.LabelField("R键重做上次生成");
+                EditorGUILayout.LabelField("T键切换单/多物体模式");
+                EditorGUILayout.LabelField("Q和W键旋转物体");
+                EditorGUILayout.LabelField("A和S键缩放物体");
             }
+            EditorGUILayout.LabelField("Ctrl+1/Ctrl+2/Ctrl+3/Ctrl+4切换操作");
 
             if (GetDirtyObjectIDs().Count == 0)
             {
@@ -613,7 +635,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 m_LabelStyle.normal.textColor = Color.magenta;
             }
-            EditorGUILayout.LabelField("Transform sync needed!", m_LabelStyle);
+            EditorGUILayout.LabelField("物体坐标改变,需要同步!", m_LabelStyle);
         }
 
         private void UndoRedo(UndoAction action, bool undo)
@@ -645,10 +667,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             var worldPosition = Helper.GUIRayCastWithXZPlane(Event.current.mousePosition, World.CameraManipulator.Camera);
             var oldColor = Handles.color;
             Handles.color = Color.red;
-            if (m_GeometryType == GeometryType.Circle)
-            {
-                Handles.DrawWireDisc(worldPosition, Vector3.up, m_RemoveRange);
-            }
+            Handles.DrawWireDisc(worldPosition, Vector3.up, m_RemoveRange);
             Handles.color = oldColor;
         }
 
@@ -662,7 +681,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             GUI.enabled = m_CreateMode == ObjectCreateMode.Multiple;
 
-            var shape = (GeometryType)m_GeometryPopup.Render(m_GeometryType, 40);
+            var shape = (GeometryType)m_GeometryPopup.Render((int)m_GeometryType, m_ShapeNames, 40);
             SetGeometryType(shape);
 
             var enabled = true;
@@ -716,6 +735,27 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
+        private void DrawCloneObjects()
+        {
+            if (m_ButtonCloneObjects.Render(Inited))
+            {
+                var parameters = new List<ParameterWindow.Parameter>
+                {
+                    new ParameterWindow.Vector3Parameter("复制体坐标偏移", "", new Vector3(10, 0, 10)),
+                };
+
+                ParameterWindow.Open("复制物体", parameters, (p) => {
+                    bool ok = ParameterWindow.GetVector3(p[0], out var offset);
+                    if (ok)
+                    {
+                        ActionCloneObject(offset);
+                        return true;
+                    }
+                    return false;
+                });
+            }
+        }
+
         private void DrawObjectTransformSync()
         {
             if (m_ButtonSycnObjectTransforms.Render(Inited))
@@ -729,13 +769,13 @@ namespace XDay.WorldAPI.Decoration.Editor
             if (m_ButtonQueryObjectCountInActiveLOD.Render(Inited))
             {
                 var count = QueryObjectCountInLOD(m_ActiveLOD);
-                EditorUtility.DisplayDialog("", $"Object count in current lod: {count}", "OK");
+                EditorUtility.DisplayDialog("", $"当前LOD物体数量: {count}", "确定");
             }
         }
 
         private void DrawOperation()
         {
-            ChangeOperation((Action)m_PopupOperation.Render(m_Action, 60));
+            ChangeOperation((Action)m_PopupOperation.Render((int)m_Action, m_ActionNames, 35));
         }
 
         private void DrawLODSelection()
@@ -755,9 +795,9 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 var parameters = new List<ParameterWindow.Parameter>()
             {
-                new ParameterWindow.BoolParameter("Only Add To Active LOD", "", true),
+                new ParameterWindow.BoolParameter("只添加到当前LOD", "只将选中的物体加入到当前编辑的LOD中", true),
             };
-                ParameterWindow.Open("Add object to LOD", parameters, (p) =>
+                ParameterWindow.Open("添加物体到LOD", parameters, (p) =>
                 {
                     var ok = ParameterWindow.GetBool(p[0], out var onlyAddToActiveLOD);
                     if (ok)
@@ -770,15 +810,53 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
+        private void DrawAdjustObjectHeight()
+        {
+            if (m_ButtonAdjustObjectHeight.Render(Inited))
+            {
+                if (EditorUtility.DisplayDialog("注意", "确定修改高度?", "确定", "取消"))
+                {
+                    IHeightDataSource heightSource = null;
+                    for (var i = 0; i < World.PluginCount; ++i)
+                    {
+                        var plugin = World.GetPlugin(i);
+                        if (plugin is IHeightDataSource heightDataSource)
+                        {
+                            heightSource = heightDataSource;
+                        }
+                    }
+
+                    if (heightSource != null)
+                    {
+                        UndoSystem.NextGroupAndJoin();
+                        foreach (var dec in m_Decorations.Values)
+                        {
+                            if (dec.EnableHeightAdjust)
+                            {
+                                var pos = dec.Position;
+                                var height = heightSource.GetHeightAtPos(pos.x, pos.z);
+                                if (!Mathf.Approximately(height, 0))
+                                {
+                                    pos.y = height;
+                                    UndoSystem.SetAspect(dec, DecorationDefine.POSITION_NAME, IAspect.FromVector3(pos), "Adjust Decoration Position", ID, UndoActionJoinMode.None);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+
         private void DrawRemoveObjectFromLOD()
         {
             if (m_ButtonRemoveObjectFromActiveLOD.Render(Inited))
             {
                 var parameters = new List<ParameterWindow.Parameter>()
                 {
-                    new ParameterWindow.BoolParameter("Only remove from active lod", "", false),
+                    new ParameterWindow.BoolParameter("只从当前LOD中删除", "勾选后只会从当前LOD中过滤掉所选装饰物,理论上一个物体如果在当前LOD不显示,在更高级别的LOD也不会显示,所以一般不用勾选该选项", false),
                 };
-                ParameterWindow.Open("Remove object from LOD", parameters, (p) =>
+                ParameterWindow.Open("从LOD删除物体", parameters, (p) =>
                 {
                     var ok = ParameterWindow.GetBool(p[0], out var onlyRemoveFromActiveLOD);
                     if (ok)
@@ -818,6 +896,9 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 ActionDeleteObject();
             }
+            else if (m_Action == Action.CloneObject)
+            {
+            }
             else if (m_Action == Action.CreateObject)
             {
                 ActionCreateObject();
@@ -845,7 +926,17 @@ namespace XDay.WorldAPI.Decoration.Editor
                 SyncObjectTransforms();
             }
 
+            DrawBounds();
+
             SceneView.RepaintAll();
+        }
+
+        private void DrawBounds()
+        {
+            var oldColor = Handles.color;
+            Handles.color = Color.white;
+            Handles.DrawWireCube(m_Bounds.center, m_Bounds.size);
+            Handles.color = oldColor;
         }
 
         private void ActionCreateSingleObject()
@@ -926,6 +1017,30 @@ namespace XDay.WorldAPI.Decoration.Editor
                     }
                 }
             }
+        }
+
+        private void CloneObjects(List<int> objects, Vector3 offset)
+        {
+            List<DecorationObject> newObjects = new();
+            foreach (var objID in objects)
+            {
+                var obj = QueryObjectUndo(objID) as DecorationObject;
+                var decoration = CloneObject(World.AllocateObjectID(), m_Decorations.Count, obj);
+                if (decoration != null)
+                {
+                    UndoSystem.CreateObject(decoration, World.ID, DecorationDefine.ADD_DECORATION_NAME, ID, CurrentLOD);
+                    var newDecoration = World.QueryObject<DecorationObject>(decoration.ID);
+                    newObjects.Add(newDecoration);
+                    UndoSystem.SetAspect(newDecoration, DecorationDefine.POSITION_NAME, IAspect.FromVector3(obj.Position + offset), "Set Decoration Position", ID, UndoActionJoinMode.None);
+                }
+            }
+
+            List<Object> gameObjects = new();
+            foreach (var dec in newObjects)
+            {
+                gameObjects.Add(m_Renderer.QueryGameObject(dec.ID));
+            }
+            Selection.objects = gameObjects.ToArray();
         }
 
         private List<Vector3> ActionClickCreate()
@@ -1036,6 +1151,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             EditLOD,
             CreateObject,
             DeleteObject,
+            CloneObject,
         }
 
         private CoordinateGenerateOperation m_LastOperation;
@@ -1045,8 +1161,9 @@ namespace XDay.WorldAPI.Decoration.Editor
         private Popup m_PopupActiveLOD;
         private FloatField m_BorderSizeField;
         private ImageButton m_ButtonDeleteObjects;
+        private ImageButton m_ButtonCloneObjects;
         private FloatField m_RadiusField;
-        private EnumPopup m_PopupOperation;
+        private Popup m_PopupOperation;
         private IntField m_ObjectCountField;
         private ImageButton m_ButtonSycnObjectTransforms;
         private IResourceGroupSystem m_ResourceGroupSystem = IResourceGroupSystem.Create(false);
@@ -1055,7 +1172,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private FloatField m_SpaceField;
         private ToggleImageButton m_ButtonEqualSpace;
         private ImageButton m_ButtonHideObjectsNotInActiveLOD;
-        private EnumPopup m_GeometryPopup;
+        private Popup m_GeometryPopup;
         private FloatField m_WidthField;
         private PluginLODSystemEditor m_PluginLODSystemEditor = new();
         private FloatField m_HeightField;
@@ -1064,6 +1181,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private Action m_Action = Action.Select;
         private GUIStyle m_LabelStyle;
         private ImageButton m_ButtonAddObjectsToActiveLOD;
+        private ImageButton m_ButtonAdjustObjectHeight;
         private List<UIControl> m_Controls;
         private SceneSelectionTool m_SceneSelectionTool = new();
         private string[] m_LODNames;
@@ -1079,8 +1197,21 @@ namespace XDay.WorldAPI.Decoration.Editor
         private float m_RotationDelta = 10f;
         private float m_ScaleDelta = 0.2f;
         private const float m_MinScale = 0.1f;
+        private string[] m_ShapeNames = new string[]
+        {
+            "多边形",
+            "直线",
+            "矩形",
+            "圆形",
+        };
+        private string[] m_ActionNames = new string[]
+        {
+            "选择",
+            "编辑LOD",
+            "创建物体",
+            "删除物体",
+        };
     }
 }
-
 
 //XDay

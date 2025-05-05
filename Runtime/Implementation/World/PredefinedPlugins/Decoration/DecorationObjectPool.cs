@@ -48,12 +48,13 @@ namespace XDay.WorldAPI.Decoration
             int lod,
             int indexInTile,
             float posX,
+            float posY,
             float posZ,
             ResourceMetadata resourceMetadata,
             bool visible)
         {
             var decoration = m_Pool.Get();
-            decoration.Init(objectID, objectIndex, world, gridX, gridY, lod, indexInTile, posX, posZ, resourceMetadata);
+            decoration.Init(objectID, objectIndex, world, gridX, gridY, lod, indexInTile, posX, posY, posZ, resourceMetadata);
             decoration.SetVisibility(visible ? WorldObjectVisibility.Invisible : WorldObjectVisibility.Visible);
             decoration.SetEnabled(enabled);
 #if DECORATION_DEBUG

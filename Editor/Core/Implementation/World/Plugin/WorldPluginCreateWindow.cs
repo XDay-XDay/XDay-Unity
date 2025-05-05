@@ -49,21 +49,21 @@ namespace XDay.WorldAPI.Editor
 
         private void OnGUI()
         {
-            m_Name = EditorGUILayout.TextField("Name", m_Name);
+            m_Name = EditorGUILayout.TextField("名称", m_Name);
 
             if (m_DrawSize)
             {
                 GUILayout.BeginHorizontal();
 
-                m_Width = EditorGUILayout.FloatField("Width", m_Width);
-                m_Height = EditorGUILayout.FloatField("Height", m_Height);
+                m_Width = EditorGUILayout.FloatField("层宽(米)", m_Width);
+                m_Height = EditorGUILayout.FloatField("层高(米)", m_Height);
 
                 GUILayout.EndHorizontal();
             }
 
             GUIInternal();
 
-            if (GUILayout.Button("Create"))
+            if (GUILayout.Button("创建"))
             {
                 var err = Validate();
                 if (string.IsNullOrEmpty(err))
@@ -76,7 +76,7 @@ namespace XDay.WorldAPI.Editor
                 }
                 else
                 {
-                    EditorUtility.DisplayDialog("Error", err, "OK");
+                    EditorUtility.DisplayDialog("出错了", err, "确定");
                 }
             }
         }
@@ -85,17 +85,17 @@ namespace XDay.WorldAPI.Editor
         {
             if (string.IsNullOrEmpty(m_Name))
             {
-                return "Invalid name";
+                return "无效的名称";
             }
 
             if (m_Width <= 0 || m_Height <= 0)
             {
-                return "Invalid size";
+                return "无效的层宽或层高";
             }
 
             if (m_World.HasPlugin(m_Name))
             {
-                return "Name already used!";
+                return "层名已经存在";
             }
 
             return ValidateInternal();
@@ -136,14 +136,14 @@ namespace XDay.WorldAPI.Editor
             {
                 if (m_GridCountX <= 0 || m_GridCountY <= 0)
                 {
-                    return "Invalid grid count";
+                    return "无效的格子个数";
                 }
             }
             else
             {
                 if (m_GridWidth <= 0 || m_GridHeight <= 0)
                 {
-                    return "Invalid grid size";
+                    return "无效的格子大小";
                 }
             }
 
@@ -156,13 +156,13 @@ namespace XDay.WorldAPI.Editor
 
             if (SetGridCount)
             {
-                m_GridCountX = EditorGUILayout.IntField("Horizontal Grid Count", m_GridCountX);
-                m_GridCountY = EditorGUILayout.IntField("Vertical Grid Count", m_GridCountY);
+                m_GridCountX = EditorGUILayout.IntField("横向格子数", m_GridCountX);
+                m_GridCountY = EditorGUILayout.IntField("纵向格子数", m_GridCountY);
             }
             else
             {
-                m_GridWidth = EditorGUILayout.FloatField("Grid Width", m_GridWidth);
-                m_GridHeight = EditorGUILayout.FloatField("Grid Height", m_GridHeight);
+                m_GridWidth = EditorGUILayout.FloatField("格子宽(米)", m_GridWidth);
+                m_GridHeight = EditorGUILayout.FloatField("格子高(米)", m_GridHeight);
             }
 
             GUILayout.EndHorizontal();
@@ -180,6 +180,12 @@ namespace XDay.WorldAPI.Editor
     {
         protected override void GUIInternal()
         {
+        }
+
+        protected virtual Vector2 CalculateOrigin(float width, float height)
+        {
+            var center = World.Bounds.center;
+            return new Vector2(center.x - width * 0.5f, center.z - height * 0.5f);
         }
     }
 }

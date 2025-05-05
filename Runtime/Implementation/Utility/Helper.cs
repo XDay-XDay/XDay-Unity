@@ -164,18 +164,42 @@ namespace XDay.UtilityAPI
             DestroyUnityObject(comp);
         }
 
-        public static Vector3 FromFocusPoint(Camera camera, Vector3 focusPoint, float y)
+        public static Vector3 FromFocusPointXZ(Camera camera, Vector3 focusPoint, float y)
         {
             focusPoint.y = 0;
             var cameraTransform = camera.transform;
-            var viewDistance = FocalLengthFromAltitude(cameraTransform.eulerAngles.x, y);
+            var viewDistance = FocalLengthFromAltitudeXZ(cameraTransform.eulerAngles.x, y);
             var cameraPos = focusPoint - cameraTransform.forward * viewDistance;
             return cameraPos;
         }
 
-        public static float FocalLengthFromAltitude(float rotationX, float y)
+        public static Vector3 FromFocusPointXY(Camera camera, Vector3 focusPoint, float z)
         {
+            focusPoint.z = 0;
+            var cameraTransform = camera.transform;
+            var viewDistance = FocalLengthFromAltitudeXY(cameraTransform.eulerAngles.x, z);
+            var cameraPos = focusPoint - cameraTransform.forward * viewDistance;
+            return cameraPos;
+        }
+
+        public static float FocalLengthFromAltitudeXZ(float rotationX, float y)
+        {
+            Debug.Assert(y > 0);
             return (float)((double)y / System.Math.Sin(rotationX * m_DegToRad));
+        }
+
+        public static float FocalLengthFromAltitudeXY(float rotationX, float z)
+        {
+            if (z <= 0)
+            {
+                Debug.Assert(false);
+            }
+            
+            if (rotationX == 0)
+            {
+                return z;
+            }
+            return (float)((double)z / System.Math.Sin((90 - rotationX) * m_DegToRad));
         }
 
         public static Vector3 ToVector3XZ(this Vector2 v)
@@ -193,6 +217,11 @@ namespace XDay.UtilityAPI
             return origin + direction * -origin.y / direction.y;
         }
 
+        public static Vector3 RayCastXYPlane(Vector3 origin, Vector3 direction)
+        {
+            return origin - direction * origin.z / direction.z;
+        }
+
         //bottom left is origin
         public static Vector3 RayCastWithXZPlane(Vector2 screenPos, Camera camera, float y = 0)
         {
@@ -208,6 +237,18 @@ namespace XDay.UtilityAPI
             }
 
             var t = (y - ray.origin.y) / ray.direction.y;
+            return ray.GetPoint(t);
+        }
+
+        public static Vector3 RayCastWithPlane(Vector2 screenPos, Camera camera, Plane plane)
+        {
+            if (camera == null)
+            {
+                return Vector3.zero;
+            }
+
+            var ray = camera.ScreenPointToRay(screenPos);
+            plane.Raycast(ray, out var t);
             return ray.GetPoint(t);
         }
 
@@ -243,6 +284,11 @@ namespace XDay.UtilityAPI
         public static Vector3 ClampPointInXZPlane(Vector3 p, Vector2 min, Vector2 max)
         {
             return new Vector3(Mathf.Clamp(p.x, min.x, max.x), p.y, Mathf.Clamp(p.z, min.y, max.y));
+        }
+
+        public static Vector3 ClampPointInXYPlane(Vector3 p, Vector2 min, Vector2 max)
+        {
+            return new Vector3(Mathf.Clamp(p.x, min.x, max.x), Mathf.Clamp(p.y, min.y, max.y), p.z);
         }
 
         public static float Sign(float value)
@@ -694,6 +740,16 @@ namespace XDay.UtilityAPI
             return (n & (n - 1)) == 0;
         }
 
+        public static int NextPowerOf2(int value)
+        {
+            int power = 1;
+            while (power < value)
+            {
+                power *= 2;
+            }
+            return power;
+        }
+
         public static Color Lerp(this Color a, Color b, float t)
         {
             return new Color(Mathf.Lerp(a.r, b.r, t),
@@ -834,6 +890,58 @@ namespace XDay.UtilityAPI
             return distanceSqr <= radius * radius;
         }
 
+        public static bool PointInPolygon(Vector3 testPoint, Vector3[] polygon)
+        {
+            bool result = false;
+            int j = polygon.Length - 1;
+            for (int i = 0; i < polygon.Length; i++)
+            {
+                if (polygon[i].z < testPoint.z && polygon[j].z >= testPoint.z ||
+                    polygon[j].z < testPoint.z && polygon[i].z >= testPoint.z)
+                {
+                    if (polygon[i].x + (testPoint.z - polygon[i].z) /
+                       (polygon[j].z - polygon[i].z) *
+                       (polygon[j].x - polygon[i].x) < testPoint.x)
+                    {
+                        result = !result;
+                    }
+                }
+                j = i;
+            }
+            return result;
+        }
+
+        public static bool PointInPolygon(Vector3 testPoint, List<Vector3> polygon)
+        {
+            bool result = false;
+            int j = polygon.Count - 1;
+            for (int i = 0; i < polygon.Count; i++)
+            {
+                if (polygon[i].z < testPoint.z && polygon[j].z >= testPoint.z ||
+                    polygon[j].z < testPoint.z && polygon[i].z >= testPoint.z)
+                {
+                    if (polygon[i].x + (testPoint.z - polygon[i].z) /
+                       (polygon[j].z - polygon[i].z) *
+                       (polygon[j].x - polygon[i].x) < testPoint.x)
+                    {
+                        result = !result;
+                    }
+                }
+                j = i;
+            }
+            return result;
+        }
+
+        public static bool RectInPolygon(Vector3 min, Vector3 max, List<Vector3> polygon)
+        {
+            var lbIn = PointInPolygon(min, polygon);
+            var rtIn = PointInPolygon(max, polygon);
+            var ltIn = PointInPolygon(new Vector3(min.x, 0, max.z), polygon);
+            var rbIn = PointInPolygon(new Vector3(max.x, 0, min.z), polygon);
+            var centerIn = PointInPolygon((min + max) / 2, polygon);
+            return lbIn || rtIn || centerIn || ltIn || rbIn;
+        }
+
         public static bool PointInRect(Vector2 p, Vector2 rectMin, Vector2 rectMax)
         {
             if (p.x >= rectMin.x && p.x <= rectMax.x &&
@@ -862,6 +970,42 @@ namespace XDay.UtilityAPI
             return child.gameObject;
         }
 
+        public static bool PointSegmentDistance(Vector2 p, Vector2 a, Vector2 b,
+            out float distanceSquared, out Vector2 cp)
+        {
+            if (a == b)
+            {
+                cp = a;
+                distanceSquared = (p - cp).sqrMagnitude;
+                return false;
+            }
+
+            Vector2 ab = b - a;
+            Vector2 ap = p - a;
+
+            float proj = Vector2.Dot(ap, ab);
+            float abLenSq = ab.sqrMagnitude;
+            float d = proj / abLenSq;
+
+            bool interior = false;
+            if (d <= 0)
+            {
+                cp = a;
+            }
+            else if (d >= 1.0f)
+            {
+                cp = b;
+            }
+            else
+            {
+                cp = a + ab * d;
+                interior = true;
+            }
+
+            distanceSquared = (p - cp).sqrMagnitude;
+            return interior;
+        }
+
         public static Vector3 FindClosestPointToSegement(Vector3 p, Vector3 segmentStart, Vector3 segmentEnd)
         {
             var dir = segmentEnd - segmentStart;
@@ -877,6 +1021,42 @@ namespace XDay.UtilityAPI
                 return segmentStart;
             }
             return Vector3.Lerp(segmentStart, segmentEnd, proj);
+        }
+
+        public static void PointToLineSegmentDistance(Vector3 point, Vector3 lineStart, Vector3 lineEnd, out float distance, out bool interior)
+        {
+            var pointToStart = point - lineStart;
+            var pointToEnd = point - lineEnd;
+            pointToEnd.Normalize();
+
+            var lineDirection = (lineEnd - lineStart).normalized;
+            var dStart = Vector3.Dot(pointToStart, lineDirection);
+            var dEnd = Vector3.Dot(pointToEnd, -lineDirection);
+
+            var pointProjectionOnLine = Vector3.Dot(pointToStart, lineDirection) * lineDirection;
+            var perpendicularDirection = pointToStart - pointProjectionOnLine;
+
+            pointToStart.Normalize();
+
+            interior = dStart >= 0 && dEnd >= 0;
+            distance = perpendicularDirection.magnitude;
+        }
+
+        public static int FindClosestEdgeOnProjection(Vector3 point, List<Vector3> polygon)
+        {
+            var closestEdgeIndex = -1;
+            var minimumDistance = float.MaxValue;
+            for (var edgeIndex = 0; edgeIndex < polygon.Count; ++edgeIndex)
+            {
+                PointToLineSegmentDistance(point, polygon[edgeIndex], polygon[(edgeIndex + 1) % polygon.Count], out var distance, out var interior);
+                if (interior && distance < minimumDistance)
+                {
+                    closestEdgeIndex = edgeIndex;
+                    minimumDistance = distance;
+                }
+            }
+
+            return (closestEdgeIndex + 1) % polygon.Count;
         }
 
         public static Vector3 ToVector3(this FixedVector3 v)
@@ -941,6 +1121,52 @@ namespace XDay.UtilityAPI
 #endif
         }
 
+        public static Bounds CalculateBounds(List<Vector3> points)
+        {
+            if (points.Count == 0)
+            {
+                return new Bounds();
+            }
+
+            var minX = float.MaxValue;
+            var minY = float.MaxValue;
+            var minZ = float.MaxValue;
+            var maxX = float.MinValue;
+            var maxY = float.MinValue;
+            var maxZ = float.MinValue;
+            foreach (var point in points)
+            {
+                if (point.x < minX)
+                {
+                    minX = point.x;
+                }
+                if (point.y < minY)
+                {
+                    minY = point.y;
+                }
+                if (point.z < minZ)
+                {
+                    minZ = point.z;
+                }
+                if (point.x > maxX)
+                {
+                    maxX = point.x;
+                }
+                if (point.y > maxY)
+                {
+                    maxY = point.y;
+                }
+                if (point.z > maxZ)
+                {
+                    maxZ = point.z;
+                }
+            }
+
+            var bounds = new Bounds();
+            bounds.SetMinMax(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
+            return bounds;
+        }
+
         public static void SetTextNoGc(this TextMeshProUGUI textComp, ZStringInterpolatedStringHandler handler)
         {
             textComp.SetCharArray(handler.Builder.Buffer, 0, handler.Builder.Length);
@@ -949,6 +1175,297 @@ namespace XDay.UtilityAPI
         public static float EaseInExpo(float v)
         {
             return v == 0 ? 0 : Mathf.Pow(2, 10 * v - 10);
+        }
+
+        public static Color32 LerpColor(ref Color32 a, ref Color32 b, float t)
+        {
+            return new Color32(
+                (byte)(a.r + (b.r - a.r) * t), 
+                (byte)(a.g + (b.g - a.g) * t), 
+                (byte)(a.b + (b.b - a.b) * t), 
+                (byte)(a.a + (b.a - a.a) * t));
+        }
+
+        public static bool GetIntersection(int minX1, int minY1, int maxX1, int maxY1,
+            int minX2, int minY2, int maxX2, int maxY2,
+            out int intersectionMinX, out int intersectionMinY, out int intersectionMaxX, out int intersectionMaxY)
+        {
+            intersectionMinX = 0;
+            intersectionMinY = 0;
+            intersectionMaxX = 0;
+            intersectionMaxY = 0;
+
+            intersectionMinX = Mathf.Max(minX1, minX2);
+            intersectionMaxX = Mathf.Min(maxX1, maxX2);
+            if (intersectionMinX > intersectionMaxX)
+            {
+                return false;
+            }
+
+            intersectionMinY = Mathf.Max(minY1, minY2);
+            intersectionMaxY = Mathf.Min(maxY1, maxY2);
+            if (intersectionMinY > intersectionMaxY)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        // 检测线段与轴对齐矩形是否相交
+        public static bool CheckLineRectIntersection(Vector2 a, Vector2 b, Rect rect, out Vector2 intersection)
+        {
+            intersection = Vector2.zero;
+            // 1. 检查线段端点是否在矩形内
+            if (rect.Contains(a) && rect.Contains(b)) return true;
+
+            // 2. 检查线段是否与矩形四条边相交
+            Vector2 min = rect.min;
+            Vector2 max = rect.max;
+
+            // 左边界 x = min.x
+            if (LineIntersectsVertical(a, b, min.x, min.y, max.y, out intersection))
+                return true;
+
+            // 右边界 x = max.x
+            if (LineIntersectsVertical(a, b, max.x, min.y, max.y, out intersection))
+                return true;
+
+            // 下边界 y = min.y
+            if (LineIntersectsHorizontal(a, b, min.y, min.x, max.x, out intersection))
+                return true;
+
+            // 上边界 y = max.y
+            if (LineIntersectsHorizontal(a, b, max.y, min.x, max.x, out intersection))
+                return true;
+
+            return false;
+        }
+
+        // 检测线段与垂直边（x = xEdge）的交点
+        private static bool LineIntersectsVertical(Vector2 a, Vector2 b, float xEdge, float yMin, float yMax, out Vector2 intersection)
+        {
+            intersection = Vector2.zero;
+            if (Mathf.Approximately(a.x - b.x, 0)) return false; // 线段垂直，与x边平行
+
+            float t = (xEdge - a.x) / (b.x - a.x);
+            if (t < 0 || t > 1) return false;
+
+            float yIntersect = a.y + t * (b.y - a.y);
+            intersection = new Vector2(xEdge, yIntersect);
+            return yIntersect >= yMin && yIntersect <= yMax;
+        }
+
+        // 检测线段与水平边（y = yEdge）的交点
+        private static bool LineIntersectsHorizontal(Vector2 a, Vector2 b, float yEdge, float xMin, float xMax, out Vector2 intersection)
+        {
+            intersection = Vector2.zero;
+            if (Mathf.Approximately(a.y - b.y, 0)) return false; // 线段水平，与y边平行
+
+            float t = (yEdge - a.y) / (b.y - a.y);
+            if (t < 0 || t > 1) return false;
+
+            float xIntersect = a.x + t * (b.x - a.x);
+            intersection = new Vector2(xIntersect, yEdge);
+            return xIntersect >= xMin && xIntersect <= xMax;
+        }
+
+        public static Vector3 CalculateBaryCentricCoord(float x0, float z0, float x1, float z1, float x2, float z2, float px, float pz)
+        {
+            float pax = px - x0;
+            float paz = pz - z0;
+            float bax = x1 - x0;
+            float baz = z1 - z0;
+            float cax = x2 - x0;
+            float caz = z2 - z0;
+            float delta = bax * caz - baz * cax;
+            if (delta == 0)
+            {
+                return Vector3.zero;
+            }
+
+            float t1 = (pax * caz - paz * cax) / delta;
+            float t2 = (bax * paz - baz * pax) / delta;
+
+            return new Vector3(1 - t1 - t2, t1, t2);
+        }
+
+        public static bool GetRectIntersection(Rect a, Rect b, out Rect intersection)
+        {
+            if (a.Overlaps(b))
+            {
+                float minX = Mathf.Max(a.min.x, b.min.x);
+                float minY = Mathf.Max(a.min.y, b.min.y);
+                float maxX = Mathf.Min(a.max.x, b.max.x);
+                float maxY = Mathf.Min(a.max.y, b.max.y);
+                intersection = new Rect(minX, minY, maxX - minX, maxY - minY);
+                return true;
+            }
+
+            intersection = new Rect();
+            return false;
+        }
+
+        public static int FindOrAddVertex(List<Vector3> vertices, Vector3 v, float esp, out bool added)
+        {
+            for (int i = 0; i < vertices.Count; ++i)
+            {
+                var o = vertices[i];
+                if (Approximately(o.x, v.x, esp) &&
+                    Approximately(o.y, v.y, esp) &&
+                    Approximately(o.z, v.z, esp))
+                {
+                    added = false;
+                    return i;
+                }
+            }
+
+            added = true;
+            vertices.Add(v);
+            return vertices.Count - 1;
+        }
+
+        public static Vector3 CalculateCenter(List<Vector3> vertices)
+        {
+            Vector3 center = Vector3.zero;
+            foreach (var vert in vertices)
+            {
+                center += vert;
+            }
+
+            if (vertices.Count > 0)
+            {
+                center /= vertices.Count;
+            }
+
+            return center;
+        }
+
+        public static Vector3 CalculateCenterAndLocalVertices(List<Vector3> vertices, out List<Vector3> localVertices)
+        {
+            localVertices = new List<Vector3>(vertices.Count);
+
+            Vector3 center = Vector3.zero;
+            foreach (var vert in vertices)
+            {
+                center += vert;
+            }
+
+            if (vertices.Count > 0)
+            {
+                center /= vertices.Count;
+            }
+
+            for (var i = 0; i < vertices.Count; ++i)
+            {
+                localVertices.Add(vertices[i] - center);
+            }
+
+            return center;
+        }
+
+        public static bool IsClockwiseWinding(this List<Vector3> polygon)
+        {
+            if (polygon == null)
+            {
+                return false;
+            }
+            float total = 0;
+            for (var i = 0; i < polygon.Count; ++i)
+            {
+                var cur = polygon[i];
+                var next = polygon[(i + 1) % polygon.Count];
+                total += (next.x - cur.x) * (next.z + cur.z);
+            }
+            return total > 0;
+        }
+
+        public static Rect GetBounds2D(this List<Vector2> vertices)
+        {
+            var minX = float.MaxValue;
+            var minZ = float.MaxValue;
+            var maxX = float.MinValue;
+            var maxZ = float.MinValue;
+            foreach (var vert in vertices)
+            {
+                if (vert.x > maxX)
+                {
+                    maxX = vert.x;
+                }
+
+                if (vert.y > maxZ)
+                {
+                    maxZ = vert.y;
+                }
+
+                if (vert.x < minX)
+                {
+                    minX = vert.x;
+                }
+
+                if (vert.y < minZ)
+                {
+                    minZ = vert.y;
+                }
+            }
+
+            return new Rect(minX, minZ, maxX - minX, maxZ - minZ);
+        }
+
+        public static Rect GetBounds2D(this List<Vector3> vertices)
+        {
+            if (vertices == null || vertices.Count == 0)
+            {
+                return new Rect();
+            }
+
+            var minX = float.MaxValue;
+            var minZ = float.MaxValue;
+            var maxX = float.MinValue;
+            var maxZ = float.MinValue;
+            foreach (var vert in vertices)
+            {
+                if (vert.x > maxX)
+                {
+                    maxX = vert.x;
+                }
+
+                if (vert.z > maxZ)
+                {
+                    maxZ = vert.z;
+                }
+
+                if (vert.x < minX)
+                {
+                    minX = vert.x;
+                }
+
+                if (vert.z < minZ)
+                {
+                    minZ = vert.z;
+                }
+            }
+
+            return new Rect(minX, minZ, maxX - minX, maxZ - minZ);
+        }
+
+        public static int Loop(int k, int n)
+        {
+            if (k >= 0)
+            {
+                return k % n;
+            }
+            return k + n;
+        }
+
+        public static void Shuffle<T>(this IList<T> list)
+        {
+            int n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = UnityEngine.Random.Range(0, n + 1);  // 生成 0 到 n（含）的随机数
+                (list[n], list[k]) = (list[k], list[n]);
+            }
         }
 
         private const double m_DegToRad = 0.0174532924;

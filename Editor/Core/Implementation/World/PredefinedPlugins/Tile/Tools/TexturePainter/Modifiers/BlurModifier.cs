@@ -30,7 +30,7 @@ namespace XDay.WorldAPI.Tile.Editor
 {
     internal class BlurModifier : TextureModifier
     {
-        public override string DisplayName => "Blur";
+        public override string DisplayName => "模糊";
 
         public BlurModifier(TexturePainter painter, int passCount)
             : base(painter)
@@ -40,7 +40,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public override void InspectorGUI()
         {
-            m_PassCount = Mathf.Min(EditorGUILayout.IntField("Pass Count", m_PassCount), 15);
+            m_PassCount = Mathf.Min(EditorGUILayout.IntField("次数", m_PassCount), 15);
         }
 
         public override void Modify()

@@ -36,11 +36,12 @@ namespace XDay.InputAPI
         public int TouchCount => m_TrackedTouches.Count;
         public override MotionType Type => MotionType.InertialDrag;
 
-        public InertialDragMotion(int id, TouchID touchID, Camera camera, IDeviceInput device)
+        public InertialDragMotion(int id, TouchID touchID, Camera camera, Plane plane, IDeviceInput device)
             : base(id, device)
         {
             m_TouchID = touchID;
             m_Camera = camera;
+            m_Plane = plane;
             m_TouchPool = IObjectPool<TouchData>.Create(
                 createFunc:() => { 
                     return new TouchData();
@@ -74,8 +75,8 @@ namespace XDay.InputAPI
                 return false;
             }
 
-            var lastPos = Helper.RayCastWithXZPlane(touch.Previous, m_Camera);
-            var curPos = Helper.RayCastWithXZPlane(touch.Current, m_Camera);
+            var lastPos = Helper.RayCastWithPlane(touch.Previous, m_Camera, m_Plane);
+            var curPos = Helper.RayCastWithPlane(touch.Current, m_Camera, m_Plane);
             m_DragOffset = lastPos - curPos;
             var distance = m_DragOffset.magnitude;
             if (touch.State == TouchState.Start)
@@ -156,6 +157,7 @@ namespace XDay.InputAPI
         private List<TouchData> m_TrackedTouches = new(90);
         private IObjectPool<TouchData> m_TouchPool;
         private float m_MaxTimeInterval = 0.1f;
+        private Plane m_Plane;
     }
 }
 

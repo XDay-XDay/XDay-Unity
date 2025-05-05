@@ -27,6 +27,7 @@ namespace XDay
 {
     public sealed class Rigidbody
     {
+        public int ID => m_ID;
         public readonly bool IsStatic;
         public readonly FixedPoint InvMass;
         public readonly FixedPoint InvInertia;
@@ -51,9 +52,11 @@ namespace XDay
         public bool EnableGravity { get => m_EnableGravity; set=>m_EnableGravity = value; }
         public bool IsKinematic { get => m_Kinematic; set=> m_Kinematic = value; }
         public Action<Rigidbody> ActionOnStepOver { get => m_ActionOnStepOver; set => m_ActionOnStepOver = value; }
+        public FixedPoint MaxRadius => m_Collider.MaxRadius;
 
-        private Rigidbody(PhysicalMaterial material, FixedPoint mass, FixedPoint inertia, bool isStatic, Collider collider, string name)
+        private Rigidbody(int id, PhysicalMaterial material, FixedPoint mass, FixedPoint inertia, bool isStatic, Collider collider, string name, PhysicsWorld world)
         {
+            m_ID = id;
             m_Name = name;
             m_Material = material;
             m_Collider = collider;
@@ -62,6 +65,7 @@ namespace XDay
             IsStatic = isStatic;
             m_TransformDirty = true;
             m_AABBUpdateRequired = true;
+            m_World = world;
         }
 
         public FixedAABB GetAABB()
@@ -108,7 +112,7 @@ namespace XDay
 
         internal void Step(FixedPoint time, int iterations)
         {
-            if(IsStatic)
+            if (IsStatic)
             {
                 return;
             }
@@ -122,24 +126,37 @@ namespace XDay
                 m_AngleInRadian += m_AngularVelocity * time;
             }
 
+            var oldPosition = m_Position;
             m_Position += m_LinearVelocity * time;
             m_Force = FixedVector2.Zero;
             m_TransformDirty = true;
             m_AABBUpdateRequired = true;
+
+            if (m_LinearVelocity != FixedVector2.Zero)
+            {
+                m_World.OnPositionChanged(oldPosition, this);
+            }
         }
 
         public void Move(FixedVector2 amount)
         {
+            var oldPos = m_Position;
             m_Position += amount;
             m_TransformDirty = true;
             m_AABBUpdateRequired = true;
+            if (amount != FixedVector2.Zero)
+            {
+                m_World.OnPositionChanged(oldPos, this);
+            }
         }
 
         public void MoveTo(FixedVector2 position)
         {
+            var oldPos = m_Position;
             m_Position = position;
             m_TransformDirty = true;
             m_AABBUpdateRequired = true;
+            m_World.OnPositionChanged(oldPos, this);
         }
 
         public void Rotate(FixedPoint amount)
@@ -188,7 +205,7 @@ namespace XDay
             m_ActionOnStepOver?.Invoke(this);
         }
 
-        public static Rigidbody CreateCircleBody(string name, FixedPoint radius, bool isStatic, PhysicalMaterial material)
+        public static Rigidbody CreateCircleBody(string name, FixedPoint radius, bool isStatic, PhysicalMaterial material, PhysicsWorld world)
         {
             FixedPoint mass = 0;
             FixedPoint inertia = 0;
@@ -201,11 +218,11 @@ namespace XDay
                 inertia = new FixedPoint(0.5f) * mass * radius * radius;
             }
 
-            var body = new Rigidbody(material, mass, inertia, isStatic, collider, name);
+            var body = new Rigidbody(world.NextID, material, mass, inertia, isStatic, collider, name, world);
             return body;
         }
 
-        public static Rigidbody CreateBoxBody(string name, FixedPoint width, FixedPoint height, bool isStatic, PhysicalMaterial material)
+        public static Rigidbody CreateBoxBody(string name, FixedPoint width, FixedPoint height, bool isStatic, PhysicalMaterial material, PhysicsWorld world)
         {
             var collider = new BoxCollider(width, height);
 
@@ -218,15 +235,17 @@ namespace XDay
                 inertia = new FixedPoint(1) / new FixedPoint(12) * mass * (width * width + height * height);
             }
 
-            return new Rigidbody(material, mass, inertia, isStatic, collider, name);
+            return new Rigidbody(world.NextID, material, mass, inertia, isStatic, collider, name, world);
         }
 
+        private int m_ID;
         private FixedAABB m_AABB;
         private FixedVector2 m_Position;
         private FixedVector2 m_LinearVelocity;
         private FixedPoint m_AngleInRadian;
         private FixedPoint m_AngularVelocity;
         private FixedVector2 m_Force;
+        private readonly PhysicsWorld m_World;
         private readonly PhysicalMaterial m_Material;
         private readonly Collider m_Collider;
         private bool m_EnableRotation = true;

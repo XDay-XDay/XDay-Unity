@@ -24,7 +24,6 @@
 using Cysharp.Threading.Tasks;
 using XDay.CameraAPI;
 using XDay.InputAPI;
-using XDay.UtilityAPI;
 using System;
 using UnityEditor;
 using UnityEngine;

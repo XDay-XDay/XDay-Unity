@@ -41,9 +41,9 @@ namespace XDay.InputAPI
             return AddMotion(new ScrollMotion(AllocateID, 16.0f, interval, TouchID.Left, device));
         }
 
-        public InertialDragMotion CreateInertialDragMotion(TouchID name, Camera camera, IDeviceInput device)
+        public InertialDragMotion CreateInertialDragMotion(TouchID name, Plane plane, Camera camera, IDeviceInput device)
         {
-            return AddMotion(new InertialDragMotion(AllocateID, name, camera, device));
+            return AddMotion(new InertialDragMotion(AllocateID, name, camera, plane, device));
         }
 
         public PinchMotion CreatePinchMotion(float minHeight, float maxHeight, float range, Camera camera, bool enableRotation, IDeviceInput device)

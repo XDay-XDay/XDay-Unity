@@ -22,12 +22,10 @@
  */
 
 using UnityEngine;
-using XDay.SerializationAPI;
-using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
-    internal sealed class TileObject : WorldObject
+    internal sealed partial class TileObject : WorldObject
     {
         public int MaterialConfigID { get => m_MaterialConfigID; set => m_MaterialConfigID = value; }
         public override Vector3 Position => m_Position;
@@ -36,15 +34,20 @@ namespace XDay.WorldAPI.Tile.Editor
         public ResourceDescriptor ResourceDescriptor => m_ResourceDescriptor.ToObject<ResourceDescriptor>();
         public string AssetPath => m_ResourceDescriptor == null ? null : m_ResourceDescriptor.ToObject<ResourceDescriptor>()?.GetPath(0);
         public override string TypeName => "EditorTileObject";
+        public override bool EnablePostInit => true;
 
-        public TileObject() { }
+        public TileObject() 
+        {
+        }
+
         public TileObject(int id, 
             int objectIndex, 
             bool isEnabled, 
             IResourceDescriptor descriptor, 
             WorldObjectVisibility visibility, 
             Vector3 position, 
-            Quaternion rotation)
+            Quaternion rotation,
+            float[] heights, bool clipped)
             : base(id, objectIndex)
         {
             m_IsEnabled = isEnabled;
@@ -52,13 +55,24 @@ namespace XDay.WorldAPI.Tile.Editor
             m_Visibility = visibility;
             m_Position = position;
             m_Rotation = rotation;
+
+#if ENABLE_CLIP_MASK
+            m_Clipped = clipped;
+#endif
+            m_VertexHeights = heights;
+            if (heights != null)
+            {
+                m_MeshResolution = Mathf.FloorToInt(Mathf.Sqrt(m_VertexHeights.Length)) - 1;
+            }
         }
 
-        public override void Init(IWorld world)
+        protected override void OnInit()
         {
-            base.Init(world);
+            m_ResourceDescriptor.Init(World);
+        }
 
-            m_ResourceDescriptor.Init(world);
+        protected override void OnUninit()
+        {
         }
 
         public override IAspect GetAspect(int objectID, string name)
@@ -106,7 +120,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public override void EditorDeserialize(IDeserializer deserializer, string label)
         {
-            deserializer.ReadInt32("TileObject.Version");
+            var version = deserializer.ReadInt32("TileObject.Version");
 
             base.EditorDeserialize(deserializer, label);
 
@@ -115,6 +129,11 @@ namespace XDay.WorldAPI.Tile.Editor
             m_IsEnabled = deserializer.ReadBoolean("Enabled");
             m_Position = deserializer.ReadVector3("Position");
             m_Rotation = deserializer.ReadQuaternion("Rotation");
+            if (version >= 2)
+            {
+                m_VertexHeights = deserializer.ReadSingleArray("Vertex Heights");
+                m_MeshResolution = deserializer.ReadInt32("Mesh Resolution");
+            }
         }
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -128,6 +147,8 @@ namespace XDay.WorldAPI.Tile.Editor
             serializer.WriteBoolean(m_IsEnabled, "Enabled");
             serializer.WriteVector3(m_Position, "Position");
             serializer.WriteQuaternion(m_Rotation, "Rotation");
+            serializer.WriteSingleArray(m_VertexHeights, "Vertex Heights");
+            serializer.WriteInt32(m_MeshResolution, "Mesh Resolution");
         }
 
         protected override WorldObjectVisibility VisibilityInternal
@@ -147,7 +168,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private WorldObjectWeakRef m_ResourceDescriptor;
         private Vector3 m_Position;
         private Quaternion m_Rotation;
-        private const int m_Version = 1;
+        private const int m_Version = 2;
     }
 }
 

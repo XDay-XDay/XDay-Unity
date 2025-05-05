@@ -31,7 +31,7 @@ namespace XDay.CameraAPI.Editor
 {
     internal class EditorWorldPluginTemplateCreator
     {
-        [MenuItem("XDay/World/Plugin/Create Editor Plugin Template")]
+        [MenuItem("XDay/地图/插件/创建编辑器插件模板")]
         static void Open()
         {
             var parameters = new List<ParameterWindow.Parameter>()

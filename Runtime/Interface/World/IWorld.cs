@@ -27,6 +27,7 @@ using XDay.UtilityAPI;
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.AssetAPI;
+using System;
 
 namespace XDay.WorldAPI
 {
@@ -68,6 +69,7 @@ namespace XDay.WorldAPI
         string Name { get; }
         float Width { get; }
         float Height { get; }
+        int CurrentLOD { get; }
         Bounds Bounds { get; }
         int PluginCount { get; }
         string GameFolder { get; }
@@ -84,6 +86,8 @@ namespace XDay.WorldAPI
         T QueryPlugin<T>() where T : class, IWorldPlugin;
         T QueryPlugin<T>(string name) where T : class, IWorldPlugin;
         List<T> QueryPlugins<T>() where T : class, IWorldPlugin;
+        IWorldPlugin GetPlugin(int index);
+        bool HasPlugin(System.Type type);
         IDeserializer QueryGameDataDeserializer(int worldID, string gameDataFileName);
         void RegisterLODChangeEvent(LODChangeCallback callback);
         void UnregisterLODChangeEvent(LODChangeCallback callback);
@@ -94,9 +98,9 @@ namespace XDay.WorldAPI
         IWorld FirstWorld { get; }
         IAssetLoader WorldAssetLoader { get; }
 
-        UniTask<IWorld> LoadWorldAsync(string name, Camera camera = null);
-        UniTask<IWorld> LoadWorldAsync(int worldID, Camera camera = null);
-        IWorld LoadWorld(string name, Camera camera = null);
+        UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc = null);
+        UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc = null);
+        IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc = null);
         void UnloadWorld(string name);
         void UnloadWorld(int worldID);
         void LoadWorldRenderer(string name);
@@ -108,6 +112,7 @@ namespace XDay.WorldAPI
     {
         Rect VisibleArea { get; }
         Rect ExpandedArea { get; }
+        Vector2 ExpandSize { get; set; }
 
         void Update(Camera camera);
         void DebugDraw();
@@ -131,6 +136,7 @@ namespace XDay.WorldAPI
     public interface IResourceDescriptor : IWorldObject
     {
         int LODCount { get; }
+        bool IsValid { get; }
 
         void Init(IWorld world);
         void Uninit();

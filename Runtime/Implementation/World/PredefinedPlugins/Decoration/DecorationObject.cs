@@ -57,6 +57,7 @@ namespace XDay.WorldAPI.Decoration
             int lod, 
             int index,
             float posX,
+            float posY,
             float posZ,
             ResourceMetadata resourceMetadata)
         {
@@ -68,6 +69,7 @@ namespace XDay.WorldAPI.Decoration
             m_LOD = lod;
             m_IndexInGrid = index;
             m_PositionInGrid.x = posX;
+            m_PositionInGrid.y = posY;
             m_PositionInGrid.z = posZ;
             m_ResourceMetadata = resourceMetadata;
         }
@@ -101,6 +103,14 @@ namespace XDay.WorldAPI.Decoration
             }
 
             return true;
+        }
+
+        protected override void OnInit()
+        {
+        }
+
+        protected override void OnUninit()
+        {
         }
 
         protected override WorldObjectVisibility VisibilityInternal

@@ -39,7 +39,10 @@ namespace XDay.WorldAPI
             foreach (var d in m_UninitedDescriptors)
             {
                 d.Init(world);
-                m_Descriptors.Add(d.GetPath(0), d);
+                if (d.IsValid)
+                {
+                    m_Descriptors.TryAdd(d.GetPath(0), d);
+                }
             }
             m_UninitedDescriptors = null;
         }

@@ -31,6 +31,7 @@ namespace XDay.InputAPI
     internal class MouseDevice : IDevice
     {
         public event Action EventAnyTouchBegin;
+        public event Action EventAnySceneTouchBegin;
         public int TouchCount => SceneTouchCount + UITouchCount;
         public int UITouchCount => m_UITouches.Count;
         public int SceneTouchCount => m_SceneTouches.Count;
@@ -112,6 +113,7 @@ namespace XDay.InputAPI
                 }
             }
 
+            bool anySceneTouchStart = false;
             foreach (var touch in m_Touches)
             {
                 if (touch.IsActive)
@@ -133,6 +135,10 @@ namespace XDay.InputAPI
                     else
                     {
                         m_SceneTouches.Add(touch);
+                        if (touch.State == TouchState.Start)
+                        {
+                            anySceneTouchStart = true;
+                        }
                     }
                 }
             }
@@ -140,6 +146,11 @@ namespace XDay.InputAPI
             if (start)
             {
                 EventAnyTouchBegin?.Invoke();
+            }
+
+            if (anySceneTouchStart)
+            {
+                EventAnySceneTouchBegin?.Invoke();
             }
         }
 

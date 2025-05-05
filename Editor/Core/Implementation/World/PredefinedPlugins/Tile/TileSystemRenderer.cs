@@ -27,21 +27,23 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
-    internal class TileSystemRenderer
+    internal partial class TileSystemRenderer
     {
         public GameObject Root => m_Root;
 
         public TileSystemRenderer(TileSystem system) 
         {
-            m_TileRenderers = new GameObject[system.XTileCount * system.YTileCount];
+            m_TileGameObjects = new GameObject[system.XTileCount * system.YTileCount];
             m_GameObjectPool = system.World.GameObjectPool;
             m_TileSystem = system;
             CreateRoot();
+
+            m_RuntimeHeightMeshManager = new TerrainHeightMeshManager(system.World.GameFolder, system.World.AssetLoader);
         }
 
         public void OnDestroy()
         {
-            foreach (var renderer in m_TileRenderers)
+            foreach (var renderer in m_TileGameObjects)
             {
                 Helper.DestroyUnityObject(renderer);
             }
@@ -76,21 +78,22 @@ namespace XDay.WorldAPI.Tile.Editor
         public void ShowTile(TileObject tile, int x, int y)
         {
             var idx = y * m_TileSystem.XTileCount + x;
-            if (m_TileRenderers[idx] != null && m_TileRenderers[idx].gameObject != null)
+            if (m_TileGameObjects[idx] != null && m_TileGameObjects[idx].gameObject != null)
             {
                 return;
             }
 
             var gameObject = m_GameObjectPool.Get(tile.AssetPath);
-            m_TileRenderers[idx] = gameObject;
+            m_TileGameObjects[idx] = gameObject;
             gameObject.tag = WorldDefine.EDITOR_ONLY_TAG;
             gameObject.transform.localPosition = tile.Position;
             gameObject.transform.SetParent(m_Root.transform, false);
+            UpdateMesh(x, y, false);
         }
 
         public GameObject GetTileGameObject(int x, int y)
         {
-            return m_TileRenderers[y * m_TileSystem.XTileCount + x];
+            return m_TileGameObjects[y * m_TileSystem.XTileCount + x];
         }
 
         public void SetAspect(int tileObjectID, string name, IAspect aspect)
@@ -187,7 +190,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 tag = WorldDefine.EDITOR_ONLY_TAG
             };
             m_Root.transform.SetParent(m_TileSystem.World.Root.transform, true);
-            m_Root.transform.SetPositionAndRotation(m_TileSystem.Center, m_TileSystem.Rotation);
+            m_Root.transform.rotation = m_TileSystem.Rotation;
             m_Root.transform.SetSiblingIndex(m_TileSystem.ObjectIndex);
             Selection.activeGameObject = m_Root;
         }
@@ -195,13 +198,21 @@ namespace XDay.WorldAPI.Tile.Editor
         private void HideTile(TileObject tile, int x, int y)
         {
             var idx = y * m_TileSystem.XTileCount + x;
-            if (m_TileRenderers[idx] == null)
+            if (m_TileGameObjects[idx] == null)
             {
                 return;
             }
+            
+            string prefabPath = tile.AssetPath;
+            var filter = m_TileGameObjects[idx].GetComponentInChildren<MeshFilter>();
+            var originalMesh = m_RuntimeHeightMeshManager.GetOriginalMesh(prefabPath);
+            if (originalMesh != null) 
+            {
+                filter.sharedMesh = originalMesh;
+            }
 
-            m_GameObjectPool.Release(tile.AssetPath, m_TileRenderers[idx]);
-            m_TileRenderers[idx] = null;
+            m_GameObjectPool.Release(tile.AssetPath, m_TileGameObjects[idx]);
+            m_TileGameObjects[idx] = null;
         }
 
         private void ParseActionInfo(string text, out string aspectName, out string shaderPropName)
@@ -211,7 +222,7 @@ namespace XDay.WorldAPI.Tile.Editor
             shaderPropName = tokens[2];
         }
 
-        private readonly GameObject[] m_TileRenderers;
+        private readonly GameObject[] m_TileGameObjects;
         private GameObject m_Root;
         private readonly IGameObjectPool m_GameObjectPool;
         private readonly TileSystem m_TileSystem;

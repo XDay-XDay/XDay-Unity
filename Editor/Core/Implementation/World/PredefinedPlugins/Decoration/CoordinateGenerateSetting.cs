@@ -74,7 +74,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         public CoordinateGenerateOperation(List<Vector3> polygon)
         {
-            Polygon = polygon;
+            Polygon = new(polygon);
             Shape = GeometryType.Polygon;
         }
 

@@ -33,22 +33,44 @@ namespace XDay.CameraAPI
             m_Manipulator = manipulator;
         }
 
-        protected Vector3 CalculateCameraPos(Camera camera, float focalLength, float screenX, float screenY)
+        protected Vector3 CalculateCameraPos(Camera camera, float focalLength, float screenX, float screenY, CameraDirection direction)
         {
-            var min = Helper.FocalLengthFromAltitude(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MinAltitude);
-            var max = Helper.FocalLengthFromAltitude(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MaxAltitude);
-            focalLength = Mathf.Clamp(focalLength, min, max);
-            var centerPos = Helper.RayCastWithXZPlane(new Vector3(screenX, screenY, 0), camera);
+            if (direction == CameraDirection.XZ)
+            {
+                float min = Helper.FocalLengthFromAltitudeXZ(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MinAltitude);
+                float max = Helper.FocalLengthFromAltitudeXZ(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MaxAltitude);
+                focalLength = Mathf.Clamp(focalLength, min, max);
+                var centerPos = Helper.RayCastWithXZPlane(new Vector3(screenX, screenY, 0), camera);
 
-            var focusPoint = m_Manipulator.FocusPoint;
-            var originalPos = camera.transform.position;
-            camera.transform.position = PositionFromFocusPoint(camera, focalLength, focusPoint);
-            var zoomCenter = Helper.RayCastWithXZPlane(new Vector3(screenX, screenY, 0), camera);
-            camera.transform.position = originalPos;
+                var focusPoint = m_Manipulator.FocusPoint;
+                var originalPos = camera.transform.position;
+                camera.transform.position = PositionFromFocusPoint(camera, focalLength, focusPoint);
+                var zoomCenter = Helper.RayCastWithXZPlane(new Vector3(screenX, screenY, 0), camera);
+                camera.transform.position = originalPos;
 
-            var delta = zoomCenter - centerPos;
-            var newPos = PositionFromFocusPoint(camera, focalLength, new Vector3(focusPoint.x - delta.x, 0, focusPoint.z - delta.z));
-            return newPos;
+                var delta = zoomCenter - centerPos;
+                var newPos = PositionFromFocusPoint(camera, focalLength, new Vector3(focusPoint.x - delta.x, 0, focusPoint.z - delta.z));
+                return newPos;
+            }
+            else
+            {
+                float min = Helper.FocalLengthFromAltitudeXY(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MinAltitude);
+                float max = Helper.FocalLengthFromAltitudeXY(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MaxAltitude);
+                focalLength = Mathf.Clamp(focalLength, min, max);
+
+                var plane = new Plane(Vector3.back, 0);
+                var centerPos = Helper.RayCastWithPlane(new Vector3(screenX, screenY, 0), camera, plane);
+
+                var focusPoint = m_Manipulator.FocusPoint;
+                var originalPos = camera.transform.position;
+                camera.transform.position = PositionFromFocusPoint(camera, focalLength, focusPoint);
+                var zoomCenter = Helper.RayCastWithPlane(new Vector3(screenX, screenY, 0), camera, plane);
+                camera.transform.position = originalPos;
+
+                var delta = zoomCenter - centerPos;
+                var newPos = PositionFromFocusPoint(camera, focalLength, new Vector3(focusPoint.x - delta.x, focusPoint.y - delta.y, 0));
+                return newPos;
+            }
         }
 
         protected Vector3 PositionFromFocusPoint(Camera camera, float focalLength, Vector3 focusPoint)

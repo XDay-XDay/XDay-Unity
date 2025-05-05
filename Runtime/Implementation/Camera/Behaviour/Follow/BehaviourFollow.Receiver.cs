@@ -70,7 +70,14 @@ namespace XDay.CameraAPI
                 m_TargetAltitude = request.Param.TargetAltitude;
                 if (m_TargetAltitude == 0)
                 {
-                    m_TargetAltitude = pose.CurrentLogicPosition.y;
+                    if (m_Manipulator.Direction == CameraDirection.XZ)
+                    {
+                        m_TargetAltitude = pose.CurrentLogicPosition.y;
+                    }
+                    else
+                    {
+                        m_TargetAltitude = -pose.CurrentLogicPosition.z;
+                    }
                 }
                 m_CatchDuration = request.Param.CatchDuration;
                 m_Latency = request.Param.Latency;
@@ -130,7 +137,14 @@ namespace XDay.CameraAPI
                 }
                 else
                 {
-                    pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y);
+                    if (m_Manipulator.Direction == CameraDirection.XZ)
+                    {
+                        pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y);
+                    }
+                    else
+                    {
+                        pose.CurrentLogicPosition = AltitudeToPosition(-pose.CurrentLogicPosition.z);
+                    }
                 }
             }
 
@@ -140,9 +154,25 @@ namespace XDay.CameraAPI
                 {
                     SetState(State.Zoom);
                     m_ZoomTicker.Start(m_ZoomDuration);
-                    m_CameraAltitudeWhenZoomBegin = pose.CurrentRenderPosition.y;
+
+                    if (m_Manipulator.Direction == CameraDirection.XZ)
+                    {
+                        m_CameraAltitudeWhenZoomBegin = pose.CurrentRenderPosition.y;
+                    }
+                    else
+                    {
+                        m_CameraAltitudeWhenZoomBegin = -pose.CurrentRenderPosition.z;
+                    }
                 }
-                pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y);
+
+                if (m_Manipulator.Direction == CameraDirection.XZ)
+                {
+                    pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y);
+                }
+                else
+                {
+                    pose.CurrentLogicPosition = AltitudeToPosition(-pose.CurrentLogicPosition.z);
+                }
             }
 
             private void Zoom(CameraTransform pose)
@@ -164,7 +194,15 @@ namespace XDay.CameraAPI
 
             private void Catching(CameraTransform pos)
             {
-                var cameraPos = AltitudeToPosition(pos.CurrentLogicPosition.y);
+                Vector3 cameraPos;
+                if (m_Manipulator.Direction == CameraDirection.XZ)
+                {
+                    cameraPos = AltitudeToPosition(pos.CurrentLogicPosition.y);
+                }
+                else
+                {
+                    cameraPos = AltitudeToPosition(-pos.CurrentLogicPosition.z);
+                }
                 if (m_CatchSpeed == 0)
                 {
                     if (m_CatchDuration <= 0)
@@ -188,7 +226,11 @@ namespace XDay.CameraAPI
 
             private Vector3 AltitudeToPosition(float altitude)
             {
-                return Helper.FromFocusPoint(m_Manipulator.Camera, m_Target.Position, altitude);
+                if (m_Manipulator.Direction == CameraDirection.XZ)
+                {
+                    return Helper.FromFocusPointXZ(m_Manipulator.Camera, m_Target.Position, altitude);
+                }
+                return Helper.FromFocusPointXY(m_Manipulator.Camera, m_Target.Position, altitude);
             }
 
             private void SetState(State state)

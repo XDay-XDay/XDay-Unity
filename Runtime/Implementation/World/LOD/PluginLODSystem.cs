@@ -57,10 +57,9 @@ namespace XDay.WorldAPI
         public void Init(IWorldLODSystem lodSystem)
         {
             m_WorldLODSystem = lodSystem as WorldLODSystem;
-            LODCount = lodSystem.LODCount;
-            for (var i = 0; i < WorldLODSystem.LODCount; ++i)
+            for (var i = 0; i < m_LODs.Length; ++i)
             {
-                m_LODs[i].Altitude = WorldLODSystem.GetLOD(i).Altitude;
+                m_LODs[i].Altitude = m_WorldLODSystem.GetLOD(i).Altitude;
             }
         }
 

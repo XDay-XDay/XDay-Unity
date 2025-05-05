@@ -36,9 +36,9 @@ namespace XDay.WorldAPI.Tile.Editor
             var changed = false;
             EditorGUILayout.BeginHorizontal();
             {
-                m_ShowMaterialConfig = EditorGUILayout.Foldout(m_ShowMaterialConfig, "Material Config");
+                m_ShowMaterialConfig = EditorGUILayout.Foldout(m_ShowMaterialConfig, "材质参数");
                 EditorGUILayout.Space();
-                if (GUILayout.Button(new GUIContent("Add", "Add Parameters"), GUILayout.MaxWidth(30)))
+                if (GUILayout.Button(new GUIContent("新增", "新增材质参数"), GUILayout.MaxWidth(40)))
                 {
                     changed = AddMaterialConfig();
                 }
@@ -113,11 +113,13 @@ namespace XDay.WorldAPI.Tile.Editor
             }
 
             EditorGUI.BeginChangeCheck();
-            for (var i = 0; i < m_ShaderNames.Length; ++i)
+            var idx = 0;
+            foreach (var kv in m_TileShaders)
             {
-                m_ShaderNames[i] = m_TileShaders[i].name;
+                m_ShaderNames[idx] = kv.Key.name;
+                ++idx;
             }
-            var shaderIndex = EditorGUILayout.Popup("Tile Shaders", m_ActiveShaderIndex, m_ShaderNames);
+            var shaderIndex = EditorGUILayout.Popup("地块Shader", m_ActiveShaderIndex, m_ShaderNames);
             if (EditorGUI.EndChangeCheck())
             {
                 m_ActiveShaderIndex = shaderIndex;
@@ -198,9 +200,9 @@ namespace XDay.WorldAPI.Tile.Editor
                     {
                         var shader = renderer.sharedMaterial.shader;
                         if (shader != null && 
-                            !m_TileShaders.Contains(shader))
+                            !ContainsShader(shader))
                         {
-                            m_TileShaders.Add(shader);
+                            m_TileShaders.Add(new(shader, renderer.sharedMaterial));
                         }
                     }
                 }
@@ -209,7 +211,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void QueryActiveShaderMaterialConfigs(bool changed)
         {
-            var shaderGUID = EditorHelper.GetObjectGUID(GetActiveShader());
+            var shaderGUID = EditorHelper.GetObjectGUID(GetActiveShader(out _));
 
             m_TempList.Clear();
             foreach (var config in m_MaterialConfigs)
@@ -229,7 +231,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private bool DrawDeleteMaterialConfigButton(int index)
         {
-            if (GUILayout.Button(new GUIContent("Delete", "")))
+            if (GUILayout.Button(new GUIContent("删除", ""), GUILayout.MaxWidth(40)))
             {
                 m_MaterialConfigs.RemoveAt(index);
                 return true;
@@ -239,7 +241,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawRefreshMaterialButton(MaterialConfig config)
         {
-            if (GUILayout.Button(new GUIContent("Refresh", "")))
+            if (GUILayout.Button(new GUIContent("刷新", ""), GUILayout.MaxWidth(40)))
             {
                 var newConfig = CreateMaterialConfig(0);
                 config.Combine(newConfig);
@@ -248,7 +250,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawApplyMaterial(MaterialConfig config)
         {
-            if (GUILayout.Button(new GUIContent("Apply To Tiles", "")))
+            if (GUILayout.Button(new GUIContent("应用到地块", ""), GUILayout.MaxWidth(80)))
             {
                 UndoSystem.NextGroupAndJoin();
 
@@ -359,11 +361,13 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
-        private Shader GetActiveShader()
+        private Shader GetActiveShader(out Material material)
         {
+            material = null;
             if (m_ActiveShaderIndex >= 0 && m_ActiveShaderIndex < m_TileShaders.Count)
             {
-                return m_TileShaders[m_ActiveShaderIndex];
+                material = m_TileShaders[m_ActiveShaderIndex].Value;
+                return m_TileShaders[m_ActiveShaderIndex].Key;
             }
 
             return null;
@@ -411,21 +415,21 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private MaterialConfig CreateMaterialConfig(int id)
         {
-            var activeShader = GetActiveShader();
+            var activeShader = GetActiveShader(out var material);
             if (activeShader == null)
             {
-                EditorUtility.DisplayDialog("Error", "Active shader not set", "OK");
+                EditorUtility.DisplayDialog("出错了", "未设置Shader", "确定");
                 return null;
             }
             
             var tempMaterial = new Material(activeShader);
 
-            var config = new MaterialConfig(id, m_MaterialConfigs.Count, EditorHelper.GetObjectGUID(activeShader), "Material Config");
+            var config = new MaterialConfig(id, m_MaterialConfigs.Count, EditorHelper.GetObjectGUID(activeShader), "材质参数");
             config.Init(World);
 
             foreach (var name in tempMaterial.GetPropertyNames(MaterialPropertyType.Float))
             {
-                config.AddFloat(name);
+                config.AddFloat(name, material.GetFloat(name));
             }
 
             var texturePropertyNames = tempMaterial.GetTexturePropertyNames();
@@ -434,7 +438,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 var isValidName = IsUserDefinedVectorParameterName(name, texturePropertyNames);
                 if (isValidName)
                 {
-                    config.AddVector(name);
+                    config.AddVector(name, material.GetVector(name));
                 }
             }
 
@@ -442,7 +446,9 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 if (name != TexturePainter.MaskName)
                 {
-                    config.AddTexture(name);
+                    var offset = material.GetTextureOffset(name);
+                    var scale = material.GetTextureScale(name);
+                    config.AddTexture(name, material.GetTexture(name), new Vector4(scale.x, scale.y, offset.x, offset.y));
                 }
             }
 
@@ -453,7 +459,10 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawConfigInfo(MaterialConfig config)
         {
-            m_Style ??= new GUIStyle(EditorStyles.foldout);
+            if (m_Style == null)
+            {
+                m_Style = new GUIStyle(EditorStyles.foldout);
+            }
             m_Style.fixedWidth = 1;
 
             EditorGUIUtility.fieldWidth = 18;
@@ -465,10 +474,22 @@ namespace XDay.WorldAPI.Tile.Editor
             EditorGUIUtility.labelWidth = 0;
         }
 
+        private bool ContainsShader(Shader shader)
+        {
+            foreach (var kv in m_TileShaders)
+            {
+                if (kv.Key == shader)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private GUIStyle m_Style;
         private int m_ActiveShaderIndex = -1;
         private string[] m_ShaderNames;
-        private List<Shader> m_TileShaders = new();
+        private List<KeyValuePair<Shader, Material>> m_TileShaders = new();
         private List<MaterialConfig> m_TempList = new();
     }
 }

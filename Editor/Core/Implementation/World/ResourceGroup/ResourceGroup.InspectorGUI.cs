@@ -65,7 +65,7 @@ namespace XDay.WorldAPI.Editor
                 foreach (var filePath in Directory.EnumerateFiles(directory, "*.prefab", SearchOption.AllDirectories))
                 {
                     var lod = WorldHelper.GetLODIndex(filePath);
-                    if (lod == 0 || !addLOD0Only)
+                    if (lod <= 0 || !addLOD0Only)
                     {
                         prefabPaths.Add(filePath.Replace('\\', '/'));
                     }
@@ -116,8 +116,8 @@ namespace XDay.WorldAPI.Editor
         {
             EditorGUILayout.BeginHorizontal();
             {
-                EditorGUILayout.TextField("Missing", m_LabelStyle);
-                if (GUILayout.Button(new GUIContent("Delete", "Delete Resource")))
+                EditorGUILayout.TextField("无效模型", m_LabelStyle);
+                if (GUILayout.Button(new GUIContent("Delete", "删除模型")))
                 {
                     m_RemoveQueue.Add(index);
                 }
@@ -166,14 +166,14 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawIndexButton(int index)
         {
-            if (WorldHelper.ImageButton("number.png", "Change index"))
+            if (WorldHelper.ImageButton("number.png", "修改模型序号"))
             {
                 var parameters = new List<ParameterWindow.Parameter>()
                 {
-                    new ParameterWindow.IntParameter("New index", "", index),
+                    new ParameterWindow.IntParameter("新序号", "", index),
                 };
                 var idx = index;
-                ParameterWindow.Open("Change prefab index", parameters, (p) =>
+                ParameterWindow.Open("修改模型序号", parameters, (p) =>
                 {
                     var ok = ParameterWindow.GetInt(p[0], out var newIndex);
                     if (ok && idx != newIndex && newIndex >= 0)
@@ -188,9 +188,10 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawSelectButton(int index)
         {
-            if (WorldHelper.ImageButton("select.png", "Select prefab"))
+            if (WorldHelper.ImageButton("select.png", "选中Prefab文件"))
             {
-                Selection.activeGameObject = AssetDatabase.LoadAssetAtPath<GameObject>(m_Resources[index].Path);
+                Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(m_Resources[index].Path);
+                EditorGUIUtility.PingObject(Selection.activeObject);
             }
         }
 
@@ -198,9 +199,9 @@ namespace XDay.WorldAPI.Editor
         {
             if (removable)
             {
-                if (WorldHelper.ImageButton("delete.png", "Delete Resource"))
+                if (WorldHelper.ImageButton("delete.png", "从模型组中删除模型"))
                 {
-                    if (EditorUtility.DisplayDialog("Delete resource", "Continue?", "Yes", "No"))
+                    if (EditorUtility.DisplayDialog("删除模型", "继续?", "确定", "取消"))
                     {
                         m_RemoveQueue.Add(index);
                     }
@@ -223,7 +224,7 @@ namespace XDay.WorldAPI.Editor
         private void DrawPrefabSelection()
         {
             EditorGUIUtility.labelWidth = 100;
-            var prefab = EditorGUILayout.ObjectField("Prefab", m_SelectedPrefab, typeof(GameObject), false, null) as GameObject;
+            var prefab = EditorGUILayout.ObjectField("模型", m_SelectedPrefab, typeof(GameObject), false, null) as GameObject;
             EditorGUIUtility.labelWidth = 0;
 
             if (EditorHelper.IsPrefab(prefab))
@@ -234,14 +235,14 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawAddPrefabButton()
         {
-            if (WorldHelper.ImageButton("add.png", "Add Resource"))
+            if (WorldHelper.ImageButton("add.png", "添加所选Prefab到模型组"))
             {
                 if (m_SelectedPrefab != null)
                 {
                     var lod = WorldHelper.GetLODIndex(AssetDatabase.GetAssetPath(m_SelectedPrefab));
                     if (lod > 0)
                     {
-                        EditorUtility.DisplayDialog("Error", "can only add lod0 model", "OK");
+                        EditorUtility.DisplayDialog("出错了", "只能添加LOD0的模型", "确定");
                     }
                     else
                     {
@@ -254,13 +255,13 @@ namespace XDay.WorldAPI.Editor
         private void DrawDirectorySelection()
         {
             EditorGUIUtility.labelWidth = 100;
-            m_SelectedDirectory = EditorGUILayout.ObjectField("Directory", m_SelectedDirectory, typeof(DefaultAsset), false, null) as DefaultAsset;
+            m_SelectedDirectory = EditorGUILayout.ObjectField("目录", m_SelectedDirectory, typeof(DefaultAsset), false, null) as DefaultAsset;
             EditorGUIUtility.labelWidth = 0;
         }
 
         private void DrawAddDirectoryButton(ResourceDisplayFlags flags)
         {
-            if (WorldHelper.ImageButton("add.png", "Add All Resource In Directory"))
+            if (WorldHelper.ImageButton("add.png", "添加所选目录的所有Prefab到模型组里"))
             {
                 var folderPath = m_SelectedDirectory == null ? null : AssetDatabase.GetAssetPath(m_SelectedDirectory);
                 AddInDirectory(folderPath, flags.HasFlag(ResourceDisplayFlags.AddLOD0Only));

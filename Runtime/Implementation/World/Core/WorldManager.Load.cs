@@ -31,30 +31,30 @@ namespace XDay.WorldAPI
 {
     public partial class WorldManager
     {
-        public async UniTask<IWorld> LoadWorldAsync(string name, Camera camera)
+        public async UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc)
         {
             name = ConvertName(name);
             var setup = m_SetupManager.QuerySetup(name);
             if (setup != null)
             {
-                return await LoadWorldAsyncInternal(setup, camera);
+                return await LoadWorldAsyncInternal(setup, cameraQueryFunc);
             }
             Debug.LogError($"load world failed: {name}");
             return null;
         }
 
-        public async UniTask<IWorld> LoadWorldAsync(int worldID, Camera camera)
+        public async UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc)
         {
             var setup = m_SetupManager.QuerySetup(worldID);
             if (setup != null)
             {
-                return await LoadWorldAsyncInternal(setup, camera);
+                return await LoadWorldAsyncInternal(setup, cameraQueryFunc);
             }
             Debug.LogError($"load world failed: {worldID}");
             return null;
         }
 
-        public IWorld LoadWorld(string name, Camera camera)
+        public IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc)
         {
             name = ConvertName(name);
 
@@ -65,15 +65,15 @@ namespace XDay.WorldAPI
                 return null;
             }
 
-            return LoadWorldInternal(setup, camera);
+            return LoadWorldInternal(setup, cameraQueryFunc);
         }
 
-        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup setup, Camera camera)
+        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup setup, Func<Camera> cameraQueryFunc)
         {
             var source = new UniTaskCompletionSource<IWorld>();
 
             LoadWorldAsyncInternal(setup, (world) => {
-                OnLoadFinished(world, camera);
+                OnLoadFinished(world, cameraQueryFunc);
 
                 source.TrySetResult(world);
             });
@@ -93,7 +93,7 @@ namespace XDay.WorldAPI
             m_TaskSystem.ScheduleTask(job);
         }
 
-        private IWorld LoadWorldInternal(WorldSetup setup, Camera camera)
+        private IWorld LoadWorldInternal(WorldSetup setup, Func<Camera> cameraQueryFunc)
         {
             var world = QueryWorld(setup.ID);
             if (world != null)
@@ -108,13 +108,19 @@ namespace XDay.WorldAPI
             m_PluginLoader.Load(gameWorld.ID, setup.GameFolder);
             gameWorld.LoadGame();
 
-            OnLoadFinished(gameWorld, camera);
+            OnLoadFinished(gameWorld, cameraQueryFunc);
 
             return gameWorld;
         }
 
-        private void OnLoadFinished(IWorld world, Camera camera)
+        private void OnLoadFinished(IWorld world, Func<Camera> cameraQueryFunc)
         {
+            Camera camera = null;
+            if (cameraQueryFunc != null)
+            {
+                camera = cameraQueryFunc();
+            }
+
             var w = world as World;
             var cameraSetupPath = w.Setup.CameraSetupFilePath;
             var text = m_AssetLoader.LoadText(cameraSetupPath);

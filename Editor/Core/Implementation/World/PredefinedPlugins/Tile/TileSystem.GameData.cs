@@ -21,9 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Tile.Editor
@@ -72,8 +72,27 @@ namespace XDay.WorldAPI.Tile.Editor
                 {
                     var tile = m_Tiles[y * m_XTileCount + x];
                     serializer.WriteString(tile?.AssetPath, "");
+                    bool hasHeight = false;
+                    bool exportHeight = false;
+                    if (tile.VertexHeights != null)
+                    {
+                        hasHeight = true;
+                        if (m_GetGroundHeightInGame)
+                        {
+                            exportHeight = true;
+                        }
+                    }
+                    serializer.WriteBoolean(hasHeight, "Has Height");
+                    serializer.WriteBoolean(exportHeight, "Export Height");
+                    if (exportHeight)
+                    {
+                        serializer.WriteSingleArray(tile.VertexHeights, "Vertex Heights");
+                    }
                 }
             }
+
+            var usedPrefabPaths = GetUsedTilePrefabPaths();
+            serializer.WriteStringArray(usedPrefabPaths.ToArray(), "Used Tile Prefab Paths");
 
             serializer.Uninit();
             EditorHelper.WriteFile(serializer.Data, GetGameFilePath("tile"));
@@ -122,6 +141,29 @@ namespace XDay.WorldAPI.Tile.Editor
 
             serializer.Uninit();
             EditorHelper.WriteFile(serializer.Data, GetGameFilePath("terrain_lod_tile"));
+        }
+
+        private List<string> GetUsedTilePrefabPaths()
+        {
+            List<string> usedPrefabsOfHeightTile = new();
+            for (int i = 0; i < m_YTileCount; ++i)
+            {
+                for (int j = 0; j < m_XTileCount; ++j)
+                {
+                    var tile = GetTile(j, i);
+                    if (tile != null && 
+                        tile.VertexHeights != null)
+                    {
+                        string prefabPath = tile.AssetPath;
+                        if (!usedPrefabsOfHeightTile.Contains(prefabPath))
+                        {
+                            usedPrefabsOfHeightTile.Add(prefabPath);
+                        }
+                    }
+                }
+            }
+
+            return usedPrefabsOfHeightTile;
         }
 
         private const int m_TerrainLODTileVersion = 1;

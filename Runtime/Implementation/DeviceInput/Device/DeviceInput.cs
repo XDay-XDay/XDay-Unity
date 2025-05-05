@@ -38,7 +38,7 @@ namespace XDay.InputAPI
             {
                 if (m_UseConfigurableTouchAsSceneTouch)
                 {
-                    return SceneTouchCount;
+                    return TouchCountNotStartFromUI;
                 }
                 return UITouchCount;
             }
@@ -51,15 +51,20 @@ namespace XDay.InputAPI
             add => m_Device.EventAnyTouchBegin += value;
             remove => m_Device.EventAnyTouchBegin -= value;
         }
+        public event Action EventAnySceneTouchBegin
+        {
+            add => m_Device.EventAnySceneTouchBegin += value;
+            remove => m_Device.EventAnySceneTouchBegin -= value;
+        }
 
         public DeviceInput()
         {
-            m_Device = new MouseDevice(this);
+            SetDeviceType(DeviceType.Mouse);
         }
 
-        public IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Camera camera)
+        public IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Plane plane, Camera camera)
         {
-            return m_MotionSystem.CreateInertialDragMotion(validTouchName, camera, this);
+            return m_MotionSystem.CreateInertialDragMotion(validTouchName, plane, camera, this);
         }
 
         public IDragMotion CreateDragMotion(TouchID validTouchName, float touchMovingThreshold)
@@ -121,7 +126,7 @@ namespace XDay.InputAPI
         {
             if (m_UseConfigurableTouchAsSceneTouch)
             {
-                return GetSceneTouch(index);
+                return GetTouchNotStartFromUI(index);
             }
             return GetUITouch(index);
         }
@@ -142,7 +147,7 @@ namespace XDay.InputAPI
             {
                 m_Device = new TouchDevice(this); 
             }
-            else if (type == DeviceType.Touch)
+            else if (type == DeviceType.Mouse)
             {
                 m_Device = new MouseDevice(this);
             }
@@ -208,6 +213,7 @@ namespace XDay.InputAPI
     internal interface IDevice
     {
         event Action EventAnyTouchBegin;
+        event Action EventAnySceneTouchBegin;
         int TouchCount { get; }
         int UITouchCount { get;}
         int TouchCountNotStartFromUI { get;}

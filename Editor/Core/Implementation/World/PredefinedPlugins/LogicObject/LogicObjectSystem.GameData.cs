@@ -25,7 +25,7 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.LogicObject.Editor
 {
-    partial class LogicObjectSystem
+    public partial class LogicObjectSystem
     {
         protected override void GenerateGameDataInternal(IObjectIDConverter converter)
         {

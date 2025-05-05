@@ -32,7 +32,7 @@ namespace XDay.WorldAPI.Editor
 {
     internal class WorldSetupManagerWindow : EditorWindow
     {
-        [MenuItem("XDay/World/Create Setup File", false, 30)]
+        [MenuItem("XDay/地图/创建配置文件", false, 30)]
         private static void CreateSetupFile()
         {
             var setupManager = EditorHelper.QueryAsset<WorldSetupManager>();
@@ -44,13 +44,13 @@ namespace XDay.WorldAPI.Editor
                 return;
             }
 
-            EditorUtility.DisplayDialog("Error", $"Setup file already created, it's located at {AssetDatabase.GetAssetPath(setupManager)}", "OK");
+            EditorUtility.DisplayDialog("出错了", $"位置文件已经存在,在路径{AssetDatabase.GetAssetPath(setupManager)}", "确定");
         }
 
-        [MenuItem("XDay/World/Setup Window", false, 31)]
+        [MenuItem("XDay/地图/地图管理", false, 31)]
         private static void OpenSetupWindow()
         {
-            GetWindow<WorldSetupManagerWindow>().Show();
+            GetWindow<WorldSetupManagerWindow>("地图配置").Show();
         }
 
         private void OnGUI()
@@ -76,12 +76,12 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawSetupList()
         {
-            m_DrawWorlds = EditorGUILayout.Foldout(m_DrawWorlds, "Worlds");
+            m_DrawWorlds = EditorGUILayout.Foldout(m_DrawWorlds, "所有地图");
             if (m_DrawWorlds)
             {
                 EditorHelper.IndentLayout(() =>
                 {
-                    EditorGUILayout.IntField("World Count", m_SetupManager.Setups.Count);
+                    EditorGUILayout.IntField("地图数", m_SetupManager.Setups.Count);
                 });
 
                 m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
@@ -106,12 +106,12 @@ namespace XDay.WorldAPI.Editor
 
             EditorHelper.IndentLayout(() =>
             {
-                setup.Name = EditorGUILayout.TextField("World Name", setup.Name);
-                setup.ID = EditorGUILayout.IntField("World ID", setup.ID);
+                setup.Name = EditorGUILayout.TextField("地图名称", setup.Name);
+                setup.ID = EditorGUILayout.IntField("地图ID", setup.ID);
                 GUI.enabled = false;
-                EditorGUILayout.TextField("Camera Setup", setup.CameraSetupFileName);
-                setup.GameFolder = EditorHelper.ObjectField<DefaultAsset>("Game Folder", setup.GameFolder);
-                setup.EditorFolder = Helper.ToRelativePath(EditorHelper.DirectoryField("Editor Folder", setup.EditorFolder), Directory.GetCurrentDirectory());
+                setup.CameraSetupFileName = EditorGUILayout.TextField("相机设置", setup.CameraSetupFileName);
+                setup.GameFolder = EditorHelper.ObjectField<DefaultAsset>("游戏目录", setup.GameFolder);
+                setup.EditorFolder = Helper.ToRelativePath(EditorHelper.DirectoryField("地编目录", setup.EditorFolder), Directory.GetCurrentDirectory());
                 GUI.enabled = true;
             });
 
@@ -150,7 +150,7 @@ namespace XDay.WorldAPI.Editor
                 valueChanged = true;
             }
 
-            var newIndex = EditorGUILayout.Popup("Preview World", previewWorldIndex, m_WorldNames);
+            var newIndex = EditorGUILayout.Popup("预览地图", previewWorldIndex, m_WorldNames);
             if (newIndex != previewWorldIndex)
             {
                 valueChanged = true;
@@ -168,7 +168,7 @@ namespace XDay.WorldAPI.Editor
             if (string.IsNullOrEmpty(setup.GameFolder) ||
                 string.IsNullOrEmpty(setup.EditorFolder))
             {
-                EditorUtility.DisplayDialog("Error", "Data folder is null", "OK");
+                EditorUtility.DisplayDialog("出错了", "地图数据目录为空,无法复制地图", "确定");
                 return false;
             }
 
@@ -205,13 +205,13 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawEditorFolder()
         {
-            var directory = EditorHelper.DirectoryField("Editor Folder", m_SetupManager.EditorFolder, "EditorWorld", () => { Save(); });
+            var directory = EditorHelper.DirectoryField("地编目录", m_SetupManager.EditorFolder, "EditorWorld", () => { Save(); });
             m_SetupManager.EditorFolder = Helper.ToRelativePath(directory, Directory.GetCurrentDirectory());
         }
 
         private void DrawGameFolder()
         {
-            m_SetupManager.GameFolder = EditorHelper.ObjectField<DefaultAsset>("Game Folder", m_SetupManager.GameFolder, 0, () => { EditorUtility.SetDirty(m_SetupManager); });
+            m_SetupManager.GameFolder = EditorHelper.ObjectField<DefaultAsset>("游戏目录", m_SetupManager.GameFolder, 0, () => { EditorUtility.SetDirty(m_SetupManager); });
         }
 
         private void DrawHeader()
@@ -219,12 +219,12 @@ namespace XDay.WorldAPI.Editor
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.Space();
 
-            if (GUILayout.Button("Save", GUILayout.MaxWidth(60)))
+            if (GUILayout.Button("保存", GUILayout.MaxWidth(40)))
             {
                 Save();
             }
 
-            if (GUILayout.Button("Select", GUILayout.MaxWidth(60)))
+            if (GUILayout.Button("选中配置文件", GUILayout.MaxWidth(80)))
             {
                 Selection.activeObject = m_SetupManager;
             }
@@ -257,9 +257,9 @@ namespace XDay.WorldAPI.Editor
 
         private bool DrawDeleteButton(WorldSetup setup)
         {
-            if (GUILayout.Button("Delete", GUILayout.MaxWidth(60)))
+            if (GUILayout.Button("删除", GUILayout.MaxWidth(40)))
             {
-                var ok = EditorUtility.DisplayDialog("Warning", "Continue?", "Yes", "No");
+                var ok = EditorUtility.DisplayDialog("注意", "确定删除?", "确定", "取消");
                 if (ok)
                 {
                     if (Directory.Exists(setup.EditorFolder))
@@ -287,13 +287,13 @@ namespace XDay.WorldAPI.Editor
 
         private bool DrawCloneButton(WorldSetup setup)
         {
-            if (GUILayout.Button("Clone", GUILayout.MaxWidth(60)))
+            if (GUILayout.Button("复制", GUILayout.MaxWidth(40)))
             {
                 var parameters = new List<ParameterWindow.Parameter>()
                 {
                     new ParameterWindow.StringParameter("New World", "", setup.Name + "_New"),
                 };
-                ParameterWindow.Open("Clone World", parameters, (p) => {
+                ParameterWindow.Open("复制地图", parameters, (p) => {
                     var ok = ParameterWindow.GetString(p[0], out var newName);
                     if (ok && m_SetupManager.QuerySetup(newName) == null)
                     {
@@ -313,7 +313,7 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawOpenEditorFolder(WorldSetup setup)
         {
-            if (GUILayout.Button("Editor Folder", GUILayout.MaxWidth(100)))
+            if (GUILayout.Button(new GUIContent("地编目录", "打开地编数据目录"), GUILayout.MaxWidth(100)))
             {
                 EditorHelper.ShowInExplorer(setup.EditorFolder);
             }

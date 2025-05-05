@@ -134,17 +134,31 @@ namespace XDay.CameraAPI
                     var areaMin = m_Manipulator.AreaMin;
                     var areaMax = m_Manipulator.AreaMax;
                     var focusPoint = m_Manipulator.FocusPoint;
-                    if (focusPoint.x < areaMin.x ||
-                        focusPoint.z < areaMin.y ||
-                        focusPoint.x > areaMax.x ||
-                        focusPoint.z > areaMax.y)
+
+                    var direction = m_Manipulator.Setup.Direction;
+                    bool outOfRange = CheckRange(direction, focusPoint, areaMin, areaMax);
+                    if (outOfRange)
                     {
                         m_Manipulator.EnableZoom = false;
 
                         SetState(State.Bounce);
 
-                        var intersection = Helper.ClampPointInXZPlane(focusPoint, areaMin, areaMax);
-                        m_BounceEndPos = Helper.FromFocusPoint(m_Manipulator.Camera, intersection, cameraPos.y);
+                        Vector3 intersection = Vector3.zero;
+                        if (direction == CameraDirection.XZ)
+                        {
+                            intersection = Helper.ClampPointInXZPlane(focusPoint, areaMin, areaMax);
+                            m_BounceEndPos = Helper.FromFocusPointXZ(m_Manipulator.Camera, intersection, cameraPos.y);
+                        }
+                        else if (direction == CameraDirection.XY)
+                        {
+                            intersection = Helper.ClampPointInXYPlane(focusPoint, areaMin, areaMax);
+                            m_BounceEndPos = Helper.FromFocusPointXY(m_Manipulator.Camera, intersection, -cameraPos.z);
+                        }
+                        else
+                        {
+                            Debug.Assert(false);
+                        }
+                        
                         m_BounceStartPos = cameraPos;
                         m_BounceSpeed = Mathf.Max(m_BounceMinSpeed, Vector3.Distance(m_BounceEndPos, m_BounceStartPos) / m_BounceTime);
 
@@ -226,6 +240,26 @@ namespace XDay.CameraAPI
                         Over();
                     }
                 }
+            }
+
+            private bool CheckRange(CameraDirection direction, Vector3 focusPoint, Vector2 areaMin, Vector2 areaMax)
+            {
+                if (direction == CameraDirection.XZ)
+                {
+                    return focusPoint.x < areaMin.x ||
+                            focusPoint.z < areaMin.y ||
+                            focusPoint.x > areaMax.x ||
+                            focusPoint.z > areaMax.y;
+                }
+                else if (direction == CameraDirection.XY)
+                {
+                    return focusPoint.x < areaMin.x ||
+                            focusPoint.y < areaMin.y ||
+                            focusPoint.x > areaMax.x ||
+                            focusPoint.y > areaMax.y;
+                }
+                Debug.Assert(false, "todo");
+                return false;
             }
 
             private enum State

@@ -32,6 +32,7 @@ namespace XDay.WorldAPI.Tile.Editor
     internal sealed partial class TileSystem
     {
         public TexturePainter TexturePainter => m_TexturePainter;
+        public VertexHeightPainter VertexHeightPainter => m_VertexHeightPainter;
         public IResourceGroupSystem ResourceGroupSystem => m_ResourceGroupSystem;
 
         public override List<UIControl> GetSceneViewControls()
@@ -55,7 +56,17 @@ namespace XDay.WorldAPI.Tile.Editor
                     ++n;
                 }
             }
-            return new TileObject(World.AllocateObjectID(), n, true, descriptor, WorldObjectVisibility.Visible, pos, Quaternion.identity);
+
+            return new TileObject(
+                World.AllocateObjectID(),
+                n, 
+                true, 
+                descriptor, 
+                WorldObjectVisibility.Visible, 
+                pos, 
+                Quaternion.identity, 
+                null, 
+                false);
         }
 
         protected override void SelectionChangeInternal(bool selected)
@@ -73,7 +84,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         protected override void InspectorGUIInternal()
         {
-            m_Show = EditorGUILayout.Foldout(m_Show, "Tile System");
+            m_Show = EditorGUILayout.Foldout(m_Show, "地表层");
             if (m_Show)
             {
                 m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
@@ -89,22 +100,25 @@ namespace XDay.WorldAPI.Tile.Editor
                         case Action.PaintTexture:
                             m_TexturePainter.InspectorGUI();
                             break;
+                        case Action.PaintHeight:
+                            m_VertexHeightPainter.InspectorGUI();
+                            break;
                         case Action.SetTile:
                             m_ResourceGroupSystem.InspectorGUI();
                             break;
                     }
 
-                    m_ShowTileSetting = EditorGUILayout.Foldout(m_ShowTileSetting, "Tile");
+                    m_ShowTileSetting = EditorGUILayout.Foldout(m_ShowTileSetting, "地块");
                     if (m_ShowTileSetting)
                     {
                         GUI.enabled = Mathf.IsPowerOfTwo((int)m_TileHeight) && m_TileWidth == m_TileHeight;
 
                         EditorHelper.IndentLayout(() =>
                         {
-                            m_GameTileType = (GameTileType)EditorGUILayout.EnumPopup("Tile Type", m_GameTileType);
+                            m_GameTileType = (GameTileType)EditorGUILayout.EnumPopup("地块类型", m_GameTileType);
                             if (m_GameTileType == GameTileType.TerrainLOD)
                             {
-                                m_TerrainLODMorphRatio = Mathf.Clamp01(EditorGUILayout.FloatField("Terrain LOD Morpho Ratio", m_TerrainLODMorphRatio));
+                                m_TerrainLODMorphRatio = Mathf.Clamp01(EditorGUILayout.FloatField("LOD插值比例", m_TerrainLODMorphRatio));
                             }
                         });
 
@@ -121,23 +135,26 @@ namespace XDay.WorldAPI.Tile.Editor
             var evt = Event.current;
             if (evt.type == EventType.KeyDown && evt.shift == false)
             {
-                if (evt.keyCode == KeyCode.Alpha1)
+                if (evt.keyCode == KeyCode.Alpha1 && evt.control)
                 {
                     SetAction(Action.Select);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha2)
+                else if (evt.keyCode == KeyCode.Alpha2 && evt.control)
                 {
                     SetAction(Action.PaintTexture);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha3)
+                else if (evt.keyCode == KeyCode.Alpha3 && evt.control)
                 {
                     SetAction(Action.SetMaterial);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha4)
+                else if (evt.keyCode == KeyCode.Alpha4 && evt.control)
                 {
                     SetAction(Action.SetTile);
+                    evt.Use();
                 }
-                evt.Use();
             }
 
             m_Indicator.Visible = false;
@@ -148,6 +165,10 @@ namespace XDay.WorldAPI.Tile.Editor
                     break;
                 case Action.PaintTexture:
                     m_TexturePainter.SceneGUI();
+                    HandleUtility.AddDefaultControl(0);
+                    break;
+                case Action.PaintHeight:
+                    m_VertexHeightPainter.SceneGUI();
                     HandleUtility.AddDefaultControl(0);
                     break;
                 case Action.SetTile:
@@ -174,15 +195,11 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 if (m_Action == Action.PaintTexture)
                 {
-                    GUILayout.Space(40);
-
-                    DrawPaintSettings();
-
-                    GUILayout.Space(40);
-                    
-                    DrawBeginPaintButton();
-
-                    DrawEndPaintButton();
+                    m_TexturePainter.DrawSceneGUIControls();
+                }
+                else if (m_Action == Action.PaintHeight)
+                {
+                    m_VertexHeightPainter.DrawSceneGUIControls();
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -196,25 +213,16 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 m_Controls = new List<UIControl>();
 
-                m_OperationPopup = new EnumPopup("Operation", "", 160);
+                m_OperationPopup = new Popup("操作", "", 140);
                 m_Controls.Add(m_OperationPopup);
 
-                m_ChannelPopup = new Popup("Channel", "", 100);
-                m_Controls.Add(m_ChannelPopup);
+                var texturePainterControls = m_TexturePainter.CreateSceneGUIControls();
+                m_Controls.AddRange(texturePainterControls);
 
-                m_BrushStrengthField = new FloatField("Strength", "", 100);
-                m_Controls.Add(m_BrushStrengthField);
+                var vertexPainterControls = m_VertexHeightPainter.CreateSceneGUIControls();
+                m_Controls.AddRange(vertexPainterControls);
 
-                m_ButtonEndPaint = EditorWorldHelper.CreateImageButton("end.png", "");
-                m_Controls.Add(m_ButtonEndPaint);
-
-                m_BrushSizeField = new IntField("Size", "", 80);
-                m_Controls.Add(m_BrushSizeField);
-
-                m_ButtonBeginPaint = EditorWorldHelper.CreateImageButton("start.png", "");
-                m_Controls.Add(m_ButtonBeginPaint);
-
-                m_ButtonTiling = EditorWorldHelper.CreateImageButton("tiling.png", "");
+                m_ButtonTiling = EditorWorldHelper.CreateImageButton("tiling.png", "平铺到全地图");
                 m_Controls.Add(m_ButtonTiling);
             }
         }
@@ -278,34 +286,11 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
-        private void DrawPaintSettings()
-        {
-            m_TexturePainter.Range = m_BrushSizeField.Render(m_TexturePainter.Range, 30);
-            m_TexturePainter.Intensity = m_BrushStrengthField.Render(m_TexturePainter.Intensity, 50);
-            m_TexturePainter.Channel = m_ChannelPopup.Render(m_TexturePainter.Channel, m_ChannelNames, 50);
-        }
-
-        private void DrawEndPaintButton()
-        {
-            if (m_ButtonEndPaint.Render(Inited))
-            {
-                m_TexturePainter.End();
-            }
-        }
-
-        private void DrawBeginPaintButton()
-        {
-            if (m_ButtonBeginPaint.Render(Inited))
-            {
-                m_TexturePainter.Start();
-            }
-        }
-
         private void DrawTilingButton()
         {
             if (m_ButtonTiling.Render(Inited && m_Action != Action.PaintTexture))
             {
-                if (EditorUtility.DisplayDialog("Tiling", "Sure?", "Yes", "Cancel"))
+                if (EditorUtility.DisplayDialog("平铺", "继续?", "确定", "取消"))
                 {
                     TilingUseSelectedGroup();
                 }
@@ -314,7 +299,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawOperation()
         {
-            SetAction((Action)m_OperationPopup.Render(m_Action, 60));
+            SetAction((Action)m_OperationPopup.Render((int)m_Action, m_ActionNames, 30));
         }
 
         private void SetTile()
@@ -377,32 +362,33 @@ namespace XDay.WorldAPI.Tile.Editor
         {
             if (m_Action == Action.PaintTexture)
             {
-                EditorGUILayout.LabelField("Use Space key to rotate brush");
-                EditorGUILayout.LabelField("Use [] key to change brush size");
-                EditorGUILayout.LabelField($"Mask Name {m_TexturePainter.MaskName}");
-                EditorGUILayout.LabelField($"Mask Resolution {m_TexturePainter.Resolution}");
+                m_TexturePainter.DrawTooltips();
             }
-            EditorGUILayout.LabelField($"Tile Size: {m_TileWidth}X{m_TileHeight}m");
-            EditorGUILayout.LabelField($"Tile Count {m_XTileCount}X{m_YTileCount}");
+            else if (m_Action == Action.PaintHeight)
+            {
+                m_VertexHeightPainter.DrawTooltips();
+            }
+            EditorGUILayout.LabelField($"地块总数: {m_XTileCount}X{m_YTileCount}个");
+            EditorGUILayout.LabelField($"单个地块大小: {m_TileWidth}X{m_TileHeight}米");
         }
 
-        private string[] m_ChannelNames = new string[] { "R", "G", "B", "A" };
+        internal void GenerateHeightMeshes()
+        {
+            m_TileMeshCreator.GenerateHeightMeshes();
+        }
+
         private int m_Range = 1;
         private bool m_Show = true;
         private readonly PluginLODSystemEditor m_PluginSystemEditor = new();
         private TexturePainter m_TexturePainter = new();
+        private VertexHeightPainter m_VertexHeightPainter = new();
         private IResourceGroupSystem m_ResourceGroupSystem = IResourceGroupSystem.Create(true);
         private Vector2 m_ScrollPos;
-        private FloatField m_BrushStrengthField;
-        private IntField m_BrushSizeField;
-        private ImageButton m_ButtonEndPaint;
-        private EnumPopup m_OperationPopup;
-        private ImageButton m_ButtonBeginPaint;
+        private Popup m_OperationPopup;
         private List<UIControl> m_Controls;
-        private Popup m_ChannelPopup;
         private ImageButton m_ButtonTiling;
         private Action m_Action = Action.Select;
-        private const int m_Version = 1;
+        private const int m_Version = 3;
 
         private enum Action
         {
@@ -410,7 +396,17 @@ namespace XDay.WorldAPI.Tile.Editor
             PaintTexture,
             SetMaterial,
             SetTile,
+            PaintHeight,
         }
+
+        private string[] m_ActionNames =
+        {
+            "选择",
+            "贴图绘制",
+            "材质设置",
+            "刷地块",
+            "绘制顶点高度",
+        };
     }
 }
 

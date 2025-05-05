@@ -39,10 +39,40 @@ namespace XDay.WorldAPI.Decoration.Editor
         public Quaternion RecordedRot { get; private set; }
         public Vector3 RecordedPos { get; private set; }
 
-        public void Init(int objectID, Action<int> transformChangeCallback)
+        public void Init(
+            int objectID, 
+            Func<int, bool> getEnableHeightAdjust,
+            Action<int, bool> setEnableHeightAdjust,
+            Func<int, bool> getEnableInstanceRendering,
+            Action<int, bool> setEnableInstanceRendering,
+            Action<int> transformChangeCallback)
         {
             m_ObjectID = objectID;
             m_TransformChangedCallback = transformChangeCallback;
+            m_GetEnableHeightAdjust = getEnableHeightAdjust;
+            m_GetEnableInstanceRendering = getEnableInstanceRendering;
+            m_SetEnableHeightAdjust = setEnableHeightAdjust;
+            m_SetEnableInstanceRendering = setEnableInstanceRendering;
+        }
+
+        public bool GetEnableHeightAdjust()
+        {
+            return m_GetEnableHeightAdjust(m_ObjectID);
+        }
+
+        public bool GetEnableInstanceRendering()
+        {
+            return m_GetEnableInstanceRendering(m_ObjectID);
+        }
+
+        public void SetEnableHeightAdjust(bool enable)
+        {
+            m_SetEnableHeightAdjust(m_ObjectID, enable);
+        }
+
+        public void SetEnableInstanceRendering(bool enable)
+        {
+            m_SetEnableInstanceRendering(m_ObjectID, enable);
         }
 
         public void UpdateTranfsorm()
@@ -75,6 +105,10 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private int m_ObjectID;
         private Action<int> m_TransformChangedCallback;
+        private Func<int, bool> m_GetEnableHeightAdjust;
+        private Action<int, bool> m_SetEnableHeightAdjust;
+        private Func<int, bool> m_GetEnableInstanceRendering;
+        private Action<int, bool> m_SetEnableInstanceRendering;
     }
 
     [CanEditMultipleObjects]
@@ -102,6 +136,8 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
             var behaviour = target as DecorationObjectBehaviour;
             EditorGUILayout.LabelField($"Object ID: {behaviour.ObjectID}");
+            behaviour.SetEnableHeightAdjust(EditorGUILayout.Toggle("开启自适应高度修改", behaviour.GetEnableHeightAdjust()));
+            behaviour.SetEnableInstanceRendering(EditorGUILayout.Toggle("开启Instance Rendering", behaviour.GetEnableInstanceRendering()));
         }
     }
 }

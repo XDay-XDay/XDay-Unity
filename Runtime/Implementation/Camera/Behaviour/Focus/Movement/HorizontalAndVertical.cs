@@ -36,6 +36,7 @@ namespace XDay.CameraAPI
                 : base(manipulator)
             {
                 m_Calculator = new(manipulator);
+                m_Direction = manipulator.Direction;
             }
 
             public override void Over()
@@ -48,12 +49,27 @@ namespace XDay.CameraAPI
                 m_Timer = 0;
                 m_StartPos = pos.StartPosition;
                 m_MoveTime = request.FocusParam.MoveDuration;
-                m_EndPos = Helper.FromFocusPoint(m_Manipulator.Camera, request.FocusParam.FocusPoint, request.FocusParam.TargetAltitude);
+                if (m_Direction == CameraDirection.XZ)
+                {
+                    m_EndPos = Helper.FromFocusPointXZ(m_Manipulator.Camera, request.FocusParam.FocusPoint, request.FocusParam.TargetAltitude);
+                }
+                else
+                {
+                    m_EndPos = Helper.FromFocusPointXY(m_Manipulator.Camera, request.FocusParam.FocusPoint, request.FocusParam.TargetAltitude);
+                }
                 m_ScaleCurve = request.FocusParam.ZoomModulator;
                 m_MoveCurve = request.FocusParam.MoveModulator;
                 m_ReachDistance = request.FocusParam.ReachDistance;
                 SetState(State.Move);
-                Begin(request.FocusParam.m_ZoomTime, request.FocusParam.FocusPoint.x, request.FocusParam.FocusPoint.z, m_Manipulator.Camera, pos);
+
+                if (m_Direction == CameraDirection.XZ)
+                {
+                    Begin(request.FocusParam.m_ZoomTime, request.FocusParam.FocusPoint.x, request.FocusParam.FocusPoint.z, m_Manipulator.Camera, pos);
+                }
+                else
+                {
+                    Begin(request.FocusParam.m_ZoomTime, request.FocusParam.FocusPoint.x, request.FocusParam.FocusPoint.y, m_Manipulator.Camera, pos);
+                }
             }
 
             public override BehaviourState Update(CameraTransform pos)
@@ -77,7 +93,14 @@ namespace XDay.CameraAPI
                 }
                 else
                 {
-                    m_MoveEndPos = CalculateMoveEndPos(focusX, focusZ, m_StartPos.y, camera.transform.forward, pose.CurrentLogicRotation);
+                    if (m_Direction == CameraDirection.XZ)
+                    {
+                        m_MoveEndPos = CalculateMoveEndPosXZ(focusX, focusZ, m_StartPos.y, camera.transform.forward, pose.CurrentLogicRotation);
+                    }
+                    else
+                    {
+                        m_MoveEndPos = CalculateMoveEndPosXY(focusX, focusZ, -m_StartPos.z, camera.transform.forward, pose.CurrentLogicRotation);
+                    }
                     m_ZoomTime = zoomTime;
                 }
 
@@ -143,15 +166,28 @@ namespace XDay.CameraAPI
                 return result;
             }
 
-            private Vector3 CalculateMoveEndPos(float focusX, float focusZ, float startY, Vector3 forward, Quaternion rotation)
+            private Vector3 CalculateMoveEndPosXZ(float focusX, float focusZ, float startY, Vector3 forward, Quaternion rotation)
             {
-                var distance = Helper.FocalLengthFromAltitude(rotation.eulerAngles.x, startY);
+                var distance = Helper.FocalLengthFromAltitudeXZ(rotation.eulerAngles.x, startY);
                 return new Vector3(focusX, 0, focusZ) - forward * distance;
+            }
+
+            private Vector3 CalculateMoveEndPosXY(float focusX, float focusZ, float startZ, Vector3 forward, Quaternion rotation)
+            {
+                var distance = Helper.FocalLengthFromAltitudeXY(rotation.eulerAngles.x, startZ);
+                return new Vector3(focusX, focusZ, 0) - forward * distance;
             }
 
             private bool CheckZoomNeeded(Vector3 startPos, Vector3 targetPos)
             {
-                if (Mathf.Approximately(targetPos.y, startPos.y))
+                if (m_Direction == CameraDirection.XZ)
+                {
+                    if (Mathf.Approximately(targetPos.y, startPos.y))
+                    {
+                        return false;
+                    }
+                }
+                if (Mathf.Approximately(targetPos.z, startPos.z))
                 {
                     return false;
                 }
@@ -167,7 +203,15 @@ namespace XDay.CameraAPI
                     m_MoveEndPos = m_EndPos;
                     m_MoveTime = m_ZoomTime;
                     m_Timer = 0;
-                    var zoomFactor = m_Manipulator.Setup.ZoomFactorAtAltitude(m_EndPos.y);
+                    float zoomFactor;
+                    if (m_Direction == CameraDirection.XZ)
+                    {
+                        zoomFactor = m_Manipulator.Setup.ZoomFactorAtAltitude(m_EndPos.y);
+                    }
+                    else
+                    {
+                        zoomFactor = m_Manipulator.Setup.ZoomFactorAtAltitude(-m_EndPos.z);
+                    }
                     m_Calculator.Start(zoomFactor, m_ZoomTime);
                 }
             }
@@ -191,6 +235,7 @@ namespace XDay.CameraAPI
             private float m_ZoomTime;
             private Vector3 m_StartPos;
             private Vector3 m_EndPos;
+            private CameraDirection m_Direction;
         }
     }
 }

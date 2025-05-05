@@ -58,6 +58,7 @@ namespace XDay.CameraAPI.Editor
             string template =
 @"
 {
+    ""Direction"":""XZ"",
     ""Orbit"":
     {
         ""Pitch"":45,
@@ -74,12 +75,12 @@ namespace XDay.CameraAPI.Editor
         {
             ""Name"":""min"",
             ""Altitude"":""5"",
-            ""FOV"":""60""
+            ""FOV"":""30""
         },
         {
             ""Name"":""max"",
             ""Altitude"":""500"",
-            ""FOV"":""60""
+            ""FOV"":""30""
         }
     ],
     ""Restore"":

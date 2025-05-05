@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -22,23 +22,20 @@
  */
 
 
-
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
+using XDay.SerializationAPI.Editor;
 
 namespace XDay.UtilityAPI.Editor
 {
-    internal partial class DisplayKeyEditor : EditorWindow
+    public class DisplayKeyEditor
     {
-        [MenuItem("XDay/Display Key")]
-        private static void Open()
-        {
-            GetWindow<DisplayKeyEditor>().Show();
-        }
+        public DisplayKeyManager DisplayKeyManager => m_DisplayKeyManager;
 
-        private void OnGUI()
+        public void DrawEditor()
         {
             if (m_Config == null)
             {
@@ -61,6 +58,11 @@ namespace XDay.UtilityAPI.Editor
             {
                 EditorGUILayout.LabelField("Create DisplayKeyConfig first!");
             }
+        }
+
+        public void Search(int keyID)
+        {
+            m_SearchText = keyID.ToString();
         }
 
         private void Draw()
@@ -90,7 +92,7 @@ namespace XDay.UtilityAPI.Editor
             {
                 m_DisplayKeyManager.OutputFolder = EditorGUILayout.TextField(new GUIContent("Output Code Folder", "输出的ID文件夹"), m_DisplayKeyManager.OutputFolder);
                 EditorGUILayout.BeginHorizontal();
-                m_SearchText = EditorGUILayout.TextField("Search", m_SearchText);
+                m_SearchText = EditorGUILayout.TextField("Search", m_SearchText, EditorStyles.toolbarSearchField);
                 EditorGUILayout.IntField("Key Count", m_DisplayKeyManager.KeyCount);
                 EditorGUILayout.EndHorizontal();
             }
@@ -127,12 +129,12 @@ namespace XDay.UtilityAPI.Editor
             group.Name = EditorGUILayout.TextField("", group.Name, GUILayout.MaxWidth(100));
             EditorGUIUtility.labelWidth = 0;
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(new GUIContent("Fold", "折叠Group所有Key")))
+            if (GUILayout.Button(new GUIContent("Fold", "折叠Group所有Key的参数列表")))
             {
                 FoldAll(group);
             }
 
-            if (GUILayout.Button(new GUIContent("Expand", "展开Group所有Key")))
+            if (GUILayout.Button(new GUIContent("Expand", "展开Group所有Key的参数列表")))
             {
                 ExpandAll(group);
             }
@@ -154,19 +156,20 @@ namespace XDay.UtilityAPI.Editor
             }
 
             EditorGUILayout.EndHorizontal();
-            if (group.Show)
+            if (group.Show || !string.IsNullOrEmpty(m_SearchText))
             {
                 EditorHelper.IndentLayout(() =>
                 {
-                    DrawDisplayKeys(group.Keys);
+                    DrawDisplayKeys(group);
                 });
             }
 
             return removed;
         }
 
-        private void DrawDisplayKeys(List<DisplayKey> keys)
+        private void DrawDisplayKeys(DisplayKeyGroup group)
         {
+            var keys = group.Keys;
             for (var i = 0; i < keys.Count; ++i)
             {
                 var key = keys[i];
@@ -249,6 +252,19 @@ namespace XDay.UtilityAPI.Editor
                     m_ScrollPos.y = float.MaxValue;
 
                     Save(false);
+                }
+                if (GUILayout.Button(new GUIContent("=>", "移动到组"), GUILayout.Width(30)))
+                {
+                    var contextMenu = new GenericMenu();
+                    string[] groupNames = GetGroupNames();
+                    for (var g = 0; g < groupNames.Length; ++g)
+                    {
+                        var index = g;
+                        contextMenu.AddItem(new GUIContent(groupNames[g]), false, () => {
+                            OnClickMoveToGroup(key, group, index);
+                        });
+                    }
+                    contextMenu.ShowAsContext();
                 }
 
                 EditorGUILayout.EndHorizontal();
@@ -400,8 +416,21 @@ namespace XDay.UtilityAPI.Editor
             return removed;
         }
 
-        private void Load()
+        public void Load()
         {
+            if (m_Config == null)
+            {
+                var config = EditorHelper.QueryAsset<DisplayKeyConfig>();
+                if (config != null && config.IsValid())
+                {
+                    m_Config = config;
+                }
+                else
+                {
+                    EditorGUILayout.LabelField("DisplayKeyConfig is not valid!");
+                }
+            }
+
             m_DisplayKeyManager = new DisplayKeyManager();
 
             if (File.Exists(m_Config.EditorDataPath))
@@ -410,8 +439,13 @@ namespace XDay.UtilityAPI.Editor
             }
         }
 
-        private void Save(bool genCode)
+        public void Save(bool genCode)
         {
+            if (m_DisplayKeyManager == null)
+            {
+                return;
+            }
+
             var err = Validate();
             if (!string.IsNullOrEmpty(err))
             {
@@ -428,6 +462,13 @@ namespace XDay.UtilityAPI.Editor
             }
 
             AssetDatabase.Refresh();
+        }
+
+        private void OnClickMoveToGroup(DisplayKey key, DisplayKeyGroup oldGroup, int newGroupIndex)
+        {
+            oldGroup.Keys.Remove(key);
+            m_DisplayKeyManager.Groups[newGroupIndex].Keys.Add(key);
+            Save(false);
         }
 
         private void OnClickAddParam(DisplayKey key, bool showType, string type)
@@ -544,9 +585,54 @@ namespace XDay.UtilityAPI.Editor
             return null;
         }
 
+        private string[] GetGroupNames()
+        {
+            string[] names = new string[m_DisplayKeyManager.Groups.Count];
+            for (var i = 0; i < m_DisplayKeyManager.Groups.Count; ++i)
+            {
+                names[i] = m_DisplayKeyManager.Groups[i].Name;
+            }
+            return names;
+        }
+
+        private void GenerateIDs(string fileName)
+        {
+            var code =
+@"
+namespace XDay.DisplayKeyID 
+{
+    $CLASSES$
+}
+";
+            StringBuilder builder = new StringBuilder();
+            foreach (var group in m_DisplayKeyManager.Groups)
+            {
+                builder.AppendLine($"public static class {group.Name} {{");
+
+                for (var i = 0; i < group.Keys.Count; ++i)
+                {
+                    var key = group.Keys[i];
+                    if (!string.IsNullOrEmpty(key.Name))
+                    {
+                        builder.AppendLine($"public const int {key.Name.Replace(" ", "_")} = {key.ID};");
+                    }
+                }
+
+                builder.AppendLine("}");
+            }
+
+            builder.AppendLine("");
+
+            code = code.Replace("$CLASSES$", builder.ToString());
+
+            File.WriteAllText(fileName, code);
+
+            SerializationHelper.FormatCode(fileName);
+        }
+
         private DisplayKeyManager m_DisplayKeyManager;
         private string m_SearchText = "";
-        private Vector2 m_ScrollPos;
         private DisplayKeyConfig m_Config;
+        private Vector2 m_ScrollPos;
     }
 }

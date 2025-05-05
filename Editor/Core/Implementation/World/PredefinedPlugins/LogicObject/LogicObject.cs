@@ -28,7 +28,7 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.LogicObject.Editor
 {
-    internal class LogicObject : WorldObject
+    public class LogicObject : WorldObject
     {
         public IEditorResourceDescriptor ResourceDescriptor => m_ResourceDescriptor.ToObject<IEditorResourceDescriptor>();
         public override Vector3 Scale => m_EditScale.Mult(PrefabScale);
@@ -39,7 +39,28 @@ namespace XDay.WorldAPI.LogicObject.Editor
         public Vector3 PrefabPosition => (ResourceDescriptor != null && ResourceDescriptor.Prefab != null) ? ResourceDescriptor.Prefab.transform.position : Vector3.zero;
         public override string TypeName => "EditorLogicObject";
         public string Name { get => m_Name; set => m_Name = value; }
-        public LogicObjectGroup Group => World.QueryObject<LogicObjectGroup>(m_Group.ObjectID);
+        public IAspectContainer AspectContainer => m_AspectContainer;
+        public LogicObjectGroup Group
+        {
+            get
+            {
+                return World.QueryObject<LogicObjectGroup>(m_Group.ObjectID);
+            }
+            internal set
+            {
+                m_Group.FromObject(value);
+            }
+        }
+        protected override WorldObjectVisibility VisibilityInternal
+        {
+            set { }
+            get => WorldObjectVisibility.Visible;
+        }
+        protected override bool EnabledInternal
+        {
+            set => m_Enabled = value;
+            get => m_Enabled;
+        }
 
         public LogicObject()
         {
@@ -56,21 +77,22 @@ namespace XDay.WorldAPI.LogicObject.Editor
             m_Group = new(group);
         }
 
-        public override void Init(IWorld world)
+        protected override void OnInit()
         {
             Debug.Assert(ID != 0);
+            m_ResourceDescriptor.Init(World);
+            m_Group.Init(World);
 
-            base.Init(world);
-
-            m_ResourceDescriptor.Init(world);
+            if (m_AspectContainer == null ||
+                m_AspectContainer.AspectCount == 0)
+            {
+                m_AspectContainer = m_Group.ToObject<LogicObjectGroup>().AspectContainer.Clone();
+            }
         }
 
-        public override void Uninit()
+        protected override void OnUninit()
         {
             Debug.Assert(ID != 0);
-
-            base.Uninit();
-
             m_ResourceDescriptor = null;
             m_Group = null;
         }
@@ -89,6 +111,14 @@ namespace XDay.WorldAPI.LogicObject.Editor
             {
                 m_Group = new WorldObjectWeakRef(deserializer.ReadInt32("Group"));
             }
+            if (version >= 3)
+            {
+                deserializer.ReadStructure("Aspect Container", () =>
+                {
+                    m_AspectContainer = IAspectContainer.Create();
+                    m_AspectContainer.Deserialize(deserializer);
+                });
+            }
         }
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -102,6 +132,10 @@ namespace XDay.WorldAPI.LogicObject.Editor
             serializer.WriteObjectID(m_ResourceDescriptor.ObjectID, "Resource Descriptor", converter);
             serializer.WriteString(m_Name, "Name");
             serializer.WriteObjectID(m_Group.ObjectID, "Group", converter);
+            serializer.WriteStructure("Aspect Container", () =>
+            {
+                m_AspectContainer.Serialize(serializer);
+            });
         }
 
         public override bool SetAspect(int objectID, string name, IAspect aspect)
@@ -146,6 +180,11 @@ namespace XDay.WorldAPI.LogicObject.Editor
                 return aspect;
             }
 
+            if (name == LogicObjectDefine.CHANGE_LOGIC_OBJECT_GROUP)
+            {
+                return IAspect.FromString(m_Group.ToObject<LogicObjectGroup>().Name);
+            }
+
             if (name == LogicObjectDefine.ENABLE_LOGIC_OBJECT_NAME)
             {
                 return IAspect.FromBoolean(m_Enabled);
@@ -170,25 +209,14 @@ namespace XDay.WorldAPI.LogicObject.Editor
             return null;
         }
 
-        protected override WorldObjectVisibility VisibilityInternal
-        {
-            set { }
-            get => WorldObjectVisibility.Visible;
-        }
-
-        protected override bool EnabledInternal
-        {
-            set => m_Enabled = value;
-            get => m_Enabled;
-        }
-
         private bool m_Enabled = true;
         private WorldObjectWeakRef m_ResourceDescriptor;
         private Vector3 m_EditPosition;
         private Quaternion m_EditRotation;
         private Vector3 m_EditScale;
         private string m_Name;
-        private const int m_Version = 2;
+        private const int m_Version = 3;
         private WorldObjectWeakRef m_Group;
+        private IAspectContainer m_AspectContainer = IAspectContainer.Create();
     }
 }

@@ -27,12 +27,19 @@ using UnityEngine;
 
 namespace XDay.CameraAPI
 {
+    public enum CameraDirection
+    {
+        XZ,
+        XY,
+    }
+
     public partial class CameraSetup
     {
         public OrbitSetup Orbit { get => m_Orbit; set => m_Orbit = value; }
         public RestoreSetup Restore => m_Restore;
         public string Name => m_Name;
         public bool ChangeFOV { get => m_ChangeFOV; set => m_ChangeFOV = value; }
+        public CameraDirection Direction { get => m_Direction; set => m_Direction = value; }
         public float MaxAltitude
         {
             get => m_AltitudeManager.Max.Altitude;
@@ -79,7 +86,11 @@ namespace XDay.CameraAPI
             }
 
             FOVAtAltitude(height, out var fov);
-            return fov * Helper.FocalLengthFromAltitude(m_Orbit.Pitch, height);
+            if (m_Direction == CameraDirection.XZ)
+            {
+                return fov * Helper.FocalLengthFromAltitudeXZ(m_Orbit.Pitch, height);
+            }
+            return fov * Helper.FocalLengthFromAltitudeXY(m_Orbit.Pitch, height);
         }
 
         public void FOVAtAltitude(float height, out float fov)
@@ -89,6 +100,7 @@ namespace XDay.CameraAPI
 
         private string m_Name;
         private bool m_ChangeFOV = true;
+        private CameraDirection m_Direction = CameraDirection.XZ;
         private OrbitSetup m_Orbit = new();
         private AltitudeSetupManager m_AltitudeManager = new();
         private RestoreSetup m_Restore = new();

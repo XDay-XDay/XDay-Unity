@@ -139,5 +139,20 @@ namespace XDay
         {
             return v.Abs();
         }
+
+        public static FixedPoint FloorToInt(FixedPoint v)
+        {
+            return v - v % 1;
+        }
+
+        public static FixedPoint CeilToInt(FixedPoint v)
+        {
+            var d = v - v % 1;
+            if (d != v)
+            {
+                return d + 1;
+            }
+            return d;
+        }
     }
 }

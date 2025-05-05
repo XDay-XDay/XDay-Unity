@@ -67,6 +67,11 @@ namespace XDay.API
             createInfo.LayerInfo.Add(new TaskLayerInfo(1, 1));
             m_TaskSystem = ITaskSystem.Create(createInfo);
             m_Input = IDeviceInput.Create();
+#if UNITY_EDITOR
+            m_Input.SetDeviceType(InputAPI.DeviceType.Mouse);
+#else
+            m_Input.SetDeviceType(InputAPI.DeviceType.Touch);
+#endif
             m_WorldSystem = new WorldManager();
             m_AssetLoader = loader;
 

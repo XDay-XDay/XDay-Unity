@@ -2,9 +2,8 @@
     "name": "XDayUnity.Editor.MonoBehviours",
     "rootNamespace": "",
     "references": [
-        "GUID:57db19fe6bd20ff459ebdad159e02be2",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:bf54e5a7e2442604aa1feef0e78d0d9f"
+        "GUID:57db19fe6bd20ff459ebdad159e02be2"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -12,7 +11,9 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "ZString.dll",
-        "XDay.dll"
+        "XDay.dll",
+        "NVIDIA.PhysX.dll",
+        "NVIDIA.PhysX.Unity.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

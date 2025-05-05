@@ -33,10 +33,17 @@ public class RigidbodyTest : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        m_World = new();
+        var gridCreateInfo = new GridCreateInfo()
+        {
+            Min = new FixedVector2(-50, -50),
+            Max = new FixedVector2(200, 200), 
+            GridSize = 10,
+        };
+        m_World = new(gridCreateInfo);
+        //m_World = new(null);
 
         {
-            var rect = XDay.Rigidbody.CreateBoxBody("", 10, 1, true, m_LedgeMaterial);
+            var rect = XDay.Rigidbody.CreateBoxBody("Hori", 100, 1, true, m_LedgeMaterial, m_World);
             var entity = new Entity(rect, m_World);
             m_Entities.Add(entity);
             entity.SetPosition(new Vector3(0, 0, -10));
@@ -44,7 +51,7 @@ public class RigidbodyTest : MonoBehaviour
         }
 
         {
-            var rect =XDay.Rigidbody.CreateBoxBody("", 10, 1, true, m_LedgeMaterial);
+            var rect =XDay.Rigidbody.CreateBoxBody("Slope", 10, 1, true, m_LedgeMaterial, m_World);
             var entity = new Entity(rect, m_World);
             m_Entities.Add(entity);
             entity.SetPosition(new Vector3(-8, 0, -15));
@@ -66,7 +73,7 @@ public class RigidbodyTest : MonoBehaviour
         var pos = Helper.RayCastWithXZPlane(Input.mousePosition, Camera.main);
         if (Input.GetMouseButtonDown(1))
         {
-            var circle = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial);
+            var circle = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial, m_World);
             var entity = new Entity(circle, m_World);
             entity.SetMaterial(SphereMaterial);
             m_Entities.Add(entity);
@@ -75,7 +82,7 @@ public class RigidbodyTest : MonoBehaviour
 
         if (Input.GetMouseButtonDown(2))
         {
-            var body = XDay.Rigidbody.CreateBoxBody("", 2, 2, false, m_CubeMaterial);
+            var body = XDay.Rigidbody.CreateBoxBody("", 2, 2, false, m_CubeMaterial, m_World);
             var entity = new Entity(body, m_World);
             entity.SetMaterial(SphereMaterial);
             m_Entities.Add(entity);

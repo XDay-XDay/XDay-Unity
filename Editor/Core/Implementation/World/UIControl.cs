@@ -314,6 +314,34 @@ namespace XDay.WorldAPI.Editor
         private string m_Tooltip;
         private string m_Label;
     }
+
+    public class ColorField : UIControl
+    {
+        public ColorField(string label, string tooltip, int size)
+        {
+            m_Label = label;
+            m_Tooltip = tooltip;
+            m_Size = size;
+        }
+
+        public Color Render(Color color, float labelWidth)
+        {
+            return RenderInternal(color, labelWidth);
+        }
+
+        private Color RenderInternal(Color color, float labelWidth)
+        {
+            EditorGUIUtility.labelWidth = labelWidth;
+            color = EditorGUILayout.ColorField(new GUIContent(m_Label, m_Tooltip), color, GUILayout.MaxWidth(m_Size));
+            EditorGUIUtility.labelWidth = 0;
+            RenderInternal();
+            return color;
+        }
+
+        private int m_Size;
+        private string m_Tooltip;
+        private string m_Label;
+    }
 }
 
 //XDay

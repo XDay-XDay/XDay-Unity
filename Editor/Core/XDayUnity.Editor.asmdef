@@ -15,7 +15,9 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "XDay.dll",
-        "ZString.dll"
+        "ZString.dll",
+        "NVIDIA.PhysX.dll",
+        "NVIDIA.PhysX.Unity.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

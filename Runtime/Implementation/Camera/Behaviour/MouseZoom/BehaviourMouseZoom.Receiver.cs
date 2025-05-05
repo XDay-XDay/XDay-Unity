@@ -58,7 +58,15 @@ namespace XDay.CameraAPI
                     var deltaDis = (m_PrevMousePos.x - mousePos.x + m_PrevMousePos.y - mousePos.y) * 0.5f;
                     m_PrevMousePos = mousePos;
 
-                    var scrollRate = m_Speed * deltaDis * pos.CurrentLogicPosition.y;
+                    float scrollRate;
+                    if (m_Manipulator.Direction == CameraDirection.XZ)
+                    {
+                        scrollRate = m_Speed * deltaDis * pos.CurrentLogicPosition.y;
+                    }
+                    else
+                    {
+                        scrollRate = m_Speed * deltaDis * Mathf.Abs(pos.CurrentLogicPosition.z);
+                    }
                     pos.CurrentLogicPosition += scrollRate * (pos.CurrentLogicRotation * Vector3.forward);
                 }
             }

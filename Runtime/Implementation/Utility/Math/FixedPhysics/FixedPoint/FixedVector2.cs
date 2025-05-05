@@ -23,6 +23,7 @@
 
 using System;
 using System.Diagnostics;
+using UnityEngine;
 
 namespace XDay
 {
@@ -59,6 +60,12 @@ namespace XDay
             Y = new FixedPoint(y);
         }
 
+        public FixedVector2(Vector2 v)
+        {
+            X = new FixedPoint(v.x);
+            Y = new FixedPoint(v.y);
+        }
+
         public FixedVector2(int x, int y)
         {
             X = new FixedPoint(x);
@@ -69,6 +76,11 @@ namespace XDay
         {
             X = x;
             Y = y;
+        }
+
+        public Vector2 ToVector2()
+        {
+            return new Vector2(X.FloatValue, Y.FloatValue);
         }
 
         public FixedVector3 ToFixedVector3XZ()
@@ -117,7 +129,7 @@ namespace XDay
                         Y = value;
                         break;
                     default:
-                        Debug.Assert(false);
+                        UnityEngine.Debug.Assert(false);
                         break;
                 }
             }

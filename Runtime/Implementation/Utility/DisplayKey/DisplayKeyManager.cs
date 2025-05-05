@@ -35,6 +35,29 @@ namespace XDay.UtilityAPI
         public int KeyCount => m_AllKeys.Count;
         public string OutputFolder { get => m_OutputFolder; set => m_OutputFolder = value; }
 
+        public bool IsValidKey(int id)
+        {
+            foreach (var key in m_AllKeys)
+            {
+                if (key.ID == id) {  return true; }
+            }
+            return false;
+        }
+
+        public int GetIndex(int id)
+        {
+            var idx = 0;
+            foreach (var key in m_AllKeys)
+            {
+                if (key.ID == id)
+                {
+                    return idx;
+                }
+                ++idx;
+            }
+            return -1;
+        }
+
         public DisplayKey GetKey(int id)
         {
             foreach (var key in m_AllKeys)

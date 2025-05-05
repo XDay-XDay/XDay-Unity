@@ -22,7 +22,9 @@
  */
 
 using MiniJSON;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 using XDay.UtilityAPI;
 
 namespace XDay.CameraAPI
@@ -32,6 +34,14 @@ namespace XDay.CameraAPI
         public void Load(string text)
         {
             var root = Json.Deserialize(text) as Dictionary<string, object>;
+
+            var direction = root.TryGetValue("Direction", out var directionObj);
+            if (directionObj != null)
+            {
+                var dir = directionObj as string;
+                bool ok = Enum.TryParse(dir, out m_Direction);
+                Debug.Assert(ok, $"Invalid direction: {dir}");
+            }
 
             float pitch;
             {
@@ -66,7 +76,15 @@ namespace XDay.CameraAPI
                     var name = System.Convert.ToString(config["Name"]);
                     var altitude = System.Convert.ToSingle(config["Altitude"]);
                     var fov = System.Convert.ToSingle(config["FOV"]);
-                    var focalLength = Helper.FocalLengthFromAltitude(pitch, altitude);
+                    float focalLength;
+                    if (m_Direction == CameraDirection.XZ)
+                    {
+                        focalLength = Helper.FocalLengthFromAltitudeXZ(pitch, altitude);
+                    }
+                    else
+                    {
+                        focalLength = Helper.FocalLengthFromAltitudeXY(pitch, altitude);
+                    }
                     m_AltitudeManager.AddSetup(new AltitudeSetup(name, altitude, fov, focalLength));
                 }
                 m_AltitudeManager.PostLoad();

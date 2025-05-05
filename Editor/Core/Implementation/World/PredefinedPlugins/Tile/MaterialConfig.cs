@@ -23,8 +23,8 @@
 
 using System.Linq;
 using System.Collections.Generic;
-using XDay.SerializationAPI;
 using UnityEngine;
+using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -56,6 +56,16 @@ namespace XDay.WorldAPI.Tile.Editor
             CombineVectors(other);
         }
 
+        public void AddTexture(string name, Texture texture, Vector4 uvTransform)
+        {
+            m_Textures.Add(new TextureParam
+            {
+                Name = name,
+                TextureGUID = EditorHelper.GetObjectGUID(texture),
+                UVTransform = uvTransform,
+            });
+        }
+
         public void AddTexture(string name)
         {
             m_Textures.Add(new TextureParam
@@ -64,11 +74,29 @@ namespace XDay.WorldAPI.Tile.Editor
             });
         }
 
+        public void AddVector(string name, Vector4 value)
+        {
+            m_Vector4s.Add(new Vector4Param
+            {
+                Name = name,
+                Value = value,
+            });
+        }
+
         public void AddVector(string name)
         {
             m_Vector4s.Add(new Vector4Param
             {
                 Name = name,
+            });
+        }
+
+        public void AddFloat(string name, float value)
+        {
+            m_Floats.Add(new FloatParam
+            {
+                Name = name,
+                Value = value,
             });
         }
 
@@ -228,6 +256,14 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 AddTexture(setting.Name);
             }
+        }
+
+        protected override void OnInit()
+        {
+        }
+
+        protected override void OnUninit()
+        {
         }
 
         public class ParamBase

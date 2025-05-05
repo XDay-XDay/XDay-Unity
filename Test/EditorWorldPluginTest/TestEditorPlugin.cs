@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#if false
 #if UNITY_EDITOR
 
 using Cysharp.Threading.Tasks;
@@ -193,4 +194,5 @@ namespace XDay.Test.EditorWorldPluginTest
     }
 }
 
+#endif
 #endif

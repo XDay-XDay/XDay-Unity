@@ -22,6 +22,7 @@
  */
 
 using System;
+using UnityEngine;
 
 namespace XDay
 {
@@ -64,6 +65,13 @@ namespace XDay
             Z = new FixedPoint(z);
         }
 
+        public FixedVector3(Vector3 v)
+        {
+            X = new FixedPoint(v.x);
+            Y = new FixedPoint(v.y);
+            Z = new FixedPoint(v.z);
+        }
+
         public FixedVector3(int x, int y, int z)
         {
             X = new FixedPoint(x);
@@ -88,6 +96,11 @@ namespace XDay
                 Y *= len;
                 Z *= len;
             }
+        }
+
+        public Vector3 ToVector3()
+        {
+            return new Vector3(X.FloatValue, Y.FloatValue, Z.FloatValue);
         }
 
         public FixedVector2 ToFixedVector2XZ()

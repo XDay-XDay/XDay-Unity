@@ -33,7 +33,7 @@ namespace XDay.SerializationAPI.Editor
             var workingDir = Directory.GetCurrentDirectory();
             string exeName = "Tools\\ProjectAnalyser\\bin\\Debug\\net8.0\\ProjectAnalyser.exe";
             string arguments = $"{"GetClassFilePath"} {"Assets"} {classFullName}";
-            EditorHelper.RunProcess(exeName, arguments, out var output, out var error);
+            EditorHelper.RunProcess(exeName, arguments, "", out var output, out var error);
             output = output.Trim();
             return output;
         }
@@ -43,7 +43,7 @@ namespace XDay.SerializationAPI.Editor
             var workingDir = Directory.GetCurrentDirectory();
             string exeName = "Tools\\ProjectAnalyser\\bin\\Debug\\net8.0\\ProjectAnalyser.exe";
             string arguments = $"{"FormatCode"} {fileName}";
-            EditorHelper.RunProcess(exeName, arguments, out var output, out var error);
+            EditorHelper.RunProcess(exeName, arguments, "", out var output, out var error);
         }
     }
 }

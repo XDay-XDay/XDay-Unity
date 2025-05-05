@@ -30,6 +30,7 @@ namespace XDay.WorldAPI
     {
         public Rect VisibleArea => m_VisibleArea;
         public Rect ExpandedArea => m_ExpandedArea;
+        public Vector2 ExpandSize { get => m_ExpandSize; set => m_ExpandSize = value; }
 
         public void DebugDraw()
         {
@@ -50,7 +51,7 @@ namespace XDay.WorldAPI
                 {
                     m_LastCameraPos = cameraPos;
                     m_VisibleArea = GetVisibleAreas(camera);
-                    m_ExpandedArea = Helper.ExpandRect(m_VisibleArea, new Vector2(10, 10));
+                    m_ExpandedArea = Helper.ExpandRect(m_VisibleArea, m_ExpandSize);
                 }
             }
         }
@@ -83,6 +84,7 @@ namespace XDay.WorldAPI
         private Rect m_ExpandedArea;
         private Vector3 m_LastCameraPos;
         private Plane m_XZPlane = new(Vector3.up, 0);
+        private Vector2 m_ExpandSize;
     }
 }
 

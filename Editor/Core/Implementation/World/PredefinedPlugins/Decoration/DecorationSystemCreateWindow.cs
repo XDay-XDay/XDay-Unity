@@ -30,11 +30,14 @@ namespace XDay.WorldAPI.Decoration.Editor
 {
     internal class DecorationSystemCreateWindow : GenericWorldPluginCreateWindow
     {
-        protected override string DisplayName => "Decoration System";
+        protected override string DisplayName => "Decoration Layer";
 
         protected override void CreateInternal()
         {
-            var system = new DecorationSystem(World.AllocateObjectID(), World.PluginCount, new Vector2(100, 100), World.Bounds, DisplayName);
+            var origin = CalculateOrigin(m_Width, m_Height);
+            var bounds = new Bounds();
+            bounds.SetMinMax(new Vector3(origin.x, 0, origin.y), new Vector3(origin.x + m_Width, 0, origin.y + m_Height));
+            var system = new DecorationSystem(World.AllocateObjectID(), World.PluginCount, new Vector2(100, 100), bounds, DisplayName);
             UndoSystem.CreateObject(system, World.ID, "Create Decoration System");
         }
     }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -31,7 +31,7 @@ namespace XDay.CameraAPI.Editor
 {
     internal class WorldPluginTemplateCreator
     {
-        [MenuItem("XDay/World/Plugin/Create Plugin Template")]
+        [MenuItem("XDay/地图/插件/创建运行时插件模板")]
         static void Open()
         {
             var parameters = new List<ParameterWindow.Parameter>()

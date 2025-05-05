@@ -22,7 +22,6 @@
  */
 
 using XDay.CameraAPI;
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 using System;
 using System.Collections.Generic;
@@ -38,6 +37,7 @@ namespace XDay.WorldAPI.Editor
     {
         public int SelectedPluginIndex { set => m_SelectedPluginIndex = value; get => m_SelectedPluginIndex; }
         public override string TypeName => "EditorWorld";
+        public override int CurrentLOD => throw new NotImplementedException();
 
         public EditorWorld()
         {
@@ -275,6 +275,7 @@ namespace XDay.WorldAPI.Editor
         {
             public Rect VisibleArea => new(-30000, -30000, 30000, 30000);
             public Rect ExpandedArea => VisibleArea;
+            public Vector2 ExpandSize { get => Vector2.zero; set { } }
 
             public void DebugDraw()
             {

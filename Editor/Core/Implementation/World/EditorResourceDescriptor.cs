@@ -36,7 +36,7 @@ namespace XDay.WorldAPI.Editor
         public string PathPrefix => m_Prefix;
         public GameObject Prefab => m_Prefab;
         public Rect Bounds { get => m_Bounds; set => m_Bounds = value; }
-        public bool IsValid => AssetDatabase.LoadAssetAtPath<GameObject>(GetPath(0)) != null;
+        public override bool IsValid => m_Prefab != null;
         public override string TypeName => "EditorResourceDescriptor";
 
         public EditorResourceDescriptor()
@@ -49,10 +49,8 @@ namespace XDay.WorldAPI.Editor
             m_LOD0GUID = AssetDatabase.AssetPathToGUID(m_LOD0);
         }
 
-        public override void Init(IWorld world)
+        protected override void OnInit()
         {
-            base.Init(world);
-
             m_LOD0 = AssetDatabase.GUIDToAssetPath(m_LOD0GUID);
             if (string.IsNullOrEmpty(m_LOD0))
             {

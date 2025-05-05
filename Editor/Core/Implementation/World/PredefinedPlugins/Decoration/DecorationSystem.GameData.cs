@@ -75,7 +75,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             serializer.WriteByteArray(decorationMetadata.LODResourceChangeMasks, "LOD Resource Change Masks");
             serializer.WriteInt32Array(decorationMetadata.ResourceMetadataIndex, "Resource Metadata Index");
-            serializer.WriteVector2Array(decorationMetadata.Position, "Position XZ");
+            serializer.WriteVector3Array(decorationMetadata.Position, "Position");
 
             var n = resourceMetadata.Count;
             serializer.WriteInt32(n, "Resource Metadata Count");
@@ -110,7 +110,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             decorationMetadata = new GameDecorationMetaData
             {
-                Position = new Vector2[decorations.Count],
+                Position = new Vector3[decorations.Count],
                 ResourceMetadataIndex = new int[decorations.Count],
                 LODResourceChangeMasks = new byte[decorations.Count],
             };
@@ -118,7 +118,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             for (var i = 0; i < decorations.Count; ++i)
             {
                 decorationMetadata.LODResourceChangeMasks[i] = CalculateLODChangeMasks(decorations[i]);
-                decorationMetadata.Position[i] = decorations[i].Position.ToVector2();
+                decorationMetadata.Position[i] = decorations[i].Position;
                 decorationMetadata.ResourceMetadataIndex[i] = QueryResourceMetadataIndex(decorations[i], resourceMetadatas);
             }
 
@@ -153,7 +153,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private int QueryResourceMetadataIndex(DecorationObject decoration, List<GameResourceMetadata> resourceMetadata)
         {
             var path = decoration.ResourceDescriptor.GetPath(0);
-            var batchID = CalculateBatchID(decoration.ResourceDescriptor);
+            var batchID = CalculateBatchID(decoration);
 
             var resourceMetadataIndex = -1;
             for (var i = 0; i < resourceMetadata.Count; ++i)
@@ -180,8 +180,14 @@ namespace XDay.WorldAPI.Decoration.Editor
             return resourceMetadataIndex;
         }
 
-        private int CalculateBatchID(IResourceDescriptor descriptor)
+        private int CalculateBatchID(DecorationObject decoration)
         {
+            if (!m_EnableInstanceRendering || !decoration.EnableInstanceRendering)
+            {
+                return -1;
+            }
+
+            var descriptor = decoration.ResourceDescriptor;
             var lod0Path = descriptor.GetPath(0);
             if (m_ResourceGPUBatchID.TryGetValue(lod0Path, out var batchID))
             {
@@ -256,15 +262,26 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private void BeforeGenerate()
         {
-            m_ResourceGPUBatchID = new Dictionary<string, int>();
-            m_InstanceAnimatorBatchInfoManager = ScriptableObject.CreateInstance<InstanceAnimatorBatchInfoRegistry>();
-            m_BatchInfoRegistry = ScriptableObject.CreateInstance<GPUBatchInfoRegistry>();
+            m_AnimatorBatchDataPath = $"{World.GameFolder}/DecorationInstanceBatchInfo.asset";
+            m_BatchDataPath = $"{World.GameFolder}/DecorationBatchInfo.asset";
+            AssetDatabase.DeleteAsset(m_AnimatorBatchDataPath);
+            AssetDatabase.DeleteAsset(m_BatchDataPath);
+
+            if (m_EnableInstanceRendering)
+            {
+                m_ResourceGPUBatchID = new Dictionary<string, int>();
+                m_InstanceAnimatorBatchInfoManager = ScriptableObject.CreateInstance<InstanceAnimatorBatchInfoRegistry>();
+                m_BatchInfoRegistry = ScriptableObject.CreateInstance<GPUBatchInfoRegistry>();
+            }
         }
 
         private void EndGenerate()
         {
-            AssetDatabase.CreateAsset(m_InstanceAnimatorBatchInfoManager, $"{World.GameFolder}/DecorationInstanceBatchInfo.asset");
-            AssetDatabase.CreateAsset(m_BatchInfoRegistry, $"{World.GameFolder}/DecorationBatchInfo.asset");
+            if (m_EnableInstanceRendering)
+            {
+                AssetDatabase.CreateAsset(m_InstanceAnimatorBatchInfoManager, $"{World.GameFolder}/DecorationInstanceBatchInfo.asset");
+                AssetDatabase.CreateAsset(m_BatchInfoRegistry, $"{World.GameFolder}/DecorationBatchInfo.asset");
+            }
             m_ResourceGPUBatchID = null;
             m_BatchInfoRegistry = null;
             m_InstanceAnimatorBatchInfoManager = null;
@@ -324,6 +341,9 @@ namespace XDay.WorldAPI.Decoration.Editor
         private GPUBatchInfoRegistry m_BatchInfoRegistry;
         private Dictionary<string, int> m_ResourceGPUBatchID;
         private const int m_RuntimeVersion = 1;
+        private bool m_EnableInstanceRendering = true;
+        private string m_AnimatorBatchDataPath;
+        private string m_BatchDataPath;
     }
 }
 

@@ -42,7 +42,7 @@ namespace XDay.CameraAPI
         {
             if (m_Manipulator.Setup.DecomposeZoomFactor(m_StartZoomFactor * rate, out var focalLength, out _))
             {
-                newCameraPos = CalculateCameraPos(m_Manipulator.Camera, focalLength, centerX, centerY);
+                newCameraPos = CalculateCameraPos(m_Manipulator.Camera, focalLength, centerX, centerY, m_Manipulator.Direction);
             }
         }
 
@@ -51,7 +51,7 @@ namespace XDay.CameraAPI
             m_CurrentZoomFactor += deltaRate;
             if (m_Manipulator.Setup.DecomposeZoomFactor(m_CurrentZoomFactor, out var focalLength, out _))
             {
-                newCameraPos = CalculateCameraPos(m_Manipulator.Camera, focalLength, centerX, centerY);
+                newCameraPos = CalculateCameraPos(m_Manipulator.Camera, focalLength, centerX, centerY, m_Manipulator.Direction);
             }   
         }
 

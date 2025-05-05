@@ -41,6 +41,18 @@ namespace XDay.WorldAPI.Decoration.Editor
         public Quaternion PrefabRotation => ResourceDescriptor.Prefab != null ? ResourceDescriptor.Prefab.transform.rotation : Quaternion.identity;
         public Vector3 PrefabPosition => ResourceDescriptor.Prefab != null ? ResourceDescriptor.Prefab.transform.position : Vector3.zero;
         public override string TypeName => "EditorDecorationObject";
+        public bool EnableInstanceRendering { get => m_EnableInstanceRendering; set => m_EnableInstanceRendering = value; }
+        public bool EnableHeightAdjust { get => m_EnableHeightAdjust; set => m_EnableHeightAdjust = value; }
+        protected override WorldObjectVisibility VisibilityInternal
+        {
+            set => m_Visibility = value;
+            get => m_Visibility;
+        }
+        protected override bool EnabledInternal
+        {
+            set => m_Enabled = value;
+            get => m_Enabled;
+        }
 
         public DecorationObject()
         {
@@ -57,19 +69,14 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_ResourceDescriptor = new WorldObjectWeakRef(descriptor);
         }
 
-        public override void Init(IWorld world)
+        protected override void OnInit()
         {
-            base.Init(world);
-
-            m_ResourceDescriptor.Init(world);
+            m_ResourceDescriptor.Init(World);
         }
 
-        public override void Uninit()
+        protected override void OnUninit()
         {
             Debug.Assert(ID != 0);
-            
-            base.Uninit();
-            
             m_ResourceDescriptor = null;
         }
 
@@ -86,13 +93,22 @@ namespace XDay.WorldAPI.Decoration.Editor
         public override void EditorDeserialize(IDeserializer deserializer, string label)
         {
             base.EditorDeserialize(deserializer, label);
-            deserializer.ReadInt32("DecorationObject.Version");
+            var version = deserializer.ReadInt32("DecorationObject.Version");
             m_Enabled = deserializer.ReadBoolean("Is Enabled");
             m_LODLayerMask = (LODLayerMask)deserializer.ReadUInt32("LOD Layer Mask");
             m_EditPosition = deserializer.ReadVector3("Edit Position");
             m_EditRotation = deserializer.ReadQuaternion("Edit Rotation");
             m_EditScale = deserializer.ReadVector3("Edit Scale");
             m_ResourceDescriptor = new WorldObjectWeakRef(deserializer.ReadInt32("Resource Descriptor"));
+            if (version >= 2) 
+            {
+                m_OverridePrefabTransform = deserializer.ReadBoolean("Override Prefab Transform");
+            }
+            if (version >= 3)
+            {
+                m_EnableHeightAdjust = deserializer.ReadBoolean("Enable Height Adjust");
+                m_EnableInstanceRendering = deserializer.ReadBoolean("Enable Instance Rendering");
+            }
         }
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -105,6 +121,9 @@ namespace XDay.WorldAPI.Decoration.Editor
             serializer.WriteQuaternion(m_EditRotation, "Edit Rotation");
             serializer.WriteVector3(m_EditScale, "Edit Scale");
             serializer.WriteObjectID(m_ResourceDescriptor.ObjectID, "Resource Descriptor", converter);
+            serializer.WriteBoolean(m_OverridePrefabTransform, "Override Prefab Transform");
+            serializer.WriteBoolean(m_EnableHeightAdjust, "Enable Height Adjust");
+            serializer.WriteBoolean(m_EnableInstanceRendering, "Enable Instance Rendering");
         }
 
         public override bool SetAspect(int objectID, string name, IAspect aspect)
@@ -206,18 +225,6 @@ namespace XDay.WorldAPI.Decoration.Editor
             return m_LODLayerMask & (LODLayerMask)~(1 << lod);
         }
 
-        protected override WorldObjectVisibility VisibilityInternal
-        {
-            set => m_Visibility = value;
-            get => m_Visibility;
-        }
-
-        protected override bool EnabledInternal
-        {
-            set => m_Enabled = value;
-            get => m_Enabled;
-        }
-
         private bool m_BoundsDirty = true;
         private Rect m_WorldBounds = new();
         private LODLayerMask m_LODLayerMask = LODLayerMask.AllLOD;
@@ -228,7 +235,9 @@ namespace XDay.WorldAPI.Decoration.Editor
         private Vector3 m_EditPosition;
         private Quaternion m_EditRotation;
         private Vector3 m_EditScale;
-        private const int m_Version = 1;
+        private bool m_EnableInstanceRendering = true;
+        private bool m_EnableHeightAdjust = true;
+        private const int m_Version = 3;
     }
     
 }

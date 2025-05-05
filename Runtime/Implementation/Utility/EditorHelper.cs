@@ -101,6 +101,17 @@ namespace XDay.UtilityAPI
             }
         }
 
+        public static void SelectFolder(string folder)
+        {
+            if (!string.IsNullOrEmpty(folder))
+            {
+                folder = Helper.ToUnityPath(folder);
+                var asset = AssetDatabase.LoadAssetAtPath<DefaultAsset>(folder);
+                Selection.activeObject = asset;
+                EditorGUIUtility.PingObject(asset);
+            }
+        }
+
         public static string QueryAssetFilePath<T>() where T : UnityEngine.Object
         {
             var assets = QueryAssets<T>();
@@ -135,7 +146,7 @@ namespace XDay.UtilityAPI
             return null;
         }
 
-        public static void RunProcess(string exeName, string argument, out string output, out string error, bool waitForExit = true)
+        public static void RunProcess(string exeName, string argument, string workingDir, out string output, out string error, bool waitForExit = true)
         {
             output = "";
             error = "";
@@ -148,6 +159,7 @@ namespace XDay.UtilityAPI
                 RedirectStandardOutput = true, // Redirect output
                 RedirectStandardError = true, // Redirect errors
                 UseShellExecute = false, // Necessary for redirection
+                WorkingDirectory = workingDir,
                 CreateNoWindow = true // Do not create a window
             };
 
@@ -270,7 +282,7 @@ namespace XDay.UtilityAPI
                 newPath = EditorGUILayout.TextField(new GUIContent(title, tooltip), path);
             }
 
-            if (GUILayout.Button("...", GUILayout.MaxWidth(60)))
+            if (GUILayout.Button("...", GUILayout.MaxWidth(30)))
             {
                 newPath = EditorUtility.OpenFolderPanel("Select", defaultFolder, "");
             }
@@ -517,6 +529,181 @@ namespace XDay.UtilityAPI
                 UnityEngine.Debug.LogError("import failed!");
             }
         }
+
+        public static string ConvertPackageToPhysicalPath(string packagePath)
+        {
+            if (!packagePath.StartsWith("Packages/"))
+            {
+                return null;
+            }
+
+            // 提取包名（如 "com.example.mypackage"）
+            var parts = packagePath.Split('/');
+            if (parts.Length < 2) return null;
+            var packageName = parts[1];
+
+            // 通过PackageManager获取包信息
+            var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath);
+            if (packageInfo == null)
+            {
+                return null;
+            }
+
+            // 返回解析后的物理路径
+            return packageInfo.resolvedPath;
+        }
+
+        public static bool DrawIntArray(string title, string elementName, ref int[] array, string tooltip = "")
+        {
+            EditorGUI.BeginChangeCheck();
+            int newSize = EditorGUILayout.DelayedIntField(new GUIContent(title, tooltip), array.Length);
+            if (newSize != array.Length)
+            {
+                System.Array.Resize(ref array, newSize);
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = EditorGUILayout.IntField($"{elementName} {i}", array[i]);
+            }
+            EditorGUI.indentLevel--;
+            return EditorGUI.EndChangeCheck();
+        }
+
+        public static void DrawFloatArray(string title, string elementName, ref float[] array)
+        {
+            int newSize = EditorGUILayout.DelayedIntField(title, array.Length);
+            if (newSize != array.Length)
+            {
+                System.Array.Resize(ref array, newSize);
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = EditorGUILayout.FloatField($"{elementName} {i}", array[i]);
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        public static void DrawFloatArray(string title, string[] elementNames, ref float[] array)
+        {
+            int newSize = EditorGUILayout.DelayedIntField(title, array.Length);
+            if (newSize != array.Length)
+            {
+                System.Array.Resize(ref array, newSize);
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = EditorGUILayout.FloatField($"{elementNames[i]}", array[i]);
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        public static void DrawStringArray(string title, string elementName, ref string[] array)
+        {
+            int newSize = EditorGUILayout.DelayedIntField(title, array.Length);
+            if (newSize != array.Length)
+            {
+                System.Array.Resize(ref array, newSize);
+                for (var i = 0; i < array.Length; ++i)
+                {
+                    if (array[i] == null)
+                    {
+                        array[i] = "";
+                    }
+                }
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = EditorGUILayout.TextField($"{elementName} {i}", array[i]);
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        public static void DrawIntList(string title, string elementName, List<int> list)
+        {
+            int newSize = EditorGUILayout.DelayedIntField(title, list.Count);
+            if (newSize != list.Count)
+            {
+                var added = newSize - list.Count;
+                for (var i = 0; i < added; i++)
+                {
+                    list.Add(0);
+                }
+                for (var i = 0; i < -added; i++)
+                {
+                    list.RemoveAt(list.Count - 1);
+                }
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < list.Count; i++)
+            {
+                list[i] = EditorGUILayout.IntField($"{elementName} {i}", list[i]);
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        public static void DrawVector3Array(string title, string elementName, ref Vector3[] array)
+        {
+            int newSize = EditorGUILayout.DelayedIntField(title, array.Length);
+            if (newSize != array.Length)
+            {
+                System.Array.Resize(ref array, newSize);
+                for (var i = 0; i < array.Length; ++i)
+                {
+                    if (array[i] == null)
+                    {
+                        array[i] = Vector3.zero;
+                    }
+                }
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = EditorGUILayout.Vector3Field($"{elementName} {i}", array[i]);
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        public static void DrawVector3List(string title, string elementName, List<Vector3> list)
+        {
+            int newSize = EditorGUILayout.DelayedIntField(title, list.Count);
+            if (newSize != list.Count)
+            {
+                var added = newSize - list.Count;
+                for (var i = 0; i < added; i++)
+                {
+                    list.Add(Vector3.zero);
+                }
+                for (var i = 0; i < -added; i++)
+                {
+                    list.RemoveAt(list.Count - 1);
+                }
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < list.Count; i++)
+            {
+                list[i] = EditorGUILayout.Vector3Field($"{elementName} {i}", list[i]);
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        public static Vector3 MousePositionToWorldRay(Vector2 mousePosition, out Ray ray, float planeHeight = 0)
+        {
+            ray = HandleUtility.GUIPointToWorldRay(mousePosition);
+            var plane = new Plane(Vector3.up, planeHeight);
+            plane.Raycast(ray, out float distance);
+            return ray.origin + ray.direction * distance;
+        }		
     }
 }
 

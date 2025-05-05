@@ -29,6 +29,7 @@ namespace XDay
     {
         public readonly FixedPoint Width;
         public readonly FixedPoint Height;
+        public override FixedPoint MaxRadius => FixedMath.Max(Width, Height) / 2;
 
         public BoxCollider(FixedPoint width, FixedPoint height)
             : base(width * height)

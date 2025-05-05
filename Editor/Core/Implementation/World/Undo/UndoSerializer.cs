@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using XDay.SerializationAPI;
 using System;
 using System.IO;
 
@@ -44,14 +43,21 @@ namespace XDay.WorldAPI.Editor
             return serializer.Data;
         }
 
-        public IWorldObject Deserialize(int worldID, string type, byte[] data)
+        public IWorldObject Deserialize(int worldID, string type, byte[] data, int id, int objectIndex, bool init)
         {
             var deserializer = IDeserializer.CreateBinary(new MemoryStream(data), m_SerializableFactory);
-
             var obj = Activator.CreateInstance(Type.GetType(type)) as WorldObject;
             obj.EditorDeserialize(deserializer, "");
-            var world = m_WorldSystem.QueryWorld(worldID);
-            obj.Init(world);
+            if (id != 0)
+            {
+                obj.ID = id;
+                obj.ObjectIndex = objectIndex;
+            }
+            if (init)
+            {
+                var world = m_WorldSystem.QueryWorld(worldID);
+                obj.Init(world);
+            }
             return obj;
         }
 

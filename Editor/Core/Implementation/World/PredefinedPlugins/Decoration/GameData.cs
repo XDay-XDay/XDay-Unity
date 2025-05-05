@@ -74,7 +74,7 @@ namespace XDay.WorldAPI.Decoration.Editor
     {
         public byte[] LODResourceChangeMasks { get; set; }
         public int[] ResourceMetadataIndex { get; set; }
-        public Vector2[] Position { get; set; }
+        public Vector3[] Position { get; set; }
     }
 
     internal class Grid

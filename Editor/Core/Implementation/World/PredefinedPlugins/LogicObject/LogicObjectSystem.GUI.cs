@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -31,7 +31,7 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.LogicObject.Editor
 {
-    internal partial class LogicObjectSystem
+    public partial class LogicObjectSystem
     {
         private void ActionCreateObject()
         {
@@ -83,16 +83,73 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
         protected override void InspectorGUIInternal()
         {
-            m_Show = EditorGUILayout.Foldout(m_Show, "Logic Object");
+            m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
+            m_Show = EditorGUILayout.Foldout(m_Show, "逻辑物体");
             if (m_Show)
             {
-                m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
                 EditorHelper.IndentLayout(() =>
                 {
                     m_ResourceGroupSystem.InspectorGUI();
                 });
-                EditorGUILayout.EndScrollView();
             }
+            DrawProperties();
+            EditorGUILayout.EndScrollView();
+        }
+
+        private void DrawProperties()
+        {
+            var gameObject = Selection.activeGameObject;
+            if (gameObject == null)
+            {
+                return;
+            }
+
+            LogicObjectGroup group = GetGroupFromGameObject(gameObject);
+            if (group != null)
+            {
+                DrawGroupProperties(group);
+            }
+            else
+            {
+                LogicObject logicObject = GetLogicObjectFromGameObject(gameObject);
+                if (logicObject != null)
+                {
+                    DrawObjectProperties(logicObject);
+                }
+            }
+        }
+
+        private LogicObjectGroup GetGroupFromGameObject(GameObject gameObject)
+        {
+            var groupID = m_Renderer.QueryGroupID(gameObject);
+            if (groupID == 0)
+            {
+                return null;
+            }
+            return QueryObjectUndo(groupID) as LogicObjectGroup;
+        }
+
+        private LogicObject GetLogicObjectFromGameObject(GameObject gameObject)
+        {
+            var objectID = m_Renderer.QueryObjectID(gameObject);
+            if (objectID == 0)
+            {
+                return null;
+            }
+            return QueryObjectUndo(objectID) as LogicObject;
+        }
+
+        private void DrawGroupProperties(LogicObjectGroup group)
+        {
+            m_AspectContainerEditor.Draw(true, group.AspectContainer, 
+                (property) => { OnAddGroupProperty(group, property); }, 
+                (property)=> { OnRemoveGroupProperty(group, property); },
+                (oldName, property) => { OnRenameGroupProperty(group, oldName, property); } );
+        }
+
+        private void DrawObjectProperties(LogicObject obj)
+        {
+            m_AspectContainerEditor.Draw(false, obj.AspectContainer);
         }
 
         private void RedoLastGeneration()
@@ -215,78 +272,69 @@ namespace XDay.WorldAPI.LogicObject.Editor
             {
                 m_Controls = new();
 
-                m_PopupOperation = new EnumPopup("Operation", "", 160);
+                m_PopupOperation = new Popup("操作", "", 140);
                 m_Controls.Add(m_PopupOperation);
 
-                m_GroupsPopup = new Popup("Group", "", 160);
+                m_GroupsPopup = new Popup("当前组", "", 160);
                 m_Controls.Add(m_GroupsPopup);
 
-                m_ObjectCountField = new IntField("Count", "", 80);
+                m_ObjectCountField = new IntField("数量", "", 60);
                 m_Controls.Add(m_ObjectCountField);
 
-                m_PopupActiveLOD = new Popup("LOD", "", 80);
-                m_Controls.Add(m_PopupActiveLOD);
-
-                m_HeightField = new FloatField("Height", "", 80);
+                m_HeightField = new FloatField("高度", "", 80);
                 m_Controls.Add(m_HeightField);
 
-                m_RotationField = new FloatField("Rotation", "", 100);
+                m_RotationField = new FloatField("旋转角度", "", 100);
                 m_Controls.Add(m_RotationField);
 
-                m_ScaleField = new FloatField("Scale", "", 100);
+                m_ScaleField = new FloatField("缩放", "", 80);
                 m_Controls.Add(m_ScaleField);
 
-                m_SpaceField = new FloatField("Space", "Minimum distance between objects", 90);
+                m_SpaceField = new FloatField("间隔", "两个物体之间的最小间隔", 80);
                 m_Controls.Add(m_SpaceField);
 
-                m_BorderSizeField = new FloatField("Border", "Generate objects along edge of shape", 90);
+                m_BorderSizeField = new FloatField("边界", "沿着形状的边界生成物体", 80);
                 m_Controls.Add(m_BorderSizeField);
 
-                m_ButtonQueryObjectCountInActiveGroup = EditorWorldHelper.CreateImageButton("number.png", "Show object count in current group");
+                m_ButtonQueryObjectCountInActiveGroup = EditorWorldHelper.CreateImageButton("number.png", "显示当前组中物体个数");
                 m_Controls.Add(m_ButtonQueryObjectCountInActiveGroup);
 
-                m_AddGroupButton = EditorWorldHelper.CreateImageButton("add.png", "Add Group");
+                m_AddGroupButton = EditorWorldHelper.CreateImageButton("add.png", "新增组");
                 m_Controls.Add(m_AddGroupButton);
 
-                m_RemoveGroupButton = EditorWorldHelper.CreateImageButton("remove.png", "Remove Group");
+                m_RemoveGroupButton = EditorWorldHelper.CreateImageButton("remove.png", "删除组");
                 m_Controls.Add(m_RemoveGroupButton);
 
-                m_RenameGroupButton = EditorWorldHelper.CreateImageButton("rename.png", "Rename Group");
+                m_RenameGroupButton = EditorWorldHelper.CreateImageButton("rename.png", "修改组名");
                 m_Controls.Add(m_RenameGroupButton);
 
-                m_GroupVisibilityButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "Show/Hide Group");
+                m_TransferGroupButton = EditorWorldHelper.CreateImageButton("move.png", "将选中的点移动到其他组");
+                m_Controls.Add(m_TransferGroupButton);
+
+                m_GroupVisibilityButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐组");
                 m_Controls.Add(m_GroupVisibilityButton);
 
-                m_ButtonRandom = EditorWorldHelper.CreateToggleImageButton(false, "random.png", "Use random object in resource group");
+                m_ButtonRandom = EditorWorldHelper.CreateToggleImageButton(false, "random.png", "使用所选模型组中的随机模型");
                 m_ButtonRandom.Active = m_CoordinateGenerateSetting.Random;
                 m_Controls.Add(m_ButtonRandom);
 
-                m_ButtonShowObjectsNotInActiveLOD = EditorWorldHelper.CreateImageButton("show.png", "Show objects not in current group");
-                m_Controls.Add(m_ButtonShowObjectsNotInActiveLOD);
-
-                m_ButtonAddObjectsToActiveLOD = EditorWorldHelper.CreateImageButton("add.png", "Add object to current lod");
-                m_Controls.Add(m_ButtonAddObjectsToActiveLOD);
-
-                m_WidthField = new FloatField("Width", "", 80);
+                m_WidthField = new FloatField("宽", "", 80);
                 m_Controls.Add(m_WidthField);
 
-                m_ButtonRemoveObjectFromActiveLOD = EditorWorldHelper.CreateImageButton("remove.png", "Remove object from current lod");
-                m_Controls.Add(m_ButtonRemoveObjectFromActiveLOD);
-
-                m_GeometryPopup = new EnumPopup("Shape", "", 130);
+                m_GeometryPopup = new Popup("形状", "", 130);
                 m_Controls.Add(m_GeometryPopup);
 
-                m_ButtonSycnObjectTransforms = EditorWorldHelper.CreateImageButton("refresh.png", "Sync object transform");
+                m_ButtonSycnObjectTransforms = EditorWorldHelper.CreateImageButton("refresh.png", "同步物体坐标");
                 m_Controls.Add(m_ButtonSycnObjectTransforms);
 
-                m_ButtonDeleteObjects = EditorWorldHelper.CreateImageButton("delete.png", "Delete objects");
+                m_ButtonDeleteObjects = EditorWorldHelper.CreateImageButton("delete.png", "删除物体");
                 m_Controls.Add(m_ButtonDeleteObjects);
 
-                m_ButtonEqualSpace = EditorWorldHelper.CreateToggleImageButton(false, "equal.png", "Generate equal distance objects");
+                m_ButtonEqualSpace = EditorWorldHelper.CreateToggleImageButton(false, "equal.png", "生成等距物体");
                 m_ButtonEqualSpace.Active = m_CoordinateGenerateSetting.LineEquidistant;
                 m_Controls.Add(m_ButtonEqualSpace);
 
-                m_RadiusField = new FloatField("Radius", "", 80);
+                m_RadiusField = new FloatField("半径", "", 80);
                 m_Controls.Add(m_RadiusField);
             }
         }
@@ -363,19 +411,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         {
             if (m_CurrentGroupID != groupID)
             {
-                SetGroupActive(m_CurrentGroupID, false);
                 m_CurrentGroupID = groupID;
-                SetGroupActive(m_CurrentGroupID, true);
-            }
-        }
-
-        private void SetGroupActive(int groupID, bool show)
-        {
-            var group = GetGroup(groupID);
-            if (group != null)
-            {
-                group.SetEnabled(show);
-                m_Renderer?.ToggleVisibility(group);
             }
         }
 
@@ -388,11 +424,23 @@ namespace XDay.WorldAPI.LogicObject.Editor
             }
         }
 
-        private LogicObjectGroup GetGroup(int groupID)
+        public LogicObjectGroup GetGroup(int groupID)
         {
             foreach (var group in m_Groups)
             {
                 if (group.ID == groupID)
+                {
+                    return group;
+                }
+            }
+            return null;
+        }
+
+        public LogicObjectGroup GetGroup(string groupName)
+        {
+            foreach (var group in m_Groups)
+            {
+                if (group.Name == groupName)
                 {
                     return group;
                 }
@@ -489,14 +537,19 @@ namespace XDay.WorldAPI.LogicObject.Editor
             var group = GetCurrentGroup();
             if (group != null)
             {
-                EditorGUILayout.LabelField($"Object Count: {group.ObjectCount}, Range: {m_Bounds.min:F0} to {m_Bounds.max:F0} meters");
+                var n = 0;
+                foreach (var g in m_Groups)
+                {
+                    n += g.ObjectCount;
+                }
+                EditorGUILayout.LabelField($"当前组物体个数: {group.ObjectCount}, 所有组物体总数: {n}, 范围: {m_Bounds.min:F0}X{m_Bounds.max:F0}米");
             }
             if (m_Action == Action.CreateObject)
             {
-                EditorGUILayout.LabelField("Use R key to redo last generation");
-                EditorGUILayout.LabelField("Use T key to toggle Multiple/Single mode");
-                EditorGUILayout.LabelField("Use Q/W key to rotate object");
-                EditorGUILayout.LabelField("Use A/S key to scale object");
+                EditorGUILayout.LabelField("按下R键重做上次生成");
+                EditorGUILayout.LabelField("按下T键切换单/多物体生成模式");
+                EditorGUILayout.LabelField("按下Q和W键旋转物体");
+                EditorGUILayout.LabelField("按下A和S键缩放物体");
             }
 
             if (GetDirtyObjectIDs().Count == 0)
@@ -507,7 +560,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
             {
                 m_LabelStyle.normal.textColor = Color.magenta;
             }
-            EditorGUILayout.LabelField("Transform sync needed!", m_LabelStyle);
+            EditorGUILayout.LabelField("物体坐标改变,需要同步!", m_LabelStyle);
         }
 
         private void UndoRedo(UndoAction action, bool undo)
@@ -551,12 +604,12 @@ namespace XDay.WorldAPI.LogicObject.Editor
             if (m_CreateMode == ObjectCreateMode.Single)
             {
                 m_Rotation = m_RotationField.Render(m_Rotation, 50);
-                m_Scale = m_ScaleField.Render(m_Scale, 50);
+                m_Scale = m_ScaleField.Render(m_Scale, 30);
             }
 
             GUI.enabled = m_CreateMode == ObjectCreateMode.Multiple;
 
-            var shape = (GeometryType)m_GeometryPopup.Render(m_GeometryType, 40);
+            var shape = (GeometryType)m_GeometryPopup.Render((int)m_GeometryType, m_ShapeNames, 40);
             SetGeometryType(shape);
 
             var enabled = true;
@@ -567,7 +620,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
             var old = GUI.enabled;
             GUI.enabled = enabled;
-            m_CoordinateGenerateSetting.Count = m_ObjectCountField.Render(m_CoordinateGenerateSetting.Count, 40);
+            m_CoordinateGenerateSetting.Count = m_ObjectCountField.Render(m_CoordinateGenerateSetting.Count, 30);
             GUI.enabled = old;
 
             if (m_GeometryType == GeometryType.Circle)
@@ -586,8 +639,8 @@ namespace XDay.WorldAPI.LogicObject.Editor
                     m_CoordinateGenerateSetting.LineEquidistant = m_ButtonEqualSpace.Active;
                 }
             }
-            m_CoordinateGenerateSetting.Space = m_SpaceField.Render(m_CoordinateGenerateSetting.Space, 40);
-            m_CoordinateGenerateSetting.BorderSize = m_BorderSizeField.Render(m_CoordinateGenerateSetting.BorderSize, 40);
+            m_CoordinateGenerateSetting.Space = m_SpaceField.Render(m_CoordinateGenerateSetting.Space, 35);
+            m_CoordinateGenerateSetting.BorderSize = m_BorderSizeField.Render(m_CoordinateGenerateSetting.BorderSize, 35);
 
             if (m_ButtonRandom.Render(true, GUI.enabled))
             {
@@ -625,14 +678,14 @@ namespace XDay.WorldAPI.LogicObject.Editor
                 var group = GetCurrentGroup();
                 if (group != null)
                 {
-                    EditorUtility.DisplayDialog("", $"Object count in current group: {group.ObjectCount}", "OK");
+                    EditorUtility.DisplayDialog("", $"当前组物体数量: {group.ObjectCount}", "确定");
                 }
             }
         }
 
         private void DrawOperation()
         {
-            ChangeOperation((Action)m_PopupOperation.Render(m_Action, 60));
+            ChangeOperation((Action)m_PopupOperation.Render((int)m_Action, m_ActionNames, 35));
         }
 
         private void DrawGroups()
@@ -726,6 +779,32 @@ namespace XDay.WorldAPI.LogicObject.Editor
                     return false;
                 });
             }
+
+            if (m_TransferGroupButton.Render(Inited))
+            {
+                var group = GetCurrentGroup();
+                var parameters = new List<ParameterWindow.Parameter>()
+                {
+                    new ParameterWindow.StringArrayParameter("Name", "", m_GroupNames),
+                };
+                ParameterWindow.Open("Move To Other Group", parameters, (p) =>
+                {
+                    var ok = ParameterWindow.GetStringArraySelection(p[0], out var selection);
+                    if (ok)
+                    {
+                        UndoSystem.NextGroupAndJoin();
+
+                        var selectedObjectIDs = QueryRootObjectSelection();
+                        foreach (var objID in selectedObjectIDs)
+                        {
+                            var obj = QueryObjectUndo(objID);
+                            UndoSystem.SetAspect(obj, LogicObjectDefine.CHANGE_LOGIC_OBJECT_GROUP, IAspect.FromString(m_GroupNames[selection]), "Group Name", ID, UndoActionJoinMode.None);
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+            }
             EditorGUILayout.EndHorizontal();
         }
 
@@ -734,19 +813,21 @@ namespace XDay.WorldAPI.LogicObject.Editor
             var evt = Event.current;
             if (evt.type == EventType.KeyDown && evt.shift == false)
             {
-                if (evt.keyCode == KeyCode.Alpha1)
+                if (evt.keyCode == KeyCode.Alpha1 && evt.control)
                 {
                     ChangeOperation(Action.Select);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha2)
+                else if (evt.keyCode == KeyCode.Alpha2 && evt.control)
                 {
                     ChangeOperation(Action.CreateObject);
+                    evt.Use();
                 }
-                else if (evt.keyCode == KeyCode.Alpha3)
+                else if (evt.keyCode == KeyCode.Alpha3 && evt.control)
                 {
                     ChangeOperation(Action.DeleteObject);
+                    evt.Use();
                 }
-                evt.Use();
             }
 
             m_Indicator.Visible = false;
@@ -959,12 +1040,43 @@ namespace XDay.WorldAPI.LogicObject.Editor
             }
         }
 
-        private enum LayerMaskChangeMode
+        private void OnSelectionChanged()
         {
-            AddToActiveLODOnly,
-            DeleteFromActiveLODOnly,
-            AddToActiveAndHigherLOD,
-            DeleteFromActiveAndHigherLOD,
+            EditorApplication.delayCall += () =>
+            {
+                EditorWindow.GetWindow<WorldEditorEntrance>().Repaint();
+                //// 强制所有Inspector窗口刷新
+                //var inspectorType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.InspectorWindow");
+                //var inspectors = Resources.FindObjectsOfTypeAll(inspectorType);
+                //foreach (var inspector in inspectors)
+                //{
+                //    (inspector as EditorWindow)?.Repaint();
+                //}
+            };
+        }
+
+        private void OnAddGroupProperty(LogicObjectGroup group, INamedAspect property)
+        {
+            foreach (var obj in group.Objects)
+            {
+                obj.AspectContainer.AddAspect(property.Clone());
+            }
+        }
+
+        private void OnRemoveGroupProperty(LogicObjectGroup group, INamedAspect property)
+        {
+            foreach (var obj in group.Objects)
+            {
+                obj.AspectContainer.RemoveAspect(property.Name);
+            }
+        }
+
+        private void OnRenameGroupProperty(LogicObjectGroup group, string oldName, INamedAspect property)
+        {
+            foreach (var obj in group.Objects)
+            {
+                obj.AspectContainer.RenameAspect(oldName, property.Name);
+            }
         }
 
         private enum Action
@@ -975,14 +1087,11 @@ namespace XDay.WorldAPI.LogicObject.Editor
         }
 
         private CoordinateGenerateOperation m_LastOperation;
-        private ImageButton m_ButtonShowObjectsNotInActiveLOD;
         private bool m_ClearOperation = false;
-        private ImageButton m_ButtonRemoveObjectFromActiveLOD;
-        private Popup m_PopupActiveLOD;
         private FloatField m_BorderSizeField;
         private ImageButton m_ButtonDeleteObjects;
         private FloatField m_RadiusField;
-        private EnumPopup m_PopupOperation;
+        private Popup m_PopupOperation;
         private Popup m_GroupsPopup;
         private IntField m_ObjectCountField;
         private ImageButton m_ButtonSycnObjectTransforms;
@@ -991,18 +1100,18 @@ namespace XDay.WorldAPI.LogicObject.Editor
         private ImageButton m_AddGroupButton;
         private ImageButton m_RemoveGroupButton;
         private ImageButton m_RenameGroupButton;
+        private ImageButton m_TransferGroupButton;
         private ToggleImageButton m_GroupVisibilityButton;
         private ToggleImageButton m_ButtonRandom;
         private FloatField m_SpaceField;
         private ToggleImageButton m_ButtonEqualSpace;
-        private EnumPopup m_GeometryPopup;
+        private Popup m_GeometryPopup;
         private FloatField m_WidthField;
         private FloatField m_HeightField;
         private FloatField m_RotationField;
         private FloatField m_ScaleField;
         private Action m_Action = Action.Select;
         private GUIStyle m_LabelStyle;
-        private ImageButton m_ButtonAddObjectsToActiveLOD;
         private List<UIControl> m_Controls;
         private SceneSelectionTool m_SceneSelectionTool = new();
         private string[] m_GroupNames;
@@ -1018,6 +1127,20 @@ namespace XDay.WorldAPI.LogicObject.Editor
         private float m_RotationDelta = 10f;
         private float m_ScaleDelta = 0.2f;
         private const float m_MinScale = 0.1f;
+        private AspectContainerEditor m_AspectContainerEditor = new();
+        private string[] m_ShapeNames = new string[]
+        {
+            "多边形",
+            "直线",
+            "矩形",
+            "圆形",
+        };
+        private string[] m_ActionNames = new string[]
+        {
+            "选择",
+            "创建物体",
+            "删除物体",
+        };
     }
 }
 

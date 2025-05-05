@@ -73,6 +73,8 @@ namespace XDay.CameraAPI
     {
         public FocusParam(Vector3 focusPoint, float targetAltitude)
         {
+            Debug.Assert(targetAltitude > 0, $"无效的目标高度{targetAltitude},相机目标高度要大于0");
+
             FocusPoint = focusPoint;
             TargetAltitude = targetAltitude;
         }
@@ -186,6 +188,8 @@ namespace XDay.CameraAPI
         float MaxAltitude { get; set; }
 
         Vector3 Forward { get; }
+
+        CameraDirection Direction { get; }
 
         void OnDestroy();
 

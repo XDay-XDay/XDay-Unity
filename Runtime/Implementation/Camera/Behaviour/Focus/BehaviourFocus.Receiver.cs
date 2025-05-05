@@ -116,9 +116,21 @@ namespace XDay.CameraAPI
                 {
                     var camera = m_Manipulator.Camera;
                     var oldPos = camera.transform.position;
-                    camera.transform.position = Helper.FromFocusPoint(camera, param.FocusPoint, param.TargetAltitude);
-                    var screenCenter = Helper.RayCastWithXZPlane(new Vector3(camera.pixelWidth * 0.5f, camera.pixelHeight * 0.5f, 0), camera, param.FocusPoint.y);
-                    var screenPos = Helper.RayCastWithXZPlane(new Vector3(param.ScreenPosition.x, param.ScreenPosition.y, 0), camera, param.FocusPoint.y);
+                    Vector3 screenCenter;
+                    Vector3 screenPos;
+                    if (m_Manipulator.Direction == CameraDirection.XZ)
+                    {
+                        camera.transform.position = Helper.FromFocusPointXZ(camera, param.FocusPoint, param.TargetAltitude);
+                        screenCenter = Helper.RayCastWithXZPlane(new Vector3(camera.pixelWidth * 0.5f, camera.pixelHeight * 0.5f, 0), camera, param.FocusPoint.y);
+                        screenPos = Helper.RayCastWithXZPlane(new Vector3(param.ScreenPosition.x, param.ScreenPosition.y, 0), camera, param.FocusPoint.y);
+                    }
+                    else
+                    {
+                        camera.transform.position = Helper.FromFocusPointXY(camera, param.FocusPoint, param.TargetAltitude);
+                        var plane = new Plane(Vector3.back, param.FocusPoint.z);
+                        screenCenter = Helper.RayCastWithPlane(new Vector3(camera.pixelWidth * 0.5f, camera.pixelHeight * 0.5f, 0), camera, plane);
+                        screenPos = Helper.RayCastWithPlane(new Vector3(param.ScreenPosition.x, param.ScreenPosition.y, 0), camera, plane);
+                    }
                     camera.transform.position = oldPos;
                     param.FocusPoint += screenCenter - screenPos;
                 }

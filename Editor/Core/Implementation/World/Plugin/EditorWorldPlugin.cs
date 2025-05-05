@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 using System.Collections.Generic;
 using System.Text;
@@ -47,7 +46,10 @@ namespace XDay.WorldAPI.Editor
 
         protected override void PostInitInternal()
         {
-            Root.AddComponent<NoKeyDeletion>();
+            if (Root.GetComponent<NoKeyDeletion>() == null)
+            {
+                Root.AddComponent<NoKeyDeletion>();
+            }
             Root.SetActive(m_IsActive);
         }
 
@@ -115,6 +117,11 @@ namespace XDay.WorldAPI.Editor
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
             serializer.WriteInt32(m_Version, "WorldPlugin.Version");
+
+            if (Root != null)
+            {
+                m_IsActive = IsActive;
+            }
             serializer.WriteBoolean(m_IsActive, "Is Active");
 
             base.EditorSerialize(serializer, label, converter);
@@ -123,7 +130,7 @@ namespace XDay.WorldAPI.Editor
         public override void EditorDeserialize(IDeserializer deserializer, string label)
         {
             deserializer.ReadInt32("WorldPlugin.Version");
-            m_IsActive = deserializer.ReadBoolean("Is Active");
+            m_IsActive = deserializer.ReadBoolean("Is Active", true);
 
             base.EditorDeserialize(deserializer, label);
         }

@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using XDay.AssetAPI;
+using System;
 
 namespace XDay.WorldAPI
 {
@@ -43,6 +44,7 @@ namespace XDay.WorldAPI
         public int LODCount => m_LODSystem.LODCount;
         public int ID => m_Setup.ID;
         public string Name => m_Setup.Name;
+        public abstract int CurrentLOD { get; }
         public WorldSetup Setup => m_Setup;
         public ICameraVisibleAreaCalculator CameraVisibleAreaCalculator => m_CameraVisibleAreaCalculator;
         public GameObject Root => m_WorldRenderer.Root;
@@ -92,6 +94,22 @@ namespace XDay.WorldAPI
             m_Height = height;
 
             m_LODSystem = new WorldLODSystem();
+        }
+
+        public void PostInitObject(WorldObject obj)
+        {
+            m_PostInitializers.TryGetValue(obj.GetType(), out var initFunc);
+            initFunc?.Invoke(obj);
+        }
+
+        public void AddPostInitializer(Type objectType, Action<IWorldObject> initFunc)
+        {
+            m_PostInitializers.Add(objectType, initFunc);
+        }
+
+        public void RemovePostInitializer(Type objectType)
+        {
+            m_PostInitializers.Remove(objectType);
         }
 
         public int AllocateObjectID()
@@ -289,7 +307,7 @@ namespace XDay.WorldAPI
 
         public void AddPlugin(IWorldPlugin plugin, int index)
         {
-            m_Plugins.Insert(index, plugin as WorldPlugin);
+            m_Plugins.Add(plugin as WorldPlugin);
         }
 
         public virtual void RegisterLODChangeEvent(LODChangeCallback callback) { }
@@ -339,6 +357,7 @@ namespace XDay.WorldAPI
         protected ICameraManipulator m_Manipulator;
         protected ISerializableFactory m_SerializableFactory;
         protected WorldRenderer m_WorldRenderer;
+        private Dictionary<Type, Action<IWorldObject>> m_PostInitializers = new();
 
         [XDaySerializableField(1, "Width")]
         protected float m_Width;

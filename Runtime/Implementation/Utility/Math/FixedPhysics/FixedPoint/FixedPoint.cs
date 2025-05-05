@@ -46,6 +46,8 @@ namespace XDay
         public static readonly FixedPoint One = new(1);
         public static readonly FixedPoint Max = new FixedPoint(int.MaxValue);
         public static readonly FixedPoint Min = new FixedPoint(int.MinValue);
+        public static readonly FixedPoint Half = new FixedPoint(0.5f);
+        public static readonly FixedPoint PositiveInfinity = (FixedPoint)float.PositiveInfinity;
 
         public FixedPoint(int value)
         {
@@ -108,6 +110,15 @@ namespace XDay
                 throw new Exception("divide by zero!");
             }
             return new FixedPoint((v1.m_ScaledValue << m_ShiftBit) / v2.m_ScaledValue);
+        }
+
+        public static FixedPoint operator % (FixedPoint v1, FixedPoint v2)
+        {
+            if (v2.m_ScaledValue == 0)
+            {
+                throw new Exception("divide by zero!");
+            }
+            return new FixedPoint(v1.m_ScaledValue % v2.m_ScaledValue);
         }
 
         public static bool operator == (FixedPoint v1, FixedPoint v2)

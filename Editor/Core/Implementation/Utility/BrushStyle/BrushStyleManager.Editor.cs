@@ -42,21 +42,21 @@ namespace XDay.UtilityAPI.Editor
 
         private void DrawBlurSetting()
         {
-            m_ShowBlur = EditorGUILayout.Foldout(m_ShowBlur, "Blur setting");
+            m_ShowBlur = EditorGUILayout.Foldout(m_ShowBlur, "模糊设置");
             if (m_ShowBlur)
             {
                 EditorHelper.IndentLayout(() =>
                 {
                     EditorGUILayout.BeginHorizontal();
 
-                    m_BlurPassCount = Mathf.Clamp(EditorGUILayout.IntField(new GUIContent("Blur Pass", ""), m_BlurPassCount), 1, m_BlurPassCountMax);
+                    m_BlurPassCount = Mathf.Clamp(EditorGUILayout.IntField(new GUIContent("模糊次数", ""), m_BlurPassCount), 1, m_BlurPassCountMax);
 
-                    if (WorldHelper.ImageButton("blur", "blur brush"))
+                    if (WorldHelper.ImageButton("blur.png", "模糊笔刷"))
                     {
                         (SelectedStyle as BrushStyle)?.Blur(m_BlurPassCount);
                     }
 
-                    if (WorldHelper.ImageButton("noblur", "remove brush blur"))
+                    if (WorldHelper.ImageButton("remove_blur.png", "去掉笔刷模糊"))
                     {
                         (SelectedStyle as BrushStyle)?.RemoveBlur();
                     }
@@ -121,7 +121,7 @@ namespace XDay.UtilityAPI.Editor
 
         private void DrawOpenButton()
         {
-            if (WorldHelper.ImageButton("file-open", "Open style folder"))
+            if (WorldHelper.ImageButton("file-open.png", "打开笔刷样式目录"))
             {
                 EditorHelper.ShowInExplorer(m_StyleTextureFolder);
             }
@@ -129,7 +129,7 @@ namespace XDay.UtilityAPI.Editor
 
         private void DrawRefreshButton()
         {
-            if (WorldHelper.ImageButton("refresh", "Refresh styles"))
+            if (WorldHelper.ImageButton("refresh.png", "刷新笔刷样式"))
             {
                 Refresh(true);
             }
@@ -137,7 +137,7 @@ namespace XDay.UtilityAPI.Editor
 
         private void DrawFold()
         {
-            m_ShowStyles = EditorGUILayout.Foldout(m_ShowStyles, "Brush");
+            m_ShowStyles = EditorGUILayout.Foldout(m_ShowStyles, "笔刷样式");
         }
     }
 }

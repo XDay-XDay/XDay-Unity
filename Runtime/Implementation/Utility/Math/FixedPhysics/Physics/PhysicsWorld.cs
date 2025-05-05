@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace XDay
 {
@@ -40,6 +41,13 @@ namespace XDay
         Average,
     }
 
+    public class GridCreateInfo
+    {
+        public FixedVector2 Min;
+        public FixedVector2 Max;
+        public FixedPoint GridSize;
+    }
+
     public sealed class PhysicsWorld
     {
         public static readonly FixedPoint MinDensity = new FixedPoint(0.5f);
@@ -47,16 +55,17 @@ namespace XDay
         public static readonly int MinIterations = 1;
         public static readonly int MaxIterations = 40;
 
+        public int NextID => ++m_NextID;
         public int BodyCount => m_BodyList.Count;
         public FixedVector2 Gravity { get => m_Gravity; set => m_Gravity = value; }
         public RestitutionMethod RestitutionMethod { get => m_RestitutionMethod; set => m_RestitutionMethod = value; }
         public FrictionMethod FrictionMethod { get => m_FrictionMethod; set => m_FrictionMethod = value; }
 
-        public PhysicsWorld()
+        public PhysicsWorld(GridCreateInfo gridCreateInfo)
         {
             m_Gravity = new FixedVector2(0f, -9.81f);
             m_BodyList = new List<Rigidbody>();
-            m_ContactPairs = new List<Pair>();
+            m_ContactPairs = new();
 
             m_ContactList = new FixedVector2[2];
             m_ImpulseList = new FixedVector2[2];
@@ -64,6 +73,11 @@ namespace XDay
             m_RBList = new FixedVector2[2];
             m_FrictionImpulseList = new FixedVector2[2];
             m_ImpulseStrengthList = new FixedPoint[2];
+
+            if (gridCreateInfo != null)
+            {
+                m_Grid = new(gridCreateInfo.Min, gridCreateInfo.Max, gridCreateInfo.GridSize);
+            }
         }
 
         public void AddBody(Rigidbody body)
@@ -73,6 +87,7 @@ namespace XDay
 
         public bool RemoveBody(Rigidbody body)
         {
+            m_Grid?.RemoveRigidbody(body);
             return m_BodyList.Remove(body);
         }
 
@@ -97,7 +112,15 @@ namespace XDay
             {
                 m_ContactPairs.Clear();
                 StepBodies(deltaTime, totalIterations);
-                BroadPhase();
+
+                if (m_Grid != null)
+                {
+                    BroadPhaseUsingGrid();
+                }
+                else
+                {
+                    BroadPhase();
+                }
                 NarrowPhase();
             }
 
@@ -134,17 +157,74 @@ namespace XDay
                         continue;
                     }
 
-                    m_ContactPairs.Add(new Pair(i, j));
+                    var minID = Mathf.Min(bodyA.ID, bodyB.ID);
+                    var maxID = Mathf.Max(bodyA.ID, bodyB.ID);
+                    m_ContactPairs.Add(new Vector2Int(minID, maxID), new Pair(bodyA, bodyB));
                 }
             }
         }
 
+        private void BroadPhaseUsingGrid()
+        {
+            for (int i = 0; i < m_BodyList.Count; i++)
+            {
+                Rigidbody bodyA = m_BodyList[i];
+                if (!bodyA.IsStatic)
+                {
+                    FixedAABB aabbA = bodyA.GetAABB();
+
+                    GetPotentialColliders(bodyA, m_TempList);
+
+                    for (int j = 0; j < m_TempList.Count; j++)
+                    {
+                        Rigidbody bodyB = m_TempList[j];
+                        if (bodyA == bodyB)
+                        {
+                            continue;
+                        }
+
+                        if (bodyA.IsStatic && bodyB.IsStatic)
+                        {
+                            //static物体之间不碰撞
+                            continue;
+                        }
+
+                        if (!bodyA.ResolveCollision || !bodyB.ResolveCollision)
+                        {
+                            continue;
+                        }
+
+                        if (!FixedCollision.IntersectAABBs(aabbA, bodyB.GetAABB()))
+                        {
+                            continue;
+                        }
+
+                        var minID = Mathf.Min(bodyA.ID, bodyB.ID);
+                        var maxID = Mathf.Max(bodyA.ID, bodyB.ID);
+                        var key = new Vector2Int(minID, maxID);
+                        if (!m_ContactPairs.ContainsKey(key))
+                        {
+                            m_ContactPairs.Add(key, new Pair(bodyA, bodyB));
+                        }
+                    }
+                    m_TempList.Clear();
+                }
+            }
+        }
+
+        private void GetPotentialColliders(Rigidbody body, List<Rigidbody> result)
+        {
+            result.Clear();
+
+            m_Grid?.GetPotentialColliders(body, result);
+        }
+
         private void NarrowPhase()
         {
-            foreach (var pair in m_ContactPairs)
+            foreach (var kv in m_ContactPairs)
             {
-                Rigidbody bodyA = m_BodyList[pair.Item1];
-                Rigidbody bodyB = m_BodyList[pair.Item2];
+                Rigidbody bodyA = kv.Value.Item1;
+                Rigidbody bodyB = kv.Value.Item2;
 
                 if (FixedCollision.Collide(bodyA, bodyB, out FixedVector2 normal, out FixedPoint depth))
                 {
@@ -397,9 +477,14 @@ namespace XDay
             dynamicFriction = FixedPoint.Zero;
         }
 
+        internal void OnPositionChanged(FixedVector2 oldPosition, Rigidbody body)
+        {
+            m_Grid?.UpdateRigidbody(oldPosition, body);
+        }
+
         private FixedVector2 m_Gravity;
         private List<Rigidbody> m_BodyList;
-        private List<Pair> m_ContactPairs;
+        private Dictionary<Vector2Int, Pair> m_ContactPairs;
         private FixedVector2[] m_ContactList;
         private FixedVector2[] m_ImpulseList;
         private FixedVector2[] m_RAList;
@@ -408,16 +493,19 @@ namespace XDay
         private FixedPoint[] m_ImpulseStrengthList;
         private RestitutionMethod m_RestitutionMethod = RestitutionMethod.Min;
         private FrictionMethod m_FrictionMethod = FrictionMethod.Average;
+        private readonly List<Rigidbody> m_TempList = new();
+        private Grid m_Grid;
+        private int m_NextID = 0;
 
         private struct Pair
         {
-            public Pair(int item1, int item2)
+            public Pair(Rigidbody item1, Rigidbody item2)
             {
                 Item1 = item1;
                 Item2 = item2;
             }
-            public int Item1;
-            public int Item2;
+            public Rigidbody Item1;
+            public Rigidbody Item2;
         }
     }
 }

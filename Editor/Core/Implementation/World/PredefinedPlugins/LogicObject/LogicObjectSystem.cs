@@ -23,13 +23,14 @@
 
 
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.LogicObject.Editor
 {
-    [WorldPluginMetadata("LogicObjectSystem", "logic_object_editor_data", typeof(LogicObjectSystemCreateWindow), true)]
-    internal partial class LogicObjectSystem : EditorWorldPlugin
+    [WorldPluginMetadata("逻辑层", "logic_object_editor_data", typeof(LogicObjectSystemCreateWindow), true)]
+    public partial class LogicObjectSystem : EditorWorldPlugin
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "logic_object" };
@@ -85,10 +86,14 @@ namespace XDay.WorldAPI.LogicObject.Editor
             {
                 SetCurrentGroup(m_Groups[0].ID);
             }
+
+            Selection.selectionChanged += OnSelectionChanged;
         }
 
         protected override void UninitInternal()
         {
+            Selection.selectionChanged -= OnSelectionChanged;
+
             UndoSystem.RemoveUndoRedoCallback(UndoRedo);
 
             m_Indicator.OnDestroy();
@@ -189,6 +194,12 @@ namespace XDay.WorldAPI.LogicObject.Editor
                 var obj = World.QueryObject<LogicObject>(objectID);
                 if (obj != null)
                 {
+                    if (name == LogicObjectDefine.CHANGE_LOGIC_OBJECT_GROUP)
+                    {
+                        ChangeGroup(obj, aspect.GetString());
+                        return true;
+                    }
+
                     var ok = obj.SetAspect(objectID, name, aspect);
                     if (ok)
                     {
@@ -332,6 +343,20 @@ namespace XDay.WorldAPI.LogicObject.Editor
                 }
             }
             return false;
+        }
+
+        private void ChangeGroup(LogicObject obj, string groupName)
+        {
+            var newGroup = GetGroup(groupName);
+            var oldGroup = obj.Group;
+
+            if (newGroup != oldGroup) {
+
+                oldGroup.RemoveObject(obj);
+                obj.Group = newGroup;
+                newGroup.AddObject(obj, 0);
+                m_Renderer.MoveObjectToGroup(obj.ID, newGroup.ID);
+            }
         }
 
         private enum ObjectCreateMode

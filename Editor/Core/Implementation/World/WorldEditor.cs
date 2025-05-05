@@ -30,32 +30,45 @@ using UnityEngine;
 
 namespace XDay.WorldAPI.Editor
 {
-    internal static partial class WorldEditor
+    public static partial class WorldEditor
     {
         public static event System.Action EventRepaint;
         public static Camera Camera => SceneView.GetAllSceneCameras()[0];
+        public static WorldManager WorldManager => m_WorldManager;
 
         public static void Init()
         {
             Uninit();
 
             m_Root = new GameObject(WorldDefine.WORLD_EDITOR_NAME);
+            m_Root.AddComponent<PhysxSetup>();
 
             CreateWorldSystem();
 
             RegisterPlugins();
 
             CreateSceneObjects();
+
+            SearchHooks();
         }
 
         public static void Uninit()
         {
+            if (m_Hooks != null)
+            {
+                foreach (var hook in m_Hooks)
+                {
+                    hook.OnUninitEditor();
+                }
+                m_Hooks = null;
+            }
+
             m_PluginsInfo.Clear();
 
             m_Cancel?.Cancel();
             m_Cancel = null;
 
-            m_WorldSystem?.UnloadWorlds();
+            m_WorldManager?.UnloadWorlds();
 
             SetActiveWorld(null);
 
@@ -69,7 +82,7 @@ namespace XDay.WorldAPI.Editor
 
             if (IsInEditorScene())
             {
-                m_WorldSystem?.Update();
+                m_WorldManager?.Update();
             }
         }
 
@@ -87,8 +100,8 @@ namespace XDay.WorldAPI.Editor
             var createInfo = new TaskSystemCreateInfo();
             createInfo.LayerInfo.Add(new TaskLayerInfo(1, 1));
 
-            m_WorldSystem = new EditorWorldManager();
-            m_WorldSystem.Init(
+            m_WorldManager = new EditorWorldManager();
+            m_WorldManager.Init(
                 EditorHelper.QueryAssetFilePath<WorldSetupManager>(), 
                 new EditorWorldAssetLoader(), 
                 ITaskSystem.Create(createInfo), null);
@@ -103,7 +116,7 @@ namespace XDay.WorldAPI.Editor
                     if (attribute.GetType() == typeof(WorldPluginMetadataAttribute))
                     {
                         var metadata = attribute as WorldPluginMetadataAttribute;
-                        m_WorldSystem.RegisterPluginLoadInfo(type.Name, metadata.EditorFileName);
+                        m_WorldManager.RegisterPluginLoadInfo(type.Name, metadata.EditorFileName);
                         m_PluginsInfo.Add(new WorldPluginInfo(type, metadata.EditorFileName, metadata.DisplayName, metadata.IsSingleton, metadata.PluginCreateWindowType));
                     }
                 }   
@@ -112,7 +125,7 @@ namespace XDay.WorldAPI.Editor
 
         private static void CreateWorld()
         {
-            if (m_WorldSystem?.FirstWorld != null)
+            if (m_WorldManager?.FirstWorld != null)
             {
                 Debug.LogError("world is running!");
                 return;
@@ -132,12 +145,28 @@ namespace XDay.WorldAPI.Editor
         {
             m_ActiveWorld?.GameSerialize();
 
+            if (m_ActiveWorld != null)
+            {
+                foreach (var hook in m_Hooks)
+                {
+                    hook.OnExportGameData();
+                }
+            }
+
             EditorSerialize();
         }
 
         private static void EditorSerialize()
         {
             m_ActiveWorld?.EditorSerialize();
+
+            if (m_ActiveWorld != null)
+            {
+                foreach (var hook in m_Hooks)
+                {
+                    hook.OnSaveEditorData();
+                }
+            }
         }
 
         private static void CreateSceneObjects()
@@ -149,7 +178,7 @@ namespace XDay.WorldAPI.Editor
             light.transform.forward = new Vector3(0, -1, 1).normalized;
         }
 
-        private static void ResetScene()
+        private static void ResetScene(bool exitGUI = true)
         {
             m_Cancel?.Cancel();
 
@@ -157,7 +186,10 @@ namespace XDay.WorldAPI.Editor
 
             CreateScene();
 
-            GUIUtility.ExitGUI();
+            if (exitGUI)
+            {
+                GUIUtility.ExitGUI();
+            }
         }
 
         private static bool IsInEditorScene()
@@ -199,12 +231,12 @@ namespace XDay.WorldAPI.Editor
         {
             var parameters = new List<ParameterWindow.Parameter>
             {
-                new ParameterWindow.IntParameter("World ID", "", setupManager.GetValidID()),
-                new ParameterWindow.FloatParameter("World Width", "", 200),
-                new ParameterWindow.FloatParameter("World Height", "", 200),
-                new ParameterWindow.StringParameter("World Name", "", $"{setupManager.GetValidName()}")
+                new ParameterWindow.IntParameter("地图ID", "", setupManager.GetValidID()),
+                new ParameterWindow.FloatParameter("地图宽(米)", "", 200),
+                new ParameterWindow.FloatParameter("地图高(米)", "", 200),
+                new ParameterWindow.StringParameter("地图名称", "", $"{setupManager.GetValidName()}")
             };
-            ParameterWindow.Open("Create World", parameters, (p) => {
+            ParameterWindow.Open("新建地图", parameters, (p) => {
                 var ok = ParameterWindow.GetInt(p[0], out var worldID);
                 ok &= ParameterWindow.GetFloat(p[1], out var worldWidth);
                 ok &= ParameterWindow.GetFloat(p[2], out var worldHeight);
@@ -213,6 +245,8 @@ namespace XDay.WorldAPI.Editor
                 worldWidth > 0 &&
                 worldHeight > 0)
                 {
+                    ResetScene(false);
+
                     Init();
 
                     var config = setupManager.AddSetup(worldID, worldName, $"{worldName.Replace(' ', '_')}CameraSetup");
@@ -227,7 +261,7 @@ namespace XDay.WorldAPI.Editor
 
                         AssetDatabase.Refresh();
 
-                        SetActiveWorld(m_WorldSystem.CreateEditorWorld(config, worldWidth, worldHeight) as EditorWorld);
+                        SetActiveWorld(m_WorldManager.CreateEditorWorld(config, worldWidth, worldHeight) as EditorWorld);
 
                         EditorSerialize();
 
@@ -240,7 +274,7 @@ namespace XDay.WorldAPI.Editor
 
         private static EditorWorldPlugin SelectedPlugin => m_ActiveWorld?.GetPlugin(SelectedPluginIndex) as EditorWorldPlugin;
 
-        private static int SelectedPluginIndex
+        public static int SelectedPluginIndex
         {
             get
             {
@@ -255,6 +289,13 @@ namespace XDay.WorldAPI.Editor
 
             set
             {
+                if (value == -1 &&
+                    m_ActiveWorld != null &&
+                    m_ActiveWorld.PluginCount > 0)
+                {
+                    value = 0;
+                }
+
                 if (m_ActiveWorld != null &&
                     m_ActiveWorld.SelectedPluginIndex != value)
                 {
@@ -279,10 +320,20 @@ namespace XDay.WorldAPI.Editor
             }
         }
 
+        private static void SearchHooks()
+        {
+            m_Hooks = EditorHelper.QueryAssets<WorldEditorHook>();
+            foreach (var hook in m_Hooks)
+            {
+                hook.OnInitEditor();
+            }
+        }
+
         private static GameObject m_Root;
-        private static EditorWorldManager m_WorldSystem;
+        private static EditorWorldManager m_WorldManager;
         private static string[] m_PluginNames;
         private static EditorWorld m_ActiveWorld;
+        private static WorldEditorHook[] m_Hooks;
     }
 }
 

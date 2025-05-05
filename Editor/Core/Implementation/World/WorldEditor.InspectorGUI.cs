@@ -29,7 +29,7 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Editor
 {
-    internal static partial class WorldEditor
+    public static partial class WorldEditor
     {
         public static void SceneGUI()
         {
@@ -88,7 +88,7 @@ namespace XDay.WorldAPI.Editor
 
         private static void DrawRangeText(float x, float y, float width, float height)
         {
-            GUI.Label(new Rect(x, y, width, height), $"World Bounds: {m_ActiveWorld.Bounds.min:F1}X{m_ActiveWorld.Bounds.max:F1}");
+            GUI.Label(new Rect(x, y, width, height), $"地图范围: {m_ActiveWorld.Bounds.min:F1}到{m_ActiveWorld.Bounds.max:F1}米");
         }
 
         private static void DrawEntranceControls()
@@ -159,10 +159,13 @@ namespace XDay.WorldAPI.Editor
                 GUI.enabled = true;
 
                 var rect = sceneView.camera.pixelRect;
-                var width = 250.0f;
+                var width = 400.0f;
                 DrawRangeText(rect.center.x - width * 0.5f, rect.yMax - 30, width, 20);
 
                 DrawLoadingProgress(0, rect.yMax - 50, 300, 20);
+
+                GUILayout.Space(100);
+                DrawHooks();
             }
             EditorGUILayout.EndHorizontal();
 
@@ -175,7 +178,7 @@ namespace XDay.WorldAPI.Editor
         {
             EditorGUILayout.BeginVertical();
 
-            m_DrawWorldSetting = EditorGUILayout.Foldout(m_DrawWorldSetting, "World Setting");
+            m_DrawWorldSetting = EditorGUILayout.Foldout(m_DrawWorldSetting, new GUIContent("地图设置", "通用的地图设置"));
             if (m_DrawWorldSetting)
             {
                 EditorHelper.IndentLayout(() => {
@@ -185,6 +188,7 @@ namespace XDay.WorldAPI.Editor
 
                     DrawOpenEditorFolderButton();
                     DrawOpenGameFolderButton();
+                    DrawSelectGameFolderButton();
 
                     GUI.enabled = true;
 
@@ -216,6 +220,20 @@ namespace XDay.WorldAPI.Editor
 					SelectedPluginIndex = -1;
 				}
 			}
+        }
+
+        private static void DrawHooks()
+        {
+            foreach (var hook in m_Hooks)
+            {
+                if (hook.Show)
+                {
+                    if (GUILayout.Button(new GUIContent(hook.DisplayName, hook.Tooltip), GUILayout.MaxWidth(hook.ButtonWidth)))
+                    {
+                        hook.Execute();
+                    }
+                }
+            }
         }
 
         private static void DrawPluginControls(SceneView sceneview)
@@ -287,31 +305,31 @@ namespace XDay.WorldAPI.Editor
                 m_PluginList = new Popup("", "", 200);
                 m_Controls.Add(m_PluginList);
 
-                m_VisibilityToggle = EditorWorldHelper.CreateToggleImageButton(true, "show.png", "Show/Hide Plugin");
+                m_VisibilityToggle = EditorWorldHelper.CreateToggleImageButton(true, "show.png", "显隐层");
                 m_Controls.Add(m_VisibilityToggle);
 
-                m_ResetWorld = EditorWorldHelper.CreateImageButton("reset.png", "Reset World");
+                m_ResetWorld = EditorWorldHelper.CreateImageButton("reset.png", "重置地图");
                 m_Controls.Add(m_ResetWorld);
 
-                m_CreateWorld = EditorWorldHelper.CreateImageButton("create.png", "Create World");
+                m_CreateWorld = EditorWorldHelper.CreateImageButton("create.png", "创建地图");
                 m_Controls.Add(m_CreateWorld);
 
-                m_GenerateGameData = EditorWorldHelper.CreateImageButton("export.png", "Export");
+                m_GenerateGameData = EditorWorldHelper.CreateImageButton("export.png", "导出数据");
                 m_Controls.Add(m_GenerateGameData);
 
-                m_AddPlugin = EditorWorldHelper.CreateImageButton("add.png", "Add Plugin");
+                m_AddPlugin = EditorWorldHelper.CreateImageButton("add.png", "新建层");
                 m_Controls.Add(m_AddPlugin);
 
-                m_LoadWorld = EditorWorldHelper.CreateImageButton("file-open.png", "Load World");
+                m_LoadWorld = EditorWorldHelper.CreateImageButton("file-open.png", "加载地图Shift+O");
                 m_Controls.Add(m_LoadWorld);
 
-                m_DeletePlugin = EditorWorldHelper.CreateImageButton("delete.png", "Delete Plugin");
+                m_DeletePlugin = EditorWorldHelper.CreateImageButton("delete.png", "删除层");
                 m_Controls.Add(m_DeletePlugin);
 
-                m_SaveWorld = EditorWorldHelper.CreateImageButton("save.png", "Save World");
+                m_SaveWorld = EditorWorldHelper.CreateImageButton("save.png", "保存地图Shift+S");
                 m_Controls.Add(m_SaveWorld);
 
-                m_RenamePlugin = EditorWorldHelper.CreateImageButton("rename.png", "Set Plugin Name");
+                m_RenamePlugin = EditorWorldHelper.CreateImageButton("rename.png", "修改层名称");
                 m_Controls.Add(m_RenamePlugin);
             }
         }
@@ -336,7 +354,7 @@ namespace XDay.WorldAPI.Editor
                 return;
             }
 
-            var createWindow = EditorWindow.GetWindow(pluginInfo.PluginCreateWindowType, false, $"Create {pluginInfo.PluginType.Name}") as WorldPluginCreateWindow;
+            var createWindow = EditorWindow.GetWindow(pluginInfo.PluginCreateWindowType, false, $"创建 {pluginInfo.DisplayName}") as WorldPluginCreateWindow;
             createWindow.MakeWindowCenterAndSetSize(500, 700);
             createWindow.Show(() => { SelectedPluginIndex = world.PluginCount - 1; }, world);
         }
@@ -449,10 +467,10 @@ namespace XDay.WorldAPI.Editor
 
                 var parameters = new List<ParameterWindow.Parameter>()
                 {
-                    new ParameterWindow.StringParameter("Name", "", plugin.Name),
+                    new ParameterWindow.StringParameter("名称", "", plugin.Name),
                 };
 
-                ParameterWindow.Open("Rename Plugin", parameters, (p) => {
+                ParameterWindow.Open("修改层名", parameters, (p) => {
                     ParameterWindow.GetString(p[0], out var name);
                     if (!string.IsNullOrEmpty(name) &&
                     !m_ActiveWorld.HasPlugin(name))
@@ -498,7 +516,7 @@ namespace XDay.WorldAPI.Editor
                 var plugin = SelectedPlugin;
                 if (plugin != null)
                 {
-                    if (EditorUtility.DisplayDialog("Warning", $"Continue?", "Yes", "No"))
+                    if (EditorUtility.DisplayDialog("警告", $"确定删除?", "确定", "取消"))
                     {
                         UndoSystem.NextGroup();
 
@@ -519,7 +537,7 @@ namespace XDay.WorldAPI.Editor
 
         private static void DrawOpenGameFolderButton()
         {
-            if (GUILayout.Button("Game Folder"))
+            if (GUILayout.Button(new GUIContent("打开游戏目录", "打开地图游戏数据目录")))
             {
                 if (m_ActiveWorld != null)
                 {
@@ -528,11 +546,22 @@ namespace XDay.WorldAPI.Editor
             }
         }
 
+        private static void DrawSelectGameFolderButton()
+        {
+            if (GUILayout.Button(new GUIContent("选中游戏目录", "选中地图游戏数据目录")))
+            {
+                if (m_ActiveWorld != null)
+                {
+                    EditorHelper.SelectFolder(m_ActiveWorld.Setup.GameFolder);
+                }
+            }
+        }
+
         private static void DrawResetButton()
         {
             if (m_ResetWorld.Render(true))
             {
-                if (EditorUtility.DisplayDialog("Reset World Editor", "Are you sure?", "Yes", "No"))
+                if (EditorUtility.DisplayDialog("重置地图编辑器", "确定重置?未保存的数据会丢失!", "确定", "取消"))
                 {
                     ResetScene();
                 }
@@ -556,7 +585,7 @@ namespace XDay.WorldAPI.Editor
 
         private static void DrawOpenEditorFolderButton()
         {
-            if (GUILayout.Button("Editor Folder"))
+            if (GUILayout.Button(new GUIContent("打开地编目录", "打开地编数据目录")))
             {
                 if (m_ActiveWorld != null)
                 {
@@ -610,25 +639,25 @@ namespace XDay.WorldAPI.Editor
             }
         }
 
-        [MenuItem("XDay/World/Keys/Redo #r")]
+        [MenuItem("XDay/地图/快捷键/重做 #r")]
         static void RedoCommand()
         {
             UndoSystem.Redo();
         }
 
-        [MenuItem("XDay/World/Keys/Undo #z")]
+        [MenuItem("XDay/地图/快捷键/撤销 #z")]
         static void UndoCommand()
         {
             UndoSystem.Undo();
         }
 
-        [MenuItem("XDay/World/Keys/Load World #o")]
+        [MenuItem("XDay/地图/快捷键/加载地图 #o")]
         static void LoadWorldCommand()
         {
             LoadWorld();
         }
 
-        [MenuItem("XDay/World/Keys/Save World #s")]
+        [MenuItem("XDay/地图/快捷键/保存地图 #s")]
         static void SaveWorldCommand()
         {
             EditorSerialize();
@@ -637,10 +666,10 @@ namespace XDay.WorldAPI.Editor
         private static Vector2 m_ViewScrollPos = Vector2.zero;
         private static bool m_DrawWorldSetting = true;
         private static bool m_ShowContextMenu = true;
-		private static string[] m_ToolbarNames = new string[]
+		private static GUIContent[] m_ToolbarNames = new GUIContent[]
         {
-            "World",
-            "Plugin",
+            new GUIContent("地图设置", "通用的地图设置"),
+            new GUIContent("层设置", "当前层的设置"),
         };
         private static List<WorldPluginInfo> m_PluginsInfo = new();
         private static int m_SelectedToolIndex = 1;

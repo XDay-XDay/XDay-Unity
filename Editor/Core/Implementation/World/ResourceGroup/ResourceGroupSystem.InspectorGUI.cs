@@ -34,7 +34,7 @@ namespace XDay.WorldAPI.Editor
     {
         public void InspectorGUI(ResourceDisplayFlags flags)
         {
-            m_ShowGroup = EditorGUILayout.Foldout(m_ShowGroup, "Groups");
+            m_ShowGroup = EditorGUILayout.Foldout(m_ShowGroup, "模型组");
             if (m_ShowGroup)
             {
                 ++EditorGUI.indentLevel;
@@ -61,7 +61,7 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawRenameButton()
         {
-            if (WorldHelper.ImageButton("edit.png", "Rename Group"))
+            if (WorldHelper.ImageButton("edit.png", "修改模型组名称"))
             {
                 ChangeGroupName(m_SelectedGroupIndex);   
             }
@@ -69,9 +69,9 @@ namespace XDay.WorldAPI.Editor
         
         private void DrawRemoveButton()
         {
-            if (WorldHelper.ImageButton("delete.png", "Delete Group"))
+            if (WorldHelper.ImageButton("delete.png", "删除模型组"))
             {
-                if (EditorUtility.DisplayDialog("Delete Group", "Continue?", "Yes", "No"))
+                if (EditorUtility.DisplayDialog("删除模型组", "继续?", "确定", "取消"))
                 {
                     RemoveGroup(m_SelectedGroupIndex);
                 }
@@ -80,13 +80,13 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawAddButton()
         {
-            if (WorldHelper.ImageButton("add.png", "Add Group"))
+            if (WorldHelper.ImageButton("add.png", "新增模型组"))
             {
                 var parameters = new List<ParameterWindow.Parameter>()
                 {
-                    new ParameterWindow.StringParameter("Group Name", "", "New Group"),
+                    new ParameterWindow.StringParameter("组名", "", "新组"),
                 };
-                ParameterWindow.Open("Group Setting", parameters, (p) =>
+                ParameterWindow.Open("设置", parameters, (p) =>
                 {
                     var ok = ParameterWindow.GetString(p[0], out var name);
                     if (ok)
@@ -120,7 +120,7 @@ namespace XDay.WorldAPI.Editor
 
             EditorGUILayout.BeginHorizontal();
             {
-                EditorGUILayout.LabelField("Resource Group", GUILayout.MaxWidth(110));
+                EditorGUILayout.LabelField("当前组", GUILayout.MaxWidth(110));
 
                 var newIndex = EditorGUILayout.Popup(m_SelectedGroupIndex, m_GroupNames);
                 if (newIndex != m_SelectedGroupIndex)

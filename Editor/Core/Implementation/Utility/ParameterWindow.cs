@@ -24,6 +24,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace XDay.UtilityAPI.Editor
 {
@@ -51,6 +52,16 @@ namespace XDay.UtilityAPI.Editor
             public int value;
         }
 
+        public class Vector3Parameter : Parameter
+        {
+            public Vector3Parameter(string name, string tooltip, Vector3 value) : base(name, tooltip)
+            {
+                this.value = value;
+            }
+
+            public Vector3 value;
+        }
+
         public class FloatParameter : Parameter
         {
             public FloatParameter(string name, string tooltip, float value) : base(name, tooltip)
@@ -71,9 +82,9 @@ namespace XDay.UtilityAPI.Editor
             public string text;
         }
 
-        public class StringListParameter : Parameter
+        public class StringArrayParameter : Parameter
         {
-            public StringListParameter(string name, string tooltip, string[] texts) : base(name, tooltip)
+            public StringArrayParameter(string name, string tooltip, string[] texts) : base(name, tooltip)
             {
                 this.texts = texts;
                 if (texts.Length > 0)
@@ -92,14 +103,14 @@ namespace XDay.UtilityAPI.Editor
 
         public class ObjectParameter : Parameter
         {
-            public ObjectParameter(string name, string tooltip, Object obj, System.Type type, bool allowSceneObject) : base(name, tooltip)
+            public ObjectParameter(string name, string tooltip, UnityEngine.Object obj, System.Type type, bool allowSceneObject) : base(name, tooltip)
             {
                 this.obj = obj;
                 this.type = type;
                 this.allowSceneObject = allowSceneObject;
             }
 
-            public Object obj;
+            public UnityEngine.Object obj;
             public System.Type type;
             public bool allowSceneObject;
         }
@@ -146,11 +157,20 @@ namespace XDay.UtilityAPI.Editor
             public Color color;
         }
 
-        public static ParameterWindow Open(string title, List<Parameter> parameters, System.Func<List<Parameter>, bool> onClickOK, bool setSize = true)
+        public static ParameterWindow Open(
+            string title, 
+            List<Parameter> parameters, 
+            Func<List<Parameter>, bool> onClickOK, 
+            bool setSize = true, 
+            Action customOnGUI = null)
         {
             var window = Open(title, setSize);
 
-            window.Show(parameters, onClickOK);
+            window.Show(parameters, onClickOK, customOnGUI);
+            EditorApplication.delayCall += () =>
+            {
+                EditorGUI.FocusTextInControl("ConfirmButton");
+            };
 
             return window;
         }
@@ -169,16 +189,23 @@ namespace XDay.UtilityAPI.Editor
             return inputDialog;
         }
 
-        public void Show(List<Parameter> items, System.Func<List<Parameter>, bool> OnClickOK, float labelWidth = 0)
+        public void Show(List<Parameter> items, System.Func<List<Parameter>, bool> OnClickOK, Action customOnGUI, float labelWidth = 0)
         {
             m_Parameters = items;
             m_OnClickOK = OnClickOK;
             m_LabelWidth = labelWidth;
+            m_CustomOnGUI = customOnGUI;
         }
 
         public static bool GetInt(Parameter param, out int ret)
         {
             ret = (param as IntParameter).value;
+            return true;
+        }
+
+        public static bool GetVector3(Parameter param, out Vector3 ret)
+        {
+            ret = (param as Vector3Parameter).value;
             return true;
         }
 
@@ -218,9 +245,9 @@ namespace XDay.UtilityAPI.Editor
             return !string.IsNullOrEmpty(ret);
         }
 
-        public static bool GetStringList(Parameter param, out string[] ret)
+        public static bool GetStringArraySelection(Parameter param, out int selection)
         {
-            ret = (param as StringListParameter).texts;
+            selection = (param as StringArrayParameter).selection;
             return true;
         }
 
@@ -232,6 +259,7 @@ namespace XDay.UtilityAPI.Editor
 
         private void OnGUI()
         {
+            m_ScrollView = EditorGUILayout.BeginScrollView(m_ScrollView);
             EditorGUIUtility.labelWidth = m_LabelWidth;
             EditorGUILayout.BeginVertical();
             for (int i = 0; i < m_Parameters.Count; ++i)
@@ -248,9 +276,9 @@ namespace XDay.UtilityAPI.Editor
                 {
                     stringParam.text = EditorGUILayout.TextField(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), stringParam.text);
                 }
-                else if (m_Parameters[i] is StringListParameter stringListParam)
+                else if (m_Parameters[i] is StringArrayParameter stringArrayParam)
                 {
-                    stringListParam.selection = EditorGUILayout.Popup(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), stringListParam.selection, stringListParam.texts);
+                    stringArrayParam.selection = EditorGUILayout.Popup(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), stringArrayParam.selection, stringArrayParam.texts);
                 }
                 else if (m_Parameters[i] is ObjectParameter objParam)
                 {
@@ -264,6 +292,12 @@ namespace XDay.UtilityAPI.Editor
                     {
                         pathParam.text = EditorUtility.OpenFolderPanel("Select folder", "", "");
                     }
+                    EditorGUILayout.EndHorizontal();
+                }
+                else if (m_Parameters[i] is Vector3Parameter vector3Param)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    vector3Param.value = EditorGUILayout.Vector3Field(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), vector3Param.value);
                     EditorGUILayout.EndHorizontal();
                 }
                 else if (m_Parameters[i] is BoolParameter boolParam)
@@ -293,7 +327,10 @@ namespace XDay.UtilityAPI.Editor
             EditorGUILayout.EndVertical();
             EditorGUIUtility.labelWidth = 0;
 
-            if (GUILayout.Button("OK"))
+            m_CustomOnGUI?.Invoke();
+
+            GUI.SetNextControlName("ConfirmButton");
+            if (GUILayout.Button("确定"))
             {
                 if (m_OnClickOK != null)
                 {
@@ -307,13 +344,16 @@ namespace XDay.UtilityAPI.Editor
                     Close();
                 }
             }
+
+            EditorGUILayout.EndScrollView();
         }
 
         private float m_LabelWidth;
-        private System.Func<List<Parameter>, bool> m_OnClickOK;
-        private List<Parameter> m_Parameters = new List<Parameter>();
+        private Func<List<Parameter>, bool> m_OnClickOK;
+        private Action m_CustomOnGUI;
+        private List<Parameter> m_Parameters = new();
+        private Vector2 m_ScrollView;
     }
 }
 
 //XDay
-

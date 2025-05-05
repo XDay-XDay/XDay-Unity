@@ -35,7 +35,7 @@ namespace XDay.WorldAPI.Editor
         public void InspectorGUI(IPluginLODSystem pluginLODSystem, Action<int, int> onLODCountChanged, string title, Func<int, bool> lodCountFilter)
         {
             m_PluginLODSystem = pluginLODSystem;
-            m_ShowLOD = EditorGUILayout.Foldout(m_ShowLOD, new GUIContent(title, "Plugin LODs"));
+            m_ShowLOD = EditorGUILayout.Foldout(m_ShowLOD, new GUIContent(title, "层LOD"));
             if (m_ShowLOD)
             {
                 EditorGUILayout.BeginVertical("GroupBox");
@@ -65,12 +65,12 @@ namespace XDay.WorldAPI.Editor
                         EditorGUILayout.BeginHorizontal();
 
                         GUI.enabled = false;
-                        EditorGUILayout.TextField("Name", lod.Name);
+                        EditorGUILayout.TextField("名称", lod.Name);
                         GUI.enabled = true;
 
-                        if (GUILayout.Button("Change", GUILayout.MaxWidth(60)))
+                        if (GUILayout.Button("修改", GUILayout.MaxWidth(60)))
                         {
-                            var window = EditorWindow.GetWindow<PluginLODSystemEditorWindow>("Set LOD");
+                            var window = EditorWindow.GetWindow<PluginLODSystemEditorWindow>("设置LOD");
                             EditorHelper.MakeWindowCenterAndSetSize(window);
                             window.Open(lod.Name, m_PluginLODSystem, m_PluginLODSystem.WorldLODSystem, (oldName, newName) => {
                                 var lod = m_PluginLODSystem.QueryLOD(oldName);
@@ -80,7 +80,7 @@ namespace XDay.WorldAPI.Editor
 
                         EditorGUILayout.EndHorizontal();
 
-                        lod.Tolerance = EditorGUILayout.FloatField(new GUIContent("Tolerance", ""), lod.Tolerance);
+                        lod.Tolerance = EditorGUILayout.FloatField(new GUIContent("缓冲高度(米)", ""), lod.Tolerance);
                     });   
                 }
             }
@@ -92,15 +92,15 @@ namespace XDay.WorldAPI.Editor
         {
             EditorGUILayout.BeginHorizontal();
 
-            EditorGUILayout.LabelField("LOD Count", m_PluginLODSystem.LODCount.ToString());
-            if (GUILayout.Button("Change"))
+            EditorGUILayout.LabelField("LOD数量", m_PluginLODSystem.LODCount.ToString());
+            if (GUILayout.Button("修改"))
             {
                 var parameters = new List<ParameterWindow.Parameter>
                 {
-                    new ParameterWindow.IntParameter("Count", "", m_PluginLODSystem.LODCount),
+                    new ParameterWindow.IntParameter("数量", "", m_PluginLODSystem.LODCount),
                 };
 
-                ParameterWindow.Open("Change LOD Name", parameters, (p) => {
+                ParameterWindow.Open("修改LOD名称", parameters, (p) => {
                     ParameterWindow.GetInt(p[0], out var newLODCount);
                     if (newLODCount <= 0)
                     {
@@ -113,7 +113,7 @@ namespace XDay.WorldAPI.Editor
                     {
                         if (newLODCount > m_PluginLODSystem.WorldLODSystem.LODCount)
                         {
-                            EditorUtility.DisplayDialog("Error", "plugin lod count should be <= world lod count!", "OK");
+                            EditorUtility.DisplayDialog("出错了", "层的LOD个数应该不超过地图LOD个数!", "确定");
                         }
                         else
                         {

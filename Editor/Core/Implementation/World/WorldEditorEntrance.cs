@@ -29,10 +29,10 @@ namespace XDay.WorldAPI.Editor
 {
     internal class WorldEditorEntrance : EditorWindow
     {
-        [MenuItem("XDay/World/Editor")]
+        [MenuItem("XDay/地图/打开编辑器")]
         private static void Open()
         {
-            GetWindow<WorldEditorEntrance>(WorldDefine.WORLD_EDITOR_NAME).Show();
+            GetWindow<WorldEditorEntrance>("地图编辑器").Show();
 
             WorldEditor.CreateScene();
         }

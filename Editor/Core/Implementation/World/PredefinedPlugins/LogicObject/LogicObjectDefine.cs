@@ -34,6 +34,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         public const string ENABLE_LOGIC_OBJECT_NAME = "Enable Logic Object";
         public const string CHANGE_LOGIC_OBJECT_GROUP_NAME = "Change Logic Object Group Name";
         public const string CHANGE_LOGIC_OBJECT_GROUP_VISIBILITY = "Change Logic Object Group Visibility";
+        public const string CHANGE_LOGIC_OBJECT_GROUP = "Change Logic Object Group";
         public const string ROTATION_NAME = "Logic Object Rotation";
         public const string SCALE_NAME = "Logic Object Scale";
         public const string POSITION_NAME = "Logic Object Position";

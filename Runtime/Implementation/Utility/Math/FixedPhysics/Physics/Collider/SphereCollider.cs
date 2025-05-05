@@ -28,6 +28,7 @@ namespace XDay
     public class SphereCollider : Collider
     {
         public readonly FixedPoint Radius;
+        public override FixedPoint MaxRadius => Radius;
 
         public SphereCollider(FixedPoint radius)
             : base(radius * radius * FixedMath.Pi)

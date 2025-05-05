@@ -67,6 +67,24 @@ namespace XDay.WorldAPI.LogicObject.Editor
             return gameObject;
         }
 
+        public int QueryGroupID(GameObject gameObject)
+        {
+            foreach (var kv in m_Groups)
+            {
+                if (kv.Value == gameObject) 
+                {
+                    return kv.Key;
+                }
+            }
+            return 0;
+        }
+
+        public int QueryObjectID(GameObject gameObject)
+        {
+            m_ObjectToIDs.TryGetValue(gameObject, out var objectID);
+            return objectID;
+        }
+
         public void SetAspect(int objectID, string name)
         {
             var logicObject = m_System.World.QueryObject<LogicObject>(objectID);
@@ -138,6 +156,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         {
             if (m_Objects.TryGetValue(data.ID, out var gameObject))
             {
+                m_ObjectToIDs.Remove(gameObject);
                 if (destroyGameObject)
                 {
                     Helper.DestroyUnityObject(gameObject);
@@ -153,8 +172,17 @@ namespace XDay.WorldAPI.LogicObject.Editor
         public void DestroyGroup(int groupID)
         {
             var obj = QueryGroup(groupID);
-            Object.DestroyImmediate(obj);
             m_Groups.Remove(groupID);
+            Object.DestroyImmediate(obj);
+        }
+
+        public void MoveObjectToGroup(int objectID, int newGroupID)
+        {
+            m_Objects.TryGetValue(objectID, out var gameObject);
+            if (gameObject != null)
+            {
+                gameObject.transform.SetParent(m_Groups[newGroupID].transform);
+            }
         }
 
         public void Create(LogicObject obj, int lod, int objectIndex)
@@ -178,6 +206,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
             }
 
             m_Objects.Add(obj.ID, gameObject);
+            m_ObjectToIDs.Add(gameObject, obj.ID);
             var listener = gameObject.AddOrGetComponent<LogicObjectBehaviour>();
             listener.Init(obj.ID, (objectID) => {
                 m_System.NotifyObjectDirty(obj.ID);
@@ -218,10 +247,11 @@ namespace XDay.WorldAPI.LogicObject.Editor
             }
         }
 
-        private LogicObjectSystem m_System;
-        private GameObject m_Root;
-        private IGameObjectPool m_Pool;
+        private readonly LogicObjectSystem m_System;
+        private readonly GameObject m_Root;
+        private readonly IGameObjectPool m_Pool;
         private readonly Dictionary<int, GameObject> m_Objects = new();
+        private readonly Dictionary<GameObject, int> m_ObjectToIDs = new();
         private readonly Dictionary<int, GameObject> m_Groups = new();
     }
 }

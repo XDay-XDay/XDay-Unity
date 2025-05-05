@@ -23,14 +23,13 @@
 
 
 
-using UnityEngine;
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.LogicObject.Editor
 {
     internal class LogicObjectSystemCreateWindow : GenericWorldPluginCreateWindow
     {
-        protected override string DisplayName => "Logic Object System";
+        protected override string DisplayName => "Logic Layer";
 
         protected override void CreateInternal()
         {

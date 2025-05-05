@@ -24,7 +24,6 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Editor
 {
@@ -339,14 +338,19 @@ namespace XDay.WorldAPI.Editor
             return false;
         }
 
-        private static byte[] Serialize(IWorldObject obj)
+        internal static byte[] Serialize(IWorldObject obj)
         {
             return m_Serializer.Serialize(obj);
         }
 
+        internal static IWorldObject Deserialize(int newID, int newObjectIndex, byte[] data, int worldID, string objectTypeName, bool init)
+        {
+            return m_Serializer.Deserialize(worldID, objectTypeName, data, newID, newObjectIndex, init);
+        }
+
         private static IWorldObject Deserialize(UndoActionObjectFactory action)
         {
-            return m_Serializer.Deserialize(action.WorldID, action.TypeName, action.ObjectData);
+            return m_Serializer.Deserialize(action.WorldID, action.TypeName, action.ObjectData, 0, 0, true);
         }
 
         private static IAspect GetAspect(int relayID, IWorldObject obj, string name)

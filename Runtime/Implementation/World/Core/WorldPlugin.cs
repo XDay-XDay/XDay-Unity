@@ -47,29 +47,23 @@ namespace XDay.WorldAPI
         {
         }
 
-        public sealed override void Init(IWorld world)
+        protected sealed override void OnInit()
         {
-            PreInit(world);
-
             InitInternal();
 
-            PostInit(world);
+            PostInit(World);
         }
 
         public async UniTask InitAsync(IWorld world, CancellationToken token)
         {
-            PreInit(world);
-
             await InitAsyncInternal(token);
 
             PostInit(world);
         }
 
-        public sealed override void Uninit()
+        protected sealed override void OnUninit()
         {
             UninitInternal();
-
-            base.Uninit();
 
             m_Inited = false;
         }
@@ -105,11 +99,6 @@ namespace XDay.WorldAPI
         internal void UninitRenderer()
         {
             UninitRendererInternal();
-        }
-
-        private void PreInit(IWorld world)
-        {
-            base.Init(world);
         }
 
         private void PostInit(IWorld world)

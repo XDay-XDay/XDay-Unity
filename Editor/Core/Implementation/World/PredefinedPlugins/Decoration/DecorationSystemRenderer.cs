@@ -150,13 +150,34 @@ namespace XDay.WorldAPI.Decoration.Editor
             gameObject.AddOrGetComponent<NoKeyDeletion>();
             var transform = gameObject.transform;
             transform.localScale = decoration.Scale;
-            transform.localRotation = decoration.Rotation;
-            transform.localPosition = decoration.Position;
+            transform.SetLocalPositionAndRotation(decoration.Position, decoration.Rotation);
             transform.SetParent(m_Root.transform, false);
 
             m_GameObjects.Add(decoration.ID, gameObject);
             var listener = gameObject.AddOrGetComponent<DecorationObjectBehaviour>();
-            listener.Init(decoration.ID, (objectID) => {
+            listener.Init(
+                decoration.ID,
+                getEnableHeightAdjust: (objectID) => 
+                {
+                    var dec = m_System.QueryObjectUndo(objectID) as DecorationObject;
+                    return dec.EnableHeightAdjust;
+                },
+                setEnableHeightAdjust: (objectID, enable) =>
+                {
+                    var dec = m_System.QueryObjectUndo(objectID) as DecorationObject;
+                    dec.EnableHeightAdjust = enable;
+                },
+                getEnableInstanceRendering: (objectID) =>
+                {
+                    var dec = m_System.QueryObjectUndo(objectID) as DecorationObject;
+                    return dec.EnableInstanceRendering;
+                },
+                setEnableInstanceRendering: (objectID, enable) =>
+                {
+                    var dec = m_System.QueryObjectUndo(objectID) as DecorationObject;
+                    dec.EnableInstanceRendering = enable;
+                },
+                transformChangeCallback: (objectID) => {
                 m_System.NotifyObjectDirty(decoration.ID);
             });
             Helper.Traverse(gameObject.transform, true, (obj) =>

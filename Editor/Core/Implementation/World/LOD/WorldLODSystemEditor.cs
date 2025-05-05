@@ -37,7 +37,7 @@ namespace XDay.WorldAPI.Editor
         {
             m_LODSystem = lodSystem;
 
-            m_ShowLOD = EditorGUILayout.Foldout(m_ShowLOD, new GUIContent("LOD Setting", ""));
+            m_ShowLOD = EditorGUILayout.Foldout(m_ShowLOD, new GUIContent("LOD设置", ""));
             if (m_ShowLOD)
             {
                 UpdateNames(lodSystem.LODCount);
@@ -69,17 +69,17 @@ namespace XDay.WorldAPI.Editor
                 EditorGUILayout.BeginHorizontal();
 
                 GUI.enabled = false;
-                EditorGUILayout.TextField(new GUIContent("Name", "LOD Name"), lod.Name);
+                EditorGUILayout.TextField(new GUIContent("名称", "LOD名称"), lod.Name);
                 GUI.enabled = true;
 
-                if (GUILayout.Button("Change", GUILayout.MaxWidth(60)))
+                if (GUILayout.Button("修改", GUILayout.MaxWidth(60)))
                 {
                     ChangeLOD(lod, onLODNameChanged);
                 }
 
                 EditorGUILayout.EndHorizontal();
 
-                lod.Altitude = EditorGUILayout.FloatField(new GUIContent("Altitude", "LOD Switch Altitude"), lod.Altitude);
+                lod.Altitude = EditorGUILayout.FloatField(new GUIContent("高度(米)", "相机LOD切换高度"), lod.Altitude);
             }
         }
 
@@ -105,17 +105,17 @@ namespace XDay.WorldAPI.Editor
             EditorGUILayout.BeginHorizontal();
             {
                 GUI.enabled = false;
-                EditorGUILayout.IntField(new GUIContent("LOD Count", ""), m_LODSystem.LODCount);
+                EditorGUILayout.IntField(new GUIContent("LOD数量", ""), m_LODSystem.LODCount);
                 GUI.enabled = true;
 
-                if (GUILayout.Button(new GUIContent("Change", "Change LOD Count"), GUILayout.MaxWidth(80)))
+                if (GUILayout.Button(new GUIContent("修改", "修改LOD数量"), GUILayout.MaxWidth(80)))
                 {
                     var parameters = new List<ParameterWindow.Parameter>
                     {
-                        new ParameterWindow.IntParameter("New LOD Count", "", m_LODSystem.LODCount),
+                        new ParameterWindow.IntParameter("新LOD数量", "", m_LODSystem.LODCount),
                     };
 
-                    ParameterWindow.Open("Change LOD Count", parameters, (p) => {
+                    ParameterWindow.Open("修改LOD数量", parameters, (p) => {
                         ParameterWindow.GetInt(p[0], out var newLODCount);
                         if (
                             m_LODSystem.LODCount == newLODCount ||
@@ -135,7 +135,7 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawSortButton()
         {
-            if (GUILayout.Button(new GUIContent("Sort", "Sort from low to high"), GUILayout.MaxWidth(100)))
+            if (GUILayout.Button(new GUIContent("排序", "LOD按高度从低到高排序"), GUILayout.MaxWidth(100)))
             {
                 m_LODSystem.Sort();
             }
@@ -143,7 +143,7 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawCheckHeightButton()
         {
-            if (GUILayout.Button(new GUIContent("Check Height", "Check if height is sorted!"), GUILayout.MaxWidth(100)))
+            if (GUILayout.Button(new GUIContent("LOD高度校验", "检查每级LOD的高度是否递增"), GUILayout.MaxWidth(100)))
             {
                 m_LODSystem.CheckIfLODIsSorted();
             }
@@ -170,10 +170,10 @@ namespace XDay.WorldAPI.Editor
         {
             var parameters = new List<ParameterWindow.Parameter>
             {
-                new ParameterWindow.StringParameter("New Name", "", lod.Name),
+                new ParameterWindow.StringParameter("新名称", "", lod.Name),
             };
 
-            ParameterWindow.Open("Change LOD Name", parameters, (p) => {
+            ParameterWindow.Open("修改LOD名称", parameters, (p) => {
                 ParameterWindow.GetString(p[0], out var newName);
 
                 if (string.IsNullOrEmpty(newName) ||

@@ -51,7 +51,7 @@ namespace XDay.WorldAPI.Editor
 
             var newDescriptor = CreateDescriptor(world.AllocateObjectID(), m_Descriptors.Count, path);
             newDescriptor.Init(world);
-            AddDescriptor(newDescriptor);
+            AddDescriptor(path, newDescriptor);
             return newDescriptor as IEditorResourceDescriptor;
         }
 
@@ -130,18 +130,19 @@ namespace XDay.WorldAPI.Editor
             return paths;
         }
 
-        private void AddDescriptor(IResourceDescriptor descriptor)
+        private void AddDescriptor(string path, IResourceDescriptor descriptor)
         {
-            var path = descriptor.GetPath(0);
-            if (string.IsNullOrEmpty(path))
+            var lod0Path = descriptor.GetPath(0);
+            Debug.Assert(path == lod0Path);
+            if (string.IsNullOrEmpty(lod0Path))
             {
                 Debug.Assert(false);
                 return;
             }
 
-            if (!m_Descriptors.ContainsKey(path))
+            if (!m_Descriptors.ContainsKey(lod0Path))
             {
-                m_Descriptors.Add(path, descriptor);
+                m_Descriptors.Add(lod0Path, descriptor);
             }
         }
 

@@ -25,7 +25,7 @@ using System;
 
 namespace XDay.WorldAPI
 {
-    public class WorldPluginMetadataAttribute : Attribute
+    public class WorldPluginMetadataAttribute : System.Attribute
     {
         public string DisplayName => m_DisplayName;
         public string EditorFileName => m_EditorFileName;

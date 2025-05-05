@@ -31,6 +31,7 @@ namespace XDay.InputAPI
     internal class TouchDevice : IDevice
     {
         public event Action EventAnyTouchBegin;
+        public event Action EventAnySceneTouchBegin;
         public int TouchCount => SceneTouchCount + UITouchCount;
         public int SceneTouchCount => m_SceneTouches.Count;
         public int UITouchCount => m_UITouches.Count;
@@ -66,6 +67,7 @@ namespace XDay.InputAPI
         {
             Clear();
 
+            m_AnySceneTouchBegin = false;
             var touchBegin = false;
             var touchCount = Input.touchCount;
             for (var i = 0; i < touchCount; i++)
@@ -76,6 +78,11 @@ namespace XDay.InputAPI
             if (touchBegin)
             {
                 EventAnyTouchBegin?.Invoke();
+            }
+
+            if (m_AnySceneTouchBegin)
+            {
+                EventAnySceneTouchBegin?.Invoke();
             }
         }
 
@@ -105,7 +112,7 @@ namespace XDay.InputAPI
             var touch = Input.GetTouch(index);
             if (touch.phase == TouchPhase.Began)
             {
-                AddTouch(touch.fingerId);
+                deviceTouch = AddTouch(touch.fingerId);
             }
             else if (
                 touch.phase == TouchPhase.Moved ||
@@ -154,6 +161,10 @@ namespace XDay.InputAPI
                         m_SceneTouchesNotStartFromUI.Add(deviceTouch);
                     }
                     m_SceneTouches.Add(deviceTouch);
+                    if (deviceTouch.State == TouchState.Start)
+                    {
+                        m_AnySceneTouchBegin = true;
+                    }
                 }
 
                 if (!deviceTouch.StartFromUI)
@@ -216,6 +227,7 @@ namespace XDay.InputAPI
         private List<DeviceTouch> m_SceneTouches = new();
         private List<DeviceTouch> m_SceneTouchesNotStartFromUI = new();
         private List<DeviceTouch> m_Touches = new();
+        private bool m_AnySceneTouchBegin = false;
     }
 }
 

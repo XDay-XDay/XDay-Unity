@@ -48,7 +48,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public void InspectorGUI()
         {
-            m_Show = EditorGUILayout.Foldout(m_Show, "Modifier");
+            m_Show = EditorGUILayout.Foldout(m_Show, "修改器");
             if (m_Show)
             {
                 EditorHelper.IndentLayout(() =>
@@ -113,9 +113,9 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawApplyButton(TextureModifier modifier)
         {
-            if (GUILayout.Button("Apply", GUILayout.MaxWidth(40)))
+            if (GUILayout.Button("应用", GUILayout.MaxWidth(40)))
             {
-                if (EditorUtility.DisplayDialog("Warning", "Continue?", "Yes", "No"))
+                if (EditorUtility.DisplayDialog("警告", "继续?", "确定", "取消"))
                 {
                     m_Painter.Prepare();
                     Apply(modifier);

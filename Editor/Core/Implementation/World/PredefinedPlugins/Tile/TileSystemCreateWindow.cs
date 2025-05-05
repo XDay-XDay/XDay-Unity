@@ -33,7 +33,7 @@ namespace XDay.WorldAPI.Tile.Editor
     public class TileSystemCreateWindow : GridBasedWorldPluginCreateWindow
     {
         protected override bool SetGridCount => !m_UseTerrainLOD;
-        protected override string DisplayName => "Tile System";
+        protected override string DisplayName => "Tile Layer";
 
         protected override void CreateInternal()
         {
@@ -103,23 +103,23 @@ namespace XDay.WorldAPI.Tile.Editor
         {
             base.GUIInternal();
 
-            m_Rotation = EditorGUILayout.FloatField("Rotation", m_Rotation);
+            m_Rotation = EditorGUILayout.FloatField("旋转角度", m_Rotation);
 
-            m_TileSource = (TileSource)EditorGUILayout.EnumPopup("Type", m_TileSource);
+            m_TileSource = (TileSource)EditorGUILayout.Popup("类型", (int)m_TileSource, m_TileSourceNames);
             if (m_TileSource == TileSource.CreateNewTile)
             {
                 var oldColor = EditorStyles.label.normal.textColor;
-                m_UseTerrainLOD = EditorGUILayout.ToggleLeft("Use Terrain LOD", m_UseTerrainLOD);
+                //m_UseTerrainLOD = EditorGUILayout.ToggleLeft("Use Terrain LOD", m_UseTerrainLOD);
                 EditorStyles.label.normal.textColor = Color.red;
-                m_TileName = EditorGUILayout.TextField("Name", m_TileName);
-                m_OutputDir = Helper.ToUnityPath(EditorHelper.DirectoryField("Output Folder", m_OutputDir, "", () => { Repaint(); }, tooltip: null));
+                m_TileName = EditorGUILayout.TextField("名称", m_TileName);
+                m_OutputDir = Helper.ToUnityPath(EditorHelper.DirectoryField("地块输出目录", m_OutputDir, "", () => { Repaint(); }, tooltip: null));
                 EditorStyles.label.normal.textColor = oldColor;
-                m_MaskFormat = (TextureFormat)EditorGUILayout.EnumPopup("Splat Mask Format", m_MaskFormat);
-                m_MaskTextureResolution = EditorGUILayout.IntField("Splat Mask Resolution", m_MaskTextureResolution);
+                m_MaskFormat = (TextureFormat)EditorGUILayout.EnumPopup("Mask贴图格式", m_MaskFormat);
+                m_MaskTextureResolution = EditorGUILayout.IntField("Mask贴图分辨率", m_MaskTextureResolution);
                 GUI.enabled = m_CustomMaterial != null;
-                m_MaskName = EditorGUILayout.TextField("Splat Mask Property Name", m_MaskName);
+                m_MaskName = EditorGUILayout.TextField("Mask贴图Shader属性名", m_MaskName);
                 GUI.enabled = true;
-                m_CustomMaterial = EditorGUILayout.ObjectField("Material", m_CustomMaterial, typeof(Material), allowSceneObjects: false) as Material;
+                m_CustomMaterial = EditorGUILayout.ObjectField("材质", m_CustomMaterial, typeof(Material), allowSceneObjects: false) as Material;
             }
         }
 
@@ -225,6 +225,12 @@ namespace XDay.WorldAPI.Tile.Editor
             CreateNewTile,
             UserDefined,
         }
+
+        private string[] m_TileSourceNames = new string[]
+        {
+            "创建地块Prefab资源",
+            "用户提供Prefab资源"
+        };
     }
 }
 

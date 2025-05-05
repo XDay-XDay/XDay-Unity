@@ -76,7 +76,11 @@ namespace XDay.RenderingAPI.BRG
             drawCommands->instanceSortingPositionFloatCount = 0;
             drawCommands->drawCommandPickingInstanceIDs = null;
 
-            drawCommands->drawRanges[0].filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff };
+            var filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff };
+            //cast shadows
+            filterSettings.shadowCastingMode = ShadowCastingMode.On;
+            filterSettings.receiveShadows = true;
+            drawCommands->drawRanges[0].filterSettings = filterSettings;
             drawCommands->drawRanges[0].drawCommandsBegin = 0;
             drawCommands->drawRanges[0].drawCommandsCount = (uint)drawCommandCount;
             drawCommands->drawRanges[0].drawCommandsType = BatchDrawCommandType.Direct;

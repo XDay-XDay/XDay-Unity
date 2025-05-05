@@ -36,6 +36,8 @@ namespace XDay.GUIAPI.Editor
     {
         private void Generate()
         {
+            RemoveInvalidateData();
+
             var err = Validate();
             if (!string.IsNullOrEmpty(err))
             {

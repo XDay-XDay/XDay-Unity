@@ -34,6 +34,7 @@ namespace XDay.WorldAPI
         public event LODChangeCallback EventLODChanged;
         public event CameraAltitudeChangeCallback EventCameraAltitudeChanged;
         public override string TypeName => "GameWorld";
+        public override int CurrentLOD => m_PluginLODSystem.CurrentLOD;
 
         public GameWorld()
         {
@@ -44,13 +45,16 @@ namespace XDay.WorldAPI
             : base(setup, new SLGCameraVisibleAreaCalculator(), assetLoader, manipulator, serializableFactory, width, height)
         {
             m_PluginLoader = pluginLoader;
-            m_PluginLODSystem = new();
         }
 
         public override void Init()
         {
             base.Init();
 
+            if (m_PluginLODSystem == null)
+            {
+                m_PluginLODSystem = new(WorldLODSystem.LODCount);
+            }
             m_PluginLODSystem.Init(WorldLODSystem);
 
             InitRendererInternal();

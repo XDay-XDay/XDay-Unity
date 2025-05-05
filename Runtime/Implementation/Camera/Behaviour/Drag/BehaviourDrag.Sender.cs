@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using UnityEngine;
 using XDay.InputAPI;
 
 namespace XDay.CameraAPI
@@ -32,7 +33,9 @@ namespace XDay.CameraAPI
             public Sender(CameraManipulator manipulator, IDeviceInput deviceInput, TouchID touchID)
                 : base(manipulator, deviceInput)
             {
-                m_Motion = deviceInput.CreateInertialDragMotion(touchID, manipulator.Camera);
+                m_Motion = deviceInput.CreateInertialDragMotion(touchID,
+                    manipulator.Setup.Direction == CameraDirection.XZ ? new Plane(Vector3.up, 0) : new Plane(Vector3.back, 0),
+                    manipulator.Camera);
                 SetActive(true);
             }
 

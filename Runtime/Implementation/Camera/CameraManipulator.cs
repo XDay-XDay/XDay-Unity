@@ -33,6 +33,7 @@ namespace XDay.CameraAPI
         public event Action<ICameraManipulator> EventPositionChange;
         public event Action<ICameraManipulator> EventAltitudeChange;
         public event Action<ICameraManipulator> EventActiveStateChange;
+        public CameraDirection Direction => m_Setup.Direction;
         public bool EnableFocusPointClampXZ { set => m_FocusPointClamp.EnableClampXZ = value; get => m_FocusPointClamp.EnableClampXZ; }
         public bool EnableRestore { set => m_FocusPointClamp.EnableRestore = value; get => m_FocusPointClamp.EnableRestore; }
         public bool EnableDrag { set => SetBehaviourActive(BehaviourType.Drag, value); }
@@ -74,11 +75,12 @@ namespace XDay.CameraAPI
 
             m_Setup = setup;
             m_Camera = camera;
+            m_Camera.farClipPlane = 10000;
             m_Camera.transform.rotation = Quaternion.Euler(m_Setup.Orbit.Pitch, m_Setup.Orbit.Yaw, 0);
 
             m_Transform = new CameraTransform(camera);
 
-            m_FocusPointClamp = new("Focus Point", camera.gameObject.transform);
+            m_FocusPointClamp = new("Focus Point", camera.gameObject.transform, m_Setup.Direction);
             m_FOVUpdater = new(setup, camera);
 
             SetBehaviours(input);

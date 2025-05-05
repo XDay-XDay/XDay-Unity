@@ -25,9 +25,10 @@
 
 namespace XDay
 {
-    public class Collider
+    public abstract class Collider
     {
         public readonly FixedPoint Area;
+        public abstract FixedPoint MaxRadius { get; }
 
         public Collider(FixedPoint area)
         {

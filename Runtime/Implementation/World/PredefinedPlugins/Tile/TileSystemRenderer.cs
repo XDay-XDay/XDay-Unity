@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI;
 
@@ -30,13 +31,17 @@ namespace XDay.WorldAPI.Tile
     {
         public GameObject Root => m_Root;
 
-        public TileSystemRenderer(TileSystem tileSystem)
+        public TileSystemRenderer(TileSystem tileSystem, string[] usedTilePrefabPaths)
         {
             m_GameObjects = new GameObject[tileSystem.YTileCount * tileSystem.XTileCount];
             m_Root = new GameObject(tileSystem.Name);
             m_Root.transform.SetParent(tileSystem.World.Root.transform, true);
             m_Root.transform.SetPositionAndRotation(tileSystem.Center, tileSystem.Rotation);
             m_TileSystem = tileSystem;
+
+            m_MeshManager = new TerrainHeightMeshManager(tileSystem.World.GameFolder, tileSystem.World.AssetLoader);
+
+            PreprocessHeightMeshies(usedTilePrefabPaths);
         }
 
         public void OnDestroy()
@@ -63,12 +68,17 @@ namespace XDay.WorldAPI.Tile
         private void HideTile(int x, int y, TileData tile, int lod)
         {
             var idx = y * m_TileSystem.XTileCount + x;
-            if (m_GameObjects[idx] == null)
+            var gameObject = m_GameObjects[idx];
+            if (gameObject == null)
             {
                 return;
             }
 
-            m_TileSystem.World.GameObjectPool.Release(tile.GetPath(lod), m_GameObjects[idx]);
+            var prefabPath = tile.GetPath(lod);
+            var filter = gameObject.GetComponentInChildren<MeshFilter>();
+            filter.sharedMesh = m_MeshManager.GetOriginalMesh(prefabPath);
+
+            m_TileSystem.World.GameObjectPool.Release(prefabPath, gameObject);
             m_GameObjects[idx] = null;
         }
 
@@ -84,11 +94,43 @@ namespace XDay.WorldAPI.Tile
             gameObject.transform.position = m_TileSystem.CoordinateToLocalPosition(x, y);
             gameObject.transform.SetParent(m_Root.transform, false);
             m_GameObjects[idx] = gameObject;
+
+            if (tile.HasHeightData  
+                /* || tile.clipped*/)
+            {
+                var lodMesh = m_MeshManager.GetHeightMesh(x, y, lod);
+                if (lodMesh != null)
+                {
+                    var filter = gameObject.GetComponentInChildren<MeshFilter>();
+                    filter.sharedMesh = lodMesh;
+                }
+            }
+        }
+
+        private void PreprocessHeightMeshies(string[] usedPrefabPaths)
+        {
+            if (usedPrefabPaths != null)
+            {
+                for (int i = 0; i < usedPrefabPaths.Length; ++i)
+                {
+                    var prefab = m_TileSystem.World.AssetLoader.Load<GameObject>(usedPrefabPaths[i]);
+                    var filter = prefab.GetComponentInChildren<MeshFilter>();
+                    if (filter != null)
+                    {
+                        var mesh = filter.sharedMesh;
+                        if (mesh != null)
+                        {
+                            m_MeshManager.SetOriginalMesh(usedPrefabPaths[i], mesh);
+                        }
+                    }
+                }
+            }
         }
 
         private readonly GameObject m_Root;
         private readonly GameObject[] m_GameObjects;
         private readonly TileSystem m_TileSystem;
+        private TerrainHeightMeshManager m_MeshManager;
     };
 }
 

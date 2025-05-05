@@ -64,11 +64,11 @@ namespace XDay.WorldAPI.Editor
         {
             m_ActiveLOD = EditorGUILayout.Popup("LOD", m_ActiveLOD, m_Labels);
 
-            if (GUILayout.Button("OK"))
+            if (GUILayout.Button("确定"))
             {
                 if (m_PluginLODSystem.QueryLOD(m_Names[m_ActiveLOD]) != null)
                 {
-                    EditorUtility.DisplayDialog("Error", $"LOD{m_Names[m_ActiveLOD]} already existed!", "OK");
+                    EditorUtility.DisplayDialog("出错了", $"{m_Names[m_ActiveLOD]}已经存在!", "确定");
                 }
                 else
                 {

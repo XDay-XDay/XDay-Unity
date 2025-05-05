@@ -33,7 +33,7 @@ using UnityEngine.SceneManagement;
 
 namespace XDay.WorldAPI.Editor
 {
-    internal static partial class WorldEditor
+    public static partial class WorldEditor
     {
         public static async UniTask LoadWorldAsyncUniTask()
         {
@@ -42,7 +42,7 @@ namespace XDay.WorldAPI.Editor
             {
                 Init();
 
-                var world = await m_WorldSystem.LoadEditorWorldAsync(setup) as EditorWorld;
+                var world = await m_WorldManager.LoadEditorWorldAsync(setup) as EditorWorld;
                 if (world != null)
                 {
                     SetActiveWorld(world);
@@ -71,7 +71,7 @@ namespace XDay.WorldAPI.Editor
 
                 Init();
 
-                m_WorldSystem.LoadEditorWorldAsync(setup, (world) => { SetActiveWorld(world as EditorWorld); });
+                m_WorldManager.LoadEditorWorldAsync(setup, (world) => { SetActiveWorld(world as EditorWorld); });
             }
         }
 
@@ -86,7 +86,7 @@ namespace XDay.WorldAPI.Editor
 
                 Init();
 
-                SetActiveWorld(m_WorldSystem.LoadEditorWorld(setup));
+                SetActiveWorld(m_WorldManager.LoadEditorWorld(setup));
             }
         }
 
@@ -95,20 +95,28 @@ namespace XDay.WorldAPI.Editor
             var setupManager = EditorHelper.QueryAsset<WorldSetupManager>();
             if (setupManager == null)
             {
-                EditorUtility.DisplayDialog("Error", "WorldSetupManager not found!", "OK");
+                EditorUtility.DisplayDialog("出错了", "WorldSetupManager文件没有找到", "确定");
                 return null;
             }
 
             var path = EditorPrefs.GetString(WorldDefine.LAST_OPEN_FILE_PATH);
+            if (!Directory.Exists(path))
+            {
+                path = null;
+            }
 
             var selectedFolder = EditorUtility.OpenFolderPanel(
-                "Select World",
-                string.IsNullOrEmpty(path) ? "EditorWorld" : path, 
+                "选择地图文件夹",
+                string.IsNullOrEmpty(path) ? setupManager.EditorFolder : path, 
                 "");
             if (!string.IsNullOrEmpty(selectedFolder))
             {
                 var name = Path.GetFileNameWithoutExtension(selectedFolder);
                 var setup = setupManager.QuerySetup(name);
+                if(setup == null)
+                {
+                    Debug.LogError($"地图{name}配置不存在!");
+                }
 
                 EditorPrefs.SetString(WorldDefine.LAST_OPEN_FILE_PATH, selectedFolder); 
 

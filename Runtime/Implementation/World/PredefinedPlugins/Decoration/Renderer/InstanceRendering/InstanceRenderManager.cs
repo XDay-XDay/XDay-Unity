@@ -132,6 +132,10 @@ namespace XDay.WorldAPI.Decoration
         private GPUStaticBatch QueryBatch(int batchID, int lod)
         {
             var batchInfo = m_GPUBatchInfoRegistry.GetBatch(batchID);
+            if (lod >= batchInfo.LODs.Count)
+            {
+                lod = batchInfo.LODs.Count - 1;
+            }
             var lodInfo = batchInfo.LODs[lod];
             var batch = m_GPUBatchManager.QueryRenderableBatch<GPUStaticBatch>(lodInfo.Mesh, lodInfo.Material);
             if (batch == null)

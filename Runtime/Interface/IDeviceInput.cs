@@ -81,9 +81,14 @@ namespace XDay.InputAPI
         }
 
         /// <summary>
-        /// event triggered when any touch happens
+        /// event triggered when any touch pressed
         /// </summary>
         event Action EventAnyTouchBegin;
+
+        /// <summary>
+        /// event triggered when any scene touch pressed
+        /// </summary>
+        event Action EventAnySceneTouchBegin;
 
         bool UseConfigurableTouchAsSceneTouch { get; set; }
 
@@ -171,7 +176,7 @@ namespace XDay.InputAPI
         /// <param name="validTouchName">valid button</param>
         /// <param name="camera">camera</param>
         /// <returns></returns>
-        IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Camera camera);
+        IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Plane plane, Camera camera);
 
         /// <summary>
         /// create a one finger scroll gesture motion

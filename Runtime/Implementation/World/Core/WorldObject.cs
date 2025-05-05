@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using UnityEngine;
 
 namespace XDay.WorldAPI
@@ -31,14 +29,15 @@ namespace XDay.WorldAPI
     public abstract partial class WorldObject : IWorldObject
     {
         public virtual bool IsActive => EnabledInternal && VisibilityInternal == WorldObjectVisibility.Visible;
-        public int ID => m_ID;
-        public int ObjectIndex => m_Index;
+        public int ID { get => m_ID; set => m_ID = value; }
+        public int ObjectIndex { get => m_Index; set => m_Index = value; }
         public int WorldID => m_World.ID;
         public IWorld World => m_World;
         public virtual Vector3 Position { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public virtual Vector3 Scale { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public virtual Quaternion Rotation { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public abstract string TypeName { get; }
+        public virtual bool EnablePostInit => false;
         public virtual string GameTypeName => TypeName;
 
         public WorldObject()
@@ -51,12 +50,20 @@ namespace XDay.WorldAPI
             m_Index = index;
         }
 
-        public virtual void Init(IWorld world)
+        public void Init(IWorld world)
         {
+            m_World = world as World;
+
             if (m_ID != 0)
             {
-                m_World = world as World;
                 m_World.RegisterObject(this);
+            }
+
+            OnInit();
+
+            if (EnablePostInit)
+            {
+                (world as World).PostInitObject(this);
             }
         }
 
@@ -67,8 +74,10 @@ namespace XDay.WorldAPI
             Init(world);
         }
 
-        public virtual void Uninit()
+        public void Uninit()
         {
+            OnUninit();
+
             if (m_ID != 0)
             {
                 m_World?.UnregisterObject(m_ID);
@@ -161,6 +170,9 @@ namespace XDay.WorldAPI
             set => throw new System.NotImplementedException();
             get => throw new System.NotImplementedException();
         }
+
+        protected abstract void OnInit();
+        protected abstract void OnUninit();
 
         [XDaySerializableField(1, "ID")]
         protected int m_ID;

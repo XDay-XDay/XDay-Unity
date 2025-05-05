@@ -28,8 +28,8 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    [WorldPluginMetadata("DecorationSystem", "decoration_editor_data", typeof(DecorationSystemCreateWindow), true)]
-    internal partial class DecorationSystem : EditorWorldPlugin
+    [WorldPluginMetadata("装饰层", "decoration_editor_data", typeof(DecorationSystemCreateWindow), true)]
+    internal partial class DecorationSystem : EditorWorldPlugin, IObstacleSource
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "decoration" };
@@ -259,6 +259,18 @@ namespace XDay.WorldAPI.Decoration.Editor
             var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(assetPath, World);
             var obj = new DecorationObject(id, m_Decorations.Count, false, LODLayerMask.AllLOD, userPosition, userRotation, userScale, descriptor);
             return obj;
+        }
+
+        private DecorationObject CloneObject(int id, int objectIndex, DecorationObject obj)
+        {
+            if (obj == null)
+            {
+                Debug.Assert(false, $"Clone object failed: {id}");
+                return null;
+            }
+            var bytes = UndoSystem.Serialize(obj);
+            var newObj = UndoSystem.Deserialize(id, objectIndex, bytes, World.ID, typeof(DecorationObject).FullName, false) as DecorationObject;
+            return newObj;
         }
 
         private List<int> GetDirtyObjectIDs()

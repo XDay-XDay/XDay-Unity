@@ -73,7 +73,14 @@ namespace XDay.CameraAPI
             if (setup.DecomposeZoomFactor(zoomFactor, out var focalLength, out _))
             {
                 var focusPoint = m_Manipulator.FocusPoint;
-                newPos = PositionFromFocusPoint(camera, focalLength, new Vector3(focusPoint.x, 0, focusPoint.z));
+                if (m_Manipulator.Direction == CameraDirection.XZ)
+                {
+                    newPos = PositionFromFocusPoint(camera, focalLength, new Vector3(focusPoint.x, 0, focusPoint.z));
+                }
+                else
+                {
+                    newPos = PositionFromFocusPoint(camera, focalLength, new Vector3(focusPoint.x, focusPoint.y, 0));
+                }
             }
             
             return false;

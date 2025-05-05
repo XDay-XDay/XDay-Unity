@@ -29,6 +29,7 @@ using XDay.UtilityAPI;
 using XDay.UtilityAPI.Math;
 using XDay.UtilityAPI.Editor;
 using System;
+using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -67,6 +68,27 @@ namespace XDay.WorldAPI.Tile.Editor
             m_Indicator.OnDestroy();
             m_ModifierManager.OnDestroy();
             m_BrushStyleManager.OnDestroy();
+        }
+
+        public List<UIControl> CreateSceneGUIControls()
+        {
+            List<UIControl> controls = new();
+            m_ChannelPopup = new Popup("通道", "", 100);
+            controls.Add(m_ChannelPopup);
+
+            m_BrushStrengthField = new FloatField("强度", "", 100);
+            controls.Add(m_BrushStrengthField);
+
+            m_ButtonEndPaint = EditorWorldHelper.CreateImageButton("end.png", "");
+            controls.Add(m_ButtonEndPaint);
+
+            m_BrushSizeField = new IntField("大小", "", 80);
+            controls.Add(m_BrushSizeField);
+
+            m_ButtonBeginPaint = EditorWorldHelper.CreateImageButton("start.png", "");
+            controls.Add(m_ButtonBeginPaint);
+
+            return controls;
         }
 
         public void SceneGUI()
@@ -129,17 +151,60 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public void InspectorGUI()
         {
-            m_Show = EditorGUILayout.Foldout(m_Show, "Mask Painting");
+            m_Show = EditorGUILayout.Foldout(m_Show, "Mask贴图绘制");
             if (m_Show)
             {
                 EditorGUILayout.BeginVertical("GroupBox");
                 {
-                    IgnoreAlpha = EditorGUILayout.ToggleLeft(new GUIContent("Ignore Alpha", "if alpha is not used, check this"), IgnoreAlpha);
+                    IgnoreAlpha = EditorGUILayout.ToggleLeft(new GUIContent("忽略Alpha通道", "如果Shader中不使用Alpha通道则勾选"), IgnoreAlpha);
                     m_ModifierManager.InspectorGUI();
                     DrawStyle();
-                    m_BrushStyleManager.InspectorGUI();
                 }
                 EditorGUILayout.EndVertical();
+            }
+        }
+
+        public void DrawSceneGUIControls()
+        {
+            GUILayout.Space(40);
+
+            DrawTexturePaintSettings();
+
+            GUILayout.Space(40);
+
+            DrawBeginPaintButton();
+
+            DrawEndPaintButton();
+        }
+
+        public void DrawTooltips()
+        {
+            EditorGUILayout.LabelField("按下空格键旋转笔刷");
+            EditorGUILayout.LabelField("按下[或]键修改笔刷大小");
+            EditorGUILayout.LabelField($"Mask贴图在Shader中的名称:{MaskName}");
+            EditorGUILayout.LabelField($"Mask贴图分辨率:{Resolution}");
+        }
+
+        private void DrawTexturePaintSettings()
+        {
+            Range = m_BrushSizeField.Render(Range, 30);
+            Intensity = m_BrushStrengthField.Render(Intensity, 50);
+            Channel = m_ChannelPopup.Render(Channel, m_ChannelNames, 50);
+        }
+
+        private void DrawEndPaintButton()
+        {
+            if (m_ButtonEndPaint.Render(m_TileSystem.Inited))
+            {
+                End();
+            }
+        }
+
+        private void DrawBeginPaintButton()
+        {
+            if (m_ButtonBeginPaint.Render(m_TileSystem.Inited))
+            {
+                Start();
             }
         }
 
@@ -181,24 +246,21 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawStyle()
         {
-            m_ShowBrush = EditorGUILayout.Foldout(m_ShowBrush, "Brush");
+            m_ShowBrush = EditorGUILayout.Foldout(m_ShowBrush, "笔刷");
             if (m_ShowBrush)
             {
                 EditorHelper.IndentLayout(() =>
                 {
-                    EditorHelper.IndentLayout(() =>
+                    GUI.enabled = !EnableRandomAngle;
+                    var newAngle = EditorGUILayout.FloatField(new GUIContent("旋转角度", ""), Angle);
+                    if (newAngle != Angle)
                     {
-                        GUI.enabled = !EnableRandomAngle;
-                        var newAngle = EditorGUILayout.FloatField(new GUIContent("Angle", ""), Angle);
-                        if (newAngle != Angle)
-                        {
-                            Angle = newAngle;
-                            m_BrushStyleManager.Rotate(newAngle, Channel < 4);
-                        }
-                        GUI.enabled = true;
-                    }, 40);
+                        Angle = newAngle;
+                        m_BrushStyleManager.Rotate(newAngle, Channel < 4);
+                    }
+                    GUI.enabled = true;
 
-                    var enableRandomAngle = EditorGUILayout.ToggleLeft(new GUIContent("Random Angle", ""), EnableRandomAngle);
+                    var enableRandomAngle = EditorGUILayout.ToggleLeft(new GUIContent("随机旋转角度", ""), EnableRandomAngle);
                     if (enableRandomAngle != EnableRandomAngle)
                     {
                         if (enableRandomAngle)
@@ -207,6 +269,8 @@ namespace XDay.WorldAPI.Tile.Editor
                         }
                         EnableRandomAngle = enableRandomAngle;
                     }
+
+                    m_BrushStyleManager.InspectorGUI();
                 });
             }
         }
@@ -251,7 +315,12 @@ namespace XDay.WorldAPI.Tile.Editor
         private Dictionary<Texture2D, ImportSetting> m_TextureToImportSetting;
         private Dictionary<Texture2D, List<Vector2Int>> m_TextureToTileCoordinates;
         private const int m_Version = 1;
+        private FloatField m_BrushStrengthField;
+        private IntField m_BrushSizeField;
+        private ImageButton m_ButtonEndPaint;
+        private ImageButton m_ButtonBeginPaint;
+        private Popup m_ChannelPopup;
+        private string[] m_ChannelNames = new string[] { "R", "G", "B", "A" };
     }
 }
 
-//XDay

@@ -46,7 +46,14 @@ namespace XDay.CameraAPI
             {
                 m_ReachDistance = request.FocusParam.ReachDistance;
                 m_StartPos = transform.StartPosition;
-                m_EndPos = Helper.FromFocusPoint(m_Manipulator.Camera, request.FocusParam.FocusPoint, request.FocusParam.TargetAltitude);
+                if (m_Manipulator.Direction == CameraDirection.XZ)
+                {
+                    m_EndPos = Helper.FromFocusPointXZ(m_Manipulator.Camera, request.FocusParam.FocusPoint, request.FocusParam.TargetAltitude);
+                }
+                else
+                {
+                    m_EndPos = Helper.FromFocusPointXY(m_Manipulator.Camera, request.FocusParam.FocusPoint, request.FocusParam.TargetAltitude);
+                }
                 m_Speed = request.FocusParam.MoveModulator;
                 m_Duration = request.FocusParam.MoveDuration;
                 m_Timer = 0;

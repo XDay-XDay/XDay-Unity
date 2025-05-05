@@ -33,10 +33,10 @@ public class ControllerTest : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        m_World = new();
+        m_World = new(null);
 
         {
-            var rect = XDay.Rigidbody.CreateBoxBody("",10, 1, true, m_LedgeMaterial);
+            var rect = XDay.Rigidbody.CreateBoxBody("",10, 1, true, m_LedgeMaterial, m_World);
             var entity = new Entity(rect, m_World);
             m_Entities.Add(entity);
             entity.SetPosition(new Vector3(10, 0, 0));
@@ -44,7 +44,7 @@ public class ControllerTest : MonoBehaviour
         }
 
         {
-            var rect = XDay.Rigidbody.CreateBoxBody("", 10, 1, true, m_LedgeMaterial);
+            var rect = XDay.Rigidbody.CreateBoxBody("", 10, 1, true, m_LedgeMaterial, m_World);
             var entity = new Entity(rect, m_World);
             m_Entities.Add(entity);
             entity.SetPosition(new Vector3(-10, 0, 0));
@@ -52,7 +52,7 @@ public class ControllerTest : MonoBehaviour
         }
 
         {
-            m_Sphere = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial);
+            m_Sphere = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial, m_World);
             m_Sphere.EnableGravity = false;
             m_Sphere.IsKinematic = true;
             var entity = new Entity(m_Sphere, m_World);
@@ -62,7 +62,7 @@ public class ControllerTest : MonoBehaviour
         }
 
         {
-            var s = XDay.Rigidbody.CreateCircleBody("", 2, false, m_BallMaterial);
+            var s = XDay.Rigidbody.CreateCircleBody("", 2, false, m_BallMaterial, m_World);
             s.EnableGravity = false;
             s.IsKinematic = false;
             var entity = new Entity(s, m_World);
@@ -72,7 +72,7 @@ public class ControllerTest : MonoBehaviour
         }
 
         {
-            var s1 = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial);
+            var s1 = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial, m_World);
             s1.EnableGravity = false;
             s1.IsKinematic = true;
             var entity = new Entity(s1, m_World);
@@ -96,7 +96,7 @@ public class ControllerTest : MonoBehaviour
         var pos = Helper.RayCastWithXZPlane(Input.mousePosition, Camera.main);
         if (Input.GetMouseButtonDown(1))
         {
-            var circle = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial);
+            var circle = XDay.Rigidbody.CreateCircleBody("", 1, false, m_BallMaterial, m_World);
             var entity = new Entity(circle, m_World);
             entity.SetMaterial(SphereMaterial);
             m_Entities.Add(entity);
@@ -105,7 +105,7 @@ public class ControllerTest : MonoBehaviour
 
         if (Input.GetMouseButtonDown(2))
         {
-            var body = XDay.Rigidbody.CreateBoxBody("", 2, 2, false, m_CubeMaterial);
+            var body = XDay.Rigidbody.CreateBoxBody("", 2, 2, false, m_CubeMaterial, m_World);
             var entity = new Entity(body, m_World);
             entity.SetMaterial(SphereMaterial);
             m_Entities.Add(entity);
