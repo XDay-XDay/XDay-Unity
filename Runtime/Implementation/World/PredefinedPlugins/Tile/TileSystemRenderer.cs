@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI;
 
@@ -41,7 +40,7 @@ namespace XDay.WorldAPI.Tile
 
             m_MeshManager = new TerrainHeightMeshManager(tileSystem.World.GameFolder, tileSystem.World.AssetLoader);
 
-            PreprocessHeightMeshies(usedTilePrefabPaths);
+            PreprocessHeightMeshes(usedTilePrefabPaths);
         }
 
         public void OnDestroy()
@@ -75,8 +74,11 @@ namespace XDay.WorldAPI.Tile
             }
 
             var prefabPath = tile.GetPath(lod);
-            var filter = gameObject.GetComponentInChildren<MeshFilter>();
-            filter.sharedMesh = m_MeshManager.GetOriginalMesh(prefabPath);
+            if (tile.HasHeightData)
+            {
+                var filter = gameObject.GetComponentInChildren<MeshFilter>();
+                filter.sharedMesh = m_MeshManager.GetOriginalMesh(prefabPath);
+            }
 
             m_TileSystem.World.GameObjectPool.Release(prefabPath, gameObject);
             m_GameObjects[idx] = null;
@@ -107,14 +109,15 @@ namespace XDay.WorldAPI.Tile
             }
         }
 
-        private void PreprocessHeightMeshies(string[] usedPrefabPaths)
+        private void PreprocessHeightMeshes(string[] usedPrefabPaths)
         {
             if (usedPrefabPaths != null)
             {
+                var assetLoader = m_TileSystem.World.AssetLoader;
                 for (int i = 0; i < usedPrefabPaths.Length; ++i)
                 {
-                    var prefab = m_TileSystem.World.AssetLoader.Load<GameObject>(usedPrefabPaths[i]);
-                    var filter = prefab.GetComponentInChildren<MeshFilter>();
+                    var obj = assetLoader.LoadGameObject(usedPrefabPaths[i]);
+                    var filter = obj.GetComponentInChildren<MeshFilter>();
                     if (filter != null)
                     {
                         var mesh = filter.sharedMesh;
@@ -123,6 +126,7 @@ namespace XDay.WorldAPI.Tile
                             m_MeshManager.SetOriginalMesh(usedPrefabPaths[i], mesh);
                         }
                     }
+                    Object.Destroy(obj);
                 }
             }
         }

@@ -37,6 +37,7 @@ namespace XDay.WorldAPI
     [XDaySerializableClass("World")]
     public abstract partial class World : IWorld, ISerializable
     {
+        public IWorldManager WorldManager => m_WorldManager;
         public float Width => m_Width;
         public float Height => m_Height;
         public bool Inited => m_Inited;
@@ -75,11 +76,12 @@ namespace XDay.WorldAPI
         }
 
         public World(
-            WorldSetup setup, 
-            ICameraVisibleAreaCalculator calculator, 
-            IAssetLoader assetLoader, 
-            ICameraManipulator manipulator, 
-            ISerializableFactory serialzableFactory, 
+            IWorldManager worldManager,
+            WorldSetup setup,
+            ICameraVisibleAreaCalculator calculator,
+            IAssetLoader assetLoader,
+            ICameraManipulator manipulator,
+            ISerializableFactory serialzableFactory,
             float width, 
             float height)
         {
@@ -92,7 +94,7 @@ namespace XDay.WorldAPI
             m_SerializableFactory = serialzableFactory;
             m_Width = width;
             m_Height = height;
-
+            m_WorldManager = worldManager;
             m_LODSystem = new WorldLODSystem();
         }
 
@@ -313,7 +315,7 @@ namespace XDay.WorldAPI
         public virtual void RegisterLODChangeEvent(LODChangeCallback callback) { }
         public virtual void UnregisterLODChangeEvent(LODChangeCallback callback) { }
 
-        public abstract void Update();
+        public abstract void Update(float dt);
 
         public virtual void LateUpdate() 
         {
@@ -353,6 +355,7 @@ namespace XDay.WorldAPI
         private WorldSetup m_Setup;
         private Dictionary<int, IWorldObject> m_Objects;
         private ICameraVisibleAreaCalculator m_CameraVisibleAreaCalculator;
+        private IWorldManager m_WorldManager;
         protected IAssetLoader m_AssetLoader;
         protected ICameraManipulator m_Manipulator;
         protected ISerializableFactory m_SerializableFactory;

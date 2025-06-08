@@ -335,7 +335,7 @@ namespace XDay.CameraAPI
             m_Senders.Add(new BehaviourDrag.Sender(this, input, TouchID.Left));
 
             m_Receivers.Add(BehaviourType.MouseZoom, new BehaviourMouseZoom.Receiver(this));
-            m_Receivers.Add(BehaviourType.ScrollZoom, new BehaviourScrollZoom.Receiver(this));
+            m_Receivers.Add(BehaviourType.ScrollZoom, new BehaviourScrollZoom.Receiver(this, m_Setup.MouseZoomSpeed));
             m_Receivers.Add(BehaviourType.Pinch, new BehaviourPinch.Receiver(this));
             m_Receivers.Add(BehaviourType.Follow, new BehaviourFollow.Receiver(this));
             m_Receivers.Add(BehaviourType.StopFollow, new BehaviourFollow.Receiver(this));

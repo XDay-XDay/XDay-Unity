@@ -48,12 +48,20 @@ namespace XDay.InputAPI
         public int SceneTouchCountNotStartFromUI => m_Device.SceneTouchCountNotStartFromUI;
         public event Action EventAnyTouchBegin
         {
-            add => m_Device.EventAnyTouchBegin += value;
+            add
+            {
+                m_Device.EventAnyTouchBegin -= value;
+                m_Device.EventAnyTouchBegin += value;
+            }
             remove => m_Device.EventAnyTouchBegin -= value;
         }
         public event Action EventAnySceneTouchBegin
         {
-            add => m_Device.EventAnySceneTouchBegin += value;
+            add
+            {
+                m_Device.EventAnySceneTouchBegin -= value;
+                m_Device.EventAnySceneTouchBegin += value;
+            }
             remove => m_Device.EventAnySceneTouchBegin -= value;
         }
 

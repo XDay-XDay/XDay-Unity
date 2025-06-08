@@ -328,9 +328,9 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
         List<GroupInfo> mGroups = new List<GroupInfo>();
         
         //wzw temp
-        string mCodeFolderName = "D:\\my_projects\\map2\\Assets\\Scripts\\CodeAssistant";
+        string mCodeFolderName = "Assets\\XDay\\Editor\\Core\\Implementation\\Utility\\CodeAssistant";
         string mVSDTEFilePath = "D:\\my_projects\\playground\\tool\\vs_dte\\vs_dte\\bin\\Debug\\vs_dte.exe";
-        string mServerFilePath = "D:\\my_projects\\playground\\tool\\CodeAssistantServer\\bin\\Debug\\net6.0\\CodeAssistantServer.exe";
+        string mServerFilePath = "Tools\\CodeAssistantServer\\bin\\Debug\\net6.0\\CodeAssistantServer.exe";
         string mCSProjectName = "map2";
 
         //;隔开

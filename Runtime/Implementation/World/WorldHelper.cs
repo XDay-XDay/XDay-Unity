@@ -82,6 +82,11 @@ namespace XDay.WorldAPI
             return GetResourcePath(name, "Icon");
         }
 
+        public static string GetPrefabPath(string name)
+        {
+            return GetResourcePath(name, "Prefab");
+        }
+
         public static string GetShaderPath(string name)
         {
             return GetResourcePath(name, "Shader");
@@ -100,15 +105,17 @@ namespace XDay.WorldAPI
                 string[] guids = AssetDatabase.FindAssets("XDayDummy t:Scene");
                 foreach (string guid in guids)
                 {
-                    string path = AssetDatabase.GUIDToAssetPath(guid);
-                    var sceneName = Path.GetFileName(path);
+                    string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                    var sceneName = Path.GetFileName(assetPath);
                     if (sceneName == "XDayDummy.unity")
                     {
-                        m_ResourceDir = Helper.GetFolderPath(path);
+                        m_ResourceDir = Helper.GetFolderPath(assetPath);
                     }
                 }
             }
-            return Path.Combine($"{m_ResourceDir}/{type}", name);
+            var path = Path.Combine($"{m_ResourceDir}/{type}", name);
+            path = path.Replace('\\', '/');
+            return path;
 #else
             return "";
 #endif

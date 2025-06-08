@@ -70,7 +70,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
 
             EditorGUILayout.EndHorizontal();
 
-            mGraphView.Render(position.width, position.height);
+            mGraphView.Render(position.width, position.height, Repaint);
             Repaint();
         }
 

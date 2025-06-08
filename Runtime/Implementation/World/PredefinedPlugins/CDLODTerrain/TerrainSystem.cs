@@ -102,7 +102,7 @@ namespace XDay.WorldAPI.CDLODTerrain
             m_Renderer = null;
         }
 
-        protected override void UpdateInternal()
+        protected override void UpdateInternal(float dt)
         {
             CullTiles();
 

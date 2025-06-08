@@ -25,6 +25,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI;
+using UnityEditor;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -49,11 +50,38 @@ namespace XDay.WorldAPI.Tile.Editor
             m_Name = name;
         }
 
+        public MaterialConfig Clone()
+        {
+            var clone = new MaterialConfig(World.AllocateObjectID(), 0, m_ShaderGUID, m_Name + "_Clone");
+            clone.Combine(this);
+            clone.m_Show = m_Show;
+            return clone;
+        }
+
         public void Combine(MaterialConfig other)
         {
             CombineFloats(other);
             CombineTextures(other);
             CombineVectors(other);
+        }
+
+        public void ReplaceName(string oldName, string newName)
+        {
+            m_Name = m_Name.Replace(oldName, newName);
+        }
+
+        public void ReplaceTexture(Texture oldTexture, Texture newTexture, Vector4 uvTransform)
+        {
+            foreach (var tex in m_Textures)
+            {
+                var oldGUID = EditorHelper.GetObjectGUID(oldTexture);
+                var newGUID = EditorHelper.GetObjectGUID(newTexture);
+                if (oldGUID == tex.TextureGUID)
+                {
+                    tex.TextureGUID = newGUID;
+                    tex.UVTransform = uvTransform;
+                }
+            }
         }
 
         public void AddTexture(string name, Texture texture, Vector4 uvTransform)
@@ -66,14 +94,6 @@ namespace XDay.WorldAPI.Tile.Editor
             });
         }
 
-        public void AddTexture(string name)
-        {
-            m_Textures.Add(new TextureParam
-            {
-                Name = name,
-            });
-        }
-
         public void AddVector(string name, Vector4 value)
         {
             m_Vector4s.Add(new Vector4Param
@@ -83,28 +103,12 @@ namespace XDay.WorldAPI.Tile.Editor
             });
         }
 
-        public void AddVector(string name)
-        {
-            m_Vector4s.Add(new Vector4Param
-            {
-                Name = name,
-            });
-        }
-
         public void AddFloat(string name, float value)
         {
             m_Floats.Add(new FloatParam
             {
                 Name = name,
                 Value = value,
-            });
-        }
-
-        public void AddFloat(string name)
-        {
-            m_Floats.Add(new FloatParam
-            {
-                Name = name,
             });
         }
 
@@ -214,7 +218,7 @@ namespace XDay.WorldAPI.Tile.Editor
             }
             foreach (var setting in addedFloats)
             {
-                AddFloat(setting.Name);
+                AddFloat(setting.Name, setting.Value.Value);
             }
         }
 
@@ -234,7 +238,7 @@ namespace XDay.WorldAPI.Tile.Editor
             }
             foreach (var setting in addedVectors)
             {
-                AddVector(setting.Name);
+                AddVector(setting.Name, setting.Value.Value);
             }
         }
 
@@ -254,7 +258,14 @@ namespace XDay.WorldAPI.Tile.Editor
             }
             foreach (var setting in addedTextures)
             {
-                AddTexture(setting.Name);
+                Texture texture = null;
+                Vector4 uvTransform = new Vector4(1, 1, 0, 0);
+                if (!string.IsNullOrEmpty(setting.TextureGUID))
+                {
+                    texture = AssetDatabase.LoadAssetAtPath<Texture>(AssetDatabase.GUIDToAssetPath(setting.TextureGUID));
+                }
+                
+                AddTexture(setting.Name, texture, setting.UVTransform.Value);
             }
         }
 

@@ -21,14 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using Priority_Queue;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using XDay.UtilityAPI;
 
 namespace XDay.NavigationAPI
 {

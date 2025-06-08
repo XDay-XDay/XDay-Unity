@@ -97,7 +97,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
             //mAlignToGrid = true;
             Reset();
 
-            mViewer.SetWorldPosition(-windowWidth * 0.5f, -windowHeight * 0.5f);
+            m_Viewer.SetWorldPosition(-windowWidth * 0.5f, -windowHeight * 0.5f);
             mActiveGraph = graph;
 
             mNeedLayout = true;
@@ -145,7 +145,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
 
         void DrawGridState()
         {
-            foreach (var p in mOccupiedCoordinates)
+            foreach (var p in m_OccupiedCoordinates)
             {
                 var worldPosMin = GridCoordinateToWorldPosition(p.Key);
                 var worldPosMax = GridCoordinateToWorldPosition(p.Key + Vector2Int.one);
@@ -210,7 +210,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
             }
         }
 
-        protected override void OnMouseButtonReleased(int button)
+        protected override void OnMouseButtonReleased(int button, Vector2 mousePos)
         {
         }
 
@@ -237,7 +237,8 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
 
         void DrawNode(GraphNode node)
         {
-            var pos = AlignToGrid(node.worldPosition);
+            //var pos = AlignToGrid(node.worldPosition);
+            var pos = node.worldPosition;
             var size = node.size;
             //draw node
             Color color = Color.gray;
@@ -275,7 +276,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
         void DrawTextAt(string name, float worldWidth, Vector2 worldPosition)
         {
             var textSize = GUI.skin.textField.CalcSize(new GUIContent(name));
-            float offset = (worldWidth / mViewer.GetZoom() - textSize.x) / 2;
+            float offset = (worldWidth / m_Viewer.GetZoom() - textSize.x) / 2;
             if (offset < 0)
             {
                 //文字长度大于node size,需要把字体变小
@@ -296,7 +297,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
         void DrawButtonAt(string name, float worldWidth, Vector2 worldPosition, System.Action<int> onClickButton, bool alignCenter, Color color)
         {
             var textSize = GUI.skin.button.CalcSize(new GUIContent(name));
-            float offset = (worldWidth / mViewer.GetZoom() - textSize.x) / 2;
+            float offset = (worldWidth / m_Viewer.GetZoom() - textSize.x) / 2;
             if (offset < 0)
             {
                 //文字长度大于node size,需要把字体变小
@@ -328,7 +329,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
             string projectName = data.csProjectName;
 
             var originalSize = GUI.skin.button.fontSize;
-            GUI.skin.button.fontSize = Mathf.CeilToInt(originalSize / mViewer.GetZoom());
+            GUI.skin.button.fontSize = Mathf.CeilToInt(originalSize / m_Viewer.GetZoom());
             if (data.displayMode == DisplayMode.Icon)
             {
                 //draw class name
@@ -420,7 +421,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
                 if (node.typeInfo.methods.Count > 0)
                 {
                     var methodButtonMinPos = World2Window(new Vector2(node.size.x - DETAIL_BUTTON_WIDTH, node.size.y - NAME_LABEL_HEIGHT) + node.worldPosition);
-                    if (GUI.Button(new Rect(methodButtonMinPos.x, methodButtonMinPos.y, DETAIL_BUTTON_WIDTH / mViewer.GetZoom(), DETAIL_BUTTON_HEIGHT / mViewer.GetZoom()), "?"))
+                    if (GUI.Button(new Rect(methodButtonMinPos.x, methodButtonMinPos.y, DETAIL_BUTTON_WIDTH / m_Viewer.GetZoom(), DETAIL_BUTTON_HEIGHT / m_Viewer.GetZoom()), "?"))
                     {
                         mDetailInfo.detailType |= DetailInfoType.FullMethodList;
                         mDetailInfo.node = node;
@@ -430,7 +431,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
                 if (node.typeInfo.properties.Count > 0)
                 {
                     var propertyButtonMinPos = World2Window(new Vector2(node.size.x - DETAIL_BUTTON_WIDTH, node.size.y - node.propertyListPositionOffset) + node.worldPosition);
-                    if (GUI.Button(new Rect(propertyButtonMinPos.x, propertyButtonMinPos.y, DETAIL_BUTTON_WIDTH / mViewer.GetZoom(), DETAIL_BUTTON_HEIGHT / mViewer.GetZoom()), "?"))
+                    if (GUI.Button(new Rect(propertyButtonMinPos.x, propertyButtonMinPos.y, DETAIL_BUTTON_WIDTH / m_Viewer.GetZoom(), DETAIL_BUTTON_HEIGHT / m_Viewer.GetZoom()), "?"))
                     {
                         mDetailInfo.detailType |= DetailInfoType.FullPropertyList;
                         mDetailInfo.node = node;
@@ -438,10 +439,10 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
                 }
 
                 var pos = World2Window(node.worldPosition + new Vector2(0, node.size.y - node.methodListPositionOffset));
-                DrawHorizontalLine(pos.x, pos.y, node.size.x / mViewer.GetZoom(), Color.yellow);
+                DrawHorizontalLine(pos.x, pos.y, node.size.x / m_Viewer.GetZoom(), Color.yellow);
 
                 pos = World2Window(node.worldPosition + new Vector2(0, node.size.y - node.propertyListPositionOffset));
-                DrawHorizontalLine(pos.x, pos.y, node.size.x / mViewer.GetZoom(), Color.red);
+                DrawHorizontalLine(pos.x, pos.y, node.size.x / m_Viewer.GetZoom(), Color.red);
             }
             GUI.skin.button.fontSize = originalSize;
         }
@@ -519,8 +520,10 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
             {
                 var nodeA = pair.a;
                 var nodeB = pair.b;
-                var nodeAPos = World2Window(AlignToGrid(nodeA.worldPosition) + nodeA.size * 0.5f);
-                var nodeBPos = World2Window(AlignToGrid(nodeB.worldPosition) + nodeB.size * 0.5f);
+                //var nodeAPos = World2Window(AlignToGrid(nodeA.worldPosition) + nodeA.size * 0.5f);
+                //var nodeBPos = World2Window(AlignToGrid(nodeB.worldPosition) + nodeB.size * 0.5f);
+                var nodeAPos = World2Window(nodeA.worldPosition + nodeA.size * 0.5f);
+                var nodeBPos = World2Window(nodeB.worldPosition + nodeB.size * 0.5f);
 
                 Handles.color = white;
                 DrawMark(nodeBPos, nodeAPos);
@@ -596,7 +599,8 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
 
             foreach (var node in mActiveGraph.nodes)
             {
-                var pos = AlignToGrid(node.worldPosition);
+                //var pos = AlignToGrid(node.worldPosition);
+                var pos = node.worldPosition;
                 if (mouseWorldPos.x >= pos.x && mouseWorldPos.x < pos.x + node.size.x &&
                     mouseWorldPos.y >= pos.y && mouseWorldPos.y < pos.y + node.size.y)
                 {
@@ -611,7 +615,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
 
         public void ResetViewPosition()
         {
-            mViewer.ResetPosition();
+            m_Viewer.ResetPosition();
         }
 
         void OccupyGrids(GraphNode node)
@@ -630,7 +634,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
             ReleaseGrids(minCoord, maxCoord);
         }
 
-        Color mOutlineColor = new Color(0, 1, 0, 1);
+        Color mOutlineColor = new Color(0.2f, 0.2f, 0.2f, 1);
         Color mBackgroundColor = new Color(1, 1, 1, 1);
         Color mInitNodeColor = new Color(1, 0, 0, 1);
 

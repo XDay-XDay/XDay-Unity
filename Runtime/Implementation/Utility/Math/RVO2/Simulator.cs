@@ -117,7 +117,7 @@ namespace RVO
         internal int agentCount_;
         private List<int> freeIndexList_ = new();
         private bool hasRemovedAgent_ = false;
-        private bool hasRemovedObstacle_ = false;
+        //private bool hasRemovedObstacle_ = false;
 
         public static Simulator Instance
         {
@@ -272,7 +272,7 @@ namespace RVO
 
         public void removeObstacle(int id)
         {
-            hasRemovedObstacle_ = true;
+            //hasRemovedObstacle_ = true;
             throw new System.NotImplementedException();
         }
 
@@ -290,7 +290,7 @@ namespace RVO
             agentCount_ = 0;
             freeIndexList_.Clear();
             hasRemovedAgent_ = false;
-            hasRemovedObstacle_ = false;
+            //hasRemovedObstacle_ = false;
 
             SetNumWorkers(0);
         }

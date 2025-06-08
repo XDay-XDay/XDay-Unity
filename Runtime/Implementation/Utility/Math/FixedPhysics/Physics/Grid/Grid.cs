@@ -75,7 +75,7 @@ namespace XDay
             {
                 RemoveFromCell(ref oldCellCoord, body);
                 var newCell = GetCell(newCellCoord.x, newCellCoord.y);
-                newCell.Rigidbodies.Add(body);
+                newCell?.Rigidbodies.Add(body);
             }
         }
 
@@ -89,6 +89,10 @@ namespace XDay
         private void RemoveFromCell(ref Vector2Int coord, Rigidbody body)
         {
             var oldCell = GetCell(coord.x, coord.y);
+            if (oldCell == null)
+            {
+                return;
+            }
             var oldList = oldCell.Rigidbodies;
             var idx = oldList.IndexOf(body);
             if (idx >= 0)

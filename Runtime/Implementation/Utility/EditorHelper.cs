@@ -112,11 +112,11 @@ namespace XDay.UtilityAPI
             }
         }
 
-        public static string QueryAssetFilePath<T>() where T : UnityEngine.Object
+        public static string QueryAssetFilePath<T>(string[] searchInFolders = null) where T : UnityEngine.Object
         {
-            var assets = QueryAssets<T>();
+            var assets = QueryAssets<T>(searchInFolders);
 
-            if (assets.Length > 0)
+            if (assets.Count > 0)
             {
                 return AssetDatabase.GetAssetPath(assets[0]);
             }
@@ -124,22 +124,56 @@ namespace XDay.UtilityAPI
             return "";
         }
 
-        public static T[] QueryAssets<T>() where T : UnityEngine.Object
+        public static string QueryScriptFilePath(string prefix, string className)
         {
-            var typeName = $"t:{typeof(T).Name}";
-            var assetGuids = AssetDatabase.FindAssets(typeName);
-            T[] assets = new T[assetGuids.Length];
+            var assetGuids = AssetDatabase.FindAssets($"t:script {className}");
             for (int i = 0; i < assetGuids.Length; ++i)
             {
-                assets[i] = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(assetGuids[i]));
+                var assetPath = AssetDatabase.GUIDToAssetPath(assetGuids[i]);
+                var fileName = Helper.GetPathName(assetPath, false);
+                if (fileName == className && 
+                    assetPath.IndexOf("XDay") >= 0)
+                {
+                    if (assetPath.IndexOf(prefix) >= 0)
+                    {
+                        return assetPath;
+                    }
+                }
+            }
+            return null;
+        }
+
+        public static List<T> QueryAssets<T>(string[] searchInFolders = null, bool onlyTopDir = false) where T : UnityEngine.Object
+        {
+            var typeName = $"t:{typeof(T).Name}";
+            string[] assetGuids;
+            if (searchInFolders == null)
+            {
+                assetGuids = AssetDatabase.FindAssets(typeName);
+            }
+            else
+            {
+                assetGuids = AssetDatabase.FindAssets(typeName, searchInFolders);
+            }
+
+            List<T> assets = new();
+            for (int i = 0; i < assetGuids.Length; ++i)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(assetGuids[i]);
+                if (searchInFolders == null ||
+                    !onlyTopDir ||
+                    IsInFolder(path, searchInFolders))
+                {
+                    assets.Add(AssetDatabase.LoadAssetAtPath<T>(path));
+                }
             }
             return assets;
         }
 
-        public static T QueryAsset<T>() where T : UnityEngine.Object
+        public static T QueryAsset<T>(string[] searchInFolders = null) where T : UnityEngine.Object
         {
-            var assets = QueryAssets<T>();
-            if (assets.Length > 0)
+            var assets = QueryAssets<T>(searchInFolders);
+            if (assets.Count > 0)
             {
                 return assets[0];
             }
@@ -353,6 +387,15 @@ namespace XDay.UtilityAPI
             }
         }
 
+        public static T LoadAssetByGUID<T>(string guid) where T : UnityEngine.Object
+        {
+            if (string.IsNullOrEmpty(guid))
+            {
+                return null;
+            }
+            return AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guid));
+        }
+
         public static string GetObjectGUID(UnityEngine.Object obj)
         {
             if (obj == null)
@@ -511,6 +554,43 @@ namespace XDay.UtilityAPI
             return EditorGUILayout.Toggle(state, EditorStyles.foldout, GUILayout.Width(15));
         }
 
+        public static bool ImageButton(Texture2D texture, string tooltip = "", int size = 18)
+        {
+            var oldPadding = GUI.skin.button.padding;
+            int pad = 1;
+            GUI.skin.button.padding = new RectOffset(pad, pad, pad, pad);
+            bool pressed = false;
+            if (GUILayout.Button(new GUIContent(texture, tooltip), GUILayout.MaxWidth(size), GUILayout.MaxHeight(size)))
+            {
+                pressed = true;
+            }
+            GUI.skin.button.padding = oldPadding;
+            return pressed;
+        }
+
+        public static bool ImageButton(string texturePath, string tooltip = "", int size = 18)
+        {
+            var oldPadding = GUI.skin.button.padding;
+            int pad = 1;
+            GUI.skin.button.padding = new RectOffset(pad, pad, pad, pad);
+            bool pressed = false;
+            if (GUILayout.Button(new GUIContent(AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath), tooltip), GUILayout.MaxWidth(size), GUILayout.MaxHeight(size)))
+            {
+                pressed = true;
+            }
+            GUI.skin.button.padding = oldPadding;
+            return pressed;
+        }
+
+        public static bool Button(string text, string tooltip = "")
+        {
+            if (GUILayout.Button(new GUIContent(text, tooltip)))
+            {
+                return true;
+            }
+            return false;
+        }
+
         public static void ImportTextureAsSprite(string texturePath)
         {
             TextureImporter textureImporter = AssetImporter.GetAtPath(texturePath) as TextureImporter;
@@ -537,19 +617,19 @@ namespace XDay.UtilityAPI
                 return null;
             }
 
-            // ÌáÈ¡°üÃû£¨Èç "com.example.mypackage"£©
+            // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ "com.example.mypackage"ï¿½ï¿½
             var parts = packagePath.Split('/');
             if (parts.Length < 2) return null;
             var packageName = parts[1];
 
-            // Í¨¹ýPackageManager»ñÈ¡°üÐÅÏ¢
+            // é€šè¿‡PackageManagerèŽ·å–åŒ…ä¿¡æ¯
             var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath);
             if (packageInfo == null)
             {
                 return null;
             }
 
-            // ·µ»Ø½âÎöºóµÄÎïÀíÂ·¾¶
+            // è¿”å›žè§£æžåŽçš„ç‰©ç†è·¯å¾„
             return packageInfo.resolvedPath;
         }
 
@@ -703,7 +783,72 @@ namespace XDay.UtilityAPI
             var plane = new Plane(Vector3.up, planeHeight);
             plane.Raycast(ray, out float distance);
             return ray.origin + ray.direction * distance;
-        }		
+        }
+
+        public static void OpenCSFile(string filePath, int lineNumber)
+        {
+            UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(filePath, lineNumber);
+        }
+
+        public static void MoveAsset(UnityEngine.Object asset, string targetFolder)
+        {
+            if (asset == null)
+            {
+                return;
+            }
+
+            var oldPath = AssetDatabase.GetAssetPath(asset);
+            var fileName = Helper.GetPathName(oldPath, true);
+            var newPath = $"{targetFolder}/{fileName}";
+            AssetDatabase.MoveAsset(oldPath, newPath);
+        }
+
+        public static bool IsInFolder(string path, string[] folders)
+        {
+            foreach (var dir in folders)
+            {
+                var folderPath = Helper.GetFolderPath(path);
+                if (folderPath == dir)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+		
+		public static void DrawFullRect(Color color, Vector2 offset)
+        {
+            var pos = Helper.GetCurrentCursorPos();
+            EditorGUI.DrawRect(new Rect(pos.x + offset.x, pos.y + offset.y, EditorGUIUtility.currentViewWidth, 20), color);
+        }
+
+        public static void DrawLineStrip(List<Vector3> points, Color color, bool usingGizmo)
+        {
+            if (usingGizmo)
+            {
+                var originalColor = Gizmos.color;
+                Gizmos.color = color;
+
+                for (int i = 0; i < points.Count - 1; ++i)
+                {
+                    Gizmos.DrawLine(points[i], points[i + 1]);
+                }
+
+                Gizmos.color = originalColor;
+            }
+            else
+            {
+                var originalColor = Handles.color;
+                Handles.color = color;
+
+                for (int i = 0; i < points.Count - 1; ++i)
+                {
+                    Handles.DrawLine(points[i], points[i + 1]);
+                }
+
+                Handles.color = originalColor;
+            }
+        }
     }
 }
 

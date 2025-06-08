@@ -84,7 +84,7 @@ namespace XDay.WorldAPI.Tile
             m_Renderer = null;
         }
 
-        protected override void UpdateInternal()
+        protected override void UpdateInternal(float dt)
         {
             var cameraPos = World.CameraManipulator.RenderPosition;
 

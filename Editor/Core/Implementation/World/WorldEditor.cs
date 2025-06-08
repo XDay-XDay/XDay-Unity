@@ -35,10 +35,13 @@ namespace XDay.WorldAPI.Editor
         public static event System.Action EventRepaint;
         public static Camera Camera => SceneView.GetAllSceneCameras()[0];
         public static WorldManager WorldManager => m_WorldManager;
+        public static IEventSystem EventSystem => m_EventSystem;
 
         public static void Init()
         {
             Uninit();
+
+            m_EventSystem = IEventSystem.Create();
 
             m_Root = new GameObject(WorldDefine.WORLD_EDITOR_NAME);
             m_Root.AddComponent<PhysxSetup>();
@@ -74,15 +77,17 @@ namespace XDay.WorldAPI.Editor
 
             Helper.DestroyUnityObject(m_Root);
             m_Root = null;
+
+            m_EventSystem = null;
         }
 
-        public static void Update()
+        public static void Update(float dt)
         {
             CheckSelection();
 
             if (IsInEditorScene())
             {
-                m_WorldManager?.Update();
+                m_WorldManager?.Update(dt);
             }
         }
 
@@ -333,7 +338,8 @@ namespace XDay.WorldAPI.Editor
         private static EditorWorldManager m_WorldManager;
         private static string[] m_PluginNames;
         private static EditorWorld m_ActiveWorld;
-        private static WorldEditorHook[] m_Hooks;
+        private static List<WorldEditorHook> m_Hooks;
+        private static IEventSystem m_EventSystem;
     }
 }
 

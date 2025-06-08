@@ -65,7 +65,15 @@ namespace XDay.WorldAPI.Editor
 
         private void UpdateScene()
         {
-            WorldEditor.Update();
+            double currentTime = EditorApplication.timeSinceStartup;
+            var dt = currentTime - m_LastExecutionTime;
+            if (dt > 0.1)
+            {
+                dt = 0.1;
+            }
+            m_LastExecutionTime = currentTime;
+
+            WorldEditor.Update((float)dt);
         }
 
         private void SetEvents(bool clear)
@@ -83,6 +91,8 @@ namespace XDay.WorldAPI.Editor
                 WorldEditor.EventRepaint += RepaintInternal;
             }
         }
+
+        private static double m_LastExecutionTime;
     }
 }
 

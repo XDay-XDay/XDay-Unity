@@ -25,6 +25,7 @@ using System;
 
 namespace XDay.WorldAPI
 {
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class WorldPluginMetadataAttribute : System.Attribute
     {
         public string DisplayName => m_DisplayName;
@@ -40,10 +41,10 @@ namespace XDay.WorldAPI
             m_Singleton = singleton;
         }
 
-        private bool m_Singleton;
-        private string m_DisplayName;
-        private string m_EditorFileName;
-        private Type m_PluginCreateWindowType;
+        private readonly bool m_Singleton;
+        private readonly string m_DisplayName;
+        private readonly string m_EditorFileName;
+        private readonly Type m_PluginCreateWindowType;
     }
 }
 

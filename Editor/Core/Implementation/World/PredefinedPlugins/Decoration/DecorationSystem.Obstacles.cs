@@ -59,11 +59,17 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private class Obstacle : IObstacle
         {
+            public List<Vector3> WorldPolygon => m_WorldPolygon;
+            public Rect WorldBounds => m_WorldBounds;
+            public int AreaID => 0;
+            public float Height => 0;
+            public bool Walkable => false;
+            public ObstacleAttribute Attribute => ObstacleAttribute.None;
+
             public Obstacle(List<Vector3> polygon, string name)
             {
                 m_WorldPolygon = polygon;
                 m_WorldBounds = Helper.CalculateBounds(polygon).ToRect();
-
 #if false
                 //debug
                 var obj = new GameObject(name);
@@ -71,9 +77,6 @@ namespace XDay.WorldAPI.Decoration.Editor
                 dp.Init(polygon);
 #endif
             }
-
-            public List<Vector3> WorldPolygon => m_WorldPolygon;
-            public Rect WorldBounds => m_WorldBounds;
 
             private List<Vector3> m_WorldPolygon;
             private Rect m_WorldBounds;

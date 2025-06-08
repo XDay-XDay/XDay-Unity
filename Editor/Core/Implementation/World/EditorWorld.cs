@@ -35,22 +35,28 @@ namespace XDay.WorldAPI.Editor
 {
     internal partial class EditorWorld : World, IWorldObjectContainer
     {
-        public int SelectedPluginIndex { set => m_SelectedPluginIndex = value; get => m_SelectedPluginIndex; }
+        public int SelectedPluginIndex 
+        { 
+            set => m_SelectedPluginIndex = value; 
+            get => m_SelectedPluginIndex; 
+        }
         public override string TypeName => "EditorWorld";
         public override int CurrentLOD => throw new NotImplementedException();
+        public bool AllowUndo => true;
 
         public EditorWorld()
         {
         }
 
-        public EditorWorld(WorldSetup setup, 
+        public EditorWorld(
+            IWorldManager worldManager, WorldSetup setup, 
             IAssetLoader assetLoader, 
             ICameraManipulator manipulator, 
             ISerializableFactory serialzableFactory, 
             EditorWorldPluginLoader pluginLoader,
             float width = 0,
             float height = 0) 
-            : base(setup, new EditorCameraVisibleAreaCalculator(), assetLoader, manipulator, serialzableFactory, width, height)
+            : base(worldManager, setup, new EditorCameraVisibleAreaCalculator(), assetLoader, manipulator, serialzableFactory, width, height)
         {
             m_PluginLoader = pluginLoader; 
         }
@@ -60,6 +66,16 @@ namespace XDay.WorldAPI.Editor
             base.Init();
 
             m_WorldRenderer.Root.AddComponent<NoKeyDeletion>();
+
+            if (GetPlugin(m_SelectedPluginIndex) is EditorWorldPlugin selectedPlugin)
+            {
+                Selection.activeGameObject = selectedPlugin.Root;
+            }
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
         }
 
         public WorldPlugin QueryPlugin(GameObject gameObject)
@@ -109,13 +125,13 @@ namespace XDay.WorldAPI.Editor
             AssetDatabase.SaveAssets();
         }
 
-        public override void Update()
+        public override void Update(float dt)
         {
             if (Inited)
             {
                 foreach (var plugin in m_Plugins)
                 {
-                    plugin.Update();
+                    plugin.Update(dt);
                 }
             }
         }

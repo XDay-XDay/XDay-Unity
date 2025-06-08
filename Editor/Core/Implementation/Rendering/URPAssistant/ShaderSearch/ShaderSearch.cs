@@ -87,12 +87,7 @@ namespace ShaderTool
             var packagePath = tokens[0] + "/" + tokens[1];
             var absFilePath = EditorHelper.ConvertPackageToPhysicalPath(packagePath);
             var relativePath = fullPath.Substring(packagePath.Length);
-            Open($"{absFilePath}{relativePath}", 1);
-        }
-
-        public void Open(string filePath, int lineNumber)
-        {
-            UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(filePath, lineNumber);
+            EditorHelper.OpenCSFile($"{absFilePath}{relativePath}", 1);
         }
 
         List<Entry> SearchContent(string file, string content, bool matchWord)

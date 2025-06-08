@@ -35,7 +35,7 @@ namespace XDay.AnimationAPI
 
     public class GPUAnimationBakeSetting : MonoBehaviour
     {
-        public BakeSetting Setting;
+        public BakeSetting Setting = new();
     }
 
     [Serializable]

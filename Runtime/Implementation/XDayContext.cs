@@ -48,7 +48,7 @@ namespace XDay.API
         public XDayContext(string worldSetupFilePath, IAssetLoader loader, bool enableLog, bool enableUI)
         {
             Debug.Assert(!string.IsNullOrEmpty(worldSetupFilePath));
-            Debug.Assert(loader != null);
+            loader ??= new DefaultAssetLoader();
 
             var logSetting = new LogSetting()
             {
@@ -99,13 +99,13 @@ namespace XDay.API
             Log.Uninit();
         }
 
-        public void Update()
+        public void Update(float dt)
         {
             m_TickTimer.Update();
             m_FrameTimer.Update();
             m_Input.Update();
-            m_WindowManager?.Update(Time.deltaTime);
-            m_WorldSystem?.Update();
+            m_WindowManager?.Update(dt);
+            m_WorldSystem?.Update(dt);
         }
 
         public void LateUpdate()

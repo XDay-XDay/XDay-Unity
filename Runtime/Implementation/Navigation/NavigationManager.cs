@@ -21,10 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using UnityEngine;
-using XDay.UtilityAPI;
 
 namespace XDay.NavigationAPI
 {

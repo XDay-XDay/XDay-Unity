@@ -152,13 +152,13 @@ namespace XDay.WorldAPI
             UnloadWorldsInternal();
         }
 
-        public void Update()
+        public void Update(float dt)
         {
             m_TaskSystem?.Update();
 
             foreach (var world in m_Worlds)
             {
-                world.Update();
+                world.Update(dt);
             }
         }
 
@@ -202,9 +202,10 @@ namespace XDay.WorldAPI
         private void InitSetup(string setupFilePath)
         {
             m_SetupManager = m_AssetLoader.Load<WorldSetupManager>(setupFilePath);
-            if (m_SetupManager == null)
+            if (m_SetupManager == null || string.IsNullOrEmpty(m_SetupManager.GameFolder))
             {
-                Debug.LogError($"Invalid world setup file path {setupFilePath}");
+                Debug.LogWarning($"Invalid world setup file path {setupFilePath}");
+                return;
             }
 
             var setup = m_AssetLoader.Load<WorldPluginSetup>($"{m_SetupManager.GameFolder}/WorldPluginSetup.asset");

@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.Terrain.Editor
@@ -125,7 +124,7 @@ namespace XDay.Terrain.Editor
         public TerrainModifier GetStartModifier() { return mStartModifier; }
         public TerrainModifier CreateModifier(string typeName)
         {
-            Debug.Assert(mModifierCreators.ContainsKey(typeName));
+            Debug.Assert(mModifierCreators.ContainsKey(typeName), $"{typeName} not found!");
             return mModifierCreators[typeName]();
         }
         public float GetMaxHeight()
@@ -373,6 +372,7 @@ namespace XDay.Terrain.Editor
             mModifierCreators["Output"] = () => { return new Output(); };
             mModifierCreators["Noise"] = () => { return new Noise(); };
             mModifierCreators["Erosion"] = () => { return new Erosion(); };
+            mModifierCreators["ThermalErosion"] = () => { return new ThermalErosion(); };
             mModifierCreators["HeightMap"] = () => { return new HeightMap(); };
             mModifierCreators["WeightMap"] = () => { return new WeightMap(); };
             mModifierCreators["TextureBlend"] = () => { return new TextureBlend(); };

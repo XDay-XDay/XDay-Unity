@@ -23,17 +23,19 @@
 
 
 
+using System;
 using UnityEngine;
 
 namespace XDay.UtilityAPI.Editor
 {
     public class VirtualViewer
     {
-        public VirtualViewer(float worldWidth, float worldHeight)
+        public VirtualViewer(float worldWidth, float worldHeight, Action onZoomChanged)
         {
             m_WorldWidth = worldWidth;
             m_WorldHeight = worldHeight;
             m_Zoom = 1.0f;
+            m_OnZoomChanged = onZoomChanged;
         }
 
         public void SetFrustum(float height, float ratio)
@@ -61,6 +63,11 @@ namespace XDay.UtilityAPI.Editor
             m_AnchorWorldPositionY = worldY;
         }
 
+        public Vector2 GetWorldPosition()
+        {
+            return new Vector2(m_AnchorWorldPositionX, m_AnchorWorldPositionY);
+        }
+
         public void Move(float x, float y)
         {
             float frustumWidth = m_FrustumWidth * m_Zoom;
@@ -81,8 +88,7 @@ namespace XDay.UtilityAPI.Editor
             float rx = (worldPosOldX - m_AnchorWorldPositionX) / frustumWidth;
             float ry = (worldPosOldY - m_AnchorWorldPositionY) / frustumHeight;
 
-            m_Zoom += delta;
-            m_Zoom = Mathf.Clamp(m_Zoom, m_MinZoom, m_MaxZoom);
+            SetZoom(m_Zoom + delta);
 
             float newFrustumWidth = m_FrustumHeight * m_AspectRatio * m_Zoom;
             float newFrustumHeight = m_FrustumHeight * m_Zoom;
@@ -116,25 +122,31 @@ namespace XDay.UtilityAPI.Editor
         public float GetWorldWidth() { return m_WorldWidth; }
         public float GetWorldHeight() { return m_WorldHeight; }
         public float GetZoom() { return m_Zoom; }
+        public void SetZoom(float zoom) 
+        {
+            m_Zoom = zoom;
+            m_Zoom = Mathf.Clamp(m_Zoom, m_MinZoom, m_MaxZoom);
+            m_OnZoomChanged?.Invoke();
+        }
         public float GetMaxZoom() { return m_MaxZoom; }
         public float GetMinZoom() { return m_MinZoom; }
-
         public void SetZoomRange(float maxZoom, float minZoom)
         {
             m_MaxZoom = maxZoom;
             m_MinZoom = minZoom;
         }
 
-        float m_FrustumHeight = 0;
-        float m_FrustumWidth = 0;
-        float m_AspectRatio = 0;
-        float m_WorldWidth;
-        float m_WorldHeight;
-        float m_Zoom = 1.0f;
-        float m_MaxZoom = 5.0f;
-        float m_MinZoom = 0.5f;
-        float m_AnchorWorldPositionX;
-        float m_AnchorWorldPositionY;
+        private float m_FrustumHeight = 0;
+        private float m_FrustumWidth = 0;
+        private float m_AspectRatio = 0;
+        private float m_WorldWidth;
+        private float m_WorldHeight;
+        private float m_Zoom = 1.0f;
+        private float m_MaxZoom = 5.0f;
+        private float m_MinZoom = 0.5f;
+        private float m_AnchorWorldPositionX;
+        private float m_AnchorWorldPositionY;
+        private Action m_OnZoomChanged;
     };
 }
 

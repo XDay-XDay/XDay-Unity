@@ -162,11 +162,11 @@ namespace XDay.AnimationAPI.Editor
             var animator = root.GetComponentInChildren<Animator>(true);
             if (animator != null)
             {
-                Debug.LogError($"No GameObject tagged as \"AnimationRoot\", will sample animation from animator game object {animator.gameObject}!");
+                Debug.LogError($"No GameObject tagged as {AnimationDefine.ANIM_SAMPLE_NAME}, will sample animation from animator game object {animator.gameObject}!");
                 return animator.gameObject;
             }
 
-            Debug.LogError($"Can't sample animation, no game object tagged as \"AnimationRoot\" or animator!");
+            Debug.LogError($"Can't sample animation, no game object tagged as {AnimationDefine.ANIM_SAMPLE_NAME} or animator!");
             return null;
         }
 

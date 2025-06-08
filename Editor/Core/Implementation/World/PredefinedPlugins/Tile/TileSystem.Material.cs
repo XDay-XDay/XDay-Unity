@@ -26,6 +26,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using XDay.WorldAPI.Editor;
 using XDay.UtilityAPI;
+using XDay.UtilityAPI.Editor;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -38,12 +39,22 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 m_ShowMaterialConfig = EditorGUILayout.Foldout(m_ShowMaterialConfig, "材质参数");
                 EditorGUILayout.Space();
+                if (GUILayout.Button("替换名称", GUILayout.MaxWidth(80)))
+                {
+                    ReplaceName();
+                }
+                if (GUILayout.Button("应用所有", GUILayout.MaxWidth(80)))
+                {
+                    ApplyAllMaterialConfigs();
+                }
                 if (GUILayout.Button(new GUIContent("新增", "新增材质参数"), GUILayout.MaxWidth(40)))
                 {
                     changed = AddMaterialConfig();
                 }
             }
             EditorGUILayout.EndHorizontal();
+
+            DrawSearch();
 
             if (m_ShowMaterialConfig)
             {
@@ -57,12 +68,14 @@ namespace XDay.WorldAPI.Tile.Editor
 
                     for (var i = 0; i < m_TempList.Count; ++i)
                     {
-                        if (DrawMaterialConfig(m_TempList[i], i))
+                        if (DrawMaterialConfig(m_TempList, i))
                         {
                             break;
                         }
                     }
                 });
+                m_MaterialConfigs.Clear();
+                m_MaterialConfigs.AddRange(m_TempList);
             }
         }
 
@@ -89,7 +102,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
             if (m_ActiveMaterialConfigID == 0)
             {
-                m_ActiveMaterialConfigID = config.ID;
+                SetActiveMaterialConfig(config.ID);
             }
             m_MaterialConfigs.Add(config);
             return true;
@@ -135,7 +148,7 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 if (EditorHelper.GetObjectGUID(renderer.sharedMaterial.shader) == config.ShaderGUID)
                 {
-                    tile.MaterialConfigID = config.ID;
+                    UndoSystem.SetAspect(tile, TileDefine.TILE_MATERIAL_ID_NAME, IAspect.FromInt32(config.ID), "Set Tile Material ID", ID, UndoActionJoinMode.None);
                     ApplyVectorParameters(config, renderer, tile);
                     ApplyTextureParameters(config, renderer, tile);
                     ApplyFloatParameters(config, renderer, tile);
@@ -152,14 +165,21 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
-        private bool DrawMaterialConfig(MaterialConfig config, int index)
+        private bool DrawMaterialConfig(List<MaterialConfig> configs, int index)
         {
+            var config = configs[index];
+
+            if(!string.IsNullOrEmpty(m_SearchText) && config.Name.IndexOf(m_SearchText) < 0)
+            {
+                return false;
+            }
+
             EditorGUILayout.BeginHorizontal();
 
             EditorGUIUtility.labelWidth = 5;
             if (EditorGUILayout.ToggleLeft("", config.ID == m_ActiveMaterialConfigID, GUILayout.MaxWidth(25)))
             {
-                m_ActiveMaterialConfigID = config.ID;
+                SetActiveMaterialConfig(config.ID);
             }
             EditorGUIUtility.labelWidth = 0;
 
@@ -167,11 +187,15 @@ namespace XDay.WorldAPI.Tile.Editor
 
             EditorGUILayout.Space();
 
+            DrawChangeOrder(configs, index);
+
             DrawApplyMaterial(config);
 
             DrawRefreshMaterialButton(config);
 
-            var configDeleted = DrawDeleteMaterialConfigButton(index);
+            DrawCopyMaterial(configs, config, index);
+
+            var configDeleted = DrawDeleteMaterialConfigButton(configs, index);
 
             EditorGUILayout.EndHorizontal();
 
@@ -225,16 +249,21 @@ namespace XDay.WorldAPI.Tile.Editor
             if (m_TempList.Count > 0 &&
                 changed)
             {
-                m_ActiveMaterialConfigID = m_TempList[0].ID;
+                SetActiveMaterialConfig(m_TempList[0].ID);
             }
         }
 
-        private bool DrawDeleteMaterialConfigButton(int index)
+        private bool DrawDeleteMaterialConfigButton(List<MaterialConfig> configs, int index)
         {
             if (GUILayout.Button(new GUIContent("删除", ""), GUILayout.MaxWidth(40)))
             {
-                m_MaterialConfigs.RemoveAt(index);
-                return true;
+                if (EditorUtility.DisplayDialog("警告", "确定删除?删除后不可恢复", "确定", "取消"))
+                {
+                    configs[index].Uninit();
+                    configs.RemoveAt(index);
+                    SceneView.RepaintAll();
+                    return true;
+                }
             }
             return false;
         }
@@ -248,9 +277,28 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
+        private void DrawChangeOrder(List<MaterialConfig> configs, int index)
+        {
+            if (index != configs.Count - 1)
+            {
+                if (GUILayout.Button(new GUIContent("->", "向下移动"), GUILayout.MaxWidth(20)))
+                {
+                    (configs[index], configs[index+1]) = (configs[index + 1], configs[index]);
+                }
+            }
+
+            if (index != 0)
+            {
+                if (GUILayout.Button(new GUIContent("<-", "向上移动"), GUILayout.MaxWidth(20)))
+                {
+                    (configs[index], configs[index - 1]) = (configs[index - 1], configs[index]);
+                }
+            }
+        }
+
         private void DrawApplyMaterial(MaterialConfig config)
         {
-            if (GUILayout.Button(new GUIContent("应用到地块", ""), GUILayout.MaxWidth(80)))
+            if (GUILayout.Button(new GUIContent("应用", "应用到地块"), GUILayout.MaxWidth(40)))
             {
                 UndoSystem.NextGroupAndJoin();
 
@@ -268,12 +316,50 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
+        private void ApplyAllMaterialConfigs()
+        {
+            UndoSystem.NextGroupAndJoin();
+
+            foreach (var config in m_MaterialConfigs)
+            {
+                for (var y = 0; y < m_YTileCount; ++y)
+                {
+                    for (var x = 0; x < m_XTileCount; ++x)
+                    {
+                        var tile = m_Tiles[y * m_XTileCount + x];
+                        if (tile != null && tile.MaterialConfigID == config.ID)
+                        {
+                            ApplyMaterialConfigToTile(config, tile, x, y);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void DrawCopyMaterial(List<MaterialConfig> configs, MaterialConfig config, int index)
+        {
+            if (GUILayout.Button(new GUIContent("复制", "复制材质设置"), GUILayout.MaxWidth(40)))
+            {
+                var newConfig = config.Clone();
+                newConfig.Init(World);
+                configs.Insert(index + 1, newConfig);
+                SetActiveMaterialConfig(newConfig.ID);
+            }
+        }
+
         private void DrawMaterialTextureParameters(MaterialConfig config)
         {
             for (var i = 0; i < config.Textures.Count; ++i)
             {
                 var tex = config.Textures[i];
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button(new GUIContent("替换", "替换所有材质中相同的texture"), GUILayout.MaxWidth(40)))
+                {
+                    var oldTexture = EditorHelper.LoadAssetByGUID<Texture>(tex.TextureGUID);
+                    ShowReplaceTextureWindow(tex.Name, oldTexture, tex.UVTransform.Value);
+                }
                 tex.TextureGUID = AssetDatabase.AssetPathToGUID(EditorHelper.ObjectField<Texture>($"{tex.Name}", AssetDatabase.GUIDToAssetPath(tex.TextureGUID)));
+                EditorGUILayout.EndHorizontal();
                 tex.UVTransform = EditorGUILayout.Vector4Field("", tex.UVTransform.HasValue ? tex.UVTransform.GetValueOrDefault() : new Vector4(1, 1, 0, 0));
                 if (i == config.Textures.Count - 1)
                 {
@@ -380,24 +466,33 @@ namespace XDay.WorldAPI.Tile.Editor
 
             if (evt.alt == false &&
                 evt.button == 0 &&
-                evt.type == EventType.MouseDown)
+                (evt.type == EventType.MouseDown || 
+                evt.type == EventType.MouseDrag))
             {
                 if (MaterialConfig != null)
                 {
                     GetTileCoordinatesInRange(pos, out var minX, out var minY, out var maxX, out var maxY);
-
-                    UndoSystem.NextGroupAndJoin();
-
-                    for (var y = minY; y <= maxY; ++y)
+                    var coord = UnrotatedPositionToCoordinate(pos.x, pos.z);
+                    if (m_LastPaintMaterialCoord != coord)
                     {
-                        for (var x = minX; x <= maxX; ++x)
+                        m_LastPaintMaterialCoord = coord;
+
+                        if (evt.type == EventType.MouseDown)
                         {
-                            if (x >= 0 && x < m_XTileCount && y >= 0 && y < m_YTileCount)
+                            UndoSystem.NextGroupAndJoin();
+                        }
+
+                        for (var y = minY; y <= maxY; ++y)
+                        {
+                            for (var x = minX; x <= maxX; ++x)
                             {
-                                var tile = GetTile(x, y);
-                                if (tile != null)
+                                if (x >= 0 && x < m_XTileCount && y >= 0 && y < m_YTileCount)
                                 {
-                                    ApplyMaterialConfigToTile(MaterialConfig, tile, x, y);
+                                    var tile = GetTile(x, y);
+                                    if (tile != null)
+                                    {
+                                        ApplyMaterialConfigToTile(MaterialConfig, tile, x, y);
+                                    }
                                 }
                             }
                         }
@@ -410,7 +505,49 @@ namespace XDay.WorldAPI.Tile.Editor
                 }
             }
 
+            if (evt.button == 0 && evt.type == EventType.MouseUp)
+            {
+                m_LastPaintMaterialCoord = new Vector2Int(-1, -1);
+            }
+
             HandleUtility.AddDefaultControl(0);
+        }
+
+        private void DrawTileMaterialIDs()
+        {
+            if (m_TextStyle == null)
+            {
+                m_TextStyle = new GUIStyle(GUI.skin.label);
+                m_TextStyle.normal.textColor = Color.black;
+            }
+            for (var i = 0; i < m_YTileCount; ++i)
+            {
+                for (var j = 0; j < m_XTileCount; ++j)
+                {
+                    var tile = GetTile(j, i);
+                    if (tile != null)
+                    {
+                        var position = CoordinateToRotatedCenterPosition(j, i);
+                        var config = GetMaterialConfig(tile.MaterialConfigID);
+                        if (config != null)
+                        {
+                            Handles.Label(position, config.Name, m_TextStyle);
+                        }
+                    }
+                }
+            }
+        }
+
+        private MaterialConfig GetMaterialConfig(int id)
+        {
+            foreach (var config in m_MaterialConfigs)
+            {
+                if (id == config.ID)
+                {
+                    return config;
+                }
+            }
+            return null;
         }
 
         private MaterialConfig CreateMaterialConfig(int id)
@@ -486,11 +623,64 @@ namespace XDay.WorldAPI.Tile.Editor
             return false;
         }
 
+        //替换所有material config的相同texture
+        private void ShowReplaceTextureWindow(string name, Texture oldTexture, Vector4 oldUVTransform)
+        {
+            var parameters = new List<ParameterWindow.Parameter>()
+            {
+                new ParameterWindow.TextureParameter("旧", "", name, oldTexture, oldUVTransform),
+                new ParameterWindow.TextureParameter("新", "", name, null, oldUVTransform)
+            };
+            ParameterWindow.Open("替换贴图", parameters, (p) =>
+            {
+                var ok = ParameterWindow.GetTexture(p[0], out var oldTex, out var oldUV);
+                ok &= ParameterWindow.GetTexture(p[1], out var newTex, out var newUV);
+                if (ok)
+                {
+                    foreach (var config in m_MaterialConfigs)
+                    {
+                        config.ReplaceTexture(oldTexture, newTex, newUV);
+                    }
+                }
+                return ok;
+            });
+        }
+
+        private void ReplaceName()
+        {
+            var parameters = new List<ParameterWindow.Parameter>()
+            {
+                new ParameterWindow.StringParameter("旧", "", ""),
+                new ParameterWindow.StringParameter("新", "", "")
+            };
+            ParameterWindow.Open("替换名称", parameters, (p) =>
+            {
+                var ok = ParameterWindow.GetString(p[0], out var oldName);
+                ok &= ParameterWindow.GetString(p[1], out var newName);
+                if (ok)
+                {
+                    foreach (var config in m_MaterialConfigs) 
+                    {
+                        config.ReplaceName(oldName, newName);
+                    }
+                }
+                return ok;
+            });
+        }
+
+        private void DrawSearch()
+        {
+            m_SearchText = EditorGUILayout.TextField("搜索", m_SearchText, EditorStyles.toolbarSearchField);
+        }
+
         private GUIStyle m_Style;
+        private GUIStyle m_TextStyle;
         private int m_ActiveShaderIndex = -1;
         private string[] m_ShaderNames;
+        private string m_SearchText;
         private List<KeyValuePair<Shader, Material>> m_TileShaders = new();
         private List<MaterialConfig> m_TempList = new();
+        private Vector2Int m_LastPaintMaterialCoord = new Vector2Int(-1, -1);
     }
 }
 

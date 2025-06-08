@@ -188,6 +188,44 @@ namespace XDay.WorldAPI.Editor
             return true;
         }
 
+        private void RenameWorld(WorldSetup setup, string newWorldName)
+        {
+            var dir = Helper.GetFolderPath(setup.EditorFolder);
+            var oldGameFolder = setup.GameFolder;
+            var oldEditorFolder = setup.EditorFolder;
+            var newEditorFolder = $"{dir}/{newWorldName}";
+            dir = Helper.GetFolderPath(setup.GameFolder);
+            var newGameFolder = $"{dir}/{newWorldName}";
+
+            if (Directory.Exists(newEditorFolder) || Directory.Exists(newGameFolder))
+            {
+                Debug.LogError("目标目录已经存在,无法重命名!");
+                return;
+            }
+
+            if (m_SetupManager.PreviewWorldName == setup.Name) 
+            {
+                m_SetupManager.PreviewWorldName = newWorldName;
+            }
+            setup.Name = newWorldName;
+            setup.EditorFolder = newEditorFolder;
+            setup.GameFolder = newGameFolder;
+
+            Helper.RenameFolder(oldGameFolder, setup.GameFolder);
+            Helper.RenameFolder(oldEditorFolder, setup.EditorFolder);
+
+            AssetDatabase.Refresh();
+
+            var oldSetupFilePath = setup.CameraSetupFilePath;
+
+            setup.CameraSetupFileName = $"{newWorldName}CameraSetup";
+            FileUtil.MoveFileOrDirectory(oldSetupFilePath, setup.CameraSetupFilePath);
+
+            m_SetupManager.Save();
+
+            AssetDatabase.Refresh();
+        }
+
         private bool QuerySetupManager()
         {
             if (m_SetupManager == null)
@@ -242,6 +280,8 @@ namespace XDay.WorldAPI.Editor
 
                     EditorGUILayout.Space();
 
+                    DrawRenameButton(setup);
+
                     quit |= DrawCloneButton(setup);
 
                     quit |= DrawDeleteButton(setup);
@@ -283,6 +323,30 @@ namespace XDay.WorldAPI.Editor
                 return true;
             }
             return false;
+        }
+
+        private void DrawRenameButton(WorldSetup setup)
+        {
+            if (GUILayout.Button("重命名", GUILayout.MaxWidth(50)))
+            {
+                var parameters = new List<ParameterWindow.Parameter>()
+                {
+                    new ParameterWindow.StringParameter("新名称", "", setup.Name + "_New"),
+                };
+                ParameterWindow.Open("重命名地图", parameters, (p) => {
+                    var ok = ParameterWindow.GetString(p[0], out var newName);
+                    if (ok && m_SetupManager.QuerySetup(newName) == null)
+                    {
+                        RenameWorld(setup, newName);
+                        return true;
+                    }
+                    return false;
+                });
+
+                GUIUtility.ExitGUI();
+
+                Save();
+            }
         }
 
         private bool DrawCloneButton(WorldSetup setup)

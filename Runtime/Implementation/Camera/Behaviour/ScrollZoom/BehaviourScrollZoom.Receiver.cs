@@ -22,8 +22,6 @@
  */
 
 
-
-using XDay.UtilityAPI;
 using UnityEngine;
 
 namespace XDay.CameraAPI
@@ -34,9 +32,10 @@ namespace XDay.CameraAPI
         {
             public override BehaviourType Type => BehaviourType.ScrollZoom;
 
-            public Receiver(CameraManipulator manipulator)
+            public Receiver(CameraManipulator manipulator, float zoomSpeed)
                 : base(manipulator)
             {
+                m_ZoomSpeed = zoomSpeed;
             }
 
             protected override BehaviourState UpdateInternal(CameraTransform pos)
@@ -49,9 +48,11 @@ namespace XDay.CameraAPI
                 var req = request as Request;
                 if (req.ScrollDelta != 0)
                 {
-                    pos.CurrentLogicPosition += Helper.Sign(req.ScrollDelta) * (pos.CurrentRenderRotation * Vector3.forward);
+                    pos.CurrentLogicPosition += req.ScrollDelta * m_ZoomSpeed * (pos.CurrentRenderRotation * Vector3.forward);
                 }
             }
+
+            private float m_ZoomSpeed;
         }
     }
 }

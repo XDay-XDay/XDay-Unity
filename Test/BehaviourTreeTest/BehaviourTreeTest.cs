@@ -21,31 +21,55 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#if UNITY_EDITOR
 
-
+using UnityEditor;
 using UnityEngine;
 using XDay.BehaviourTreeAPI;
+using XDay.UtilityAPI;
 
 namespace Assets.XDay.Test
 {
     internal class BehaviourTreeTest : MonoBehaviour
     {
+        public BehaviourTreeState TreeState;
+
         private void Start()
         {
-            m_Tree = new BehaviourTree();
-            var action = new ActionLog("Log") {Text = "Hello" };
-            action.SetParent(m_Tree);
+            Global.InitRuntime(new GameAssetLoader(), EditorHelper.QueryAssetFilePath<VariableManagerState>());
+            m_Tree1 = Global.RuntimeBehaviourTreeManager.CreateTree(AssetDatabase.GetAssetPath(TreeState), "Test Tree1");
+        }
+
+        private void OnDestroy()
+        {
         }
 
         private void Update()
         {
-            if (m_NodeStatus == NodeStatus.Running)
-            {
-                m_NodeStatus = m_Tree.Tick();
-            }
+            m_Tree1?.Tick();
         }
 
-        private BehaviourTree m_Tree;
-        private NodeStatus m_NodeStatus = NodeStatus.Running;
+        public void Run()
+        {
+            m_Tree1?.Run();
+        }
+
+        private BehaviourTree m_Tree1;
+    }
+
+    [CustomEditor(typeof(BehaviourTreeTest))]
+    internal class BehaviourTreeTestEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+
+            if (GUILayout.Button("Run"))
+            {
+                (target as BehaviourTreeTest).Run();
+            }
+        }
     }
 }
+
+#endif

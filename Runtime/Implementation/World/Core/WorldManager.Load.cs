@@ -31,30 +31,30 @@ namespace XDay.WorldAPI
 {
     public partial class WorldManager
     {
-        public async UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc)
+        public async UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc, bool createManipulator)
         {
             name = ConvertName(name);
             var setup = m_SetupManager.QuerySetup(name);
             if (setup != null)
             {
-                return await LoadWorldAsyncInternal(setup, cameraQueryFunc);
+                return await LoadWorldAsyncInternal(setup, cameraQueryFunc, createManipulator);
             }
             Debug.LogError($"load world failed: {name}");
             return null;
         }
 
-        public async UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc)
+        public async UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc, bool createManipulator)
         {
             var setup = m_SetupManager.QuerySetup(worldID);
             if (setup != null)
             {
-                return await LoadWorldAsyncInternal(setup, cameraQueryFunc);
+                return await LoadWorldAsyncInternal(setup, cameraQueryFunc, createManipulator);
             }
             Debug.LogError($"load world failed: {worldID}");
             return null;
         }
 
-        public IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc)
+        public IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc, bool createManipulator)
         {
             name = ConvertName(name);
 
@@ -65,15 +65,15 @@ namespace XDay.WorldAPI
                 return null;
             }
 
-            return LoadWorldInternal(setup, cameraQueryFunc);
+            return LoadWorldInternal(setup, cameraQueryFunc, createManipulator);
         }
 
-        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup setup, Func<Camera> cameraQueryFunc)
+        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup setup, Func<Camera> cameraQueryFunc, bool createManipulator)
         {
             var source = new UniTaskCompletionSource<IWorld>();
 
             LoadWorldAsyncInternal(setup, (world) => {
-                OnLoadFinished(world, cameraQueryFunc);
+                OnLoadFinished(world, cameraQueryFunc, createManipulator);
 
                 source.TrySetResult(world);
             });
@@ -83,7 +83,7 @@ namespace XDay.WorldAPI
 
         private void LoadWorldAsyncInternal(WorldSetup setup, Action<IWorld> onLoadingFinished)
         {
-            var world = new GameWorld(setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
+            var world = new GameWorld(this, setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
             m_Worlds.Add(world);
 
             m_PluginLoader.Load(world.ID, setup.GameFolder);
@@ -93,7 +93,7 @@ namespace XDay.WorldAPI
             m_TaskSystem.ScheduleTask(job);
         }
 
-        private IWorld LoadWorldInternal(WorldSetup setup, Func<Camera> cameraQueryFunc)
+        private IWorld LoadWorldInternal(WorldSetup setup, Func<Camera> cameraQueryFunc, bool createManipulator)
         {
             var world = QueryWorld(setup.ID);
             if (world != null)
@@ -102,37 +102,37 @@ namespace XDay.WorldAPI
                 return world;
             }
 
-            var gameWorld = new GameWorld(setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
+            var gameWorld = new GameWorld(this, setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
             m_Worlds.Add(gameWorld);
 
             m_PluginLoader.Load(gameWorld.ID, setup.GameFolder);
             gameWorld.LoadGame();
 
-            OnLoadFinished(gameWorld, cameraQueryFunc);
+            OnLoadFinished(gameWorld, cameraQueryFunc, createManipulator);
 
             return gameWorld;
         }
 
-        private void OnLoadFinished(IWorld world, Func<Camera> cameraQueryFunc)
+        private void OnLoadFinished(IWorld world, Func<Camera> cameraQueryFunc, bool createCameraManipulator)
         {
-            Camera camera = null;
-            if (cameraQueryFunc != null)
+            if (createCameraManipulator)
             {
-                camera = cameraQueryFunc();
+                var w = world as World;
+                var cameraSetupPath = w.Setup.CameraSetupFilePath;
+                var text = m_AssetLoader.LoadText(cameraSetupPath);
+                var setup = new CameraSetup(Helper.GetPathName(cameraSetupPath, false));
+                setup.Load(text);
+                Camera camera = null;
+                if (cameraQueryFunc != null)
+                {
+                    camera = cameraQueryFunc();
+                }
+                var manipulator = ICameraManipulator.Create(camera, setup, m_DeviceInput);
+                manipulator.SetActive(true);
+                world.CameraManipulator = manipulator;
+                manipulator.SetFocusPointBounds(world.Bounds.min.ToVector2(), world.Bounds.max.ToVector2());
+                manipulator.EnableFocusPointClampXZ = true;
             }
-
-            var w = world as World;
-            var cameraSetupPath = w.Setup.CameraSetupFilePath;
-            var text = m_AssetLoader.LoadText(cameraSetupPath);
-            var setup = new CameraSetup(Helper.GetPathName(cameraSetupPath, false));
-            setup.Load(text);
-
-            var manipulator = ICameraManipulator.Create(camera, setup, m_DeviceInput);
-            manipulator.SetActive(true);
-
-            world.CameraManipulator = manipulator;
-            manipulator.SetFocusPointBounds(world.Bounds.min.ToVector2(), world.Bounds.max.ToVector2());
-            manipulator.EnableFocusPointClampXZ = true;
         }
 
         private string ConvertName(string name)

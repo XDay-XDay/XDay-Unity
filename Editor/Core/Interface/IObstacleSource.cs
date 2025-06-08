@@ -26,8 +26,20 @@ using UnityEngine;
 
 namespace XDay.WorldAPI.Editor
 {
+    [System.Flags]
+    public enum ObstacleAttribute
+    {
+        None = 0,
+        Walkable = 1,
+    }
+
     public interface IObstacle
     {
+        int AreaID => 0;
+        //for 3d navmesh
+        float Height => 0;
+        bool Walkable => false;
+        ObstacleAttribute Attribute => ObstacleAttribute.None;
         List<Vector3> WorldPolygon { get; }
         Rect WorldBounds { get; }
     }
@@ -35,5 +47,24 @@ namespace XDay.WorldAPI.Editor
     public interface IObstacleSource
     {
         List<IObstacle> GetObstacles();
+    }
+
+    public interface IWalkableObjectSource
+    {
+        List<MeshSource> GetAllWalkableMeshes();
+        List<ColliderSource> GetAllWalkableColliders();
+    }
+
+    public class MeshSource
+    {
+        public int AreaID = 0;
+        public Mesh Mesh;
+        public GameObject GameObject;
+    }
+
+    public class ColliderSource
+    {
+        public int AreaID = 0;
+        public UnityEngine.Collider Collider;
     }
 }

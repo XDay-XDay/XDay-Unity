@@ -25,6 +25,8 @@ using Cysharp.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using TMPro;
@@ -149,6 +151,38 @@ namespace XDay.UtilityAPI
 #endif
         }
 
+        public static Vector2Int GetCenter(this HashSet<Vector2Int> coordinates)
+        {
+            var center = new Vector2Int(0, 0);
+            foreach (var coord in coordinates)
+            {
+                center += coord;
+            }
+
+            if (coordinates.Count > 0)
+            {
+                center /= coordinates.Count;
+            }
+
+            return center;
+        }
+
+        public static Vector2Int GetCenter(this List<Vector2Int> coordinates)
+        {
+            var center = new Vector2Int(0, 0);
+            for (var i = 0; i < coordinates.Count; ++i)
+            {
+                center += coordinates[i];
+            }
+
+            if (coordinates.Count > 0)
+            {
+                center /= coordinates.Count;
+            }
+
+            return center;
+        }
+
         public static T AddOrGetComponent<T>(this GameObject obj) where T : Component
         {
             if (!obj.TryGetComponent<T>(out var comp))
@@ -192,7 +226,7 @@ namespace XDay.UtilityAPI
         {
             if (z <= 0)
             {
-                Debug.Assert(false);
+                Debug.Assert(false, $"无效的高度{z}");
             }
             
             if (rotationX == 0)
@@ -296,6 +330,80 @@ namespace XDay.UtilityAPI
             return value >= 0 ? 1 : -1;
         }
 
+        public static bool PointInTriangle2D(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
+        {
+            Vector2 v0 = b - a, v1 = c - a, v2 = p - a;
+            float d00 = Vector2.Dot(v0, v0);
+            float d01 = Vector2.Dot(v0, v1);
+            float d11 = Vector2.Dot(v1, v1);
+            float d20 = Vector2.Dot(v2, v0);
+            float d21 = Vector2.Dot(v2, v1);
+            float denom = d00 * d11 - d01 * d01;
+            var v = (d11 * d20 - d01 * d21) / denom;
+            var w = (d00 * d21 - d01 * d20) / denom;
+            var u = 1.0f - v - w;
+
+            return (u >= 0) && (v >= 0) && (u + v < 1);
+        }
+
+        public static bool PointInTriangle3D(Vector3 p, Vector3 a, Vector3 b, Vector3 c, out Vector3 barycentricCoordinate)
+        {
+            Vector3 v0 = b - a, v1 = c - a, v2 = p - a;
+            float d00 = Vector3.Dot(v0, v0);
+            float d01 = Vector3.Dot(v0, v1);
+            float d11 = Vector3.Dot(v1, v1);
+            float d20 = Vector3.Dot(v2, v0);
+            float d21 = Vector3.Dot(v2, v1);
+            float denom = d00 * d11 - d01 * d01;
+            var v = (d11 * d20 - d01 * d21) / denom;
+            var w = (d00 * d21 - d01 * d20) / denom;
+            var u = 1.0f - v - w;
+            barycentricCoordinate = new Vector3(u, v, w);
+            return (u >= 0) && (v >= 0) && (u + v < 1);
+        }
+
+        //检查a是否在b的左边,顺时针,左手系
+        public static bool IsLeftXZ(Vector3 a, Vector3 b)
+        {
+            return a.z * b.x - a.x * b.z >= 0;
+        }
+
+        /// <summary>
+        /// 左手坐标系
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns>0共线,-1左边,1右边</returns>
+        public static int GetSide(Vector3 a, Vector3 b)
+        {
+            float ret = a.z * b.x - a.x * b.z;
+            if (Approximately(ret, 0, 0.0001f))
+            {
+                return 0;
+            }
+            if (ret > 0)
+            {
+                return -1;
+            }
+            return 1;
+        }
+
+        //检查dir在dirLeft和dirRight的哪边
+        public static int GetSide(Vector3 dir, Vector3 dirLeft, Vector3 dirRight)
+        {
+            bool leftCheck = IsLeftXZ(dirLeft, dir);
+            if (leftCheck == false)
+            {
+                return -1;
+            }
+            bool rightCheck = IsLeftXZ(dir, dirRight);
+            if (rightCheck == false)
+            {
+                return 1;
+            }
+            return 0;
+        }
+
         public static float GetAngleBetween(Vector2 dir0, Vector2 dir1)
         {
             dir0.Normalize();
@@ -347,6 +455,13 @@ namespace XDay.UtilityAPI
                 return true;
             }
             return false;
+        }
+
+        public static Rect MergeRect(Rect a, Rect b)
+        {
+            var min = Vector2.Min(a.min, b.min);
+            var max = Vector2.Max(a.max, b.max);
+            return new Rect(min, max - min);
         }
 
         public static Rect ExpandRect(Rect rect, Vector2 size)
@@ -1111,6 +1226,70 @@ namespace XDay.UtilityAPI
             return null;
         }
 
+        /// <summary>
+        /// 获取所有继承自指定基类的非抽象子类
+        /// </summary>
+        /// <param name="baseType">基类类型</param>
+        /// <param name="includeAbstract">是否包含抽象类</param>
+        public static List<Type> GetAllSubclasses(Type baseType, bool includeAbstract = false)
+        {
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(assembly =>
+                {
+                    try
+                    {
+                        return assembly.GetTypes();
+                    }
+                    catch (ReflectionTypeLoadException)
+                    {
+                        // 处理无法加载的类型（如缺少依赖）
+                        return Array.Empty<Type>();
+                    }
+                })
+                .Where(type =>
+                    type.IsSubclassOf(baseType) && // 必须是直接或间接子类
+                    (includeAbstract || !type.IsAbstract) // 根据参数过滤抽象类
+                )
+                .ToList();
+        }
+
+        public static List<Type> GetClassesImplementingInterface(Type interfaceType)
+        {
+            if (!interfaceType.IsInterface)
+                throw new ArgumentException("提供的类型必须是一个接口。", nameof(interfaceType));
+
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            List<Type> ret = new();
+            foreach (var assembly in assemblies)
+            {
+                Type[] types;
+                try
+                {
+                    types = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException ex)
+                {
+                    // 处理部分类型加载失败的情况
+                    types = ex.Types.Where(t => t != null).ToArray();
+                }
+                catch
+                {
+                    // 忽略无法加载的程序集
+                    continue;
+                }
+
+                foreach (var type in types)
+                {
+                    if (type.IsClass && !type.IsAbstract && interfaceType.IsAssignableFrom(type))
+                    {
+                        ret.Add(type);
+                    }
+                }
+            }
+            return ret;
+        }
+
         public static string GetObjectGUID(UnityEngine.Object obj)
         {
 #if UNITY_EDITOR
@@ -1119,6 +1298,39 @@ namespace XDay.UtilityAPI
 #else
             return "";
 #endif
+        }
+
+        public static Rect CalculateRect(IEnumerable<Vector3> vertices)
+        {
+            float minX = float.MaxValue;
+            float minZ = float.MaxValue;
+            float maxX = float.MinValue;
+            float maxZ = float.MinValue;
+            foreach (var local in vertices)
+            {
+                if (local.x < minX)
+                {
+                    minX = local.x;
+                }
+
+                if (local.z < minZ)
+                {
+                    minZ = local.z;
+                }
+
+                if (local.x > maxX)
+                {
+                    maxX = local.x;
+                }
+
+                if (local.z > maxZ)
+                {
+                    maxZ = local.z;
+                }
+            }
+
+            var bounds = new Rect(minX, minZ, maxX - minX, maxZ - minZ);
+            return bounds;
         }
 
         public static Bounds CalculateBounds(List<Vector3> points)
@@ -1448,6 +1660,16 @@ namespace XDay.UtilityAPI
             return new Rect(minX, minZ, maxX - minX, maxZ - minZ);
         }
 
+        public static long Min(long a, long b)
+        {
+            return a < b ? a : b;
+        }
+
+        public static long Max(long a, long b)
+        {
+            return a > b ? a : b;
+        }
+
         public static int Loop(int k, int n)
         {
             if (k >= 0)
@@ -1466,6 +1688,277 @@ namespace XDay.UtilityAPI
                 int k = UnityEngine.Random.Range(0, n + 1);  // 生成 0 到 n（含）的随机数
                 (list[n], list[k]) = (list[k], list[n]);
             }
+        }
+
+        /// <summary>
+        /// 获取类中所有带有指定 Attribute 的字段
+        /// </summary>
+        /// <param name="targetType">要搜索的类类型</param>
+        /// <param name="includeInherited">是否包含继承的基类字段</param>
+        /// <typeparam name="TAttribute">目标 Attribute 类型</typeparam>
+        public static List<FieldInfo> GetFieldsWithAttribute<TAttribute>(
+            Type targetType,
+            bool includeInherited = false
+        ) where TAttribute : Attribute
+        {
+            List<FieldInfo> result = new List<FieldInfo>();
+            BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+            Type currentType = targetType;
+            while (currentType != null && currentType != typeof(object))
+            {
+                // 获取当前类型的所有字段（根据 includeInherited 决定是否包含基类）
+                FieldInfo[] fields = currentType.GetFields(bindingFlags | BindingFlags.DeclaredOnly);
+                foreach (FieldInfo field in fields)
+                {
+                    var attribute = field.GetCustomAttribute(typeof(TAttribute), false);
+                    if (attribute != null)
+                    {
+                        result.Add(field);
+                    }
+                }
+
+                // 是否继续遍历基类
+                if (!includeInherited) break;
+                currentType = currentType.BaseType;
+            }
+
+            return result;
+        }
+
+        public static T GetClassAttribute<T>(Type type, bool inherit = false) where T : Attribute
+        {
+            return type.GetCustomAttribute<T>(inherit);
+        }
+
+        /// <summary>
+        /// 例如创建Variable<int>
+        /// </summary>
+        /// <param name="baseType">例如typeof(Variable<>)</param>
+        /// <param name="genericTypes">例如typeof(int)</param>
+        public static Type CreateGenericType(Type classType, Type[] genericTypes)
+        {
+            return classType.MakeGenericType(genericTypes);
+        }
+
+        public static ushort[] ConvertToUInt16Array(int[] array)
+        {
+            ushort[] ret = new ushort[array.Length];
+            for (int i = 0; i < array.Length; ++i)
+            {
+                ret[i] = (ushort)array[i];
+            }
+            return ret;
+        }
+
+        public static void ReverseList<T>(List<T> list)
+        {
+            int n = list.Count / 2;
+            for (int i = 0; i < n; ++i)
+            {
+                T temp = list[i];
+                int k = list.Count - 1 - i;
+                list[i] = list[k];
+                list[k] = temp;
+            }
+        }
+
+        public static void ReverseArray<T>(T[] array)
+        {
+            int n = array.Length / 2;
+            for (int i = 0; i < n; ++i)
+            {
+                T temp = array[i];
+                int k = array.Length - 1 - i;
+                array[i] = array[k];
+                array[k] = temp;
+            }
+        }
+
+
+        /// <summary>
+        /// 获取当前gui游标坐标
+        /// </summary>
+        /// <returns></returns>
+        public static Vector2 GetCurrentCursorPos()
+        {
+            Rect cursorRect = GUILayoutUtility.GetRect(
+                GUIContent.none,
+                GUIStyle.none,
+                GUILayout.Width(0),
+                GUILayout.Height(0)
+            );
+            return cursorRect.min;
+        }
+
+        public static bool IsGameObjectTransformIdentity(GameObject obj)
+        {
+            return obj.transform.position == Vector3.zero &&
+                   obj.transform.lossyScale == Vector3.one &&
+                   obj.transform.rotation == Quaternion.identity;
+        }
+
+        public static void RenameFolder(string sourceFolder, string targetFolder)
+        {
+            try
+            {
+                // 验证原文件夹是否存在
+                if (!Directory.Exists(sourceFolder))
+                    throw new DirectoryNotFoundException($"源文件夹不存在: {sourceFolder}");
+
+                // 检查目标路径是否已存在
+                if (Directory.Exists(targetFolder))
+                    throw new IOException($"目标文件夹已存在: {targetFolder}");
+
+                // 执行重命名（支持非空文件夹）
+                Directory.Move(sourceFolder, targetFolder);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"重命名失败: {ex.Message}");
+                throw; // 抛出异常供上层处理
+            }
+        }
+
+        public static Bounds CalculateBoxColliderWorldBounds(UnityEngine.BoxCollider collider)
+        {
+            Vector3 worldCenter = collider.transform.TransformPoint(collider.center);
+            Vector3 worldSize = Vector3.Scale(collider.size, collider.transform.lossyScale);
+            return new Bounds(worldCenter, worldSize);
+        }
+
+        public static T[][] Rotate180<T>(T[][] matrix)
+        {
+            int n = matrix.Length;
+            for (int i = 0; i < n; i++)
+            {
+                Array.Reverse(matrix[i]); // 左右翻转
+            }
+
+            // 上下翻转
+            for (int i = 0; i < n / 2; i++)
+            {
+                (matrix[n - 1 - i], matrix[i]) = (matrix[i], matrix[n - 1 - i]);
+            }
+
+            return matrix;
+        }
+
+        public static T[] ToArray<T>(T[][] v, int row, int col)
+        {
+            T[] ret = new T[row * col];
+            int idx = 0;
+            for (var i = 0; i < row; i++)
+            {
+                for (var j = 0; j < col; j++)
+                {
+                    ret[idx++] = v[i][j];
+                }
+            }
+            return ret;
+        }
+
+        public static T[][] ToArray2D<T>(T[] v, int row, int col)
+        {
+            T[][] ret = new T[row][];
+            for (var i = 0; i < row; i++)
+            {
+                ret[i] = new T[col];
+            }
+
+            int idx = 0;
+            for (var i = 0; i < row; ++i)
+            {
+                for (var j = 0; j < col; ++j)
+                {
+                    ret[i][j] = v[idx++];
+                }
+            }
+
+            return ret;
+        }
+
+        public static string ToString<T>(T[] arr)
+        {
+            StringBuilder builder = new();
+            foreach (var s in arr)
+            {
+                builder.Append($"{s} ");
+            }
+            return builder.ToString();
+        }
+
+        public static bool TriangleRayIntersectionTest3D(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 rayOrigin, Vector3 rayDirection, out Vector3 barycentricCoordinate, out Vector3 normal, out float distance)
+        {
+            barycentricCoordinate = Vector3.zero;
+            distance = 0;
+
+            var v10 = v1 - v0;
+            var v20 = v2 - v0;
+            normal = Vector3.Cross(v10, v20);
+            normal.Normalize();
+
+            float dn = Vector3.Dot(rayDirection, normal);
+            if (Mathf.Approximately(dn, 0))
+            {
+                return false;
+            }
+
+            float d = -Vector3.Dot(v0, normal);
+            distance = (Vector3.Dot(rayOrigin, normal) + d) / -dn;
+            var intersectionPoint = rayOrigin + rayDirection * distance;
+            return PointInTriangle3D(intersectionPoint, v0, v1, v2, out barycentricCoordinate);
+        }
+
+        //找出点与边的最近点
+        //offset:交点与边的偏移
+        public static bool PointToSegmentDistance(Vector2 point, Vector2 s, Vector2 e, float offset, out Vector2 nearestPoint, out float minDistance)
+        {
+            var segmentDir = (e - s).normalized;
+            var pointToStart = point - s;
+            var pointToEnd = point - e;
+
+            minDistance = 0;
+            nearestPoint = Vector2.zero;
+            var d1 = Vector2.Dot(pointToStart.normalized, segmentDir);
+            var d2 = Vector2.Dot(pointToEnd.normalized, -segmentDir);
+            bool inBetween = (d1 >= 0 && d2 >= 0);
+            if (!inBetween)
+            {
+                return false;
+            }
+
+            var proj = Vector2.Dot(pointToStart, segmentDir) * segmentDir;
+            var perp = pointToStart - proj;
+            var normal = new Vector2(-segmentDir.y, segmentDir.x);
+            float point2StartDistance = pointToStart.sqrMagnitude;
+            float perpDistance2 = perp.sqrMagnitude;
+            float point2EndDistance = pointToEnd.sqrMagnitude;
+
+            if (Helper.LE(perpDistance2, point2StartDistance) && Helper.LE(perpDistance2, point2EndDistance))
+            {
+                minDistance = Mathf.Sqrt(perpDistance2);
+                nearestPoint = s + proj - normal * offset;
+                return true;
+            }
+
+            if (Helper.LE(point2StartDistance, perpDistance2) && Helper.LE(point2StartDistance, point2EndDistance))
+            {
+                minDistance = Mathf.Sqrt(point2StartDistance);
+                nearestPoint = s;
+                return true;
+            }
+
+            if (Helper.LE(point2EndDistance, point2StartDistance) && Helper.LE(point2EndDistance, perpDistance2))
+            {
+                minDistance = Mathf.Sqrt(point2EndDistance);
+                nearestPoint = e;
+                return true;
+            }
+
+            minDistance = Mathf.Sqrt(perpDistance2);
+            nearestPoint = s + proj - normal * offset;
+            return true;
         }
 
         private const double m_DegToRad = 0.0174532924;

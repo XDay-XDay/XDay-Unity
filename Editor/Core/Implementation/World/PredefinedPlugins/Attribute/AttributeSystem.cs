@@ -111,7 +111,7 @@ namespace XDay.WorldAPI.Attribute.Editor
             }
         }
 
-        protected override void UpdateInternal()
+        protected override void UpdateInternal(float dt)
         {
             if (m_Layers.Count > 0 && m_ActiveLayerID == 0)
             {

@@ -70,6 +70,8 @@ namespace XDay.WorldAPI.Editor
                 {
                     CreateInternal();
 
+                    UndoSystem.NextGroupAndJoin();
+
                     m_OnPluginCreated?.Invoke();
 
                     Close();

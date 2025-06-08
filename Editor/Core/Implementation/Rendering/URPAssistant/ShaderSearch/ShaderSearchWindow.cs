@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using XDay.UtilityAPI;
 
 namespace ShaderTool
 {
@@ -137,7 +138,7 @@ namespace ShaderTool
                             EditorGUIUtility.labelWidth = 0;
                             if (GUILayout.Button("Open", GUILayout.MaxWidth(50)))
                             {
-                                m_Search.Open(entry.File, entry.LineNumber);
+                                EditorHelper.OpenCSFile(entry.File, entry.LineNumber);
                             }
                             EditorGUILayout.TextField(entry.Text);
                             EditorGUILayout.EndHorizontal();

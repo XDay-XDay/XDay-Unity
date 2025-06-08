@@ -24,12 +24,13 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using XDay.NavigationAPI;
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
     [WorldPluginMetadata("装饰层", "decoration_editor_data", typeof(DecorationSystemCreateWindow), true)]
-    internal partial class DecorationSystem : EditorWorldPlugin, IObstacleSource
+    internal partial class DecorationSystem : EditorWorldPlugin, IObstacleSource, IWalkableObjectSource
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "decoration" };
@@ -276,6 +277,51 @@ namespace XDay.WorldAPI.Decoration.Editor
         private List<int> GetDirtyObjectIDs()
         {
             return m_DirtyObjectIDs;
+        }
+
+        List<MeshSource> IWalkableObjectSource.GetAllWalkableMeshes()
+        {
+            List<MeshSource> sources = new();
+            foreach (var kv in m_Decorations)
+            {
+                var decoration = kv.Value;
+                var gameObject = m_Renderer.GetGameObject(kv.Key);
+                //根节点挂了NavMeshSetting的物体才生成NavMesh
+                if (gameObject.TryGetComponent<NavMeshSetting>(out var navMeshSetting))
+                {
+                    var meshFilters = gameObject.GetComponentsInChildren<MeshFilter>(true);
+                    foreach (var filter in meshFilters)
+                    {
+                        var source = new MeshSource()
+                        {
+                            AreaID = navMeshSetting.AreaID,
+                            GameObject = filter.gameObject,
+                            Mesh = filter.sharedMesh,
+                        };
+                        sources.Add(source);
+                    }
+                }
+            }
+            return sources;
+        }
+
+        List<ColliderSource> IWalkableObjectSource.GetAllWalkableColliders()
+        {
+            List<ColliderSource> colliders = new();
+            foreach (var kv in m_Decorations)
+            {
+                var decoration = kv.Value;
+                var gameObject = m_Renderer.GetGameObject(kv.Key);
+                //根节点挂了NavMeshSetting的物体才生成NavMesh
+                if (gameObject.TryGetComponent<NavMeshSetting>(out var navMeshSetting))
+                {
+                    foreach (var collider in gameObject.GetComponentsInChildren<UnityEngine.Collider>(true))
+                    {
+                        colliders.Add(new ColliderSource() { AreaID = navMeshSetting.AreaID, Collider = collider});
+                    }
+                }
+            }
+            return colliders;
         }
 
         private enum ObjectCreateMode

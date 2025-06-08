@@ -188,6 +188,12 @@ namespace XDay.WorldAPI.Decoration.Editor
             UpdateObjectLOD(decoration.ID, m_System.ActiveLOD);
         }
 
+        public GameObject GetGameObject(int objectID)
+        {
+            m_GameObjects.TryGetValue(objectID, out var gameObject);
+            return gameObject;
+        }
+
         private void SetLayer(DecorationObject decoration, GameObject obj, int lod)
         {
             var layer = 0;
@@ -225,10 +231,10 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_Pool.Release(data.ResourceDescriptor.GetPath(lod), obj);
         }
 
-        private DecorationSystem m_System;
-        private GameObject m_Root;
-        private IGameObjectPool m_Pool;
-        private Dictionary<int, GameObject> m_GameObjects = new();
+        private readonly DecorationSystem m_System;
+        private readonly GameObject m_Root;
+        private readonly IGameObjectPool m_Pool;
+        private readonly Dictionary<int, GameObject> m_GameObjects = new();
     }
 }
 

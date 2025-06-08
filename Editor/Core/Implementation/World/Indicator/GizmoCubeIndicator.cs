@@ -56,15 +56,13 @@ namespace XDay.WorldAPI.Editor
                 Handles.matrix = Matrix4x4.TRS(position, m_Rotation, new Vector3(m_Size, 0, m_Size));
                 Handles.DrawWireCube(Vector3.zero, Vector3.one);
                 Handles.color = oldColor;
+                Handles.matrix = Matrix4x4.identity;
             }
         }
 
         private Vector3 m_Position;
-        private Quaternion m_Rotation;
+        private Quaternion m_Rotation = Quaternion.identity;
         private float m_Size;
         private bool m_Visible;
     }
 }
-
-
-//XDay

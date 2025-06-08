@@ -36,11 +36,11 @@ namespace XDay.Terrain.Editor
 {
     internal class TerrainGenEditor : EditorWindow, IXNodeCoordinateConverter, IXNodeEditorEventListener
     {
-        //[MenuItem("XDay/地图/地形生成")]
-        //private static void Open()
-        //{
-        //    GetWindow<TerrainGenEditor>().Show();
-        //}
+        [MenuItem("XDay/地图/地形生成")]
+        private static void Open()
+        {
+            GetWindow<TerrainGenEditor>().Show();
+        }
 
         private void OnGUI()
         {
@@ -228,6 +228,11 @@ namespace XDay.Terrain.Editor
         {
             CreateModifier<Erosion>();
         }, () => { return true; });
+
+            mNodeEditor.AddMenuItem("Modifier/Thermal Erosion", () =>
+            {
+                CreateModifier<ThermalErosion>();
+            }, () => { return true; });
 
             mNodeEditor.AddMenuItem("Modifier/Weight Map", () =>
         {

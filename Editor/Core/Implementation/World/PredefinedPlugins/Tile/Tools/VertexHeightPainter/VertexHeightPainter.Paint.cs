@@ -1007,20 +1007,17 @@ namespace XDay.WorldAPI.Tile.Editor
             int maxX = resolution;
             int maxY = resolution;
 
-            var act = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, minX, minY, maxX, minY, resolution, null, 0, false, updateMesh:false);
+            var act = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, minX, minY, maxX, minY, resolution, null, 0, false, updateMesh:true);
             UndoSystem.PerformCustomAction(act, true);
   
-            var act1 = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, minX, minY, minX, maxY, resolution, null, 0, false, updateMesh:false);
+            var act1 = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, minX, minY, minX, maxY, resolution, null, 0, false, updateMesh: true);
             UndoSystem.PerformCustomAction(act1, true);
 
-            var act2 = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, minX, maxY, maxX, maxY, resolution, null, 0, false, updateMesh:false);
+            var act2 = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, minX, maxY, maxX, maxY, resolution, null, 0, false, updateMesh: true);
             UndoSystem.PerformCustomAction(act2, true);
 
-            var act3 = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, maxX, minY, maxX, maxY, resolution, null, 0, false, updateMesh: false);
+            var act3 = new UndoActionSetTileVertexHeights("Reset Edge Vertex Height", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, maxX, minY, maxX, maxY, resolution, null, 0, false, updateMesh: true);
             UndoSystem.PerformCustomAction(act3, true);
-
-            var act4 = new UndoActionUpdateTileMesh("Update Tile Mesh", UndoSystem.Group, m_TileSystem.ID, tileX, tileY, true);
-            UndoSystem.PerformCustomAction(act4, true);
         }
 
         private void DoSmooth(Vector3 worldPos, bool isMouseDown, TileSystem m_TileSystem)

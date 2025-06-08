@@ -74,11 +74,13 @@ namespace XDay.WorldAPI.Tile.Editor
             if (selected)
             {
                 SetAction(m_Action);
+                m_Grid.SetActive(m_ShowGrid);
             }
             else
             {
                 m_Indicator.Visible = false;
                 Tools.hidden = false;
+                m_Grid.SetActive(false);
             }
         }
 
@@ -181,6 +183,11 @@ namespace XDay.WorldAPI.Tile.Editor
                     }
                     break;
             }
+
+            if (m_ShowMaterial)
+            {
+                DrawTileMaterialIDs();
+            }
         }
 
         protected override void SceneViewControlInternal(Rect sceneViewRect)
@@ -190,6 +197,10 @@ namespace XDay.WorldAPI.Tile.Editor
                 CreateControls();
 
                 DrawOperation();
+
+                DrawShowGridButton();
+
+                DrawShowMaterialButton();
 
                 DrawTilingButton();
 
@@ -224,6 +235,12 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 m_ButtonTiling = EditorWorldHelper.CreateImageButton("tiling.png", "平铺到全地图");
                 m_Controls.Add(m_ButtonTiling);
+
+                m_ButtonShowGrid = EditorWorldHelper.CreateToggleImageButton(m_ShowGrid, "show.png", "是否显示格子");
+                m_Controls.Add(m_ButtonShowGrid);
+
+                m_ButtonShowMaterial = EditorWorldHelper.CreateToggleImageButton(m_ShowMaterial, "show_material.png", "是否显示tile材质ID");
+                m_Controls.Add(m_ButtonShowMaterial);
             }
         }
 
@@ -283,6 +300,26 @@ namespace XDay.WorldAPI.Tile.Editor
             else
             {
                 Tools.hidden = true;
+            }
+        }
+
+        private void DrawShowGridButton()
+        {
+            m_ButtonShowGrid.Active = m_ShowGrid;
+            if (m_ButtonShowGrid.Render(Inited))
+            {
+                m_ShowGrid = m_ButtonShowGrid.Active;
+                m_Grid.SetActive(m_ShowGrid);
+            }
+        }
+
+        private void DrawShowMaterialButton()
+        {
+            m_ButtonShowMaterial.Active = m_ShowMaterial;
+            if (m_ButtonShowMaterial.Render(Inited))
+            {
+                m_ShowMaterial = m_ButtonShowMaterial.Active;
+                SceneView.RepaintAll();
             }
         }
 
@@ -379,6 +416,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private int m_Range = 1;
         private bool m_Show = true;
+        private bool m_ShowMaterial = true;
         private readonly PluginLODSystemEditor m_PluginSystemEditor = new();
         private TexturePainter m_TexturePainter = new();
         private VertexHeightPainter m_VertexHeightPainter = new();
@@ -387,8 +425,10 @@ namespace XDay.WorldAPI.Tile.Editor
         private Popup m_OperationPopup;
         private List<UIControl> m_Controls;
         private ImageButton m_ButtonTiling;
+        private ToggleImageButton m_ButtonShowGrid;
+        private ToggleImageButton m_ButtonShowMaterial;
         private Action m_Action = Action.Select;
-        private const int m_Version = 3;
+        private const int m_Version = 5;
 
         private enum Action
         {

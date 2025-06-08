@@ -51,6 +51,7 @@ namespace XDay.WorldAPI
         int WorldID { get; }
         int ObjectIndex { get; }
         IWorld World { get; }
+        bool AllowUndo => true;
     }
 
     public interface IWorldPlugin
@@ -58,7 +59,7 @@ namespace XDay.WorldAPI
         int ID { get; }
         string Name { get; }
 
-        void Update();
+        void Update(float dt);
     }
 
     public delegate void LODChangeCallback(int oldLOD, int newLOD);
@@ -76,6 +77,7 @@ namespace XDay.WorldAPI
         string EditorFolder { get; }
         IAssetLoader AssetLoader { get; }
         ICameraManipulator CameraManipulator { get; set; }
+        IWorldManager WorldManager { get; }
         GameObject Root { get; }
         IGameObjectPool GameObjectPool { get; }
         ICameraVisibleAreaCalculator CameraVisibleAreaCalculator { get; }
@@ -97,10 +99,11 @@ namespace XDay.WorldAPI
     {
         IWorld FirstWorld { get; }
         IAssetLoader WorldAssetLoader { get; }
+        ITaskSystem TaskSystem { get; }
 
-        UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc = null);
-        UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc = null);
-        IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc = null);
+        UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc = null, bool createManipulator = true);
+        UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc = null, bool createManipulator = true);
+        IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc = null, bool createManipulator = true);
         void UnloadWorld(string name);
         void UnloadWorld(int worldID);
         void LoadWorldRenderer(string name);

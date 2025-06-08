@@ -105,6 +105,9 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 ToggleActiveState(tile, coord.x, coord.y);
             }
+            else if (name == TileDefine.TILE_MATERIAL_ID_NAME)
+            {
+            }
             else if (name.StartsWith(TileDefine.SHADER_PROPERTY_ASPECT_NAME))
             {
                 ParseActionInfo(name, out var aspectName, out var shaderPropName);

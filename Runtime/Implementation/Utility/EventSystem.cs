@@ -145,6 +145,47 @@ namespace XDay
             UpdatePendingOperations();
         }
 
+        public void Broadcast(object e, object receiver = null)
+        {
+            m_IsBroadcasting = true;
+            if (receiver == null)
+            {
+                bool processed = false;
+                foreach (var handlers in m_Handlers.Values)
+                {
+                    foreach (var handler in handlers)
+                    {
+                        var act = handler.Action as Action<object>;
+                        act?.Invoke(e);
+                        processed = true;
+                    }
+                }
+                if (!processed)
+                {
+                    Log.Instance?.Warning($"No handler for event {e.GetType()}");
+                }
+            }
+            else
+            {
+                m_Handlers.TryGetValue(receiver, out var handlers);
+                if (handlers != null)
+                {
+                    foreach (var handler in handlers)
+                    {
+                        var act = handler.Action as Action<object>;
+                        act?.Invoke(e);
+                    }
+                }
+                else
+                {
+                    Log.Instance?.Warning($"No handler for event {e.GetType()}");
+                }
+            }
+            m_IsBroadcasting = false;
+
+            UpdatePendingOperations();
+        }
+
         private void UpdatePendingOperations()
         {
             //unregister

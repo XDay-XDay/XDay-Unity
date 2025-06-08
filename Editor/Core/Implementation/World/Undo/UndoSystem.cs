@@ -38,6 +38,7 @@ namespace XDay.WorldAPI.Editor
     public interface IWorldObjectContainer
     {
         int ID { get; }
+        bool AllowUndo { get; }
 
         void AddObjectUndo(IWorldObject obj, int lod, int objectIndex);
         void DestroyObjectUndo(int objectID);
@@ -121,7 +122,7 @@ namespace XDay.WorldAPI.Editor
                 var action = new UndoActionAspect(displayName, m_Group, obj.ID, aspectName, oldAspect, newAspect, obj.WorldID, relayID);
 
                 Queue(action);
-                Perform(action, true);
+                Perform(action, true, null);
             }
         }
 
@@ -133,15 +134,15 @@ namespace XDay.WorldAPI.Editor
 
                 if (perform)
                 {
-                    Perform(action, true);
+                    Perform(action, true, null);
                 }
             }
         }
 
-        public static void CreateObject(IWorldObject obj, int worldID, string actionName, int relayID = 0, int lod = 0)
+        public static void CreateObject(IWorldObject obj, int worldID, string actionName, int relayID = 0, int lod = 0, Action<IWorldObject> onCreate = null)
         {
             Debug.Assert(obj != null);
-            ObjectFactory(obj, worldID, actionName, relayID, lod, true);
+            ObjectFactory(obj, worldID, actionName, relayID, lod, true, onCreate);
         }
 
         public static void DestroyObject(IWorldObject obj, string actionName, int relayID = 0, int lod = 0)
@@ -150,7 +151,7 @@ namespace XDay.WorldAPI.Editor
             {
                 return;
             }
-            ObjectFactory(obj, obj.WorldID, actionName, relayID, lod, false);
+            ObjectFactory(obj, obj.WorldID, actionName, relayID, lod, false, null);
         }
 
         public static void Redo()
@@ -262,17 +263,23 @@ namespace XDay.WorldAPI.Editor
             }
         }
 
-        private static bool PerformChangeAspect(UndoActionAspect action, bool redo)
+        private static bool PerformChangeAspect(UndoActionAspect action, bool redo, bool checkAllowUndo)
         {
             if (action.RelayID == 0)
             {
                 var obj = m_QueryObject(action.WorldID, action.ObjectID) as WorldObject;
-                obj.SetAspect(0, action.AspectName, redo ? action.NewAspect : action.OldAspect);
+                if (!checkAllowUndo || obj.AllowUndo)
+                {
+                    obj.SetAspect(0, action.AspectName, redo ? action.NewAspect : action.OldAspect);
+                }
             }
             else
             {
                 var relay = m_QueryObject(action.WorldID, action.RelayID) as WorldObject;
-                relay.SetAspect(action.ObjectID, action.AspectName, redo ? action.NewAspect : action.OldAspect);
+                if (!checkAllowUndo || relay.AllowUndo)
+                {
+                    relay.SetAspect(action.ObjectID, action.AspectName, redo ? action.NewAspect : action.OldAspect);
+                }
             }
             return true;
         }
@@ -282,37 +289,53 @@ namespace XDay.WorldAPI.Editor
             return redo ? action.Redo() : action.Undo();
         }
 
-        private static bool PerformDestroy(UndoActionObjectFactory action, bool redo)
+        private static bool PerformDestroy(UndoActionObjectFactory action, bool redo, Action<IWorldObject> onCreate, bool checkAllowUndo)
         {
             if (redo)
             {
                 var relay = m_QueryRelay(action.WorldID, action.RelayID);
-                relay.DestroyObjectUndo(action.ObjectID);
+                if (!checkAllowUndo || relay.AllowUndo)
+                {
+                    relay.DestroyObjectUndo(action.ObjectID);
+                }
             }
             else
             {
                 var relay = m_QueryRelay(action.WorldID, action.RelayID);
-                relay.AddObjectUndo(Deserialize(action), action.LOD, action.ObjectIndex);
+                if (!checkAllowUndo || relay.AllowUndo)
+                {
+                    var newObj = Deserialize(action);
+                    onCreate?.Invoke(newObj);
+                    relay.AddObjectUndo(newObj, action.LOD, action.ObjectIndex);
+                }
             }
             return true;
         }
 
-        private static bool PerformCreate(UndoActionObjectFactory action, bool redo)
+        private static bool PerformCreate(UndoActionObjectFactory action, bool redo, Action<IWorldObject> onCreate, bool checkAllowUndo)
         {
             if (redo)
             {
                 var relay = m_QueryRelay(action.WorldID, action.RelayID);
-                relay.AddObjectUndo(Deserialize(action), action.LOD, action.ObjectIndex);
+                if (!checkAllowUndo || relay.AllowUndo)
+                {
+                    var newObj = Deserialize(action);
+                    onCreate?.Invoke(newObj);
+                    relay.AddObjectUndo(newObj, action.LOD, action.ObjectIndex);
+                }
             }
             else
             {
                 var relay = m_QueryRelay(action.WorldID, action.RelayID);
-                relay.DestroyObjectUndo(action.ObjectID);
+                if (!checkAllowUndo || relay.AllowUndo)
+                {
+                    relay.DestroyObjectUndo(action.ObjectID);
+                }
             }
             return true;
         }
 
-        private static bool Perform(UndoAction action, bool redo)
+        private static bool Perform(UndoAction action, bool redo, Action<IWorldObject> onCreate, bool checkAllowUndo = false)
         {
             if (action.Type == UndoActionType.Custom)
             {
@@ -321,17 +344,17 @@ namespace XDay.WorldAPI.Editor
 
             if (action.Type == UndoActionType.ChangeAspect)
             {
-                return PerformChangeAspect(action as UndoActionAspect, redo);
+                return PerformChangeAspect(action as UndoActionAspect, redo, checkAllowUndo);
             }
 
             if (action.Type == UndoActionType.CreateObject)
             {
-                return PerformCreate(action as UndoActionObjectFactory, redo);
+                return PerformCreate(action as UndoActionObjectFactory, redo, onCreate, checkAllowUndo);
             }
 
             if (action.Type == UndoActionType.DestroyObject)
             {
-                return PerformDestroy(action as UndoActionObjectFactory, redo);
+                return PerformDestroy(action as UndoActionObjectFactory, redo, onCreate, checkAllowUndo);
             }
 
             Debug.Assert(false, $"Unknown action type: {action.GetType()}");
@@ -372,7 +395,7 @@ namespace XDay.WorldAPI.Editor
             }
         }
 
-        private static void ObjectFactory(IWorldObject obj, int worldID, string actionName, int relayID, int lod, bool create)
+        private static void ObjectFactory(IWorldObject obj, int worldID, string actionName, int relayID, int lod, bool create, Action<IWorldObject> onCreate)
         {
             var data = Serialize(obj);
             var action = new UndoActionObjectFactory(
@@ -388,7 +411,7 @@ namespace XDay.WorldAPI.Editor
                 relayID);
 
             Queue(action);
-            Perform(action, true);
+            Perform(action, true, onCreate);
         }
 
         private static void Apply(bool redo)
@@ -409,7 +432,7 @@ namespace XDay.WorldAPI.Editor
                         break;
                     }
 
-                    if (Perform(action, redo))
+                    if (Perform(action, redo, null, true))
                     {
                         EventUndoRedo?.Invoke(action, redo);
                         SlidePointer(pointer - (redo ? 0 : 1));

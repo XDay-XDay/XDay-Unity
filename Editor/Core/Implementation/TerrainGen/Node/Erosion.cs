@@ -24,11 +24,10 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using XDay.SerializationAPI;
 
 namespace XDay.Terrain.Editor
 {
-    class Erosion : TerrainModifier
+    internal class Erosion : TerrainModifier
     {
         public class Setting : ITerrainModifierSetting
         {

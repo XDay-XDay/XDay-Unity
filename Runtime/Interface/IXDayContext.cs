@@ -54,7 +54,7 @@ namespace XDay.API
         IEventSystem EventSystem { get; }
 
         void OnDestroy();
-        void Update();
+        void Update(float dt);
         void LateUpdate();
         ICameraManipulator CreateCameraManipulator(string configPath, Camera camera);
     }

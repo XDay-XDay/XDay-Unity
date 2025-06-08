@@ -37,6 +37,8 @@ namespace XDay.WorldAPI.Tile.Editor
     {
         public void Start()
         {
+            End();
+
             var errorMsg = GeneratePaintInfo(m_Resolution, m_MaskName);
             if (!string.IsNullOrEmpty(errorMsg))
             {
@@ -190,6 +192,26 @@ namespace XDay.WorldAPI.Tile.Editor
             importer.SaveAndReimport();
         }
 
+        //将center所在的tile的mask重置为(1,0,0,0)
+        private void ResetMask(Vector3 center)
+        {
+            var coord = m_TileSystem.UnrotatedPositionToCoordinate(center.x, center.z);
+            var tile = m_TileSystem.GetTile(coord.x, coord.y);
+            if (tile == null)
+            {
+                return;
+            }
+            var data = m_Pool.Rent(m_Resolution * m_Resolution);
+            var red = new Color(1, 0, 0, 0);
+            for (var i = 0; i < data.Length; i++)
+            {
+                data[i] = red;
+            }
+            var tileInfo = GetTileInfo(coord.x, coord.y);
+            tileInfo.PaintInfo.SetPixels(new Vector2Int(0, 0), new Vector2Int(m_Resolution, m_Resolution), data);
+            m_Pool.Return(data);
+        }
+
         private void PaintInternal(Vector3 center, bool subtract)
         {
             var rotateBrush = EnableRotation;
@@ -207,6 +229,7 @@ namespace XDay.WorldAPI.Tile.Editor
             var brushPixelMaxX = brushPixelMinX + m_Range - 1;
             var brushPixelMinY = centerPixelY - m_Range / 2;
             var brushPixelMaxY = brushPixelMinY + m_Range - 1;
+            var centerTileCoord = m_TileSystem.UnrotatedPositionToCoordinate(center.x, center.z);
 
             for (var tileY = 0; tileY < m_TileSystem.YTileCount; ++tileY)
             {
@@ -215,6 +238,11 @@ namespace XDay.WorldAPI.Tile.Editor
                     var tile = GetTileInfo(tileX, tileY);
                     if (tile != null && tile.PaintInfo != null)
                     {
+                        if (m_PaintOneTile && (tileX != centerTileCoord.x || tileY != centerTileCoord.y))
+                        {
+                            continue;
+                        }
+
                         var ignoreAlpha = tile.PaintInfo.Texture.format == TextureFormat.RGB24 || m_IgnoreAlpha;
                         var tilePixelMinX = m_Resolution * tileX;
                         var tilePixelMinY = m_Resolution * tileY;

@@ -31,7 +31,8 @@ namespace XDay.UtilityAPI
 {
     internal class GameObjectPool : IGameObjectPool
     {
-        public GameObjectPool(Transform parent, 
+        public GameObjectPool(string name, 
+            Transform parent, 
             Func<string, GameObject> createFunc, 
             Func<string, UniTask<GameObject>> createFuncAsync, 
             Action<string, GameObject> actionOnRelease, 
@@ -40,7 +41,7 @@ namespace XDay.UtilityAPI
             m_ActionOnRelease = actionOnRelease;
             m_CreateFunc = createFunc;
             m_CreateFuncAsync = createFuncAsync;
-            m_PoolRoot = new GameObject("GameObjectPool");
+            m_PoolRoot = new GameObject(name);
             m_PoolRoot.transform.SetParent(parent);
             if (hideRoot)
             {
@@ -50,13 +51,13 @@ namespace XDay.UtilityAPI
 
         public void OnDestroy()
         {
-            ClearAll();
+            Clear();
 
             Helper.DestroyUnityObject(m_PoolRoot);
             m_PoolRoot = null;
         }
 
-        public void ClearAll()
+        public void Clear()
         {
             List<string> keys = new();
             foreach (var key in m_Pool.Keys)

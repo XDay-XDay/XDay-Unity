@@ -38,5 +38,6 @@ namespace XDay
         void Unregister<Event>(object key, Action<Event> action) where Event : struct;
         void Unregister(object key);
         void Broadcast<Event>(Event e, object receiver = null) where Event : struct;
+        void Broadcast(object e, object receiver = null);
     }
 }

@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -29,11 +30,16 @@ namespace XDay.NavigationAPI
 {
     internal partial class GridBasedNavAgent : IGridNavigationAgent
     {
-        public IGridBasedPathFinder PathFinder { set => m_PathFinder = value; }
+        public IGridBasedPathFinder PathFinder { set => m_PathFinder = value; get => m_PathFinder; }
         public bool IsMoving => m_CurrentState.GetType() == typeof(Move);
         public Quaternion Rotation { get => m_GameObject.transform.rotation; set => m_GameObject.transform.rotation = value; }
         public Vector3 Position { get => m_GameObject.transform.position; set => m_GameObject.transform.position = value; }
         public List<Vector3> Path => m_Path;
+        public float MoveSpeed { get => m_MoveSpeed; set => m_MoveSpeed = value; }
+        public float RotateSpeed { get => m_RotateSpeed; set => m_RotateSpeed = value; }
+
+        public event Action EventStartMove;
+        public event Action EventStopMove;
 
         public GridBasedNavAgent(GameObject overrideGameObject, Transform parent, Vector3 position, Quaternion rotation)
         {
@@ -52,21 +58,40 @@ namespace XDay.NavigationAPI
             }
         }
 
-        public void Update()
+        public void Update(float dt)
         {
-            m_CurrentState?.Update();
+            m_CurrentState?.Update(dt);
         }
 
-        public void MoveTo(Vector3 target)
+        public bool MoveTo(Vector3 target)
         {
             if (m_PathFinder == null)
             {
-                Debug.LogError("Can't move, no path finder!");
-                return;
+                return false;
             }
-            m_Path.Clear();
-            m_PathFinder.CalculatePath(Position, target, m_Path, null, PathFlags.SourceSearchNearestCoordinate);
-            SetState<Move>();
+
+            m_PathFinder.CalculatePath(Position, target, m_TempPath, null, PathFlags.SourceSearchNearestCoordinate);
+            if (m_TempPath.Count > 1)
+            {
+                m_Path.Clear();
+                m_Path.AddRange(m_TempPath);
+                m_TempPath.Clear();
+                SetState<Move>();
+                EventStartMove?.Invoke();
+            }
+
+            return true;
+        }
+
+        public void MoveTo(List<Vector3> path)
+        {
+            if (path.Count > 1)
+            {
+                m_Path.Clear();
+                m_Path.AddRange(path);
+                SetState<Move>();
+                EventStartMove?.Invoke();
+            }
         }
 
         public void DebugDraw()
@@ -112,10 +137,13 @@ namespace XDay.NavigationAPI
 
         private IGridBasedPathFinder m_PathFinder;
         private List<Vector3> m_Path = new();
+        private List<Vector3> m_TempPath = new();
         private List<State> m_States = new();
         private bool m_OverrideGameObject;
         private GameObject m_GameObject;
         private State m_CurrentState;
+        private float m_MoveSpeed = 3;
+        private float m_RotateSpeed = 500;
     }
 }
 

@@ -25,11 +25,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI.Shape;
 using XDay.UtilityAPI;
+using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
-    public class ShapeObject : WorldObject
+    public class ShapeObject : WorldObject, IObstacle
     {
+        public bool Walkable => m_Attribute.HasFlag(ObstacleAttribute.Walkable);
+        public ObstacleAttribute Attribute { get => m_Attribute; set => m_Attribute = value; }
+        public int AreaID { get => m_AreaID; set => m_AreaID = value; }
+        public float Height { get => m_Height; set => m_Height = value; }
         public override Vector3 Scale { get => m_Scale; set => m_Scale = value; }
         public override Vector3 Position { get => m_Position; set => m_Position = value; }
         public override Quaternion Rotation { get => m_Rotation; set => m_Rotation = value; }
@@ -41,7 +46,7 @@ namespace XDay.WorldAPI.Shape.Editor
         public bool ShowVertexIndex => m_ShowVertexIndex;
         public IAspectContainer AspectContainer => m_AspectContainer;
         public List<Vector3> VerticesCopy => m_Polygon.VerticesCopy;
-        public List<Vector3> WorldVertices
+        public List<Vector3> WorldPolygon
         {
             get
             {
@@ -171,6 +176,28 @@ namespace XDay.WorldAPI.Shape.Editor
             m_UseOverriddenColor = use;
         }
 
+        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
+        {
+            base.GameSerialize(serializer, label, converter);
+            serializer.WriteInt32(m_Version, "ShapeObject.Version");
+            serializer.WriteBoolean(m_Enabled, "Is Enabled");
+            serializer.WriteVector3(m_Position, "Position");
+            serializer.WriteQuaternion(m_Rotation, "Rotation");
+            serializer.WriteVector3(m_Scale, "Scale");
+            serializer.WriteString(m_Name, "Name");
+            serializer.WriteBoolean(m_ShowVertexIndex, "Show Vertex Index");
+            serializer.WriteSingle(m_VertexDisplaySize, "Vertex Display Size");
+            serializer.WriteColor(m_Color, "Color");
+            serializer.WriteVector3List(m_Polygon.Vertices, "Vertices");
+            serializer.WriteStructure("Aspect Container", () =>
+            {
+                m_AspectContainer.Serialize(serializer);
+            });
+            serializer.WriteSingle(m_Height, "Height");
+            serializer.WriteInt32(m_AreaID, "Area ID");
+            serializer.WriteInt32((int)m_Attribute, "Attribute");
+        }
+
         public override void EditorDeserialize(IDeserializer deserializer, string label)
         {
             base.EditorDeserialize(deserializer, label);
@@ -190,25 +217,9 @@ namespace XDay.WorldAPI.Shape.Editor
                 m_AspectContainer = IAspectContainer.Create();
                 m_AspectContainer.Deserialize(deserializer);
             });
-        }
-
-        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
-        {
-            base.GameSerialize(serializer, label, converter);
-            serializer.WriteInt32(m_Version, "ShapeObject.Version");
-            serializer.WriteBoolean(m_Enabled, "Is Enabled");
-            serializer.WriteVector3(m_Position, "Position");
-            serializer.WriteQuaternion(m_Rotation, "Rotation");
-            serializer.WriteVector3(m_Scale, "Scale");
-            serializer.WriteString(m_Name, "Name");
-            serializer.WriteBoolean(m_ShowVertexIndex, "Show Vertex Index");
-            serializer.WriteSingle(m_VertexDisplaySize, "Vertex Display Size");
-            serializer.WriteColor(m_Color, "Color");
-            serializer.WriteVector3List(m_Polygon.Vertices, "Vertices");
-            serializer.WriteStructure("Aspect Container", () =>
-            {
-                m_AspectContainer.Serialize(serializer);
-            });
+            m_Height = deserializer.ReadSingle("Height");
+            m_AreaID = deserializer.ReadInt32("Area ID");
+            m_Attribute = (ObstacleAttribute)deserializer.ReadInt32("Attribute");
         }
 
         public override bool SetAspect(int objectID, string name, IAspect aspect)
@@ -341,6 +352,12 @@ namespace XDay.WorldAPI.Shape.Editor
         private IAspectContainer m_AspectContainer = IAspectContainer.Create();
         [SerializeField]
         private Color m_Color = Color.white;
+        [SerializeField]
+        private int m_AreaID = 0;
+        [SerializeField]
+        private float m_Height = 0;
+        [SerializeField]
+        private ObstacleAttribute m_Attribute;
         private Color m_OverriddenColor = Color.white;
         private bool m_UseOverriddenColor = false;
         private const int m_Version = 1;

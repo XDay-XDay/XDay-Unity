@@ -29,16 +29,17 @@ namespace XDay.UtilityAPI
 {
     public interface IGameObjectPool
     {
-        static IGameObjectPool Create(Transform parent, 
+        static IGameObjectPool Create(string name,
+            Transform parent, 
             Func<string, GameObject> createFunc,
             Func<string, UniTask<GameObject>> createFuncAsync,
             Action<string, GameObject> returnToPoolFunc = null, bool hideRoot = true)
         {
-            return new GameObjectPool(parent, createFunc, createFuncAsync, returnToPoolFunc, hideRoot);
+            return new GameObjectPool(name, parent, createFunc, createFuncAsync, returnToPoolFunc, hideRoot);
         }
 
         void OnDestroy();
-
+        void Clear();
         GameObject TryGet(string path);
         GameObject Get(string path);
         UniTask<GameObject> GetAsync(string path);

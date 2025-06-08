@@ -499,6 +499,10 @@ namespace XDay.WorldAPI.Shape.Editor
             var shape = GetActiveShape();
             if (shape != null)
             {
+                shape.AreaID = EditorGUILayout.IntField("Area ID", shape.AreaID);
+                shape.Attribute = (ObstacleAttribute)EditorGUILayout.EnumFlagsField("Attribute", shape.Attribute);
+                shape.Height = EditorGUILayout.FloatField("Height", shape.Height);
+
                 m_AspectContainerEditor.Draw(canEdit:true, shape.AspectContainer);
             }
         }

@@ -33,6 +33,7 @@ namespace XDay.WorldAPI.Tile.Editor
         public const string SHADER_VECTOR4_PROPERTY_NAME = "Vector4";
         public const string SHADER_SINGLE_PROPERTY_NAME = "Single";
         public const string TILE_ROOT_TAG = "Tile Root";
+        public const string TILE_MATERIAL_ID_NAME = "Material ID";
     }
 }
 

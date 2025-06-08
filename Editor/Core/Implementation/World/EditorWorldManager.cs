@@ -50,7 +50,7 @@ namespace XDay.WorldAPI.Editor
         public void LoadEditorWorldAsync(WorldSetup setup, Action<World> onLoadFinished)
         {
             var manipulator = ICameraManipulator.Create(SceneView.GetAllSceneCameras()[0], new CameraSetup("noop"), IDeviceInput.Create());
-            var world = new EditorWorld(setup, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader);
+            var world = new EditorWorld(this,setup, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader);
             m_Worlds.Add(world);
 
             var job = m_TaskSystem.GetTask<EditorWorldLoadTask>();
@@ -61,7 +61,7 @@ namespace XDay.WorldAPI.Editor
         public async UniTask<IWorld> LoadEditorWorldAsync(WorldSetup setup)
         {
             var manipulator = ICameraManipulator.Create(SceneView.GetAllSceneCameras()[0], new CameraSetup("noop"), IDeviceInput.Create());
-            var world = new EditorWorld(setup, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader);
+            var world = new EditorWorld(this, setup, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader);
             m_Worlds.Add(world);
 
             var source = new UniTaskCompletionSource<World>();
@@ -96,7 +96,7 @@ namespace XDay.WorldAPI.Editor
             }
 
             var manipulator = ICameraManipulator.Create(SceneView.GetAllSceneCameras()[0], new CameraSetup("dummy"), IDeviceInput.Create());
-            var world = new EditorWorld(setup, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader);
+            var world = new EditorWorld(this, setup, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader);
             m_Worlds.Add(world);
 
             world.Load(GetEditorFilePath(setup));
@@ -118,7 +118,7 @@ namespace XDay.WorldAPI.Editor
             }
 
             var manipulator = ICameraManipulator.Create(SceneView.GetAllSceneCameras()[0], new CameraSetup("dummy"), IDeviceInput.Create());
-            var world = new EditorWorld(config, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader, width, height);
+            var world = new EditorWorld(this, config, m_AssetLoader, manipulator, m_SerializableFactory, m_PluginLoader, width, height);
             world.Init();
             m_Worlds.Add(world);
 

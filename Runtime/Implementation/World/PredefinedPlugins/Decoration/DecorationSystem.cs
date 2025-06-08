@@ -297,7 +297,7 @@ namespace XDay.WorldAPI.Decoration
             }
         }
 
-        protected override void UpdateInternal()
+        protected override void UpdateInternal(float dt)
         {
             var cameraPos = World.CameraManipulator.RenderPosition;
 

@@ -24,6 +24,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using System;
 
 namespace XDay.UtilityAPI.Editor
 {
@@ -31,51 +32,50 @@ namespace XDay.UtilityAPI.Editor
     {
         public GraphNodeEditor(float worldWidth, float worldHeight)
         {
-            mViewer = new VirtualViewer(worldWidth, worldHeight);
+            m_Viewer = new VirtualViewer(worldWidth, worldHeight, OnZoomChanged);
         }
 
         public void Reset()
         {
-            mViewer.Reset();
-            mOccupiedCoordinates.Clear();
+            m_Viewer.Reset();
+            m_OccupiedCoordinates.Clear();
             OnReset();
         }
 
         private void CreateGridLines()
         {
-            float worldWidth = mViewer.GetWorldWidth();
-            float worldHeight = mViewer.GetWorldHeight();
-            float gridSize = mGridSize;
+            float worldWidth = m_Viewer.GetWorldWidth();
+            float worldHeight = m_Viewer.GetWorldHeight();
+            float gridSize = m_GridSize;
             int horizontalGridCount = Mathf.CeilToInt(worldWidth / gridSize);
             int verticalGridCount = Mathf.CeilToInt(worldHeight / gridSize);
-            if (mGridLines == null)
-            {
-                mGridLines = new Vector3[horizontalGridCount * 2 + verticalGridCount * 2];
-            }
+            m_GridLines ??= new Vector3[horizontalGridCount * 2 + verticalGridCount * 2];
             int k = 0;
             for (int i = 0; i < verticalGridCount; ++i)
             {
                 Vector2 start = World2Window(new Vector2(-worldWidth * 0.5f, i * gridSize - worldHeight * 0.5f));
                 Vector2 end = World2Window(new Vector2(worldWidth * 0.5f, i * gridSize - worldHeight * 0.5f));
-                mGridLines[k] = start;
-                mGridLines[k + 1] = end;
+                m_GridLines[k] = start;
+                m_GridLines[k + 1] = end;
                 k += 2;
             }
             for (int i = 0; i < horizontalGridCount; ++i)
             {
                 Vector2 start = World2Window(new Vector2(i * gridSize - worldWidth * 0.5f, -worldHeight * 0.5f));
                 Vector2 end = World2Window(new Vector2(i * gridSize - worldWidth * 0.5f, worldHeight * 0.5f));
-                mGridLines[k] = start;
-                mGridLines[k + 1] = end;
+                m_GridLines[k] = start;
+                m_GridLines[k + 1] = end;
                 k += 2;
             }
         }
 
-        public void Render(float windowContentWidth, float windowContentHeight)
+        public void Render(float windowContentWidth, float windowContentHeight, System.Action repaint)
         {
-            bool windowSizeChanged = !Mathf.Approximately(mWindowContentWidth, windowContentWidth) || !Mathf.Approximately(mWindowContentHeight, windowContentHeight);
-            mWindowContentWidth = windowContentWidth;
-            mWindowContentHeight = windowContentHeight;
+            m_Repaint = repaint;
+
+            bool windowSizeChanged = !Mathf.Approximately(m_WindowContentWidth, windowContentWidth) || !Mathf.Approximately(m_WindowContentHeight, windowContentHeight);
+            m_WindowContentWidth = windowContentWidth;
+            m_WindowContentHeight = windowContentHeight;
 
             if (windowSizeChanged)
             {
@@ -90,80 +90,79 @@ namespace XDay.UtilityAPI.Editor
         public void OnWindowSizeChange(int viewportWidth, int viewportHeight)
         {
             float ratio = viewportWidth / (float)viewportHeight;
-            mViewer.SetFrustum((float)viewportHeight, ratio);
+            m_Viewer.SetFrustum(viewportHeight, ratio);
         }
 
         protected Vector2 AlignToGrid(Vector2 pos)
         {
-            if (mAlignToGrid)
+            if (m_AlignToGrid)
             {
-                float gridSize = mGridSize * mViewer.GetZoom();
-                int gx = Mathf.FloorToInt(pos.x / gridSize);
-                int gy = Mathf.FloorToInt(pos.y / gridSize);
-                return new Vector2(gx * gridSize, gy * gridSize);
+                int gx = Mathf.FloorToInt(pos.x / m_GridSize);
+                int gy = Mathf.FloorToInt(pos.y / m_GridSize);
+                return new Vector2(gx * m_GridSize, gy * m_GridSize);
             }
             return pos;
         }
 
-        protected Vector2 World2Window(Vector2 pos)
+        internal Vector2 World2Window(Vector2 pos)
         {
-            mViewer.WorldToWindow(mWindowContentWidth, mWindowContentHeight, pos, out float x, out float y);
+            m_Viewer.WorldToWindow(m_WindowContentWidth, m_WindowContentHeight, pos, out float x, out float y);
             return new Vector2(x, y);
         }
 
         protected Vector2 Window2World(Vector2 pos)
         {
-            mViewer.WindowToWorld(mWindowContentWidth, mWindowContentHeight, pos, out float x, out float y);
+            m_Viewer.WindowToWorld(m_WindowContentWidth, m_WindowContentHeight, pos, out float x, out float y);
             return new Vector2(x, y);
         }
 
         protected Vector2 World2Window(float px, float py)
         {
-            mViewer.WorldToWindow(mWindowContentWidth, mWindowContentHeight, new Vector2(px, py), out float x, out float y);
+            m_Viewer.WorldToWindow(m_WindowContentWidth, m_WindowContentHeight, new Vector2(px, py), out float x, out float y);
             return new Vector2(x, y);
         }
 
         protected Vector2 Window2World(float px, float py)
         {
-            mViewer.WindowToWorld(mWindowContentWidth, mWindowContentHeight, new Vector2(px, py), out float x, out float y);
+            m_Viewer.WindowToWorld(m_WindowContentWidth, m_WindowContentHeight, new Vector2(px, py), out float x, out float y);
             return new Vector2(x, y);
         }
 
         protected float WorldLengthToWindowLength(float length)
         {
-            return length * mViewer.GetZoom();
-        }
-
-        protected float WindowLengthToWorldLength(float length)
-        {
-            return length / mViewer.GetZoom();
+            return length / m_Viewer.GetZoom();
         }
 
         protected Vector2 WorldLengthToWindowLength(Vector2 length)
         {
-            return length * mViewer.GetZoom();
+            return length / m_Viewer.GetZoom();
+        }
+
+        protected float WindowLengthToWorldLength(float length)
+        {
+            return length * m_Viewer.GetZoom();
         }
 
         protected Vector2 WindowLengthToWorldLength(Vector2 length)
         {
-            return length / mViewer.GetZoom();
+            return length * m_Viewer.GetZoom();
         }
 
         public Vector2Int WorldPositionToGridCoordinateFloor(float x, float y)
         {
-            float worldWidth = mViewer.GetWorldWidth();
-            float worldHeight = mViewer.GetWorldHeight();
-            int gridX = Mathf.FloorToInt((x + worldWidth * 0.5f) / mGridSize);
-            int gridY = Mathf.FloorToInt((y + worldHeight * 0.5f) / mGridSize);
+            float worldWidth = m_Viewer.GetWorldWidth();
+            float worldHeight = m_Viewer.GetWorldHeight();
+            int gridX = Mathf.FloorToInt((x + worldWidth * 0.5f) / m_GridSize);
+            int gridY = Mathf.FloorToInt((y + worldHeight * 0.5f) / m_GridSize);
             return new Vector2Int(gridX, gridY);
         }
 
         public Vector2Int WorldPositionToGridCoordinateCeil(float x, float y)
         {
-            float worldWidth = mViewer.GetWorldWidth();
-            float worldHeight = mViewer.GetWorldHeight();
-            int gridX = Mathf.CeilToInt((x + worldWidth * 0.5f) / mGridSize);
-            int gridY = Mathf.CeilToInt((y + worldHeight * 0.5f) / mGridSize);
+            float worldWidth = m_Viewer.GetWorldWidth();
+            float worldHeight = m_Viewer.GetWorldHeight();
+            int gridX = Mathf.CeilToInt((x + worldWidth * 0.5f) / m_GridSize);
+            int gridY = Mathf.CeilToInt((y + worldHeight * 0.5f) / m_GridSize);
             return new Vector2Int(gridX, gridY);
         }
 
@@ -179,10 +178,10 @@ namespace XDay.UtilityAPI.Editor
 
         public Vector2 GridCoordinateToWorldPosition(int x, int y)
         {
-            float worldWidth = mViewer.GetWorldWidth();
-            float worldHeight = mViewer.GetWorldHeight();
-            float posX = x * mGridSize - worldWidth * 0.5f;
-            float posY = y * mGridSize - worldHeight * 0.5f;
+            float worldWidth = m_Viewer.GetWorldWidth();
+            float worldHeight = m_Viewer.GetWorldHeight();
+            float posX = x * m_GridSize - worldWidth * 0.5f;
+            float posY = y * m_GridSize - worldHeight * 0.5f;
             return new Vector2(posX, posY);
         }
 
@@ -191,30 +190,28 @@ namespace XDay.UtilityAPI.Editor
             return GridCoordinateToWorldPosition(coord.x, coord.y);
         }
 
-        void DrawGrid()
+        protected void DrawGrid()
         {
-            if (mDrawGrid)
+            if (m_DrawGrid)
             {
                 CreateGridLines();
                 float val = 120;
-                Color color = new Color(val / 255.0f, val / 255.0f, val / 255.0f, 0.2f);
+                Color color = new(val / 255.0f, val / 255.0f, val / 255.0f, 0.2f);
                 Handles.BeginGUI();
                 Handles.color = color;
-                Handles.DrawLines(mGridLines);
+                Handles.DrawLines(m_GridLines);
                 Handles.EndGUI();
             }
         }
 
         void DrawGUI()
         {
-            DrawGrid();
-
             OnDrawGUI();
         }
 
         void UpdateInput()
         {
-            if (mMenuShow)
+            if (m_MenuShow)
             {
                 return;
             }
@@ -227,22 +224,22 @@ namespace XDay.UtilityAPI.Editor
             {
                 if (e.type == EventType.MouseDown)
                 {
-                    mMover.Reset();
+                    m_Mover.Reset();
                 }
 
-                mMover.Update(mousePos);
-                var movement = mMover.GetMovement();
-                mViewer.Move((float)-movement.x, (float)movement.y);
+                m_Mover.Update(mousePos);
+                var movement = m_Mover.GetMovement();
+                m_Viewer.Move((float)-movement.x, (float)movement.y);
             }
             if (e.type == EventType.MouseUp && e.button == 2)
             {
-                mMover.Reset();
-                OnMouseButtonReleased(2);
+                m_Mover.Reset();
+                OnMouseButtonReleased(2, mousePos);
             }
             if (e.type == EventType.MouseUp && e.button == 0)
             {
-                mMover.Reset();
-                OnMouseButtonReleased(0);
+                m_Mover.Reset();
+                OnMouseButtonReleased(0, mousePos);
             }
             float scrollDelta = 0;
             if (e.isScrollWheel)
@@ -252,11 +249,11 @@ namespace XDay.UtilityAPI.Editor
             float zoomDelta = 0.1f * GetZoomSpeed();
             if (scrollDelta > 0)
             {
-                mViewer.Zoom(-zoomDelta, mWindowContentWidth, mWindowContentHeight, new Vector2(mousePos.x, mousePos.y));
+                m_Viewer.Zoom(-zoomDelta, m_WindowContentWidth, m_WindowContentHeight, new Vector2(mousePos.x, mousePos.y));
             }
             else if (scrollDelta < 0)
             {
-                mViewer.Zoom(zoomDelta, mWindowContentWidth, mWindowContentHeight, new Vector2(mousePos.x, mousePos.y));
+                m_Viewer.Zoom(zoomDelta, m_WindowContentWidth, m_WindowContentHeight, new Vector2(mousePos.x, mousePos.y));
             }
 
             if (e.type == EventType.MouseDown && e.button == 0)
@@ -273,9 +270,9 @@ namespace XDay.UtilityAPI.Editor
             }
             else if (e.type == EventType.MouseDrag && e.button == 0)
             {
-                mMover.Update(mousePos);
-                var movement = mMover.GetMovement();
-                OnMouseDrag(0, new Vector2(movement.x * mViewer.GetZoom(), movement.y * mViewer.GetZoom()));
+                m_Mover.Update(mousePos);
+                var movement = m_Mover.GetMovement();
+                OnMouseDrag(0, new Vector2(movement.x * m_Viewer.GetZoom(), movement.y * m_Viewer.GetZoom()));
             }
         }
 
@@ -286,14 +283,14 @@ namespace XDay.UtilityAPI.Editor
                 for (int j = min.x; j <= max.x; ++j)
                 {
                     var coord = new Vector2Int(j, i);
-                    bool found = mOccupiedCoordinates.TryGetValue(coord, out int refCount);
+                    bool found = m_OccupiedCoordinates.TryGetValue(coord, out int refCount);
                     if (!found)
                     {
-                        mOccupiedCoordinates.Add(coord, 1);
+                        m_OccupiedCoordinates.Add(coord, 1);
                     }
                     else
                     {
-                        mOccupiedCoordinates[coord] = refCount + 1;
+                        m_OccupiedCoordinates[coord] = refCount + 1;
                     }
                 }
             }
@@ -306,26 +303,37 @@ namespace XDay.UtilityAPI.Editor
                 for (int j = min.x; j <= max.x; ++j)
                 {
                     var coord = new Vector2Int(j, i);
-                    bool found = mOccupiedCoordinates.TryGetValue(coord, out int refCount);
+                    bool found = m_OccupiedCoordinates.TryGetValue(coord, out int refCount);
                     if (found)
                     {
                         refCount -= 1;
                         if (refCount == 0)
                         {
-                            mOccupiedCoordinates.Remove(coord);
+                            m_OccupiedCoordinates.Remove(coord);
                         }
                         else
                         {
-                            mOccupiedCoordinates[coord] = refCount;
+                            m_OccupiedCoordinates[coord] = refCount;
                         }
                     }
                 }
             }
         }
 
-        protected void DrawRect(Vector2 min, Vector2 max, Color color)
+        internal void DrawRect(Vector2 min, Vector2 max, Color color)
         {
             EditorGUI.DrawRect(new Rect(min, max - min), color);
+        }
+
+        protected void DrawTexture(Vector2 min, Vector2 max, Texture texture, ScaleMode scaleMode = ScaleMode.ScaleToFit)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+            var min1 = Vector2.Min(min, max);
+            var max1 = Vector2.Max(min, max);
+            GUI.DrawTexture(new Rect(min1, max1 - min1), texture, scaleMode);
         }
 
         protected void DrawLineRect(Vector2 min, Vector2 max, Color color)
@@ -341,29 +349,30 @@ namespace XDay.UtilityAPI.Editor
 
         protected abstract void OnDrawGUI();
         protected abstract void OnMouseButtonPressed(int button, Vector2 mousePos);
-        protected abstract void OnMouseButtonReleased(int button);
+        protected abstract void OnMouseButtonReleased(int button, Vector2 mousePos);
         protected abstract void OnMouseDrag(int button, Vector2 movement);
         protected virtual void OnWindowChanged() { }
         protected virtual float GetZoomSpeed() { return 1.0f; }
         protected virtual void OnReset() { }
+        protected virtual void OnZoomChanged() { }
+        protected void Repaint()
+        {
+            m_Repaint?.Invoke();
+        }
 
-        protected float mWindowContentWidth;
-        protected float mWindowContentHeight;
-
-        protected float mGridSize = 20;
-        protected VirtualViewer mViewer;
-
-        protected bool mMenuShow = false;
-        protected bool mAlignToGrid = false;
-        protected bool mDrawGrid = true;
-
-        protected IMover mMover = IMover.Create();
-
-        protected Vector2 mCursorPos;
-
-        Vector3[] mGridLines;
-
-        protected Dictionary<Vector2Int, int> mOccupiedCoordinates = new Dictionary<Vector2Int, int>();
+        protected float m_WindowContentWidth;
+        protected float m_WindowContentHeight;
+        //in world space
+        protected float m_GridSize = 20;
+        protected VirtualViewer m_Viewer;
+        protected bool m_MenuShow = false;
+        protected bool m_AlignToGrid = false;
+        protected bool m_DrawGrid = true;
+        protected IMover m_Mover = IMover.Create();
+        protected Vector2 m_CursorPos;
+        private Vector3[] m_GridLines;
+        protected Dictionary<Vector2Int, int> m_OccupiedCoordinates = new();
+        private Action m_Repaint;
     };
 
 }

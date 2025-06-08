@@ -26,6 +26,8 @@ using UnityEngine;
 using UnityEditor;
 using XDay.WorldAPI.Editor;
 using System.Text;
+using XDay.UtilityAPI;
+using XDay.NavigationAPI;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -48,7 +50,7 @@ namespace XDay.WorldAPI.Tile.Editor
     }
 
     [WorldPluginMetadata("地表层", "tile_editor_data", typeof(TileSystemCreateWindow), true)]
-    internal sealed partial class TileSystem : EditorWorldPlugin, IHeightDataSource
+    internal sealed partial class TileSystem : EditorWorldPlugin, IHeightDataSource, IWalkableObjectSource
     {
         public override string Name { set => throw new System.NotImplementedException(); get => m_Name; }
         public Vector2 Origin => m_Origin;
@@ -155,6 +157,11 @@ namespace XDay.WorldAPI.Tile.Editor
             m_VertexHeightPainter.Init(this);
 
             m_TileMeshCreator = new TileLODMeshCreator(this);
+
+            var material = new Material(Shader.Find("XDay/Grid"));
+            m_Grid = new GridMesh("Tile Grid", m_XTileCount, m_YTileCount, m_TileHeight, material, new Color32(255, 243, 60, 150), Root.transform, true);
+            m_Grid.SetActive(m_ShowGrid);
+            Object.DestroyImmediate(material);
 
             FixNormal();
         }
@@ -352,7 +359,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_ActiveMaterialConfigID = deserializer.ReadInt32("Selected Material Setting ID");
             if (m_MaterialConfigs.Count > 0)
             {
-                m_ActiveMaterialConfigID = m_MaterialConfigs[0].ID;
+                SetActiveMaterialConfig(m_MaterialConfigs[0].ID);
             }
 
             m_Tiles = deserializer.ReadArray("Tiles", (int index) =>
@@ -371,6 +378,16 @@ namespace XDay.WorldAPI.Tile.Editor
                 m_GenerateOBJMeshFile = deserializer.ReadBoolean("Generate OBJ Mesh File");
                 m_ClipMinHeight = deserializer.ReadSingle("Clip Minimum Height");
                 m_CreateMaterialForGroundPrefab = deserializer.ReadBoolean("Create Material For Ground Prefab");
+            }
+
+            if (version >= 4)
+            {
+                m_ShowGrid = deserializer.ReadBoolean("Show Grid");
+            }
+
+            if (version >= 5)
+            {
+                m_ShowMaterial = deserializer.ReadBoolean("Show Material");
             }
         }
 
@@ -424,12 +441,20 @@ namespace XDay.WorldAPI.Tile.Editor
             serializer.WriteSingle(m_ClipMinHeight, "Clip Minimum Height");
             serializer.WriteBoolean(m_CreateMaterialForGroundPrefab, "Create Material For Ground Prefab");
 
+            serializer.WriteBoolean(m_ShowGrid, "Show Grid");
+            serializer.WriteBoolean(m_ShowMaterial, "Show Material");
+
             m_TexturePainter.SaveToFile();
         }
 
         private Vector3 CoordinateToRotatedPosition(int x, int y)
         {
             return m_Rotation * (new Vector3(x * m_TileWidth, 0, y * m_TileHeight) - Center) + Center;
+        }
+
+        private Vector3 CoordinateToRotatedCenterPosition(int x, int y)
+        {
+            return m_Rotation * (new Vector3((x + 0.5f) * m_TileWidth, 0, (y + 0.5f) * m_TileHeight) - Center) + Center;
         }
 
         private void GetTileCoordinatesInRange(Vector3 pos, out int minX, out int minY, out int maxX, out int maxY)
@@ -482,6 +507,35 @@ namespace XDay.WorldAPI.Tile.Editor
 #endif
         }
 
+        private void SetActiveMaterialConfig(int id)
+        {
+            m_ActiveMaterialConfigID = id;
+        }
+
+        //实现IWalkableObjectSource接口
+        List<MeshSource> IWalkableObjectSource.GetAllWalkableMeshes()
+        {
+            List<MeshSource> ret = new();
+            for (var i = 0; i < m_YTileCount; ++i)
+            {
+                for (var j = 0; j < m_XTileCount; ++j)
+                {
+                    m_Renderer.GetTerrainTileMeshAndGameObject(j, i, out var mesh, out var gameObject);
+                    if (mesh != null && gameObject != null)
+                    {
+                        var navMeshSetting = gameObject.GetComponent<NavMeshSetting>();
+                        ret.Add(new MeshSource() { AreaID = navMeshSetting == null ? 0 : navMeshSetting.AreaID, GameObject = gameObject, Mesh = mesh });
+                    }
+                }
+            }
+            return ret;
+        }
+
+        List<ColliderSource> IWalkableObjectSource.GetAllWalkableColliders()
+        {
+            return new();
+        }
+
         private enum GameTileType
         {
             FlatTile,
@@ -498,6 +552,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private GameTileType m_GameTileType = GameTileType.FlatTile;
         private IMeshIndicator m_Indicator;
         private bool m_ShowTileSetting = false;
+        private bool m_ShowGrid = true;
         private float m_TerrainLODMorphRatio = 0.667f;
         private IPluginLODSystem m_PluginLODSystem;
         private int m_XTileCount;
@@ -508,6 +563,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private float m_TileWidth;
         private float m_TileHeight;
         private bool m_ShowMaterialConfig = true;
+        private GridMesh m_Grid;
     }
 }
 

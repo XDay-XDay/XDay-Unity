@@ -734,7 +734,7 @@ namespace XDay.WorldAPI.Attribute.Editor
         private ToggleImageButton m_ShowGrid;
         private List<UIControl> m_Controls;
         private GUIStyle m_TipsStyle;
-        private AttributeSystemHook[] m_Hooks;
+        private List<AttributeSystemHook> m_Hooks;
         public const string GridAttributeName = "GridAttribute";
         private const int m_EditorVersion = 1;
     }

@@ -25,7 +25,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using XDay.UtilityAPI;
 
 namespace XDay.NavigationAPI
 {
@@ -37,7 +36,7 @@ namespace XDay.NavigationAPI
             m_GridData = gridData;
             m_ContextManager = new();
             
-            m_HorizontalResolution = gridData.HorizontalResolution;
+            m_HorizontalResolution = gridData.HorizontalGridCount;
             m_NeighbourCount = neighbourCount;
         }
 
@@ -87,7 +86,7 @@ namespace XDay.NavigationAPI
                     result.Add(m_GridData.CoordinateToGridCenterPosition(targetNode.X, targetNode.Y));
                 }
                 targetNode = context.GetPreviousNode(targetNode);
-                if (targetNode == null)
+                if (ReferenceEquals(targetNode, null))
                 {
                     break;
                 }
@@ -99,10 +98,10 @@ namespace XDay.NavigationAPI
         private bool CalculateCoordinates(Vector3 source, Vector3 target, PathFlags flags, 
             out Vector2Int sourceCoord, out Vector2Int targetCoord, out Vector3 sourcePos, out Vector3 targetPos)
         {
-            sourceCoord = m_GridData.PositionToCoordinate(source.x, source.z);
-            targetCoord = m_GridData.PositionToCoordinate(target.x, target.z);
-            sourcePos = Vector3.zero;
-            targetPos = Vector3.zero;
+            sourceCoord = m_GridData.PositionToCoordinate(source);
+            targetCoord = m_GridData.PositionToCoordinate(target);
+            sourcePos = m_GridData.CoordinateToGridCenterPosition(sourceCoord.x, sourceCoord.y);
+            targetPos = m_GridData.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
 
             if (!m_GridData.IsWalkable(sourceCoord.x, sourceCoord.y))
             {
@@ -211,7 +210,7 @@ namespace XDay.NavigationAPI
 
                 for (var i = 0; i < m_NeighbourCount; ++i)
                 {
-                    var neighbourCoordinate = m_GridData.GetNeighbourCoordinate(i, minCostNode.X, minCostNode.Y);
+                    var neighbourCoordinate = m_GridData.GetNeighbourCoordinate(minCostNode.X, minCostNode.Y, i);
 
                     var connectedTeleportCoordinate = m_GridData.GetConnectedTeleporterCoordinate(neighbourCoordinate.x, neighbourCoordinate.y);
 
@@ -229,7 +228,7 @@ namespace XDay.NavigationAPI
 
                             var pathCostUntilNow = pathCost + minCostNode.TotalPathCost;
                             var neighbourNode = context.GetOpenNode(neighbourIndex);
-                            if (neighbourNode == null)
+                            if (ReferenceEquals(neighbourNode, null))
                             {
                                 neighbourNode = context.AddToOpenList(neighbourCoordinate, totalCost, pathCostUntilNow);
                                 ConnectNode(minCostNode, neighbourNode);

@@ -41,8 +41,8 @@ namespace XDay.WorldAPI
             m_PluginLODSystem = new();
         }
 
-        public GameWorld(WorldSetup setup, IAssetLoader assetLoader, ICameraManipulator manipulator, ISerializableFactory serializableFactory, WorldPluginLoader pluginLoader, float width = 0, float height = 0)
-            : base(setup, new SLGCameraVisibleAreaCalculator(), assetLoader, manipulator, serializableFactory, width, height)
+        public GameWorld(IWorldManager worldManager, WorldSetup setup, IAssetLoader assetLoader, ICameraManipulator manipulator, ISerializableFactory serializableFactory, WorldPluginLoader pluginLoader, float width = 0, float height = 0)
+            : base(worldManager, setup, new SLGCameraVisibleAreaCalculator(), assetLoader, manipulator, serializableFactory, width, height)
         {
             m_PluginLoader = pluginLoader;
         }
@@ -81,32 +81,38 @@ namespace XDay.WorldAPI
             m_Plugins = m_PluginLoader.LoadPlugins(this);
         }
 
-        public override void Update()
+        public override void Update(float dt)
         {
             if (Inited)
             {
-                CameraVisibleAreaCalculator.Update(m_Manipulator.Camera);
+                if (m_Manipulator != null)
+                {
+                    CameraVisibleAreaCalculator.Update(m_Manipulator.Camera);
+                }
 
                 foreach (var plugin in m_Plugins)
                 {
-                    plugin.Update();
+                    plugin.Update(dt);
                 }
 
-                var cameraPos = m_Manipulator.RenderPosition;
-
-                if (m_PluginLODSystem.Update(cameraPos.y))
+                if (m_Manipulator != null)
                 {
-                    EventLODChanged?.Invoke(m_PluginLODSystem.PreviousLOD, m_PluginLODSystem.CurrentLOD);
-                }
+                    var cameraPos = m_Manipulator.RenderPosition;
 
-                if (!Mathf.Approximately(m_LastCheckCameraAltitude, cameraPos.y))
-                {
-                    if (m_LastCheckCameraAltitude != 0)
+                    if (m_PluginLODSystem.Update(cameraPos.y))
                     {
-                        EventCameraAltitudeChanged?.Invoke(m_LastCheckCameraAltitude, cameraPos.y);
+                        EventLODChanged?.Invoke(m_PluginLODSystem.PreviousLOD, m_PluginLODSystem.CurrentLOD);
                     }
 
-                    m_LastCheckCameraAltitude = cameraPos.y;
+                    if (!Mathf.Approximately(m_LastCheckCameraAltitude, cameraPos.y))
+                    {
+                        if (m_LastCheckCameraAltitude != 0)
+                        {
+                            EventCameraAltitudeChanged?.Invoke(m_LastCheckCameraAltitude, cameraPos.y);
+                        }
+
+                        m_LastCheckCameraAltitude = cameraPos.y;
+                    }
                 }
             }
         }

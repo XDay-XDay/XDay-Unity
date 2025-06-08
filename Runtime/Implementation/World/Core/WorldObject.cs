@@ -39,6 +39,7 @@ namespace XDay.WorldAPI
         public abstract string TypeName { get; }
         public virtual bool EnablePostInit => false;
         public virtual string GameTypeName => TypeName;
+        public virtual bool AllowUndo => true;
 
         public WorldObject()
         {

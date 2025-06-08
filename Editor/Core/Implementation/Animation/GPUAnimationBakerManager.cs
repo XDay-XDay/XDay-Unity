@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -30,25 +28,25 @@ using XDay.UtilityAPI;
 
 namespace XDay.AnimationAPI.Editor
 {
-    public class GPUAnimationBakerManager
+    public static class GPUAnimationBakerManager
     {
         [MenuItem("XDay/Animation/Bake Selection")]
         private static void BakeSelection()
         {
             foreach (var prefab in Selection.gameObjects)
             {
-                Bake(prefab);   
+                Bake(prefab, null);
             }
         }
 
-        public static bool Bake(GameObject prefab)
+        public static bool Bake(GameObject prefab, string prefabFolder)
         {
-            if (!Check(prefab))
+            if (!Check(prefab, prefabFolder))
             {
                 return false;
             }
 
-            var setting = GetBakeSetting(prefab);
+            var setting = GetBakeSetting(prefab, prefabFolder);
 
             GPUAnimationBaker baker = null;
             if (setting.AnimationType == AnimationType.Rig)
@@ -72,12 +70,17 @@ namespace XDay.AnimationAPI.Editor
             return ok;
         }
 
-        private static BakeSetting GetBakeSetting(GameObject prefab)
+        private static BakeSetting GetBakeSetting(GameObject prefab, string prefabFolder)
         {
             var setting = prefab.GetComponent<GPUAnimationBakeSetting>().Setting;
             setting ??= new BakeSetting();
             setting.Prefab = prefab;
-            setting.SetOutputFolder(Path.GetDirectoryName(AssetDatabase.GetAssetPath(prefab)));
+
+            if (string.IsNullOrEmpty(prefabFolder))
+            {
+                prefabFolder = Path.GetDirectoryName(AssetDatabase.GetAssetPath(prefab));
+            }
+            setting.SetOutputFolder(prefabFolder);
             if (setting.AdvancedSetting.DeleteOutputFolder)
             {
                 EditorHelper.DeleteFolderContent(setting.OutputFolder);
@@ -93,8 +96,14 @@ namespace XDay.AnimationAPI.Editor
             return setting;
         }
 
-        private static bool Check(GameObject prefab)
+        private static bool Check(GameObject prefab, string prefabFolder)
         {
+            var assetPath = AssetDatabase.GetAssetPath(prefab);
+            if (string.IsNullOrEmpty(assetPath) && string.IsNullOrEmpty(prefabFolder))
+            {
+                return false;
+            }
+
             if (prefab == null || 
                 prefab.GetComponentInChildren<SkinnedMeshRenderer>() == null)
             {

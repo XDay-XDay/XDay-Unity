@@ -49,7 +49,7 @@ namespace XDay.TestGame
 
         private void Update()
         {
-            Global.XDayContext.Update();
+            Global.XDayContext.Update(Time.deltaTime);
             Global.StateManager.Update(Time.deltaTime);
         }
 

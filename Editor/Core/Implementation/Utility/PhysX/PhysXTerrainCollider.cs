@@ -42,7 +42,7 @@ namespace XDay.UtilityAPI.Editor
 
         public void Init(Vector3 pos, int resolution, float tileWidth, float tileHeight, float[] heights, float heightRange)
         {
-            var physics = PhysxSetup.engine.physics;
+            var physics = PhysxSetup.Setup.Physics;
             // Create PxRigidStatic for ground
             mTerrainActor = physics.createRigidStatic(new PxTransform(PxIDENTITY.PxIdentity));
 
@@ -76,7 +76,7 @@ namespace XDay.UtilityAPI.Editor
             desc.samples.data = Marshal.UnsafeAddrOfPinnedArrayElement(samples, 0);
 
             // Create PxHeightField
-            mHeightField = PhysxSetup.engine.cooking.createHeightField(desc, physics.getPhysicsInsertionCallback());
+            mHeightField = PhysxSetup.Setup.Cooking.createHeightField(desc, physics.getPhysicsInsertionCallback());
             // Unpin managed memory
             pinSamples.Free();
 
@@ -86,16 +86,16 @@ namespace XDay.UtilityAPI.Editor
             {
                 scale = 1.0f;
             }
-            mTerrainActor.createExclusiveShape(new PxHeightFieldGeometry(mHeightField, scale, tileHeight / resolution, tileWidth / resolution), PhysxSetup.engine.material);
+            mTerrainActor.createExclusiveShape(new PxHeightFieldGeometry(mHeightField, scale, tileHeight / resolution, tileWidth / resolution), PhysxSetup.Setup.Material);
             mTerrainActor.getShape(0).setLocalPose(new PxTransform(pos.x, 0, pos.z));
 
-            // Add ground actor to scene
-            PhysxSetup.engine.scene.addActor(mTerrainActor);
+            // Add ground actor to Scene
+            PhysxSetup.Setup.Scene.addActor(mTerrainActor);
         }
 
         public void UpdateHeights(float[] heights, int resolution, float tileWidth, float tileHeight, float heightRange)
         {
-            var physics = PhysxSetup.engine.physics;
+            var physics = PhysxSetup.Setup.Physics;
             mHeightRange = heightRange;
 
             int n = heights.Length;

@@ -25,7 +25,6 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.UtilityAPI;
 
 namespace XDay.NavigationAPI
 {
@@ -42,6 +41,11 @@ namespace XDay.NavigationAPI
     /// </summary>
     public interface IGridBasedPathFinder
     {
+        static IGridBasedPathFinder Create(ITaskSystem taskSystem, IGridData gridData, int neighbourCount)
+        {
+            return new GridBasedAStarPathFinder(taskSystem, gridData, neighbourCount);
+        }
+
         UniTask CalculatePathAsync(Vector3 source, 
             Vector3 target, 
             List<Vector3> path, 
@@ -60,8 +64,8 @@ namespace XDay.NavigationAPI
     /// </summary>
     public interface IGridData
     {
-        int HorizontalResolution { get; }
-        int VerticalResolution { get; }
+        int HorizontalGridCount { get; }
+        int VerticalGridCount { get; }
 
         bool IsTeleporter(int x, int y);
         Vector2Int GetConnectedTeleporterCoordinate(int x, int y);
@@ -69,9 +73,9 @@ namespace XDay.NavigationAPI
         bool GetTeleporterState(int id);
         float GetGridCost(int x, int y, Func<int, float> costOverride = null);
         bool IsWalkable(int x, int y);
-        Vector2Int GetNeighbourCoordinate(int neighbourIndex, int selfX, int selfY);
+        Vector2Int GetNeighbourCoordinate(int selfX, int selfY, int neighbourIndex);
         Vector3 CoordinateToGridCenterPosition(int x, int y);
-        Vector2Int PositionToCoordinate(float x, float z);
+        Vector2Int PositionToCoordinate(Vector3 worldPos);
         Vector2Int FindNearestWalkableCoordinate(int x, int y, Vector2Int referencePoint, int searchDistance);
         Vector2Int FindNearestWalkableCoordinate(int x, int y, int searchDistance);
     }
@@ -97,8 +101,22 @@ namespace XDay.NavigationAPI
 
     public interface IGridNavigationAgent
     {
+        static IGridNavigationAgent Create(GameObject overrideGameObject, Transform parent, Vector3 position, Quaternion rotation)
+        {
+            return new GridBasedNavAgent(overrideGameObject, parent, position, rotation);
+        }
+
+        bool IsMoving { get; }
+        IGridBasedPathFinder PathFinder { set; get; }
+        float MoveSpeed { get; set; }
+        float RotateSpeed { get; set; }
+        event Action EventStartMove; 
+        event Action EventStopMove; 
+
         void OnDestroy();
-        void MoveTo(Vector3 target);
+        void Update(float dt);
+        bool MoveTo(Vector3 target);
+        void MoveTo(List<Vector3> path);
     }
 }
 

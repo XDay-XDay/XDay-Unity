@@ -42,7 +42,7 @@ namespace XDay.WorldAPI
             m_Root = new GameObject(name);
             m_Root.tag = WorldDefine.EDITOR_ONLY_TAG;
 
-            m_Cache = IGameObjectPool.Create(m_Root.transform, 
+            m_Cache = IGameObjectPool.Create("GameObjectPool-WorldRenderer", m_Root.transform, 
                 (prefabPath) => { return CreateNew(prefabPath); },
                 (prefabPath) => { return CreateNewAsync(prefabPath); }
                 );

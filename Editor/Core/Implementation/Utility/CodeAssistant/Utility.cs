@@ -57,7 +57,14 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
         public static void OpenCSFile(string dtePath, string filePath, int line, string folderName)
         {    
             string arguments = $"{folderName} {filePath} {line} false";
-            System.Diagnostics.Process.Start(dtePath, arguments);
+            try
+            {
+                System.Diagnostics.Process.Start(dtePath, arguments);
+            }
+            catch(System.Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
 
         public static string GetAccessModifierString(AccessModifier modifier)

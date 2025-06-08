@@ -83,11 +83,11 @@ namespace XDay.WorldAPI
             LoadGameDataInternal(pluginName, world);
         }
 
-        public void Update()
+        public void Update(float dt)
         {
             if (m_Inited)
             {
-                UpdateInternal();
+                UpdateInternal(dt);
             }
         }
 
@@ -117,7 +117,7 @@ namespace XDay.WorldAPI
         protected abstract void UninitInternal();
         protected virtual void InitRendererInternal() { }
         protected virtual void UninitRendererInternal() { }
-        protected virtual void UpdateInternal() { }
+        protected virtual void UpdateInternal(float dt) { }
         protected virtual async UniTask InitAsyncInternal(CancellationToken token)
         {
             InitInternal();

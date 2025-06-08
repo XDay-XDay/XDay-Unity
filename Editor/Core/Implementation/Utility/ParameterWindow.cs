@@ -52,6 +52,16 @@ namespace XDay.UtilityAPI.Editor
             public int value;
         }
 
+        public class Vector2Parameter : Parameter
+        {
+            public Vector2Parameter(string name, string tooltip, Vector2 value) : base(name, tooltip)
+            {
+                this.value = value;
+            }
+
+            public Vector2 value;
+        }
+
         public class Vector3Parameter : Parameter
         {
             public Vector3Parameter(string name, string tooltip, Vector3 value) : base(name, tooltip)
@@ -60,6 +70,36 @@ namespace XDay.UtilityAPI.Editor
             }
 
             public Vector3 value;
+        }
+
+        public class Vector4Parameter : Parameter
+        {
+            public Vector4Parameter(string name, string tooltip, Vector4 value) : base(name, tooltip)
+            {
+                this.value = value;
+            }
+
+            public Vector4 value;
+        }
+
+        public class Vector2IntParameter : Parameter
+        {
+            public Vector2IntParameter(string name, string tooltip, Vector2Int value) : base(name, tooltip)
+            {
+                this.value = value;
+            }
+
+            public Vector2Int value;
+        }
+
+        public class Vector3IntParameter : Parameter
+        {
+            public Vector3IntParameter(string name, string tooltip, Vector3Int value) : base(name, tooltip)
+            {
+                this.value = value;
+            }
+
+            public Vector3Int value;
         }
 
         public class FloatParameter : Parameter
@@ -99,6 +139,20 @@ namespace XDay.UtilityAPI.Editor
 
             public string[] texts;
             public int selection = 0;
+        }
+
+        public class TextureParameter : Parameter
+        {
+            public string Name;
+            public Vector4 UVTransform;
+            public Texture Texture;
+
+            public TextureParameter(string n, string tooltip, string name, Texture texture, Vector4 uvTransform) : base(n, tooltip)
+            {
+                Name = name;
+                UVTransform = uvTransform;
+                Texture = texture;
+            }
         }
 
         public class ObjectParameter : Parameter
@@ -203,9 +257,33 @@ namespace XDay.UtilityAPI.Editor
             return true;
         }
 
+        public static bool GetVector2(Parameter param, out Vector2 ret)
+        {
+            ret = (param as Vector2Parameter).value;
+            return true;
+        }
+
         public static bool GetVector3(Parameter param, out Vector3 ret)
         {
             ret = (param as Vector3Parameter).value;
+            return true;
+        }
+
+        public static bool GetVector4(Parameter param, out Vector4 ret)
+        {
+            ret = (param as Vector4Parameter).value;
+            return true;
+        }
+
+        public static bool GetVector2Int(Parameter param, out Vector2Int ret)
+        {
+            ret = (param as Vector2IntParameter).value;
+            return true;
+        }
+
+        public static bool GetVector3Int(Parameter param, out Vector3Int ret)
+        {
+            ret = (param as Vector3IntParameter).value;
             return true;
         }
 
@@ -243,6 +321,14 @@ namespace XDay.UtilityAPI.Editor
         {
             ret = (param as StringParameter).text;
             return !string.IsNullOrEmpty(ret);
+        }
+
+        public static bool GetTexture(Parameter param, out Texture texture, out Vector4 uvTransform)
+        {
+            var texParam = (param as TextureParameter);
+            texture = texParam.Texture;
+            uvTransform = texParam.UVTransform;
+            return texture != null;
         }
 
         public static bool GetStringArraySelection(Parameter param, out int selection)
@@ -294,10 +380,39 @@ namespace XDay.UtilityAPI.Editor
                     }
                     EditorGUILayout.EndHorizontal();
                 }
+                else if (m_Parameters[i] is TextureParameter texParam)
+                {
+                    texParam.Texture = EditorGUILayout.ObjectField($"{texParam.Name}", texParam.Texture, typeof(Texture), false) as Texture;
+                    texParam.UVTransform = EditorGUILayout.Vector4Field("", texParam.UVTransform);
+                }
+                else if (m_Parameters[i] is Vector2Parameter vector2Param)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    vector2Param.value = EditorGUILayout.Vector2Field(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), vector2Param.value);
+                    EditorGUILayout.EndHorizontal();
+                }
                 else if (m_Parameters[i] is Vector3Parameter vector3Param)
                 {
                     EditorGUILayout.BeginHorizontal();
                     vector3Param.value = EditorGUILayout.Vector3Field(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), vector3Param.value);
+                    EditorGUILayout.EndHorizontal();
+                }
+                else if (m_Parameters[i] is Vector4Parameter vector4Param)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    vector4Param.value = EditorGUILayout.Vector4Field(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), vector4Param.value);
+                    EditorGUILayout.EndHorizontal();
+                }
+                else if (m_Parameters[i] is Vector2IntParameter vector2IntParam)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    vector2IntParam.value = EditorGUILayout.Vector2IntField(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), vector2IntParam.value);
+                    EditorGUILayout.EndHorizontal();
+                }
+                else if (m_Parameters[i] is Vector3IntParameter vector3IntParam)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    vector3IntParam.value = EditorGUILayout.Vector3IntField(new GUIContent(m_Parameters[i].name, m_Parameters[i].tooltip), vector3IntParam.value);
                     EditorGUILayout.EndHorizontal();
                 }
                 else if (m_Parameters[i] is BoolParameter boolParam)
@@ -329,7 +444,10 @@ namespace XDay.UtilityAPI.Editor
 
             m_CustomOnGUI?.Invoke();
 
+            EditorGUILayout.EndScrollView();
+
             GUI.SetNextControlName("ConfirmButton");
+
             if (GUILayout.Button("确定"))
             {
                 if (m_OnClickOK != null)
@@ -344,8 +462,6 @@ namespace XDay.UtilityAPI.Editor
                     Close();
                 }
             }
-
-            EditorGUILayout.EndScrollView();
         }
 
         private float m_LabelWidth;
@@ -355,5 +471,3 @@ namespace XDay.UtilityAPI.Editor
         private Vector2 m_ScrollView;
     }
 }
-
-//XDay

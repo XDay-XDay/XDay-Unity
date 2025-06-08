@@ -74,7 +74,7 @@ namespace XDay.WorldAPI.Tile.Editor
                     serializer.WriteString(tile?.AssetPath, "");
                     bool hasHeight = false;
                     bool exportHeight = false;
-                    if (tile.VertexHeights != null)
+                    if (tile.VertexHeights != null && tile.VertexHeights.Length > 0)
                     {
                         hasHeight = true;
                         if (m_GetGroundHeightInGame)

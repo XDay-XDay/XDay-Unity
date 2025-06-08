@@ -30,7 +30,7 @@ using XDay.WorldAPI.Editor;
 namespace XDay.WorldAPI.Shape.Editor
 {
     [WorldPluginMetadata("形状层", "shape_editor_data", typeof(ShapeSystemCreateWindow), singleton:true)]
-    internal partial class ShapeSystem : EditorWorldPlugin
+    internal partial class ShapeSystem : EditorWorldPlugin, IObstacleSource
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "shape" };
@@ -198,6 +198,16 @@ namespace XDay.WorldAPI.Shape.Editor
             var bytes = UndoSystem.Serialize(obj);
             var newObj = UndoSystem.Deserialize(id, objectIndex, bytes, World.ID, typeof(ShapeObject).FullName, false) as ShapeObject;
             return newObj;
+        }
+
+        List<IObstacle> IObstacleSource.GetObstacles()
+        {
+            List<IObstacle> obstacles = new();
+            foreach (var kv in m_Shapes)
+            {
+                obstacles.Add(kv.Value);
+            }
+            return obstacles;
         }
 
         private string m_Name;

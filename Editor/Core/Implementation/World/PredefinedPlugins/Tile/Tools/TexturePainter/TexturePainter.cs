@@ -46,7 +46,7 @@ namespace XDay.WorldAPI.Tile.Editor
         public bool IsPainting => m_Tiles != null;
         public float Angle { get => m_Angle; set => m_Angle = value; }
         public bool NormalizeColor { get => m_NormalizeColor; set => m_NormalizeColor = value; }
-        public float Intensity { get => m_Intensity; set => m_Intensity = Mathf.Clamp(value, 0.0001f, 1.0f);}
+        public float Intensity { get => m_Intensity; set => m_Intensity = Mathf.Clamp(value, 0.0001f, 1000f);}
         public float IntensityChange { get => m_IntensityChange; set => m_IntensityChange = value; }
         public TileSystem TileSystem => m_TileSystem;
         public string TypeName => "TexturePainter";
@@ -87,6 +87,12 @@ namespace XDay.WorldAPI.Tile.Editor
 
             m_ButtonBeginPaint = EditorWorldHelper.CreateImageButton("start.png", "");
             controls.Add(m_ButtonBeginPaint);
+
+            m_ButtonPaintOneTile = EditorWorldHelper.CreateToggleImageButton(m_PaintOneTile, "single.png", "只绘制一个tile的贴图");
+            controls.Add(m_ButtonPaintOneTile);
+
+            m_ButtonResetMask = EditorWorldHelper.CreateToggleImageButton(false, "reset_mask.png", "重置Mask贴图");
+            controls.Add(m_ButtonResetMask);
 
             return controls;
         }
@@ -132,7 +138,14 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 if (m_Painting)
                 {
-                    PaintInternal(pos, evt.control);
+                    if (m_ButtonResetMask.Active)
+                    {
+                        ResetMask(pos);
+                    }
+                    else
+                    {
+                        PaintInternal(pos, evt.control);
+                    }
                 }
             }
 
@@ -175,6 +188,10 @@ namespace XDay.WorldAPI.Tile.Editor
             DrawBeginPaintButton();
 
             DrawEndPaintButton();
+
+            DrawPaintOneTileButton();
+
+            DrawResetMaskButton();
         }
 
         public void DrawTooltips()
@@ -198,6 +215,20 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 End();
             }
+        }
+
+        private void DrawPaintOneTileButton()
+        {
+            m_ButtonPaintOneTile.Active = m_PaintOneTile;
+            if (m_ButtonPaintOneTile.Render(m_TileSystem.Inited))
+            {
+                m_PaintOneTile = m_ButtonPaintOneTile.Active;
+            }
+        }
+
+        private void DrawResetMaskButton()
+        {
+            m_ButtonResetMask.Render(m_TileSystem.Inited);
         }
 
         private void DrawBeginPaintButton()
@@ -306,6 +337,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private bool m_Show = true;
         private float m_IntensityChange = 0.05f;
         private bool m_Painting = false;
+        private bool m_PaintOneTile = false;
         private IBrushStyleManager m_BrushStyleManager;
         private TileSystem m_TileSystem;
         private bool m_BrushRandomAngle = true;
@@ -319,8 +351,10 @@ namespace XDay.WorldAPI.Tile.Editor
         private IntField m_BrushSizeField;
         private ImageButton m_ButtonEndPaint;
         private ImageButton m_ButtonBeginPaint;
+        private ToggleImageButton m_ButtonPaintOneTile;
+        private ToggleImageButton m_ButtonResetMask;
         private Popup m_ChannelPopup;
-        private string[] m_ChannelNames = new string[] { "R", "G", "B", "A" };
+        private readonly string[] m_ChannelNames = new string[] { "R", "G", "B", "A" };
     }
 }
 

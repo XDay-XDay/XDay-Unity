@@ -227,7 +227,7 @@ namespace XDay.WorldAPI
         {
             if (CanJoin(action))
             {
-                Debug.Log($"Action {action.DisplayName}@{action.m_AspectName} joined!");
+                //Debug.Log($"Action {action.DisplayName}@{action.m_AspectName} joined!");
                 m_NewAspect = action.m_NewAspect;
                 return true;
             }

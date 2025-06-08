@@ -83,6 +83,11 @@ namespace XDay.WorldAPI.Tile.Editor
                 return aspect;
             }
 
+            if (name == TileDefine.TILE_MATERIAL_ID_NAME)
+            {
+                return IAspect.FromInt32(m_MaterialConfigID);
+            }
+
             if (name.StartsWith(TileDefine.SHADER_PROPERTY_ASPECT_NAME))
             {
                 return null;
@@ -111,6 +116,12 @@ namespace XDay.WorldAPI.Tile.Editor
             if (name == TileDefine.ENABLE_ASPECT_NAME)
             {
                 SetEnabled(aspect.GetBoolean());
+                return true;
+            }
+
+            if (name == TileDefine.TILE_MATERIAL_ID_NAME)
+            {
+                MaterialConfigID = aspect.GetInt32();
                 return true;
             }
 

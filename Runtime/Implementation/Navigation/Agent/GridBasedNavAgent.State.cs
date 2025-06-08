@@ -39,7 +39,7 @@ namespace XDay.NavigationAPI
 
             public virtual void OnEnter() { }
             public virtual void OnExit() { }
-            public virtual void Update() { }
+            public virtual void Update(float dt) { }
 
             protected GridBasedNavAgent m_Agent;
         }
@@ -72,19 +72,23 @@ namespace XDay.NavigationAPI
                 m_Path = m_Agent.Path;
             }
 
-            public override void Update()
+            public override void Update(float dt)
             {
+                if (m_CurrentPathIndex >= m_Agent.Path.Count)
+                {
+                    SetIdle();
+                    return;
+                }
                 var position = m_Agent.Position;
                 var rotation = m_Agent.Rotation;
 
                 var endPos = m_Agent.Path[m_CurrentPathIndex];
-                var dt = Time.deltaTime;
-                position = Vector3.MoveTowards(position, endPos, m_MoveSpeed * dt);
+                position = Vector3.MoveTowards(position, endPos, m_Agent.MoveSpeed * dt);
 
                 var dir = endPos - position;
                 if (dir != Vector3.zero)
                 {
-                    rotation = Quaternion.RotateTowards(rotation, Quaternion.LookRotation(dir), m_RotateSpeed * dt);
+                    rotation = Quaternion.RotateTowards(rotation, Quaternion.LookRotation(dir), m_Agent.RotateSpeed * dt);
                 }
 
                 if (position == endPos)
@@ -92,7 +96,7 @@ namespace XDay.NavigationAPI
                     ++m_CurrentPathIndex;
                     if (m_CurrentPathIndex >= m_Path.Count)
                     {
-                        m_Agent.SetState<Idle>();
+                        SetIdle();
                     }
                 }
 
@@ -100,10 +104,14 @@ namespace XDay.NavigationAPI
                 m_Agent.Rotation = rotation;
             }
 
+            private void SetIdle()
+            {
+                m_Agent.SetState<Idle>();
+                m_Agent.EventStopMove?.Invoke();
+            }
+
             private int m_CurrentPathIndex;
             private List<Vector3> m_Path;
-            private float m_MoveSpeed = 1.0f;
-            private float m_RotateSpeed = 500.0f;
         }
     }
 }

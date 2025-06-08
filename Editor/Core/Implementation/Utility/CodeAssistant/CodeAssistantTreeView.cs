@@ -224,7 +224,7 @@ namespace XDay.UtilityAPI.Editor.CodeAssistant
         public CodeAssistantData data { get { return mData; } }
 
         CodeAssistantTreeView mTreeView;
-        CodeAssistantData mData = new CodeAssistantData();
+        CodeAssistantData mData = new();
         SearchField mSearchField;
         TreeViewState mState;
     }

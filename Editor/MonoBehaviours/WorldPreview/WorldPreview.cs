@@ -67,7 +67,7 @@ internal partial class WorldPreview : MonoBehaviour
 
     private void Update()
     {
-        m_XDay.Update();
+        m_XDay.Update(Time.deltaTime);
 
         UpdateTests();
     }
