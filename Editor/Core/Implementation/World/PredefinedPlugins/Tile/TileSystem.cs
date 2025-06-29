@@ -27,7 +27,6 @@ using UnityEditor;
 using XDay.WorldAPI.Editor;
 using System.Text;
 using XDay.UtilityAPI;
-using XDay.NavigationAPI;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -50,7 +49,10 @@ namespace XDay.WorldAPI.Tile.Editor
     }
 
     [WorldPluginMetadata("地表层", "tile_editor_data", typeof(TileSystemCreateWindow), true)]
-    internal sealed partial class TileSystem : EditorWorldPlugin, IHeightDataSource, IWalkableObjectSource
+    internal sealed partial class TileSystem : EditorWorldPlugin, 
+        IHeightDataSource, 
+        IWalkableObjectSource,
+        IWorldBakeable
     {
         public override string Name { set => throw new System.NotImplementedException(); get => m_Name; }
         public Vector2 Origin => m_Origin;
@@ -62,8 +64,27 @@ namespace XDay.WorldAPI.Tile.Editor
         public float TileHeight => m_TileHeight;
         public Vector3 Center => new(m_Origin.x + m_Width * 0.5f, 0, m_Origin.y + m_Height * 0.5f);
         public int LODCount => m_PluginLODSystem.LODCount;
+        public override Bounds Bounds => new(Center, new Vector3(Width, Height));
         public float Width => m_Width;
         public float Height => m_Height;
+        public string BrushFolder
+        {
+            get => m_BrushFolder;
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    return;
+                }
+
+                if (m_BrushFolder != value)
+                {
+                    m_BrushFolder = value;
+
+                    ApplyBrushFolder();
+                }
+            }
+        }
         public override Quaternion Rotation
         {
             get => m_Rotation;
@@ -115,6 +136,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_OptimizeMesh = createInfo.OptimizeMesh;
             m_GenerateMeshCollider = createInfo.GenerateMeshCollider;
             m_GetGroundHeightInGame = createInfo.GetGroundHeightInGame;
+            m_BrushFolder = EditorPrefs.GetString("XDay.BrushFolder");
         }
 
         protected override void InitInternal()
@@ -153,8 +175,8 @@ namespace XDay.WorldAPI.Tile.Editor
                 }
             }
 
-            m_TexturePainter.Init(() => { SceneView.RepaintAll(); }, this);
-            m_VertexHeightPainter.Init(this);
+            m_TexturePainter.Init(() => { SceneView.RepaintAll(); }, this, m_BrushFolder);
+            m_VertexHeightPainter.Init(this, m_BrushFolder);
 
             m_TileMeshCreator = new TileLODMeshCreator(this);
 
@@ -164,6 +186,8 @@ namespace XDay.WorldAPI.Tile.Editor
             Object.DestroyImmediate(material);
 
             FixNormal();
+
+            ApplyBrushFolder();
         }
 
         protected override void UninitInternal()
@@ -389,6 +413,11 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 m_ShowMaterial = deserializer.ReadBoolean("Show Material");
             }
+
+            if (version >= 6)
+            {
+                m_BrushFolder = deserializer.ReadString("Brush Folder");
+            }
         }
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -443,6 +472,8 @@ namespace XDay.WorldAPI.Tile.Editor
 
             serializer.WriteBoolean(m_ShowGrid, "Show Grid");
             serializer.WriteBoolean(m_ShowMaterial, "Show Material");
+
+            serializer.WriteString(m_BrushFolder, "Brush Folder");
 
             m_TexturePainter.SaveToFile();
         }
@@ -512,28 +543,14 @@ namespace XDay.WorldAPI.Tile.Editor
             m_ActiveMaterialConfigID = id;
         }
 
-        //实现IWalkableObjectSource接口
-        List<MeshSource> IWalkableObjectSource.GetAllWalkableMeshes()
+        private void ApplyBrushFolder()
         {
-            List<MeshSource> ret = new();
-            for (var i = 0; i < m_YTileCount; ++i)
+            if (!string.IsNullOrEmpty(m_BrushFolder))
             {
-                for (var j = 0; j < m_XTileCount; ++j)
-                {
-                    m_Renderer.GetTerrainTileMeshAndGameObject(j, i, out var mesh, out var gameObject);
-                    if (mesh != null && gameObject != null)
-                    {
-                        var navMeshSetting = gameObject.GetComponent<NavMeshSetting>();
-                        ret.Add(new MeshSource() { AreaID = navMeshSetting == null ? 0 : navMeshSetting.AreaID, GameObject = gameObject, Mesh = mesh });
-                    }
-                }
+                EditorPrefs.SetString("XDay.BrushFolder", m_BrushFolder);
             }
-            return ret;
-        }
-
-        List<ColliderSource> IWalkableObjectSource.GetAllWalkableColliders()
-        {
-            return new();
+            m_VertexHeightPainter.ChangeBrushFolder(m_BrushFolder);
+            m_TexturePainter.ChangeBrushFolder(m_BrushFolder);
         }
 
         private enum GameTileType
@@ -564,7 +581,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private float m_TileHeight;
         private bool m_ShowMaterialConfig = true;
         private GridMesh m_Grid;
+        private string m_BrushFolder;
+        private const int m_Version = 6;
     }
 }
-
-//XDay

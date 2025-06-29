@@ -61,6 +61,12 @@ namespace XDay.UtilityAPI.Editor
             (SelectedStyle as BrushStyle)?.UpdateRotation(m_TextureRotation, rotation, onlyAlpha);
         }
 
+        public void ChangeBrushFolder(string path)
+        {
+            m_StyleTextureFolder = path;
+            Refresh(true);
+        }
+
         private BrushStyle GetStyle(int index)
         {
             if (index >= 0 && index < m_Styles.Count)
@@ -132,7 +138,7 @@ namespace XDay.UtilityAPI.Editor
         private bool m_ShowBlur = true;
         private TextureRotation m_TextureRotation;
         private readonly List<BrushStyle> m_Styles = new();
-        private readonly string m_StyleTextureFolder;
+        private string m_StyleTextureFolder;
         private int m_SelectedIndex = -1;
     }
 }

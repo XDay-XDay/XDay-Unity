@@ -57,22 +57,30 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         public bool GetEnableHeightAdjust()
         {
+            if (m_GetEnableHeightAdjust == null)
+            {
+                return false;
+            }
             return m_GetEnableHeightAdjust(m_ObjectID);
         }
 
         public bool GetEnableInstanceRendering()
         {
+            if (m_GetEnableInstanceRendering == null)
+            {
+                return false;
+            }
             return m_GetEnableInstanceRendering(m_ObjectID);
         }
 
         public void SetEnableHeightAdjust(bool enable)
         {
-            m_SetEnableHeightAdjust(m_ObjectID, enable);
+            m_SetEnableHeightAdjust?.Invoke(m_ObjectID, enable);
         }
 
         public void SetEnableInstanceRendering(bool enable)
         {
-            m_SetEnableInstanceRendering(m_ObjectID, enable);
+            m_SetEnableInstanceRendering?.Invoke(m_ObjectID, enable);
         }
 
         public void UpdateTranfsorm()

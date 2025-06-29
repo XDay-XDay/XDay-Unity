@@ -46,7 +46,7 @@ namespace XDay.InputAPI
         public int UITouchCount => m_Device.UITouchCount;
         public int TouchCountNotStartFromUI => m_Device.TouchCountNotStartFromUI;
         public int SceneTouchCountNotStartFromUI => m_Device.SceneTouchCountNotStartFromUI;
-        public event Action EventAnyTouchBegin
+        public event Action<Vector2> EventAnyTouchBegin
         {
             add
             {
@@ -55,7 +55,7 @@ namespace XDay.InputAPI
             }
             remove => m_Device.EventAnyTouchBegin -= value;
         }
-        public event Action EventAnySceneTouchBegin
+        public event Action<Vector2> EventAnySceneTouchBegin
         {
             add
             {
@@ -220,8 +220,8 @@ namespace XDay.InputAPI
 
     internal interface IDevice
     {
-        event Action EventAnyTouchBegin;
-        event Action EventAnySceneTouchBegin;
+        event Action<Vector2> EventAnyTouchBegin;
+        event Action<Vector2> EventAnySceneTouchBegin;
         int TouchCount { get; }
         int UITouchCount { get;}
         int TouchCountNotStartFromUI { get;}

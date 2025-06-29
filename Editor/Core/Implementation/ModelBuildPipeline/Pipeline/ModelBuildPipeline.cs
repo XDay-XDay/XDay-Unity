@@ -33,6 +33,7 @@ namespace XDay.ModelBuildPipeline.Editor
     public partial class ModelBuildPipeline : ScriptableObject
     {
         public int NextID => ++m_NextID;
+        public int SortOrder { get => m_SortOrder; set => m_SortOrder = value; }
         public int StageCount => m_Stages.Count;
         public List<ModelBuildPipelineStage> Stages => m_Stages;
         public event Action<ModelBuildPipelineStage> EventCreateStage
@@ -157,9 +158,26 @@ namespace XDay.ModelBuildPipeline.Editor
             return null;
         }
 
+        public bool ContainsStage(int stageID)
+        {
+            foreach (var stage in m_Stages)
+            {
+                if (stage != null && stage.ID == stageID)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public int GetStageIndex(ModelBuildPipelineStage stage)
         {
             return m_Stages.IndexOf(stage);
+        }
+
+        public bool IsModelFolder(string rootFolder)
+        {
+            return GetModel(rootFolder) != null;
         }
 
         public List<AnimationClip> GetAnimations(string rootFolder)
@@ -185,7 +203,7 @@ namespace XDay.ModelBuildPipeline.Editor
             return anims;
         }
 
-        private GameObject GetModel(string folder)
+        private static GameObject GetModel(string folder)
         {
             var gameObjects = EditorHelper.QueryAssets<GameObject>(new string[] { folder }, true);
             foreach (var obj in gameObjects)
@@ -215,6 +233,9 @@ namespace XDay.ModelBuildPipeline.Editor
         private List<ModelBuildPipelineStage> m_Stages = new();
         [SerializeField]
         private int m_NextID;
+        //小的排在更前面
+        [SerializeField]
+        private int m_SortOrder = 0;
         [SerializeReference]
         public ModelBuildPipelineSetting Setting;
         private event Action<ModelBuildPipelineStage> m_EventCreateStage;

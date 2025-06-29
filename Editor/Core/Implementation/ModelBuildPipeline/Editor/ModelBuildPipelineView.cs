@@ -127,13 +127,15 @@ namespace XDay.ModelBuildPipeline.Editor
                 m_Pipeline = pipeline;
                 if (m_Pipeline != null)
                 {
-
                     m_Pipeline.EventCreateStage += OnCreateStage;
                     m_Pipeline.EventDestroyStage += OnDestroyStage;
                 }
 
-                if (pipeline != null)
+                if (m_Pipeline != null)
                 {
+                    //删除Stage为null的数据
+                    m_Pipeline.RemoveInvalidStages();
+
                     foreach (var stage in m_Pipeline.Stages)
                     {
                         CreateStageView(stage, stage.WorldPosition);

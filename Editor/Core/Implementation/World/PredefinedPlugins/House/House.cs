@@ -36,7 +36,7 @@ namespace XDay.WorldAPI.House.Editor
         public override bool IsActive => m_Enabled;
         public override string TypeName => "EditorHouse";
         public IEditorResourceDescriptor ResourceDescriptor => m_ResourceDescriptor.ToObject<IEditorResourceDescriptor>();
-        public GameObject Prefab => AssetDatabase.LoadAssetAtPath<GameObject>(ResourceDescriptor.GetPath(0));
+        public GameObject Prefab => AssetDatabase.LoadAssetAtPath<GameObject>(GetPath());
         public GameObject Root => m_Root;
         public GameObject InteractivePointRoot => m_InteractivePointRoot;
         public GameObject TeleporterRoot => m_TeleporterRoot;
@@ -123,12 +123,10 @@ namespace XDay.WorldAPI.House.Editor
             m_ResourceDescriptor.Init(World);
 
             m_HouseEditor = World.QueryPlugin<HouseEditor>();
-            var obj = World.AssetLoader.LoadGameObject(ResourceDescriptor.GetPath(0));
-            Helper.HideGameObject(obj);
             m_Root = new GameObject(m_Name);
             m_DrawBounds = m_Root.AddComponent<DrawBounds>();
             AddBehaviour();
-            obj.transform.SetParent(m_Root.transform, false);
+            CreateModel();
             m_Root.transform.SetParent(GetItemRoot().transform);
             m_Root.transform.SetPositionAndRotation(m_Position, m_Rotation);
             m_Root.SetActive(IsActive);
@@ -136,7 +134,7 @@ namespace XDay.WorldAPI.House.Editor
             m_InteractivePointRoot = CreateItemRoot("交互点");
             m_TeleporterRoot = CreateItemRoot("传送点");
             m_Collider = m_Root.transform.GetComponentInChildren<UnityEngine.BoxCollider>();
-            Debug.Assert(m_Collider != null, $"房间{obj.name}没有BoxCollider");
+            Debug.Assert(m_Collider != null, $"房间{m_Model.name}没有BoxCollider");
             if (m_Collider == null)
             {
                 m_Collider = m_Root.AddComponent<UnityEngine.BoxCollider>();
@@ -188,6 +186,13 @@ namespace XDay.WorldAPI.House.Editor
             }
         }
 
+        private void CreateModel()
+        {
+            m_Model = World.AssetLoader.LoadGameObject(GetPath());
+            Helper.HideGameObject(m_Model);
+            m_Model.transform.SetParent(m_Root.transform, false);
+        }
+
         protected override void OnUninit()
         {
             foreach (var layer in m_Layers)
@@ -213,6 +218,13 @@ namespace XDay.WorldAPI.House.Editor
             m_ResourceDescriptor = null;
 
             UnsubscribeEvents();
+        }
+
+        public void ReplaceModel(IResourceDescriptor descriptor)
+        {
+            m_ResourceDescriptor = new WorldObjectWeakRef(descriptor);
+            Helper.DestroyUnityObject(m_Model);
+            CreateModel();
         }
 
         //将房间内物体旋转180°
@@ -926,7 +938,10 @@ namespace XDay.WorldAPI.House.Editor
                 agent.Update(dt);
             }
 
-            m_DrawBounds.Bounds = m_Collider.bounds;
+            if (m_Collider != null)
+            {
+                m_DrawBounds.Bounds = m_Collider.bounds;
+            }
         }
 
         protected virtual Transform GetItemRoot()
@@ -1068,6 +1083,17 @@ namespace XDay.WorldAPI.House.Editor
             return offset;
         }
 
+        private string GetPath()
+        {
+            var path = ResourceDescriptor.GetPath(0);
+            if (!World.AssetLoader.Exists(path))
+            {
+                Debug.LogError($"模型{path}未找到,使用临时模型{HouseEditor.PlaceholderModelPath}");
+                return HouseEditor.PlaceholderModelPath;
+            }
+            return path;
+        }
+
         [SerializeField]
         private WorldObjectWeakRef m_ResourceDescriptor;
         [SerializeField]
@@ -1097,6 +1123,7 @@ namespace XDay.WorldAPI.House.Editor
         private bool m_Enabled = true;
         private HouseGrid m_Grid;
         private GameObject m_Root;
+        private GameObject m_Model;
         private GameObject m_AgentRoot;
         private GameObject m_InteractivePointRoot;
         private GameObject m_TeleporterRoot;

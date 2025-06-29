@@ -43,6 +43,17 @@ namespace XDay.CameraAPI
                 Debug.Assert(ok, $"Invalid direction: {dir}");
             }
 
+            //load bounds
+            {
+                if (root.ContainsKey("Bounds"))
+                {
+                    var boundsConfig = root["Bounds"] as Dictionary<string, object>;
+                    var boundsMin = ToVector2(boundsConfig["Min"] as string);
+                    var boundsMax = ToVector2(boundsConfig["Max"] as string);
+                    m_FocusPointBounds = new Rect(boundsMin, boundsMax - boundsMin);
+                }
+            }
+
             float pitch;
             {
                 //load orbit
@@ -89,6 +100,15 @@ namespace XDay.CameraAPI
                 }
                 m_AltitudeManager.PostLoad();
             }
+        }
+
+        private Vector2 ToVector2(string v)
+        {
+            v = v.Trim();
+            var tokens = v.Split(',');
+            float x = float.Parse(tokens[0]);
+            float y = float.Parse(tokens[1]);
+            return new Vector2(x, y);
         }
     }
 }

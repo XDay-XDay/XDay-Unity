@@ -36,17 +36,20 @@ namespace XDay.ModelBuildPipeline.Editor
         /// </summary>
         /// <param name="rootFolder"></param>
         /// <returns></returns>
-        public bool Build(string rootFolder)
+        public void Build(string rootFolder, bool recursive)
         {
             string modelFolder = $"{rootFolder}/{MODEL_FOLDER_NAME}";
             var fbxModel = GetModel(modelFolder);
             if (fbxModel == null)
             {
-                foreach (var dir in Directory.EnumerateDirectories(rootFolder))
+                if (recursive)
                 {
-                    Build(Helper.ToUnityPath(dir));
+                    foreach (var dir in Directory.EnumerateDirectories(rootFolder))
+                    {
+                        Build(Helper.ToUnityPath(dir), true);
+                    }
                 }
-                return false;
+                return;
             }
 
             var inst = GameObject.Instantiate(fbxModel);
@@ -74,7 +77,7 @@ namespace XDay.ModelBuildPipeline.Editor
             {
                 stage.PostBuild(prefab, this);
             }
-            return true;
+            return;
         }
 
         /// <summary>

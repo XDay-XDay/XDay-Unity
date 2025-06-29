@@ -27,7 +27,7 @@ using UnityEngine;
 
 namespace XDay.AssetAPI
 {
-    internal class DefaultAssetLoader : IAssetLoader
+    public class DefaultAssetLoader : IAssetLoader
     {
         public void OnDestroy()
         {
@@ -59,7 +59,9 @@ namespace XDay.AssetAPI
             var prefab = m_AssetSystem.Load<GameObject>(path);
             if (prefab != null)
             {
-                return Object.Instantiate(prefab);
+                var obj = Object.Instantiate(prefab);
+                obj.name = prefab.name;
+                return obj;
             }
             return null;
         }

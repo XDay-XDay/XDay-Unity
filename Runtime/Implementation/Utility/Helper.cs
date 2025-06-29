@@ -236,6 +236,38 @@ namespace XDay.UtilityAPI
             return (float)((double)z / System.Math.Sin((90 - rotationX) * m_DegToRad));
         }
 
+        public static bool ContainsTextureProperty(this Shader shader, string propertyName)
+        {
+            int n = shader.GetPropertyCount();
+            for (int i = 0; i < n; ++i)
+            {
+                if (shader.GetPropertyName(i) == propertyName &&
+                    shader.GetPropertyType(i) == UnityEngine.Rendering.ShaderPropertyType.Texture)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool Contains(this Bounds a, Bounds b)
+        {
+            return
+                GE(b.min.x, a.min.x) &&
+                GE(b.min.y, a.min.y) &&
+                GE(b.min.z, a.min.z) &&
+                LE(b.min.x, a.max.x) &&
+                LE(b.min.y, a.max.y) &&
+                LE(b.min.z, a.max.z) &&
+                GE(b.max.x, a.min.x) &&
+                GE(b.max.y, a.min.y) &&
+                GE(b.max.z, a.min.z) &&
+                LE(b.max.x, a.max.x) &&
+                LE(b.max.y, a.max.y) &&
+                LE(b.max.z, a.max.z);
+        }
+
         public static Vector3 ToVector3XZ(this Vector2 v)
         {
             return new Vector3(v.x, 0, v.y);
@@ -1961,6 +1993,42 @@ namespace XDay.UtilityAPI
             return true;
         }
 
+        public static float ChangePrecision(float x)
+        {
+            return Mathf.FloorToInt(x * 1000) / 1000f;
+        }
+
+        public static Transform FindChild(Transform transform, string name)
+        {
+            Stack<Transform> stack = new();
+            stack.Push(transform);
+            while (stack.Count > 0)
+            {
+                var cur = stack.Pop();
+                if (cur.name == name)
+                {
+                    return cur;
+                }
+
+                foreach (Transform child in cur.transform)
+                {
+                    stack.Push(child);
+                }
+            }
+            return null;
+        }
+		
+        public static string ToHexColor(Color32 color)
+        {
+            StringBuilder builder = new();
+            builder.Append("#");
+            builder.Append(color.r.ToString("X2"));
+            builder.Append(color.g.ToString("X2"));
+            builder.Append(color.b.ToString("X2"));
+            builder.Append(color.a.ToString("X2"));
+            return builder.ToString();
+        }
+		
         private const double m_DegToRad = 0.0174532924;
     }
 }

@@ -165,7 +165,7 @@ namespace XDay.CameraAPI
         /// <summary>
         /// enable camera position clamp in xz plane or not
         /// </summary>
-        bool EnableFocusPointClampXZ { get; set; }
+        bool EnableFocusPointClamp { get; set; }
         /// <summary>
         /// is camera transform changed
         /// </summary>

@@ -35,11 +35,7 @@ namespace XDay.WorldAPI.Editor
 {
     internal partial class EditorWorld : World, IWorldObjectContainer
     {
-        public int SelectedPluginIndex 
-        { 
-            set => m_SelectedPluginIndex = value; 
-            get => m_SelectedPluginIndex; 
-        }
+        public int SelectedPluginIndex { set => m_SelectedPluginIndex = value; get => m_SelectedPluginIndex; }
         public override string TypeName => "EditorWorld";
         public override int CurrentLOD => throw new NotImplementedException();
         public bool AllowUndo => true;

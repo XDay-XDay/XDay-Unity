@@ -26,7 +26,6 @@ using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 using XDay.UtilityAPI.Editor;
-using XDay.WorldAPI.City.Editor;
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.House.Editor
@@ -47,6 +46,8 @@ namespace XDay.WorldAPI.House.Editor
             {
                 SetEditMode((EditMode)newEditMode);
             }
+
+            m_PlaceholderModelPath = EditorHelper.ObjectField<GameObject>("替代模型", m_PlaceholderModelPath);
 
             if (m_EditMode == EditMode.House)
             {
@@ -143,8 +144,35 @@ namespace XDay.WorldAPI.House.Editor
                     house.Name = EditorGUILayout.TextField("名字", house.Name);
                     GUI.enabled = false;
                     EditorGUILayout.FloatField("格子大小(米)", house.GridSize);
-                    EditorGUILayout.ObjectField("模型", house.Prefab, typeof(GameObject), allowSceneObjects: false);
+                    EditorGUILayout.BeginHorizontal();
                     GUI.enabled = true;
+                    var prefab = EditorGUILayout.ObjectField("模型", house.Prefab, typeof(GameObject), allowSceneObjects: false) as GameObject;
+                    if (GUILayout.Button("替换", GUILayout.MaxWidth(40)))
+                    {
+                        var items = new List<ParameterWindow.Parameter> {
+                                new ParameterWindow.ObjectParameter("新模型", "", house.Prefab, typeof(GameObject), false),
+                            };
+                        ParameterWindow.Open("替换模型", items, (parameters) =>
+                        {
+                            var ok = ParameterWindow.GetObject<GameObject>(parameters[0], out var prefab);
+                            if (ok)
+                            {
+                                var type = PrefabUtility.GetPrefabAssetType(prefab);
+                                if (type == PrefabAssetType.Regular ||
+                                type == PrefabAssetType.Variant)
+                                {
+                                    ReplaceHouseModel(house, prefab);
+                                    return true;
+                                }
+                                else
+                                {
+                                    EditorUtility.DisplayDialog("出错了", "不是Prefab,无法替换", "确定");
+                                }
+                            }
+                            return false;
+                        });
+                    }
+                    EditorGUILayout.EndHorizontal();
                     DrawInteractivePointSettings(house);
                     DrawTeleporterSettings(house);
                 });
@@ -381,6 +409,7 @@ namespace XDay.WorldAPI.House.Editor
             EditorGUIUtility.labelWidth = 10;
             setter.Visible = EditorGUILayout.ToggleLeft("", setter.Visible, GUILayout.MaxWidth(20));
             EditorGUIUtility.labelWidth = 0;
+
             var newPrefab = (GameObject)EditorGUILayout.ObjectField("场景模型", setter.Prefab, typeof(GameObject), false);
             if (newPrefab != setter.Prefab)
             {

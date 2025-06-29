@@ -186,6 +186,11 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void OnSceneGUIPaintHeight()
         {
+            if (m_BrushStyleManager.SelectedStyle == null)
+            {
+                return;
+            }
+
             var currentEvent = Event.current;
             var worldPos = EditorHelper.MousePositionToWorldRay(currentEvent.mousePosition, out Ray ray);
             var camera = SceneView.currentDrawingSceneView.camera;
@@ -1022,6 +1027,11 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DoSmooth(Vector3 worldPos, bool isMouseDown, TileSystem m_TileSystem)
         {
+            if (m_BrushStyleManager.SelectedStyle == null)
+            {
+                return;
+            }
+
             //smooth只发生在和worldPos所在tile的resolution相同的tile上
             m_PaintHeightParameters.TileCoords.Clear();
 

@@ -21,13 +21,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using XDay.UtilityAPI;
 using System.IO;
 using System.Text.RegularExpressions;
-using UnityEngine;
-using UnityEditor;
 
 namespace XDay.WorldAPI
 {
@@ -71,7 +67,7 @@ namespace XDay.WorldAPI
         public static bool ImageButton(string name, string tooltip, int imageSize = 18)
         {
 #if UNITY_EDITOR
-            return GUILayout.Button(new GUIContent(AssetDatabase.LoadAssetAtPath<Texture2D>(GetIconPath(name)), tooltip), GUILayout.MaxWidth(imageSize), GUILayout.MaxHeight(imageSize));
+            return UnityEngine.GUILayout.Button(new UnityEngine.GUIContent(UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Texture2D>(GetIconPath(name)), tooltip), UnityEngine.GUILayout.MaxWidth(imageSize), UnityEngine.GUILayout.MaxHeight(imageSize));
 #else
             return false;
 #endif
@@ -97,15 +93,20 @@ namespace XDay.WorldAPI
             return GetResourcePath("", "Brush");
         }
 
+        public static string GetXDayPath()
+        {
+            return Helper.GetFolderPath(Helper.GetFolderPath(Helper.GetFolderPath(m_ResourceDir)));
+        }
+
         private static string GetResourcePath(string name, string type)
         {
 #if UNITY_EDITOR
             if (string.IsNullOrEmpty(m_ResourceDir))
             {
-                string[] guids = AssetDatabase.FindAssets("XDayDummy t:Scene");
+                string[] guids = UnityEditor.AssetDatabase.FindAssets("XDayDummy t:Scene");
                 foreach (string guid in guids)
                 {
-                    string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                    string assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
                     var sceneName = Path.GetFileName(assetPath);
                     if (sceneName == "XDayDummy.unity")
                     {

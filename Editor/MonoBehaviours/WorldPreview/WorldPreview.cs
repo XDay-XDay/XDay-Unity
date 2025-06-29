@@ -25,6 +25,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using FixMath.NET;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -33,7 +34,7 @@ using XDay.CameraAPI;
 using XDay.RenderingAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
-
+using XDay.WorldAPI.Decoration;
 
 internal partial class WorldPreview : MonoBehaviour
 {
@@ -43,9 +44,6 @@ internal partial class WorldPreview : MonoBehaviour
     public float Radius = 5;
     public string AssetPath;
     public GameObject FollowTarget;
-    public Transform StripeStart;
-    public Transform StripeEnd;
-    public Material StripeMaterial;
 
     private async void Start()
     {
@@ -56,8 +54,11 @@ internal partial class WorldPreview : MonoBehaviour
         world.CameraVisibleAreaCalculator.ExpandSize = new Vector2(50, 50);
         world.CameraManipulator.SetPosition(CameraPosition);
 
-        m_StripeEffect = new();
-        m_StripeEffect.Start(StripeStart, StripeEnd, Vector3.zero, Vector3.zero, StripeMaterial, 0.5f);
+        Fix64 f = (Fix64)12.1;
+        Fix64 f2 = (Fix64)12.1;
+        var k = f - f2;
+        var p = Fix64.Pow(f, (Fix64)3.2f);
+        int a = 1;
     }
 
     private void OnDestroy()

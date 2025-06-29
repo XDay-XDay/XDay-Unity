@@ -214,6 +214,11 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void PaintInternal(Vector3 center, bool subtract)
         {
+            if (m_BrushStyleManager.SelectedStyle == null)
+            {
+                return;
+            }
+
             var rotateBrush = EnableRotation;
             var brush = m_BrushStyleManager.SelectedStyle;
             var paintChannel = Channel;

@@ -29,7 +29,7 @@ namespace XDay.NavigationAPI.Editor
     {
         public Vector3[] MeshVertices;
         public int[] MeshIndices;
-        public ushort[] TriangleTypes;
+        public ushort[] TriangleAreaIDs;
     }
 
     public interface INavMeshBuildSetting

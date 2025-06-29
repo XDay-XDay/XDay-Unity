@@ -22,7 +22,9 @@
  */
 
 using System;
+using UnityEditor;
 using UnityEngine;
+using XDay.UtilityAPI;
 
 namespace XDay.ModelBuildPipeline.Editor
 {
@@ -45,26 +47,40 @@ namespace XDay.ModelBuildPipeline.Editor
 
             foreach (var node in setting.Nodes)
             {
-                GameObject obj;
+                GameObject obj = null;
                 if (node.Prefab != null)
                 {
                     obj = UnityEngine.Object.Instantiate(node.Prefab);
-                    obj.name = node.Name;
                 }
-                else
+                else if (!string.IsNullOrEmpty(node.PrefabPath))
+                {
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(node.PrefabPath);
+                    if (prefab != null)
+                    {
+                        obj = UnityEngine.Object.Instantiate(prefab);
+                    }
+                }
+                else if (pipeline.Setting != null)
                 {
                     var prefab = pipeline.Setting.GetGameObject(node.Name);
                     if (prefab != null)
                     {
                         obj = UnityEngine.Object.Instantiate(prefab);
-                        obj.name = node.Name;
-                    }
-                    else
-                    {
-                        obj = new GameObject(node.Name);
                     }
                 }
-                obj.transform.SetParent(root.transform);
+
+                if (obj == null)
+                {
+                    obj = new GameObject();
+                }
+                obj.name = node.Name;
+
+                var parent = Helper.FindChild(root.transform, node.AttachParentName);
+                if (parent == null)
+                {
+                    parent = root.transform;
+                }
+                obj.transform.SetParent(parent);
                 obj.transform.localPosition = node.LocalPosition;
 
                 Vector3 scale = node.LocalScale;
@@ -90,7 +106,7 @@ namespace XDay.ModelBuildPipeline.Editor
 
             foreach (var node in setting.Nodes)
             {
-                var child = root.transform.Find(node.Name);
+                var child = Helper.FindChild(root.transform, node.Name);
                 if (child != null)
                 {
                     node.LocalPosition = child.localPosition;

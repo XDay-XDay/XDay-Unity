@@ -21,12 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
-using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine;
-using XDay.UtilityAPI;
-using XDay.UtilityAPI.Editor;
 
 namespace XDay.ModelBuildPipeline.Editor
 {

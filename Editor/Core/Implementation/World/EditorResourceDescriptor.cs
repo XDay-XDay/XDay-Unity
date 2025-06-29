@@ -57,6 +57,11 @@ namespace XDay.WorldAPI.Editor
                 Debug.LogError($"guid {m_LOD0GUID} path is null");
             }
             m_Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_LOD0);
+            if (m_Prefab == null)
+            {
+                Debug.LogError($"加载Prefab失败{m_LOD0}");
+                m_Prefab = new GameObject("Placeholder: " + m_LOD0);
+            }
             m_Bounds = m_Prefab.QueryRect();
 
             FoundLODs();

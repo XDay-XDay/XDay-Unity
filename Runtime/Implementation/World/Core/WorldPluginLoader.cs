@@ -50,6 +50,7 @@ namespace XDay.WorldAPI
             }
 
             AddDeserializer(worldID, WorldDefine.GAME_FILE_NAME, CreateDeserializer($"{folder}/{WorldDefine.GAME_FILE_NAME}.bytes"));
+            AddDeserializer(worldID, WorldDefine.BAKED_TILES_FILE_NAME, CreateDeserializer($"{folder}/{WorldDefine.CONSTANT_FOLDER_NAME}/Baked/{WorldDefine.BAKED_TILES_FILE_NAME}.bytes"));
         }
 
         public IDeserializer GetPluginDeserializer(int worldID, string fileName)

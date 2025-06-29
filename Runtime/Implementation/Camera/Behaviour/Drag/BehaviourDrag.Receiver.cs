@@ -91,6 +91,9 @@ namespace XDay.CameraAPI
                 {
                     pos.CurrentLogicPosition = InertialMove(pos.CurrentLogicPosition);
                 }
+                else if (m_State == State.Dragging)
+                {
+                }
                 else
                 {
                     over = true;
@@ -129,7 +132,7 @@ namespace XDay.CameraAPI
             private bool CheckBounceNeeded(Vector3 cameraPos)
             {
                 var bounceNeeded = false;
-                if (m_Manipulator.EnableFocusPointClampXZ)
+                if (m_Manipulator.EnableFocusPointClamp)
                 {
                     var areaMin = m_Manipulator.AreaMin;
                     var areaMax = m_Manipulator.AreaMax;

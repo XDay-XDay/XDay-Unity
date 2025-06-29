@@ -30,8 +30,8 @@ namespace XDay.InputAPI
 {
     internal class MouseDevice : IDevice
     {
-        public event Action EventAnyTouchBegin;
-        public event Action EventAnySceneTouchBegin;
+        public event Action<Vector2> EventAnyTouchBegin;
+        public event Action<Vector2> EventAnySceneTouchBegin;
         public int TouchCount => SceneTouchCount + UITouchCount;
         public int UITouchCount => m_UITouches.Count;
         public int SceneTouchCount => m_SceneTouches.Count;
@@ -145,12 +145,12 @@ namespace XDay.InputAPI
 
             if (start)
             {
-                EventAnyTouchBegin?.Invoke();
+                EventAnyTouchBegin?.Invoke(mousePos);
             }
 
             if (anySceneTouchStart)
             {
-                EventAnySceneTouchBegin?.Invoke();
+                EventAnySceneTouchBegin?.Invoke(mousePos);
             }
         }
 

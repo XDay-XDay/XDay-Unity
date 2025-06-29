@@ -32,6 +32,12 @@ namespace XDay.WorldAPI.House.Editor
     {
         protected override void ValidateExportInternal(StringBuilder errorMessage) 
         {
+            if (string.IsNullOrEmpty(m_PlaceholderModelPath))
+            {
+                errorMessage.AppendLine("先设置替代模型,当房间Prefab丢失时使用替代模型");
+                return;
+            }
+
             ValidateIDs();
         }
 
@@ -96,6 +102,17 @@ namespace XDay.WorldAPI.House.Editor
                 {
                     builder.AppendLine($"{houseInstance.Name}的ID为0");
                 }
+                else
+                {
+                    if (houses.ContainsKey(houseInstance.ConfigID))
+                    {
+                        builder.AppendLine($"{houseInstance.Name}的ID和{houses[houseInstance.ConfigID].Name}相同");
+                    }
+                    else
+                    {
+                        houses.Add(houseInstance.ConfigID, houseInstance);
+                    }
+                }
 
                 Dictionary<int, HouseTeleporterInstance> teleporters = new();
                 foreach (var teleporter in houseInstance.TeleporterInstances)
@@ -108,7 +125,7 @@ namespace XDay.WorldAPI.House.Editor
                     {
                         if (teleporters.ContainsKey(teleporter.ConfigID))
                         {
-                            builder.AppendLine($"房间{houseInstance.Name}的传送点{teleporter.Name}的ID和{teleporters[teleporter.ConfigID]}相同");
+                            builder.AppendLine($"房间{houseInstance.Name}的传送点{teleporter.Name}的ID和{teleporters[teleporter.ConfigID].Name}相同");
                         }
                         else
                         {
@@ -128,7 +145,7 @@ namespace XDay.WorldAPI.House.Editor
                     {
                         if (interactorPoints.ContainsKey(interactivePoint.ConfigID))
                         {
-                            builder.AppendLine($"房间{houseInstance.Name}的交互点{interactivePoint.Name}的ID和{interactorPoints[interactivePoint.ConfigID]}相同");
+                            builder.AppendLine($"房间{houseInstance.Name}的交互点{interactivePoint.Name}的ID和{interactorPoints[interactivePoint.ConfigID].Name}相同");
                         }
                         else
                         {

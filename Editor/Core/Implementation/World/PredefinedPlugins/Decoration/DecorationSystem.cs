@@ -24,13 +24,15 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.NavigationAPI;
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
     [WorldPluginMetadata("装饰层", "decoration_editor_data", typeof(DecorationSystemCreateWindow), true)]
-    internal partial class DecorationSystem : EditorWorldPlugin, IObstacleSource, IWalkableObjectSource
+    internal partial class DecorationSystem : EditorWorldPlugin,
+        IObstacleSource, 
+        IWalkableObjectSource,
+        IWorldBakeable
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "decoration" };
@@ -195,6 +197,11 @@ namespace XDay.WorldAPI.Decoration.Editor
             return null;
         }
 
+        public void SetBounds(Bounds bounds)
+        {
+            m_Bounds = bounds;
+        }
+
         private void UpdateObjectLOD(int objectID, int lod)
         {
             m_Renderer.UpdateObjectLOD(objectID, lod);
@@ -279,51 +286,6 @@ namespace XDay.WorldAPI.Decoration.Editor
             return m_DirtyObjectIDs;
         }
 
-        List<MeshSource> IWalkableObjectSource.GetAllWalkableMeshes()
-        {
-            List<MeshSource> sources = new();
-            foreach (var kv in m_Decorations)
-            {
-                var decoration = kv.Value;
-                var gameObject = m_Renderer.GetGameObject(kv.Key);
-                //根节点挂了NavMeshSetting的物体才生成NavMesh
-                if (gameObject.TryGetComponent<NavMeshSetting>(out var navMeshSetting))
-                {
-                    var meshFilters = gameObject.GetComponentsInChildren<MeshFilter>(true);
-                    foreach (var filter in meshFilters)
-                    {
-                        var source = new MeshSource()
-                        {
-                            AreaID = navMeshSetting.AreaID,
-                            GameObject = filter.gameObject,
-                            Mesh = filter.sharedMesh,
-                        };
-                        sources.Add(source);
-                    }
-                }
-            }
-            return sources;
-        }
-
-        List<ColliderSource> IWalkableObjectSource.GetAllWalkableColliders()
-        {
-            List<ColliderSource> colliders = new();
-            foreach (var kv in m_Decorations)
-            {
-                var decoration = kv.Value;
-                var gameObject = m_Renderer.GetGameObject(kv.Key);
-                //根节点挂了NavMeshSetting的物体才生成NavMesh
-                if (gameObject.TryGetComponent<NavMeshSetting>(out var navMeshSetting))
-                {
-                    foreach (var collider in gameObject.GetComponentsInChildren<UnityEngine.Collider>(true))
-                    {
-                        colliders.Add(new ColliderSource() { AreaID = navMeshSetting.AreaID, Collider = collider});
-                    }
-                }
-            }
-            return colliders;
-        }
-
         private enum ObjectCreateMode
         {
             Single = 0,
@@ -344,6 +306,10 @@ namespace XDay.WorldAPI.Decoration.Editor
         private IEditorResourceDescriptorSystem m_ResourceDescriptorSystem;
         private float m_RemoveRange = 5;
         private List<int> m_DirtyObjectIDs = new();
+        /// <summary>
+        /// 导出数据范围
+        /// </summary>
+        private Rect m_ExportRange;
         private const int m_Version = 1;
     }
 }

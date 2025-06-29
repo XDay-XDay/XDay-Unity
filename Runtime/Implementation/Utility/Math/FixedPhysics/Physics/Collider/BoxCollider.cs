@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 namespace XDay
 {
     public class BoxCollider : Collider

@@ -47,7 +47,7 @@ public class RVOTest : MonoBehaviour
         setup.Load(File.ReadAllText("Assets/XDay/Test/RVOTest/CameraSetup.bytes"));
         m_CameraManipulator = ICameraManipulator.Create(Camera.main, setup, m_DeviceInput);
         m_CameraManipulator.SetActive(true);
-        m_CameraManipulator.EnableFocusPointClampXZ = false;
+        m_CameraManipulator.EnableFocusPointClamp = false;
     }
 
     // Update is called once per frame

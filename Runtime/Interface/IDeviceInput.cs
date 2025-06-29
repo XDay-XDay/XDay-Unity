@@ -83,12 +83,12 @@ namespace XDay.InputAPI
         /// <summary>
         /// event triggered when any touch pressed
         /// </summary>
-        event Action EventAnyTouchBegin;
+        event Action<Vector2> EventAnyTouchBegin;
 
         /// <summary>
         /// event triggered when any scene touch pressed
         /// </summary>
-        event Action EventAnySceneTouchBegin;
+        event Action<Vector2> EventAnySceneTouchBegin;
 
         bool UseConfigurableTouchAsSceneTouch { get; set; }
 

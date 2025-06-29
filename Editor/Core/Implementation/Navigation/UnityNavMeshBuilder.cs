@@ -28,6 +28,7 @@ using XDay.UtilityAPI;
 using XDay.UtilityAPI.Editor;
 using XDay.WorldAPI.Editor;
 using System.Linq;
+using System;
 
 namespace XDay.NavigationAPI.Editor
 {
@@ -65,21 +66,50 @@ namespace XDay.NavigationAPI.Editor
             m_DataInstance = NavMesh.AddNavMeshData(m_NavMeshData);
 
             //注意只包含用于寻路的navmesh,不带地形高度.The returned mesh contains only the triangles used for pathfinding. It does not contain the detail that is used to place the agents on the walkable surface. This can be noticeable on locations with curved surfaces.
+            //这里生成的顶点包含重复,需要去重
             NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
 
+            RebuildMesh(triangulation, out var meshVertices, out var meshIndices);
             NavMeshBuildResult result = new()
             {
-                MeshVertices = triangulation.vertices,
-                MeshIndices = triangulation.indices,
-                TriangleTypes = Helper.ConvertToUInt16Array(triangulation.areas),
+                MeshVertices = meshVertices,
+                MeshIndices = meshIndices,
+                TriangleAreaIDs = Helper.ConvertToUInt16Array(triangulation.areas),
             };
 
-            List<ushort> uniqueTypes = new(result.TriangleTypes);
+            List<ushort> uniqueTypes = new(result.TriangleAreaIDs);
             Debug.Log($"生成导航网格. 顶点数:{result.MeshVertices.Length} 三角形数:{result.MeshIndices.Length / 3} 区域类型:{Helper.ToString(uniqueTypes.Distinct().ToArray())}");
 
             Clear();
 
             return result;
+        }
+
+        private void RebuildMesh(NavMeshTriangulation triangulation, out Vector3[] meshVertices, out int[] meshIndices)
+        {
+            meshVertices = new Vector3[triangulation.vertices.Length];
+            meshIndices = triangulation.indices.Clone() as int[];
+            int idx = 0;
+            Dictionary<Vector3, int> newVertices = new();
+            foreach (var vert in triangulation.vertices)
+            {
+                if (!newVertices.ContainsKey(vert))
+                {
+                    meshVertices[idx] = ChangePrecision(vert);
+                    newVertices.Add(vert, idx++);
+                }
+            }
+
+            for (var i = 0; i < triangulation.indices.Length; i++)
+            {
+                var pos = triangulation.vertices[triangulation.indices[i]];
+                meshIndices[i] = newVertices[pos];
+            }
+        }
+
+        private Vector3 ChangePrecision(Vector3 vert)
+        {
+            return new Vector3(Helper.ChangePrecision(vert.x), Helper.ChangePrecision(vert.y), Helper.ChangePrecision(vert.z));
         }
 
         private bool Check(UnityNavMeshBuildSetting setting)

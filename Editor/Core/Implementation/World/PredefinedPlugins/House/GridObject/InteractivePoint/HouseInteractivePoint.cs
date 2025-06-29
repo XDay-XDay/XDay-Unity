@@ -44,8 +44,8 @@ namespace XDay.WorldAPI.House.Editor
         }
         public bool ShowInInspector { get => m_ShowInInspector; set => m_ShowInInspector = value; }
         public bool Visible { get => m_Root.activeSelf; set => m_Root.SetActive(value); }
-        public InteractivePointStartCoordinate Start { get => m_Start; set => m_Start = value; }
-        public InteractivePointEndCoordinate End { get => m_End; set => m_End = value; }
+        public HouseInteractivePointStartCoordinate Start { get => m_Start; set => m_Start = value; }
+        public HouseInteractivePointEndCoordinate End { get => m_End; set => m_End = value; }
         public Vector3 Position { set => m_Root.transform.position = value; get => m_Root.transform.position; }
 
         public HouseInteractivePoint()
@@ -71,8 +71,8 @@ namespace XDay.WorldAPI.House.Editor
             var behaviour = m_Root.AddComponent<HouseInteractivePointBehaviour>();
             behaviour.Initialize(this);
 
-            m_Start.Initialize(m_Root.transform, "起点");
-            m_End.Initialize(m_Root.transform, "终点");
+            m_Start.Initialize(m_Root.transform);
+            m_End.Initialize(m_Root.transform);
             Start.Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(WorldHelper.GetPrefabPath("Coin/CoinYellow.prefab"));
             Start.PrefabInstance.name = "起点";
             End.Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(WorldHelper.GetPrefabPath("Coin/CoinGreen.prefab"));
@@ -172,8 +172,8 @@ namespace XDay.WorldAPI.House.Editor
 
         private int m_ID;
         private string m_Name;
-        private InteractivePointStartCoordinate m_Start = new();
-        private InteractivePointEndCoordinate m_End = new();
+        private HouseInteractivePointStartCoordinate m_Start = new();
+        private HouseInteractivePointEndCoordinate m_End = new();
         private bool m_ShowInInspector = true;
         protected GameObject m_Root;
         private House m_House;

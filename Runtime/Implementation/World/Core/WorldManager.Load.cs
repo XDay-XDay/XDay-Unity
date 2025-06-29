@@ -130,8 +130,6 @@ namespace XDay.WorldAPI
                 var manipulator = ICameraManipulator.Create(camera, setup, m_DeviceInput);
                 manipulator.SetActive(true);
                 world.CameraManipulator = manipulator;
-                manipulator.SetFocusPointBounds(world.Bounds.min.ToVector2(), world.Bounds.max.ToVector2());
-                manipulator.EnableFocusPointClampXZ = true;
             }
         }
 

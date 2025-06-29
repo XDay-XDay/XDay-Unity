@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.IO;
 using System.Text;
 using UnityEditor;
@@ -69,7 +67,6 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using XDay.GUIAPI;
-using PolyAndCode.UI;
 
 $NAMESPACE_BEGIN$
 
@@ -196,6 +193,8 @@ $NAMESPACE_END$
                     builder.AppendLine($"public {gameObjectMetadata.ViewClassName} {gameObjectMetadata.ViewVariableName} => m_{gameObjectMetadata.ViewVariableName};");
                 }
             }
+
+            builder.AppendLine($"public override UIWindowLayer? Layer => UIWindowLayer.{m_Metadata.WindowLayer};");
 
             return builder.ToString();
         }

@@ -55,11 +55,11 @@ namespace XDay.WorldAPI.Tile.Editor
         {
         }
 
-        public void Init(Action refreshFunc, TileSystem tileSystem)
+        public void Init(Action refreshFunc, TileSystem tileSystem, string brushFolder)
         {
             m_RefreshFunc = refreshFunc;
             m_TileSystem = tileSystem;
-            m_BrushStyleManager = IBrushStyleManager.Create(WorldHelper.GetBrushPath());
+            m_BrushStyleManager = IBrushStyleManager.Create(brushFolder);
             m_ModifierManager = new TextureModifierManager(this);
         }
 
@@ -68,6 +68,11 @@ namespace XDay.WorldAPI.Tile.Editor
             m_Indicator.OnDestroy();
             m_ModifierManager.OnDestroy();
             m_BrushStyleManager.OnDestroy();
+        }
+
+        public void ChangeBrushFolder(string folder)
+        {
+            m_BrushStyleManager.ChangeBrushFolder(folder);
         }
 
         public List<UIControl> CreateSceneGUIControls()
@@ -211,7 +216,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawEndPaintButton()
         {
-            if (m_ButtonEndPaint.Render(m_TileSystem.Inited))
+            if (m_ButtonEndPaint.Render(m_TileSystem.Inited && !string.IsNullOrEmpty(m_TileSystem.BrushFolder)))
             {
                 End();
             }
@@ -220,7 +225,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private void DrawPaintOneTileButton()
         {
             m_ButtonPaintOneTile.Active = m_PaintOneTile;
-            if (m_ButtonPaintOneTile.Render(m_TileSystem.Inited))
+            if (m_ButtonPaintOneTile.Render(m_TileSystem.Inited && !string.IsNullOrEmpty(m_TileSystem.BrushFolder)))
             {
                 m_PaintOneTile = m_ButtonPaintOneTile.Active;
             }
@@ -228,12 +233,12 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawResetMaskButton()
         {
-            m_ButtonResetMask.Render(m_TileSystem.Inited);
+            m_ButtonResetMask.Render(m_TileSystem.Inited && !string.IsNullOrEmpty(m_TileSystem.BrushFolder));
         }
 
         private void DrawBeginPaintButton()
         {
-            if (m_ButtonBeginPaint.Render(m_TileSystem.Inited))
+            if (m_ButtonBeginPaint.Render(m_TileSystem.Inited && !string.IsNullOrEmpty(m_TileSystem.BrushFolder)))
             {
                 Start();
             }
@@ -308,6 +313,11 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private void DrawIndicator(Vector3 center)
         {
+            if (m_BrushStyleManager.SelectedStyle == null)
+            {
+                return;
+            }
+
             var oldColor = Handles.color;
             Handles.color = Color.green;
             var size = (float)m_Range / m_Resolution * m_TileSystem.TileWidth;
@@ -357,4 +367,3 @@ namespace XDay.WorldAPI.Tile.Editor
         private readonly string[] m_ChannelNames = new string[] { "R", "G", "B", "A" };
     }
 }
-

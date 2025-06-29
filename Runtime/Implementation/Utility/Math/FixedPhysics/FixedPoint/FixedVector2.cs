@@ -22,7 +22,6 @@
  */
 
 using System;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace XDay
@@ -240,7 +239,6 @@ namespace XDay
 
         public static FixedPoint Cross(FixedVector2 a, FixedVector2 b)
         {
-            // cz = ax * by − ay * bx
             return a.X * b.Y - a.Y * b.X;
         }
     }

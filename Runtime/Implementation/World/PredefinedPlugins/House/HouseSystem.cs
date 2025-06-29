@@ -126,6 +126,10 @@ namespace XDay.WorldAPI.House
 
                 var house = new HouseData(id, houseName, horizontalGridCount, verticalGridCount, gridSize, gridHeight, worldBounds, position, prefabPath, points, teleporters, walkable);
                 m_Houses.Add(house);
+                if (!m_HousesDic.ContainsKey(id))
+                {
+                    m_HousesDic.Add(id, house);
+                }
             }
 
             reader.Uninit();
@@ -133,12 +137,9 @@ namespace XDay.WorldAPI.House
 
         public IHouse GetHouseDataByID(int configID)
         {
-            foreach (var house in m_Houses)
+            if (m_HousesDic.TryGetValue(configID, out var houseDic))
             {
-                if (house.ConfigID == configID)
-                {
-                    return house;
-                }
+                return houseDic;
             }
 
             //Debug.LogError($"房间ID{configID}没找到");
@@ -232,6 +233,7 @@ namespace XDay.WorldAPI.House
 
         private string m_Name;
         private readonly List<HouseData> m_Houses = new();
+        private readonly Dictionary<int, HouseData> m_HousesDic = new();
         private readonly Dictionary<int, InteractivePoint> m_AllInteractivePoints = new();
         private HouseSystemRenderer m_Renderer;
         private HouseGraph m_Graph;

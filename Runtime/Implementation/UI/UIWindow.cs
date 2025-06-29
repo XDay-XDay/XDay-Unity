@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System;
 using UnityEngine;
 using XDay.AssetAPI;
@@ -72,7 +70,8 @@ namespace XDay.GUIAPI
         {
             m_IsLoading = true;
             var gameObject = loader.LoadGameObject(m_View.GetPath());
-            gameObject.transform.SetParent(uiRoot.transform, false);
+            var parent = GetParent(uiRoot);
+            gameObject.transform.SetParent(parent, false);
             OnLoaded(gameObject, showWhenLoaded);
         }
 
@@ -81,7 +80,8 @@ namespace XDay.GUIAPI
             m_IsLoading = true;
             loader.LoadGameObjectAsync(m_View.GetPath(), (gameObject) =>
             {
-                gameObject.transform.SetParent(uiRoot.transform, false);
+                var parent = GetParent(uiRoot);
+                gameObject.transform.SetParent(parent, false);
                 OnLoaded(gameObject, showWhenLoaded);
             });
         }
@@ -137,6 +137,25 @@ namespace XDay.GUIAPI
                     gameObject.SetActive(false);
                 }
             }
+        }
+
+        private Transform GetParent(GameObject uiRoot)
+        {
+            var layer = m_View.Layer;
+            Transform parent = uiRoot.transform;
+            if (layer != null)
+            {
+                var obj = uiRoot.transform.Find(layer.GetValueOrDefault().ToString());
+                if (obj == null)
+                {
+                    Debug.LogError($"Layer {layer.GetValueOrDefault()} not found");
+                }
+                else
+                {
+                    parent = obj.transform;
+                }
+            }
+            return parent;
         }
 
         private View m_View;

@@ -167,6 +167,7 @@ namespace XDay.GUIAPI.Editor
                 ViewClassName = prefab.name + "View",
                 ControllerClassName = prefab.name + "Controller",
                 Namespace = m_Config.DefaultNamespace,
+                WindowLayer = UIWindowLayer.Layer0,
             };
             Debug.Assert(!string.IsNullOrEmpty(m_Metadata.PrefabGUID), "Prefab guid is null!");
             m_MetadataManager.UIMetadatas.Add(m_Metadata);
@@ -215,6 +216,7 @@ namespace XDay.GUIAPI.Editor
             m_Metadata.ViewClassName = EditorGUILayout.TextField("View Class Name", m_Metadata.ViewClassName);
             m_Metadata.ControllerClassName = EditorGUILayout.TextField("Controller Class Name", m_Metadata.ControllerClassName);
             m_Metadata.Namespace = EditorGUILayout.TextField("Namespace", m_Metadata.Namespace);
+            m_Metadata.WindowLayer = (UIWindowLayer)EditorGUILayout.EnumPopup("Layer", m_Metadata.WindowLayer);
 
             EditorHelper.HorizontalLine();
 

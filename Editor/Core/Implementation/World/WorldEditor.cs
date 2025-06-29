@@ -270,6 +270,8 @@ namespace XDay.WorldAPI.Editor
 
                         EditorSerialize();
 
+                        EditorPrefs.SetString(WorldDefine.LAST_OPEN_FILE_PATH, config.EditorFolder);
+
                         return true;
                     }
                 }

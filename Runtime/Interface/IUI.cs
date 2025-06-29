@@ -21,17 +21,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
+using UnityEngine;
 using XDay.AssetAPI;
 
 namespace XDay.GUIAPI
 {
+    public enum UIWindowLayer
+    {
+        Layer0,
+        Layer1,
+        Layer2,
+        Layer3,
+        Layer4,
+    }
+
     public interface IUIWindowManager
     {
-        static IUIWindowManager Create(IAssetLoader loader)
+        static IUIWindowManager Create(IAssetLoader loader, GameObject windowRoot)
         {
-            return new UIWindowManager(loader);
+            return new UIWindowManager(loader, windowRoot);
         }
 
         void OnDestroy();

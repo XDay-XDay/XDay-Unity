@@ -31,10 +31,13 @@ namespace XDay.ModelBuildPipeline.Editor
     {
         public string Name;
         public GameObject Prefab;
+        public string PrefabPath;
         public bool UseGlobal = true;
         public Vector3 LocalPosition;
         public Vector3 LocalScale = new(1, 1, 1);
         public Quaternion LocalRotation = new(0, 0, 0, 1);
+        //要挂在哪个节点上,null或空表示挂在根节点
+        public string AttachParentName = null;
     }
 
     [CreateAssetMenu(fileName = "CreateCustomNodesStageSetting.asset", menuName = "XDay/Model/Stage/Create Custom Nodes Stage Setting")]
@@ -49,10 +52,13 @@ namespace XDay.ModelBuildPipeline.Editor
             Nodes.Clear();
             foreach (var otherNode in s.Nodes)
             {
-                var node = new CustomNode();
-                node.Name = otherNode.Name;
-                node.Prefab = otherNode.Prefab;
-                node.UseGlobal = otherNode.UseGlobal;
+                var node = new CustomNode
+                {
+                    Name = otherNode.Name,
+                    Prefab = otherNode.Prefab,
+                    PrefabPath = otherNode.PrefabPath,
+                    UseGlobal = otherNode.UseGlobal
+                };
                 Nodes.Add(node);
             }
         }

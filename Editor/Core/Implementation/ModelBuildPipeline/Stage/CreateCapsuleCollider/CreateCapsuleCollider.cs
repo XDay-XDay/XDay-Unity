@@ -31,7 +31,7 @@ namespace XDay.ModelBuildPipeline.Editor
     /// </summary>
     [Serializable]
     [StageDescription("CapsuleCollider", "创建CapsuleCollider组件")]
-    [StageGroup("Collider")]
+    [StageGroup("Stage/Collider")]
     internal class CreateCapsuleCollider : ModelBuildPipelineStage
     {
         public override Type SettingType => typeof(CreateCapsuleColliderStageSetting);

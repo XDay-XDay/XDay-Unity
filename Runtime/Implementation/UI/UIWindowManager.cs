@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.AssetAPI;
@@ -32,15 +30,24 @@ namespace XDay.GUIAPI
 {
     internal class UIWindowManager : IUIWindowManager
     {
-        public UIWindowManager(IAssetLoader loader)
-        {
-            m_Loader = loader;
+        public static UIWindowManager Instance => m_Instance;
+        public IAssetLoader AssetLoader => m_Loader;
 
-            m_UIRoot = new GameObject("UI Root");
+        public UIWindowManager(IAssetLoader loader, GameObject windowRoot)
+        {
+            if (m_Instance != null)
+            {
+                Debug.LogError("UIWindowManager只能有一个Instance");
+            }
+            m_Instance = this;
+            m_Loader = loader;
+            m_UIRoot = windowRoot;
         }
 
         public void OnDestroy()
         {
+            m_Instance = null;
+
             foreach (var window in m_ActiveWindows)
             {
                 window.OnDestroy();
@@ -174,6 +181,7 @@ namespace XDay.GUIAPI
         private readonly List<UIWindowBase> m_ActiveWindows = new();
         private readonly List<UIWindowBase> m_UpdatableActiveWindows = new();
         private readonly List<UIWindowBase> m_CachedWindows = new();
-        private GameObject m_UIRoot;
+        private readonly GameObject m_UIRoot;
+        private static UIWindowManager m_Instance;
     }
 }

@@ -238,5 +238,3 @@ namespace XDay.WorldAPI.Decoration.Editor
     }
 }
 
-
-//XDay

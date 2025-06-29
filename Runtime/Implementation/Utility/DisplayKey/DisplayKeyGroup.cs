@@ -25,7 +25,7 @@
 
 using System.Collections.Generic;
 
-namespace XDay.UtilityAPI
+namespace XDay.DisplayKeyAPI
 {
     public class DisplayKeyGroup
     {

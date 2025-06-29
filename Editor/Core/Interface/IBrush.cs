@@ -63,6 +63,7 @@ namespace XDay.UtilityAPI.Editor
         void OnDestroy();
         void InspectorGUI();
         void Rotate(float rotation, bool onlyAlpha);
+        void ChangeBrushFolder(string path);
     }
 }
 

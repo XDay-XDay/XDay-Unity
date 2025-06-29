@@ -21,9 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -103,6 +100,9 @@ namespace XDay.WorldAPI.Decoration.Editor
                     {
                         return lodCount <= 8;
                     });
+
+                    var newBounds = EditorGUILayout.RectField("Bounds", m_Bounds.ToRect());
+                    SetBounds(newBounds.ToBounds());
 
                     m_ResourceGroupSystem.InspectorGUI();
                 });

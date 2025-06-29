@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -34,7 +32,9 @@ namespace XDay.GUIAPI
         public GameObject Root => m_Root;
         public UIControllerBase Controller => m_Controller;
         public bool IsLoaded => Root != null;
+        public bool IsActive => m_Visible;
         public int SubViewCount => m_Subviews.Count;
+        public virtual UIWindowLayer? Layer => null;
 
         public UIView()
         {
@@ -90,7 +90,12 @@ namespace XDay.GUIAPI
 
         public void Hide()
         {
-            foreach (var subView in m_Subviews) 
+            if (!m_Visible)
+            {
+                return;
+            }
+
+            foreach (var subView in m_Subviews)
             {
                 subView.Hide();
             }

@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace XDay.WorldAPI
@@ -34,7 +35,7 @@ namespace XDay.WorldAPI
         public event LODCountChangeCallback EventLODCountChanged;
         public int CurrentLOD => m_CurrentLOD;
         public int PreviousLOD => m_PreviousLOD;
-        public int LODCount { get => m_LODs.Length; set => SetLODCountInternal(value); }
+        public int LODCount { get => m_LODs.Count; set => SetLODCountInternal(value); }
         public IWorldLODSystem WorldLODSystem => m_WorldLODSystem;
         public string TypeName => "PluginLODSystem";
 
@@ -47,17 +48,17 @@ namespace XDay.WorldAPI
         {
             Debug.Assert(lodCount >= 1);
 
-            m_LODs = new PluginLODSetup[lodCount];
+            m_LODs = new(lodCount);
             for (var i = 0; i < lodCount; ++i)
             {
-                m_LODs[i] = new PluginLODSetup($"LOD {i}", i * 100, 0);
+                m_LODs.Add(new PluginLODSetup($"LOD {i}", i * 100, 0));
             }
         }
 
         public void Init(IWorldLODSystem lodSystem)
         {
             m_WorldLODSystem = lodSystem as WorldLODSystem;
-            for (var i = 0; i < m_LODs.Length; ++i)
+            for (var i = 0; i < m_LODs.Count; ++i)
             {
                 m_LODs[i].Altitude = m_WorldLODSystem.GetLOD(i).Altitude;
             }
@@ -65,16 +66,21 @@ namespace XDay.WorldAPI
 
         public IPluginLODSetup GetLOD(int index)
         {
-            if (index >= 0 && index < m_LODs.Length)
+            if (index >= 0 && index < m_LODs.Count)
             {
                 return m_LODs[index];
             }
             return null;
         }
 
+        public void AddLOD(string name, float altitude, float tolerance)
+        {
+            m_LODs.Add(new PluginLODSetup(name, altitude, tolerance));
+        }
+
         public bool ValidateLODName()
         {
-            for (var i = 1; i < m_LODs.Length; ++i)
+            for (var i = 1; i < m_LODs.Count; ++i)
             {
                 if (m_WorldLODSystem.NameToIndex(m_LODs[i].Name) < 0)
                 {
@@ -95,7 +101,7 @@ namespace XDay.WorldAPI
 
         public int QueryLOD(float altitude)
         {
-            for (var i = m_LODs.Length - 1; i >= 0; --i)
+            for (var i = m_LODs.Count - 1; i >= 0; --i)
             {
                 if (altitude >= m_LODs[i].Altitude)
                 {
@@ -107,7 +113,7 @@ namespace XDay.WorldAPI
 
         public IPluginLODSetup QueryLOD(string name)
         {
-            for (var i = 0; i < m_LODs.Length; ++i)
+            for (var i = 0; i < m_LODs.Count; ++i)
             {
                 if (m_LODs[i].Name == name)
                 {
@@ -125,7 +131,7 @@ namespace XDay.WorldAPI
             }
 
             var nextLOD = curLOD;
-            for (var lod = m_LODs.Length - 1; lod >= 0; --lod)
+            for (var lod = m_LODs.Count - 1; lod >= 0; --lod)
             {
                 if (altitude >= m_LODs[lod].Altitude)
                 {
@@ -145,7 +151,7 @@ namespace XDay.WorldAPI
                     break;
                 }
             }
-            return Mathf.Clamp(nextLOD, 0, m_LODs.Length - 1);
+            return Mathf.Clamp(nextLOD, 0, m_LODs.Count - 1);
         }
 
         public bool Update(float cameraAltitude)
@@ -172,7 +178,7 @@ namespace XDay.WorldAPI
         public void EditorDeserialize(IDeserializer deserializer, string label)
         {
             deserializer.ReadInt32("PluginLODSystem.Version");
-            m_LODs = deserializer.ReadArray("LOD Setups", (index) => {
+            m_LODs = deserializer.ReadList("LOD Setups", (index) => {
                 return deserializer.ReadSerializable<IPluginLODSetup>($"LOD Setup {index}", false);
             });
         }
@@ -180,7 +186,7 @@ namespace XDay.WorldAPI
         public void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
             serializer.WriteInt32(m_Version, "PluginLODSystem.Version");
-            serializer.WriteArray(m_LODs, "LOD Setups", (lodRef, index) => {
+            serializer.WriteList(m_LODs, "LOD Setups", (lodRef, index) => {
                 serializer.WriteSerializable(lodRef, $"LOD Setup {index}", converter, false); 
             });
         }
@@ -188,7 +194,7 @@ namespace XDay.WorldAPI
         public void GameDeserialize(IDeserializer deserializer, string label)
         {
             deserializer.ReadInt32("PluginLODSystem.Version");
-            m_LODs = deserializer.ReadArray("LOD Setups", (index) => {
+            m_LODs = deserializer.ReadList("LOD Setups", (index) => {
                 return deserializer.ReadSerializable<IPluginLODSetup>($"LOD Setup {index}", true);
             });
         }
@@ -196,14 +202,14 @@ namespace XDay.WorldAPI
         public void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
             serializer.WriteInt32(m_RuntimeVersion, "PluginLODSystem.Version");
-            serializer.WriteArray(m_LODs, "LOD Setups", (lodRef, index) => {
+            serializer.WriteList(m_LODs, "LOD Setups", (lodRef, index) => {
                 serializer.WriteSerializable(lodRef, $"LOD Setup {index}", converter, true);
             });
         }
 
         private void SetLODCountInternal(int newCount)
         {
-            var oldCount = m_LODs.Length;
+            var oldCount = m_LODs.Count;
             newCount = Mathf.Clamp(newCount, 0, m_WorldLODSystem.LODCount);
             if (newCount == oldCount)
             {
@@ -242,7 +248,7 @@ namespace XDay.WorldAPI
                 }
             }
 
-            m_LODs = newLODs;
+            m_LODs = new(newLODs);
 
             EventLODCountChanged?.Invoke(oldCount, newCount);
         }
@@ -262,7 +268,7 @@ namespace XDay.WorldAPI
         }
 
         [XDaySerializableField(1, "LOD Setups")]
-        protected IPluginLODSetup[] m_LODs;
+        protected List<IPluginLODSetup> m_LODs;
         private int m_CurrentLOD = 0;
         private int m_PreviousLOD = 0;
         private float m_PreviousCheckAltitude = 0;

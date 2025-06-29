@@ -22,7 +22,6 @@
  */
 
 
-
 namespace XDay.WorldAPI.House.Editor
 {
     internal class HouseInteractivePointInstance : HouseInteractivePoint

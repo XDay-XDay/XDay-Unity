@@ -22,7 +22,7 @@
  */
 
 using UnityEngine;
-using XDay.WorldAPI.City.Editor;
+using XDay.UtilityAPI.Editor;
 
 namespace XDay.WorldAPI.House.Editor
 {
@@ -101,11 +101,11 @@ namespace XDay.WorldAPI.House.Editor
         private const int m_Version = 1;
     }
 
-    internal class InteractivePointStartCoordinate : InteractivePointCoordinate
+    internal class HouseInteractivePointStartCoordinate : HouseInteractivePointCoordinate
     {
     }
 
-    internal class InteractivePointEndCoordinate : InteractivePointCoordinate
+    internal class HouseInteractivePointEndCoordinate : HouseInteractivePointCoordinate
     {
     }
 }

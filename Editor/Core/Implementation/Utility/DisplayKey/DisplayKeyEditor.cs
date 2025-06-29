@@ -22,14 +22,17 @@
  */
 
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
 using XDay.SerializationAPI.Editor;
+using XDay.UtilityAPI;
+using XDay.UtilityAPI.Editor;
 
-namespace XDay.UtilityAPI.Editor
+namespace XDay.DisplayKeyAPI.Editor
 {
     public class DisplayKeyEditor
     {
@@ -75,6 +78,7 @@ namespace XDay.UtilityAPI.Editor
                     Save(true);
                 }
             }
+
             if (GUILayout.Button("Load"))
             {
                 Load();
@@ -431,6 +435,7 @@ namespace XDay.UtilityAPI.Editor
                 }
             }
 
+            m_DisplayKeyManager?.OnDestroy();
             m_DisplayKeyManager = new DisplayKeyManager();
 
             if (File.Exists(m_Config.EditorDataPath))
@@ -628,6 +633,11 @@ namespace XDay.DisplayKeyID
             File.WriteAllText(fileName, code);
 
             SerializationHelper.FormatCode(fileName);
+        }
+
+        internal void OnDestroy()
+        {
+            m_DisplayKeyManager?.OnDestroy();
         }
 
         private DisplayKeyManager m_DisplayKeyManager;

@@ -92,6 +92,7 @@ namespace XDay.WorldAPI.Navigation.Editor
                 DrawBuildNavMeshButton();
                 DrawClearNavMeshButton();
                 DrawShowDebugInfoButton();
+                DrawEnableDepthTestButton();
 
                 GUILayout.Space(30);
             }
@@ -117,6 +118,9 @@ namespace XDay.WorldAPI.Navigation.Editor
 
                 m_ShowDebugInfoButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐调试信息");
                 m_Controls.Add(m_ShowDebugInfoButton);
+
+                m_EnableDepthTestButton = EditorWorldHelper.CreateToggleImageButton(false, "depth.png", "NavMesh显示是否开启深度测试");
+                m_Controls.Add(m_EnableDepthTestButton);
             }
         }
 
@@ -184,6 +188,16 @@ namespace XDay.WorldAPI.Navigation.Editor
             }
         }
 
+        private void DrawEnableDepthTestButton()
+        {
+            m_EnableDepthTestButton.Active = m_EnableDepthTest;
+            if (m_EnableDepthTestButton.Render(true, GUI.enabled))
+            {
+                m_EnableDepthTest = m_EnableDepthTestButton.Active;
+                m_Renderer.SetEnableDepthTest(m_EnableDepthTest);
+            }
+        }
+
         private void ChangeOperation(Operation operation)
         {
             m_Action = operation;
@@ -223,6 +237,7 @@ namespace XDay.WorldAPI.Navigation.Editor
         private ImageButton m_BuildNavMeshButton;
         private ImageButton m_ClearNavMeshButton;
         private ToggleImageButton m_ShowDebugInfoButton;
+        private ToggleImageButton m_EnableDepthTestButton;
         private GUIStyle m_LabelStyle;
         private List<UIControl> m_Controls;
         private Popup m_PopupOperation;

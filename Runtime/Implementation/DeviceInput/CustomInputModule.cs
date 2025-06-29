@@ -25,7 +25,7 @@ using UnityEngine.EventSystems;
 
 namespace XDay.InputAPI
 {
-    internal class CustomInputModule : StandaloneInputModule
+    public class CustomInputModule : StandaloneInputModule
     {
         public PointerEventData QueryTouchPointerData(int touchID)
         {

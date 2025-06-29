@@ -31,6 +31,11 @@ namespace XDay.AssetAPI
 {
     public interface IAssetLoader
     {
+        static IAssetLoader CreateDefault()
+        {
+            return new DefaultAssetLoader();
+        }
+
         void OnDestroy();
         T Load<T>(string path) where T : Object;
         UniTask<T> LoadAsync<T>(string path) where T : Object;

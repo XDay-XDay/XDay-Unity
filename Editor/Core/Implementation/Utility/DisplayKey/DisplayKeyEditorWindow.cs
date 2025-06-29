@@ -22,12 +22,9 @@
  */
 
 
-
-using System.Collections.Generic;
-using System.IO;
 using UnityEditor;
 
-namespace XDay.UtilityAPI.Editor
+namespace XDay.DisplayKeyAPI.Editor
 {
     internal partial class DisplayKeyEditorWindow : EditorWindow
     {
@@ -39,12 +36,18 @@ namespace XDay.UtilityAPI.Editor
 
         private void OnGUI()
         {
-            if (m_Editor == null)
-            {
-                m_Editor = new DisplayKeyEditor();
-            }
-
+            m_Editor ??= new DisplayKeyEditor();
             m_Editor.DrawEditor();
+        }
+
+        private void OnDisable()
+        {
+            m_Editor?.OnDestroy();
+        }
+
+        private void OnDestroy()
+        {
+            m_Editor?.OnDestroy();
         }
 
         private DisplayKeyEditor m_Editor;

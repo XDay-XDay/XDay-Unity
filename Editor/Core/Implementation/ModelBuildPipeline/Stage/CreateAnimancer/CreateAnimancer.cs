@@ -49,8 +49,11 @@ namespace XDay.ModelBuildPipeline.Editor
             m_AnimationCount = new();
 
             var setting = GetStageSetting<CreateAnimancerStageSetting>(rootFolder);
-            root.gameObject.AddComponent<Animator>();
-            var animancer = root.gameObject.AddComponent<AnimancerComponent>();
+            if (root.GetComponent<Animator>() == null)
+            {
+                root.AddComponent<Animator>();
+            }
+            var animancer = root.AddComponent<AnimancerComponent>();
             animancer.ActionOnDisable = setting.DisableAction;
             var clipSetting = animancer.gameObject.AddComponent<AnimationClips>();
             clipSetting.Clips.Clear();

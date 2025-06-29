@@ -36,6 +36,7 @@ namespace XDay.WorldAPI.Navigation.Editor
     internal partial class NavigationPlugin : EditorWorldPlugin
     {
         public bool ShowDebugInfo => m_ShowDebugInfo;
+        public bool EnableDepthTest => m_EnableDepthTest;
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "navigation" };
         public override IPluginLODSystem LODSystem => null;
@@ -162,7 +163,7 @@ namespace XDay.WorldAPI.Navigation.Editor
             {
                 vertices = m_LastBuiltResult.MeshVertices;
                 indices = m_LastBuiltResult.MeshIndices;
-                triangleTypes = m_LastBuiltResult.TriangleTypes;
+                triangleTypes = m_LastBuiltResult.TriangleAreaIDs;
             }
             serializer.WriteVector3Array(vertices, "Vertices");
             serializer.WriteInt32Array(indices, "Indices");
@@ -171,6 +172,7 @@ namespace XDay.WorldAPI.Navigation.Editor
             SaveBuildParam(serializer);
 
             serializer.WriteBoolean(m_ShowDebugInfo, "Show Debug Info");
+            serializer.WriteBoolean(m_EnableDepthTest, "Enable Depth Test");
         }
 
         public override void EditorDeserialize(IDeserializer deserializer, string label)
@@ -187,7 +189,7 @@ namespace XDay.WorldAPI.Navigation.Editor
             {
                 m_LastBuiltResult = new NavMeshBuildResult()
                 {
-                    TriangleTypes = triangleTypes,
+                    TriangleAreaIDs = triangleTypes,
                     MeshVertices = vertices,
                     MeshIndices = indices,
                 };
@@ -196,6 +198,7 @@ namespace XDay.WorldAPI.Navigation.Editor
             LoadBuildParam(deserializer);
 
             m_ShowDebugInfo = deserializer.ReadBoolean("Show Debug Info");
+            m_EnableDepthTest = deserializer.ReadBoolean("Enable Depth Test");
         }
 
         private void SaveBuildParam(ISerializer serializer)
@@ -267,6 +270,7 @@ namespace XDay.WorldAPI.Navigation.Editor
 
         private string m_Name;
         private bool m_ShowDebugInfo = false;
+        private bool m_EnableDepthTest = false;
         private NavigationPluginRenderer m_Renderer;
         private PathFinderGizmo m_PathFinder = new();
         private MyNavigationSystem m_NavigationSystem;

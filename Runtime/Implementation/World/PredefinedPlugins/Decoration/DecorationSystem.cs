@@ -98,12 +98,24 @@ namespace XDay.WorldAPI.Decoration
             var decoration = World.QueryObject<DecorationObject>(decorationID);
             if (decoration != null)
             {
-                if (decoration.SetEnabled(show) ||
-                    VisibleTest(decoration))
+                //if (decoration.SetEnabled(show) ||
+                //    VisibleTest(decoration))
+                if (decoration.SetEnabled(show))
                 {
                     m_ToggleActiveState?.Invoke(decoration);
                 }
             }
+        }
+
+        public void ShowDecoration(Vector3 circleCenter, float circleRadius, bool show)
+        {
+            m_TempIDs.Clear();
+            QueryDecorationIDsInCircle(circleCenter, circleRadius, m_TempIDs);
+            foreach (var objID in m_TempIDs)
+            {
+                ShowDecoration(objID, show);
+            }
+            m_TempIDs.Clear();
         }
 
         public void ShowGrid(GridData grid)
@@ -630,6 +642,7 @@ namespace XDay.WorldAPI.Decoration
         private string m_Name;
         private readonly Dictionary<int, bool> m_CustomSetEnabled = new();
         private readonly List<GridData> m_TempGrids = new();
+        private readonly List<int> m_TempIDs = new();
     }
 }
 

@@ -21,12 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 
-namespace XDay.UtilityAPI
+namespace XDay.DisplayKeyAPI
 {
     public class DisplayKeyManager
     {
@@ -34,6 +33,21 @@ namespace XDay.UtilityAPI
         public List<DisplayKey> AllKeys => m_AllKeys;
         public int KeyCount => m_AllKeys.Count;
         public string OutputFolder { get => m_OutputFolder; set => m_OutputFolder = value; }
+        public static DisplayKeyManager Instance => m_Instance;
+
+        public DisplayKeyManager()
+        {
+            if (m_Instance != null)
+            {
+                Debug.LogError("DisplayKeyManager只能有一个实例");
+            }
+            m_Instance = this;
+        }
+
+        public void OnDestroy()
+        {
+            m_Instance = null;
+        }
 
         public bool IsValidKey(int id)
         {
@@ -182,10 +196,34 @@ namespace XDay.UtilityAPI
             m_AllKeys.Add(key);
         }
 
-        private List<DisplayKeyGroup> m_Groups;
-        private List<DisplayKey> m_AllKeys = new();
+        private List<DisplayKeyGroup> m_Groups = new();
+        private readonly List<DisplayKey> m_AllKeys = new();
         private string m_OutputFolder;
         private const int m_EditorVersion = 2;
         private const int m_RuntimeVersion = 1;
+        private static DisplayKeyManager m_Instance;
+    }
+
+    public static class DisplayKeyManagerExtension
+    {
+        public static string GetIconPath(this int id)
+        {
+            var key = DisplayKeyManager.Instance.GetKey(id);
+            if (key == null)
+            {
+                return null;
+            }
+            return key.IconPath;
+        }
+
+        public static string GetPrefabPath(this int id)
+        {
+            var key = DisplayKeyManager.Instance.GetKey(id);
+            if (key == null)
+            {
+                return null;
+            }
+            return key.PrefabPath;
+        }
     }
 }

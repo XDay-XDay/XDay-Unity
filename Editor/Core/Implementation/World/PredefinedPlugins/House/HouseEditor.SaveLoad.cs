@@ -21,15 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.House.Editor
 {
     internal partial class HouseEditor
     {
-        const int m_Version = 1;
-
         public override void EditorSerialize(ISerializer writer, string label, IObjectIDConverter converter)
         {
             writer.WriteInt32(m_Version, "HouseEditor.Version");
@@ -46,6 +43,7 @@ namespace XDay.WorldAPI.House.Editor
             writer.WriteInt32(m_SelectedAgentTemplateIndex, "Selected Agent Template Index");
             writer.WriteBoolean(m_ShowInteractivePointSettings, "Show Interactive Point Settings");
             writer.WriteBoolean(m_ShowInteractivePointInstanceSettings, "Show Interactive Point Instance Settings");
+            writer.WriteString(m_PlaceholderModelPath, "Placeholder Model Path");
 
             writer.WriteList(m_Houses, "Houses", (house, index) =>
             {
@@ -73,7 +71,7 @@ namespace XDay.WorldAPI.House.Editor
 
         public override void EditorDeserialize(IDeserializer reader, string label)
         {
-            reader.ReadInt32("HouseEditor.Version");
+            var version = reader.ReadInt32("HouseEditor.Version");
 
             base.EditorDeserialize(reader, label);
 
@@ -87,6 +85,10 @@ namespace XDay.WorldAPI.House.Editor
             m_SelectedAgentTemplateIndex = reader.ReadInt32("Selected Agent Template Index");
             m_ShowInteractivePointSettings = reader.ReadBoolean("Show Interactive Point Settings");
             m_ShowInteractivePointInstanceSettings = reader.ReadBoolean("Show Interactive Point Instance Settings");
+            if (version >= 2)
+            {
+                m_PlaceholderModelPath = reader.ReadString("Placeholder Model Path");
+            }
 
             m_Houses = reader.ReadList("Houses", (index) =>
             {
@@ -113,5 +115,7 @@ namespace XDay.WorldAPI.House.Editor
                 m_ScenePrefab.Load(reader);
             });
         }
+
+        private const int m_Version = 2;
     }
 }

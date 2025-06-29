@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
+using XDay.UtilityAPI.Editor;
 
 namespace XDay.ModelBuildPipeline.Editor
 {
@@ -160,6 +161,11 @@ namespace XDay.ModelBuildPipeline.Editor
                 Reset();
             }
 
+            if (GUILayout.Button("重命名"))
+            {
+                Rename();
+            }
+
             if (GUILayout.Button("选中", GUILayout.MaxWidth(40)))
             {
                 if (m_Pipeline != null)
@@ -176,6 +182,50 @@ namespace XDay.ModelBuildPipeline.Editor
             DrawToolbar();
 
             GUILayout.EndArea();
+        }
+
+        private void Rename()
+        {
+            if (m_Pipeline != null)
+            {
+                var path = AssetDatabase.GetAssetPath(m_Pipeline);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    var oldName = Helper.GetPathName(path, false);
+                    var parameters = new List<ParameterWindow.Parameter>()
+                    {
+                        new ParameterWindow.StringParameter("新名字", "", oldName),
+                    };
+                    ParameterWindow.Open("重命名", parameters, (p) =>
+                    {
+                        var ok = ParameterWindow.GetString(p[0], out var newName);
+                        if (ok)
+                        {
+                            var error = AssetDatabase.RenameAsset(path, newName);
+                            if (string.IsNullOrEmpty(error))
+                            {
+                                //也重命名ModelBuildMetadata里的引用
+                                var metadatas = EditorHelper.QueryAssets<ModelBuildMetadata>();
+                                foreach(var metadata in metadatas)
+                                {
+                                    if (metadata.ModelBuildPipelineName == oldName)
+                                    {
+                                        Debug.Log($"修改了{metadata.name}里的引用");
+                                        metadata.ModelBuildPipelineName = newName;
+                                        EditorUtility.SetDirty(metadata);
+                                    }
+                                }
+                                AssetDatabase.SaveAssets();
+                            }
+                            else
+                            {
+                                Debug.LogError(error);
+                            }
+                        }
+                        return ok;
+                    });
+                }
+            }
         }
 
         private void DrawToolbar()
@@ -755,6 +805,18 @@ namespace XDay.ModelBuildPipeline.Editor
             EditorGUIUtility.labelWidth = 0;
 
             EditorGUIUtility.labelWidth = 100;
+
+            GUI.enabled = m_Pipeline != null;
+            if (m_Pipeline != null)
+            {
+                m_Pipeline.SortOrder = EditorGUILayout.IntField("Sort Order", m_Pipeline.SortOrder);
+            }
+            else
+            {
+                EditorGUILayout.IntField("Sort Order", 0);
+            }
+            GUI.enabled = true;
+
             if (m_Pipeline != null)
             {
                 m_Pipeline.Setting = EditorGUILayout.ObjectField("设置", m_Pipeline.Setting, typeof(ModelBuildPipelineSetting), false) as ModelBuildPipelineSetting;
@@ -767,6 +829,11 @@ namespace XDay.ModelBuildPipeline.Editor
             }
             m_DebugModelFolder = EditorHelper.ObjectField<DefaultAsset>("调试模型文件夹", m_DebugModelFolder);
             EditorGUIUtility.labelWidth = 0;
+
+            if (GUI.changed && m_Pipeline != null)
+            {
+                EditorUtility.SetDirty(m_Pipeline);
+            }
         }
 
         private void GetPipelineNames(List<ModelBuildPipeline> pipelines)

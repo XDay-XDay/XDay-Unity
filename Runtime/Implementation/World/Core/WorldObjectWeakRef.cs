@@ -76,7 +76,7 @@ namespace XDay.WorldAPI
 
         public void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
-            serializer.WriteInt32(m_RuntimeVersion, "WorldObjectWeakRef.Version");
+            serializer.WriteInt32(m_Version, "WorldObjectWeakRef.Version");
 
             serializer.WriteObjectID(m_ObjectID, "Object ID", converter);
         }

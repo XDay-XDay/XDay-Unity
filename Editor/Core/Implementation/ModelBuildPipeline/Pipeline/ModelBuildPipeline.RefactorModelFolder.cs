@@ -35,14 +35,24 @@ namespace XDay.ModelBuildPipeline.Editor
         /// 将模型和动画放到一个文件夹后便可以自动整理模型文件夹
         /// </summary>
         /// <param name="rootFolder"></param>
-        public void RefractorModelFolder(string rootFolder)
+        /// <param name="recursive">是否检查子文件夹</param>
+        public static void CreateModelFolder(string rootFolder, bool recursive)
         {
             var model = GetModel(rootFolder);
             if (model == null)
             {
-                foreach (var dir in Directory.EnumerateDirectories(rootFolder))
+                bool enumerated = false;
+                if (recursive)
                 {
-                    RefractorModelFolder(Helper.ToUnityPath(dir));
+                    foreach (var dir in Directory.EnumerateDirectories(rootFolder))
+                    {
+                        enumerated = true;
+                        CreateModelFolder(Helper.ToUnityPath(dir), true);
+                    }
+                }
+                if (!enumerated)
+                {
+                    Debug.LogError($"{rootFolder}里没有找到模型");
                 }
                 return;
             }
@@ -72,10 +82,10 @@ namespace XDay.ModelBuildPipeline.Editor
                 EditorHelper.MoveAsset(anim, animFolder);
             }
 
-            foreach (var stage in m_Stages)
-            {
-                CreateSetting(stage.SettingType, settingFolder);
-            }
+            //foreach (var stage in m_Stages)
+            //{
+            //    CreateSetting(stage.SettingType, settingFolder);
+            //}
             AssetDatabase.Refresh();
 
             var fileName = Helper.GetPathName(modelPath, true);
@@ -84,11 +94,9 @@ namespace XDay.ModelBuildPipeline.Editor
 
             //删除自动生成的文件夹
             AssetDatabase.DeleteAsset($"{rootFolder}/{Helper.GetPathName(modelPath, false)}.fbm");
-
-            Build(rootFolder);
         }
 
-        private void ExtractTextures(string modelPath, string textureFolder)
+        private static void ExtractTextures(string modelPath, string textureFolder)
         {
             ModelImporter modelImporter = AssetImporter.GetAtPath(modelPath) as ModelImporter;
             if (modelImporter == null)
@@ -101,7 +109,7 @@ namespace XDay.ModelBuildPipeline.Editor
             AssetDatabase.Refresh();
         }
 
-        private void ExtractMaterials(string modelPath, string materialFolder)
+        private static void ExtractMaterials(string modelPath, string materialFolder)
         {
             var modelFolder = Helper.GetFolderPath(modelPath);
             var unityMaterialFolder = $"{modelFolder}/Materials";
@@ -114,6 +122,7 @@ namespace XDay.ModelBuildPipeline.Editor
                 return;
             }
 
+            modelImporter.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
             modelImporter.materialLocation = ModelImporterMaterialLocation.External;
             modelImporter.materialName = ModelImporterMaterialName.BasedOnMaterialName;
             modelImporter.materialSearch = ModelImporterMaterialSearch.Local;
@@ -132,8 +141,8 @@ namespace XDay.ModelBuildPipeline.Editor
 
             AssetDatabase.Refresh();
 
-            modelImporter.materialLocation = ModelImporterMaterialLocation.InPrefab;
-            modelImporter.SaveAndReimport();
+            //modelImporter.materialLocation = ModelImporterMaterialLocation.InPrefab;
+            //modelImporter.SaveAndReimport();
 
             if (!exists)
             {
@@ -143,12 +152,12 @@ namespace XDay.ModelBuildPipeline.Editor
             AssetDatabase.Refresh();
         }
 
-        private List<Material> GetMaterialsInFolder(string folder)
+        private static List<Material> GetMaterialsInFolder(string folder)
         {
             return EditorHelper.QueryAssets<Material>(new string[] { folder });
         }
 
-        private List<GameObject> GetAnimationGameObjects(string folder)
+        private static List<GameObject> GetAnimationGameObjects(string folder)
         {
             List<GameObject> anims = new();
             var gameObjects = EditorHelper.QueryAssets<GameObject>(new string[] { folder }, true);

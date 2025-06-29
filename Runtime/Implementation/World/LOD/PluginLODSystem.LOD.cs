@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 namespace XDay.WorldAPI
 {
     internal partial class PluginLODSystem
@@ -79,6 +78,9 @@ namespace XDay.WorldAPI
                 serializer.WriteSingle(m_Tolerance, "Tolerance");
             }
 
+            /// <summary>
+            /// 缓冲高度,单位米
+            /// </summary>
             [XDaySerializableField(1, "Tolerance")]
             private float m_Tolerance;
             [XDaySerializableField(1, "Height")]

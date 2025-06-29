@@ -26,8 +26,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using XDay.UtilityAPI;
 
-namespace XDay.UtilityAPI
+namespace XDay.DisplayKeyAPI
 {
     public class DisplayKeyParam
     {
@@ -36,7 +37,7 @@ namespace XDay.UtilityAPI
 
         public DisplayKeyParam Clone()
         {
-            DisplayKeyParam p = new DisplayKeyParam()
+            DisplayKeyParam p = new()
             {
                 Aspect = Aspect.Clone(),
                 UnityObjectType = UnityObjectType,

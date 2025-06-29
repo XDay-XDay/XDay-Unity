@@ -29,6 +29,7 @@ namespace XDay.WorldAPI
     {
         public const string EDITOR_FILE_NAME = "world_editor_data";
         public const string GAME_FILE_NAME = "world_game_data";
+        public const string BAKED_TILES_FILE_NAME = "baked_tiles";
         public const string LOD_KEYWORD = "_lod";
         public const string ASPECT_NAME = "Plugin Name";
         public const string ASPECT_ENABLE = "Plugin Enable";

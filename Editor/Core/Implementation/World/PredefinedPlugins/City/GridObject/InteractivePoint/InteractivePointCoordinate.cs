@@ -22,7 +22,7 @@
  */
 
 using UnityEngine;
-using XDay.UtilityAPI;
+using XDay.UtilityAPI.Editor;
 
 namespace XDay.WorldAPI.City.Editor
 {

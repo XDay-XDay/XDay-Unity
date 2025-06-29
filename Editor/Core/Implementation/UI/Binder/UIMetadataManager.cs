@@ -74,6 +74,7 @@ namespace XDay.GUIAPI
         public string ControllerClassName;
         public string Namespace;
         public string PrefabGUID;
+        public UIWindowLayer WindowLayer = UIWindowLayer.Layer0;
         public List<UIGameObjectMetadata> GameObjects = new();
     }
 

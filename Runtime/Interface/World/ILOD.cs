@@ -93,6 +93,8 @@ namespace XDay.WorldAPI
         bool Update(float altitude);
         void ChangeLODName(string oldName, string newName);
         IPluginLODSetup QueryLOD(string name);
+        int QueryLOD(float altitude);
         IPluginLODSetup GetLOD(int index);
+        void AddLOD(string name, float altitude, float tolerance = 0);
     }
 }

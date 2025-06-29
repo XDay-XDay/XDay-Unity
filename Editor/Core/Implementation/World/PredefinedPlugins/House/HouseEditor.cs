@@ -26,7 +26,7 @@ using UnityEngine;
 using UnityEditor;
 using XDay.WorldAPI.Editor;
 using XDay.UtilityAPI;
-using XDay.WorldAPI.City.Editor;
+using XDay.UtilityAPI.Editor;
 
 namespace XDay.WorldAPI.House.Editor
 {
@@ -44,6 +44,7 @@ namespace XDay.WorldAPI.House.Editor
         public bool Visible { get => m_ScenePrefab.Visible; set => m_ScenePrefab.Visible = value; }
         public GameObject Prefab { get => m_ScenePrefab.Prefab; set => m_ScenePrefab.Prefab = value; }
         public GameObject PrefabInstance => m_ScenePrefab.Instance;
+        public string PlaceholderModelPath { get => m_PlaceholderModelPath; set => m_PlaceholderModelPath = value; }
         Vector3 IScenePrefabSetter.Position
         {
             get
@@ -247,6 +248,17 @@ namespace XDay.WorldAPI.House.Editor
             var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(assetPath, World);
             var house = new House(World.AllocateObjectID(), m_Houses.Count, name, gridSize, descriptor);
             return house;
+        }
+
+        public void ReplaceHouseModel(House house, GameObject newPrefab)
+        {
+            if (newPrefab.GetComponentInChildren<UnityEngine.BoxCollider>() == null)
+            {
+                EditorUtility.DisplayDialog("出错了", "没有BoxCollider,无法替换模型", "确定");
+                return;
+            }
+            var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(AssetDatabase.GetAssetPath(newPrefab), World);
+            house.ReplaceModel(descriptor);
         }
 
         public HouseInstance CreateHouseInstance(House house, string name)
@@ -554,5 +566,6 @@ namespace XDay.WorldAPI.House.Editor
         private int m_ActiveHouseInstanceID = 0;
         private ScenePrefab m_ScenePrefab = new();
         private HouseGraph m_HouseGraph;
+        private string m_PlaceholderModelPath;
     }
 }

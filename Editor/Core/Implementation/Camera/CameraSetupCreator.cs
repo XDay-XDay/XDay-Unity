@@ -59,6 +59,11 @@ namespace XDay.CameraAPI.Editor
 @"
 {
     ""Direction"":""XZ"",
+    ""Bounds"":
+    {
+        ""Min"":""0,0"",
+        ""Max"":""0,0""
+    },
     ""Orbit"":
     {
         ""Pitch"":45,

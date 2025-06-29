@@ -33,7 +33,9 @@ namespace XDay.CameraAPI
         Follow = 3,
         StopFollow = 4,
         Drag = 5,
+        //鼠标中键缩放
         ScrollZoom = 6,
+        //ctrl+鼠标右键缩放
         MouseZoom = 7,
     }
 

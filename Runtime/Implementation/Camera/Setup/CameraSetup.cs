@@ -41,6 +41,7 @@ namespace XDay.CameraAPI
         public bool ChangeFOV { get => m_ChangeFOV; set => m_ChangeFOV = value; }
         public CameraDirection Direction { get => m_Direction; set => m_Direction = value; }
         public float MouseZoomSpeed { get => m_MouseZoomSpeed; set => m_MouseZoomSpeed = value; }
+        public Rect FocusPointBounds => m_FocusPointBounds;
         public float MaxAltitude
         {
             get => m_AltitudeManager.Max.Altitude;
@@ -106,6 +107,7 @@ namespace XDay.CameraAPI
         private AltitudeSetupManager m_AltitudeManager = new();
         private RestoreSetup m_Restore = new();
         private float m_MouseZoomSpeed = 30.0f;
+        private Rect m_FocusPointBounds;
     }
 }
 

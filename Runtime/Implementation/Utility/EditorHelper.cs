@@ -180,6 +180,16 @@ namespace XDay.UtilityAPI
             return null;
         }
 
+        public static T QueryOneAsset<T>(string searchInFolder = null) where T : UnityEngine.Object
+        {
+            var assets = QueryAssets<T>(new string[] { searchInFolder });
+            if (assets.Count > 0)
+            {
+                return assets[0];
+            }
+            return null;
+        }
+
         public static void RunProcess(string exeName, string argument, string workingDir, out string output, out string error, bool waitForExit = true)
         {
             output = "";

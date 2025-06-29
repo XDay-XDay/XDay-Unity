@@ -24,7 +24,7 @@
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
-using XDay.WorldAPI.City.Editor;
+using XDay.UtilityAPI.Editor;
 
 namespace XDay.WorldAPI.House.Editor
 {
@@ -159,7 +159,7 @@ namespace XDay.WorldAPI.House.Editor
             Selection.activeGameObject = point.Start.PrefabInstance;
         }
 
-        private void DrawStart(InteractivePointStartCoordinate start, bool enable)
+        private void DrawStart(HouseInteractivePointStartCoordinate start, bool enable)
         {
             start.ShowInInspector = EditorGUILayout.Foldout(start.ShowInInspector, "起点");
             if (start.ShowInInspector)

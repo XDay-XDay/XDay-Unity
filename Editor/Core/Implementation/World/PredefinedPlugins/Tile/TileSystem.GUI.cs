@@ -94,16 +94,22 @@ namespace XDay.WorldAPI.Tile.Editor
                 {
                     m_PluginSystemEditor.InspectorGUI(m_PluginLODSystem, null, "LOD", null);
 
+                    BrushFolder = EditorHelper.ObjectField<DefaultAsset>("笔刷目录", BrushFolder);
+
                     switch (m_Action)
                     {
                         case Action.SetMaterial:
                             DrawMaterialConfigs();
                             break;
                         case Action.PaintTexture:
+                            GUI.enabled = !string.IsNullOrEmpty(BrushFolder);
                             m_TexturePainter.InspectorGUI();
+                            GUI.enabled = true;
                             break;
                         case Action.PaintHeight:
+                            GUI.enabled = !string.IsNullOrEmpty(BrushFolder);
                             m_VertexHeightPainter.InspectorGUI();
+                            GUI.enabled = true;
                             break;
                         case Action.SetTile:
                             m_ResourceGroupSystem.InspectorGUI();
@@ -206,11 +212,15 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 if (m_Action == Action.PaintTexture)
                 {
+                    GUI.enabled = !string.IsNullOrEmpty(BrushFolder);
                     m_TexturePainter.DrawSceneGUIControls();
+                    GUI.enabled = true;
                 }
                 else if (m_Action == Action.PaintHeight)
                 {
+                    GUI.enabled = !string.IsNullOrEmpty(BrushFolder);
                     m_VertexHeightPainter.DrawSceneGUIControls();
+                    GUI.enabled = true;
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -428,7 +438,6 @@ namespace XDay.WorldAPI.Tile.Editor
         private ToggleImageButton m_ButtonShowGrid;
         private ToggleImageButton m_ButtonShowMaterial;
         private Action m_Action = Action.Select;
-        private const int m_Version = 5;
 
         private enum Action
         {

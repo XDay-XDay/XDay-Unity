@@ -22,11 +22,9 @@
  */
 
 
-
-using System.IO;
 using UnityEngine;
 
-namespace XDay.UtilityAPI
+namespace XDay.DisplayKeyAPI
 {
     [CreateAssetMenu(fileName = "DisplayKeyConfig.asset", menuName = "XDay/DisplayKeyConfig")]
     public class DisplayKeyConfig : ScriptableObject
@@ -37,9 +35,7 @@ namespace XDay.UtilityAPI
         public bool IsValid()
         {
             return !string.IsNullOrEmpty(EditorDataPath) &&
-                !string.IsNullOrEmpty(RuntimeDataPath) &&
-                File.Exists(EditorDataPath) &&
-                File.Exists(RuntimeDataPath);
+                !string.IsNullOrEmpty(RuntimeDataPath);
         }
     }
 }

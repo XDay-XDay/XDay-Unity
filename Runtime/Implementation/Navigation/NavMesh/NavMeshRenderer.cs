@@ -28,7 +28,7 @@ namespace XDay.NavigationAPI
 {
     public class NavMeshRenderer
     {
-        public NavMeshRenderer(string name, Vector3[] vertices, int[] indices, Color[] colors, Transform parent)
+        public NavMeshRenderer(string name, Vector3[] vertices, int[] indices, Color[] colors, Transform parent, bool enableDepthTest)
         {
             m_Mesh = new LargeMesh(vertices, indices, null, colors);
 
@@ -39,7 +39,7 @@ namespace XDay.NavigationAPI
             {
                 renderQueue = 3999
             };
-            m_Material.SetInt("_CompareFunc", (int)UnityEngine.Rendering.CompareFunction.Always);
+            SetDepthTest(enableDepthTest);
             
             renderer.sharedMaterial = m_Material;
             var filter = m_GameObject.AddComponent<MeshFilter>();
@@ -51,6 +51,23 @@ namespace XDay.NavigationAPI
             m_Mesh.OnDestroy();
             Helper.DestroyUnityObject(m_Material);
             Helper.DestroyUnityObject(m_GameObject);
+        }
+
+        public void SetDepthTest(bool enable)
+        {
+            if (enable)
+            {
+                m_Material.SetInt("_CompareFunc", (int)UnityEngine.Rendering.CompareFunction.LessEqual);
+            }
+            else
+            {
+                m_Material.SetInt("_CompareFunc", (int)UnityEngine.Rendering.CompareFunction.Always);
+            }
+        }
+
+        public void Show(bool show)
+        {
+            m_GameObject.SetActive(show);
         }
 
         private readonly GameObject m_GameObject;

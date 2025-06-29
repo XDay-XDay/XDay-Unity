@@ -21,11 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using UnityEditor;
-using UnityEditor.AI;
 using UnityEngine;
-using UnityEngine.AI;
 using XDay.NavigationAPI;
 using XDay.NavigationAPI.Editor;
 using XDay.UtilityAPI;
@@ -44,6 +41,7 @@ namespace XDay.WorldAPI.Navigation.Editor
             m_Debugger.Show = plugin.ShowDebugInfo;
             m_Root.transform.SetParent(parent, true);
             Selection.activeGameObject = m_Root;
+            m_Plugin = plugin;
         }
 
         public void OnDestroy()
@@ -59,8 +57,8 @@ namespace XDay.WorldAPI.Navigation.Editor
                 return;
             }
             m_LastBuiltNavMesh?.OnDestroy();
-            var colors = CreateColors(result.MeshIndices, result.TriangleTypes, result.MeshVertices.Length);
-            m_LastBuiltNavMesh = new NavMeshRenderer("NavMesh", result.MeshVertices, result.MeshIndices, colors, m_Root.transform);
+            var colors = CreateColors(result.MeshIndices, result.TriangleAreaIDs, result.MeshVertices.Length);
+            m_LastBuiltNavMesh = new NavMeshRenderer("NavMesh", result.MeshVertices, result.MeshIndices, colors, m_Root.transform, m_Plugin.EnableDepthTest);
         }
 
         public void ClearNavMesh()
@@ -69,7 +67,12 @@ namespace XDay.WorldAPI.Navigation.Editor
             m_LastBuiltNavMesh = null;
         }
 
-        private Color[] CreateColors(int[] indices, ushort[] triangleTypes, int length)
+        public void SetEnableDepthTest(bool enable)
+        {
+            m_LastBuiltNavMesh?.SetDepthTest(enable);
+        }
+
+        public Color[] CreateColors(int[] indices, ushort[] triangleTypes, int length)
         {
             Color[] colors = new Color[length];
             for (var t = 0; t < triangleTypes.Length; t++)
@@ -89,15 +92,15 @@ namespace XDay.WorldAPI.Navigation.Editor
         /// <summary>
         /// unity内部color实现
         /// </summary>
-        /// <param name="i"></param>
+        /// <param name="areaID"></param>
         /// <returns></returns>
-        private Color GetAreaColor(int i)
+        public Color GetAreaColor(int areaID)
         {
-            if (i == 0)
+            if (areaID == 0)
                 return new Color(0, 0.75f, 1.0f, 0.5f);
-            int r = (Bit(i, 4) + Bit(i, 1) * 2 + 1) * 63;
-            int g = (Bit(i, 3) + Bit(i, 2) * 2 + 1) * 63;
-            int b = (Bit(i, 5) + Bit(i, 0) * 2 + 1) * 63;
+            int r = (Bit(areaID, 4) + Bit(areaID, 1) * 2 + 1) * 63;
+            int g = (Bit(areaID, 3) + Bit(areaID, 2) * 2 + 1) * 63;
+            int b = (Bit(areaID, 5) + Bit(areaID, 0) * 2 + 1) * 63;
             return new Color(r / 255.0f, g / 255.0f, b / 255.0f, 0.5f);
         }
 
@@ -108,6 +111,7 @@ namespace XDay.WorldAPI.Navigation.Editor
 
         private readonly GameObject m_Root;
         private NavMeshRenderer m_LastBuiltNavMesh;
+        private readonly NavigationPlugin m_Plugin;
         private readonly MyNavigationSystemDebugger m_Debugger;
     }
 }

@@ -30,8 +30,8 @@ namespace XDay.InputAPI
 {
     internal class TouchDevice : IDevice
     {
-        public event Action EventAnyTouchBegin;
-        public event Action EventAnySceneTouchBegin;
+        public event Action<Vector2> EventAnyTouchBegin;
+        public event Action<Vector2> EventAnySceneTouchBegin;
         public int TouchCount => SceneTouchCount + UITouchCount;
         public int SceneTouchCount => m_SceneTouches.Count;
         public int UITouchCount => m_UITouches.Count;
@@ -70,19 +70,24 @@ namespace XDay.InputAPI
             m_AnySceneTouchBegin = false;
             var touchBegin = false;
             var touchCount = Input.touchCount;
+            Vector2 beginTouchPos = new(-1, -1);
             for (var i = 0; i < touchCount; i++)
             {
-                touchBegin |= UpdateTouch(i);
+                touchBegin |= UpdateTouch(i, out var pos);
+                if(beginTouchPos.x < 0 && touchBegin) 
+                {
+                    beginTouchPos = pos;
+                }
             }
 
             if (touchBegin)
             {
-                EventAnyTouchBegin?.Invoke();
+                EventAnyTouchBegin?.Invoke(beginTouchPos);
             }
 
             if (m_AnySceneTouchBegin)
             {
-                EventAnySceneTouchBegin?.Invoke();
+                EventAnySceneTouchBegin?.Invoke(beginTouchPos);
             }
         }
 
@@ -106,7 +111,7 @@ namespace XDay.InputAPI
             return m_SceneTouches[index];
         }
 
-        private bool UpdateTouch(int index)
+        private bool UpdateTouch(int index, out Vector2 touchPos)
         {
             DeviceTouch deviceTouch = null;
             var touch = Input.GetTouch(index);
@@ -177,7 +182,13 @@ namespace XDay.InputAPI
                 Debug.Assert(false, "wrong");
             }
 
-            return touch.phase == TouchPhase.Began;
+            if (touch.phase == TouchPhase.Began)
+            {
+                touchPos = touch.position;
+                return true;
+            }
+            touchPos = Vector2.zero;
+            return false;
         }
 
         private DeviceTouch QueryTouch(int id)

@@ -63,7 +63,7 @@ namespace XDay.WorldAPI.Editor
         {
             EditorHelper.DeleteFolderContent(folder, new List<string> { WorldDefine.CONSTANT_FOLDER_NAME });
             
-            var serializer = ISerializer.CreateFile(ISerializer.CreateBinary(), $"{folder}/{dataFileName}.bytes");
+            var serializer = ISerializer.CreateBinary();
             if (isEditor)
             {
                 EditorSerialize(serializer, "", new ToPersistentID());
@@ -74,9 +74,10 @@ namespace XDay.WorldAPI.Editor
             }
             serializer.Uninit();
 
+            EditorHelper.WriteFile(serializer.Data, $"{folder}/{dataFileName}.bytes");
+
             AssetDatabase.Refresh();
         }
     }
 }
 
-//XDay

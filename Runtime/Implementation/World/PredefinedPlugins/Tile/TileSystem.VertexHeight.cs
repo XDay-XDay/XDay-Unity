@@ -21,30 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 namespace XDay.WorldAPI.Tile
 {
     internal partial class TileSystem
     {
         public float GetHeightAtPos(float x, float z)
         {
-            var coord = RotatedPositionToCoordinate(x, z);
-            var tile = GetTile(coord.x, coord.y);
-            if (tile != null)
-            {
-                if (tile.VertexHeights == null)
-                {
-                    return 0;
-                }
-
-                float localX = coord.x * m_TileWidth + m_Origin.x;
-                float localZ = coord.y * m_TileHeight + m_Origin.y;
-                float gridSize = m_TileWidth / tile.MeshResolution;
-                return tile.GetHeightAtPos(x - localX, z - localZ, gridSize);
-            }
-
-            return 0;
+            return m_Layers[0].GetHeightAtPos(x, z);
         }
     }
 }

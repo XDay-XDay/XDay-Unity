@@ -153,35 +153,6 @@ namespace XDay.WorldAPI
         void Uninit();
         IResourceDescriptor QueryDescriptor(string prefabPath);
     }
-
-    /// <summary>
-    /// decoration system interface
-    /// </summary>
-    public interface IDecorationSystem : IWorldPlugin
-    {
-        /// <summary>
-        /// play animation on decoration object
-        /// </summary>
-        /// <param name="decorationID"></param>
-        /// <param name="animationName"></param>
-        /// <param name="alwaysPlay"></param>
-        void PlayAnimation(int decorationID, string animationName, bool alwaysPlay = false);
-
-        /// <summary>
-        /// find decorations in a circle
-        /// </summary>
-        /// <param name="center"></param>
-        /// <param name="radius"></param>
-        /// <param name="decorationIDs"></param>
-        void QueryDecorationIDsInCircle(Vector3 center, float radius, List<int> decorationIDs);
-
-        /// <summary>
-        /// show/hide decoration
-        /// </summary>
-        /// <param name="decorationID"></param>
-        /// <param name="show"></param>
-        void ShowDecoration(int decorationID, bool show);
-    }
 }
 
 

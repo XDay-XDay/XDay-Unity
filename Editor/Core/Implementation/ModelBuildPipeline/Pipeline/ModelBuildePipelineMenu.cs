@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -29,69 +30,36 @@ namespace XDay.ModelBuildPipeline.Editor
 {
     public static class ModelBuildePipelineMenu
     {
-        [MenuItem("Assets/模型管线/1.整理模型文件夹", false, 1)]
-        private static void RefactorModel()
+        [MenuItem("Assets/模型管线/1.选中文件夹,生成标准模型文件夹结构", false, 1)]
+        private static void CreateModelFolder()
         {
-            var editor = ModelBuildPipelineEditor.Open();
-            var pipeline = editor.GetActivePipeline();
-            if (pipeline == null)
-            {
-                Debug.LogError("没有找到ModelBuildePipeline");
-                return;
-            }
             foreach (var obj in Selection.objects)
             {
                 var modelFolder = obj as DefaultAsset;
                 if (modelFolder != null)
                 {
-                    pipeline.RefractorModelFolder(AssetDatabase.GetAssetPath(modelFolder));
+                    ModelBuildPipeline.CreateModelFolder(AssetDatabase.GetAssetPath(modelFolder), recursive:true);
                 }
             }
         }
 
-        [MenuItem("Assets/模型管线/2.构建模型", false, 2)]
+        [MenuItem("Assets/模型管线/2.选中模型文件夹,构建Prefab", false, 2)]
         private static void BuildSelection()
         {
-            var editor = ModelBuildPipelineEditor.Open();
-            var pipeline = editor.GetActivePipeline();
-            if (pipeline == null)
-            {
-                Debug.LogError("没有找到ModelBuildePipeline");
-                return;
-            }
+            List<string> rootFolders = new();
             foreach (var obj in Selection.objects)
             {
                 var modelFolder = obj as DefaultAsset;
                 if (modelFolder != null)
                 {
-                    var path = AssetDatabase.GetAssetPath(modelFolder);
-                    pipeline.CreateSettings(path);
-                    pipeline.Build(path);
+                    rootFolders.Add(AssetDatabase.GetAssetPath(modelFolder));
                 }
             }
+
+            ModelPipelineBuilder.BuildFolders(rootFolders);
         }
 
-        [MenuItem("Assets/模型管线/3.创建缺失模型设置", false, 3)]
-        private static void CreateModelSettings()
-        {
-            var editor = ModelBuildPipelineEditor.Open();
-            var pipeline = editor.GetActivePipeline();
-            if (pipeline == null)
-            {
-                Debug.LogError("没有找到ModelBuildePipeline");
-                return;
-            }
-            foreach (var obj in Selection.objects)
-            {
-                var modelFolder = obj as DefaultAsset;
-                if (modelFolder != null)
-                {
-                    pipeline.CreateSettings(AssetDatabase.GetAssetPath(modelFolder));
-                }
-            }
-        }
-
-        [MenuItem("GameObject/模型管线/同步模型")]
+        [MenuItem("GameObject/模型管线/将Prefab的修改同步到模型配置文件")]
         private static void Sync()
         {
             var scenePrefab = EditorHelper.GetEditingPrefab();
@@ -110,23 +78,13 @@ namespace XDay.ModelBuildPipeline.Editor
             }
         }
 
-        [MenuItem("Assets/模型管线/4.复制设置文件", false, 4)]
+        [MenuItem("Assets/模型管线/3.将一个模型的Setting复制到同级的其他模型中", false, 3)]
         private static void CopySettingFiles()
         {
-            var editor = ModelBuildPipelineEditor.Open();
-            var pipeline = editor.GetActivePipeline();
-            if (pipeline == null)
+            var modelFolder = Selection.activeObject as DefaultAsset;
+            if (modelFolder != null)
             {
-                Debug.LogError("没有找到ModelBuildePipeline");
-                return;
-            }
-            foreach (var obj in Selection.objects)
-            {
-                var modelFolder = obj as DefaultAsset;
-                if (modelFolder != null)
-                {
-                    pipeline.CopySettings(AssetDatabase.GetAssetPath(modelFolder));
-                }
+                ModelBuildPipeline.CopySettings(AssetDatabase.GetAssetPath(modelFolder));
             }
         }
     }

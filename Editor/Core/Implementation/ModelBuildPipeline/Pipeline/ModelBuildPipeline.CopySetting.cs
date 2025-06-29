@@ -35,7 +35,7 @@ namespace XDay.ModelBuildPipeline.Editor
         /// 将一个模型的Setting复制到同级的其他模型中
         /// </summary>
         /// <param name="rootFolder"></param>
-        public void CopySettings(string rootFolder)
+        public static void CopySettings(string rootFolder)
         {
             string modelFolder = $"{rootFolder}/{MODEL_FOLDER_NAME}";
             var fbxModel = GetModel(modelFolder);
@@ -52,7 +52,7 @@ namespace XDay.ModelBuildPipeline.Editor
             }
         }
 
-        private List<string> GetSameLevelRootFolders(string rootFolder)
+        private static List<string> GetSameLevelRootFolders(string rootFolder)
         {
             List<string> rootFolders = new();
             var parentFolder = Helper.GetFolderPath(rootFolder);
@@ -69,7 +69,7 @@ namespace XDay.ModelBuildPipeline.Editor
             return rootFolders;
         }
 
-        private void DoCopySettings(string srcRootFolder, string dstRootFolder)
+        private static void DoCopySettings(string srcRootFolder, string dstRootFolder)
         {
             List<ModelBuildPipelineStageSetting> srcSettings = GetStageSettings(srcRootFolder);
             List<ModelBuildPipelineStageSetting> dstSettings = GetStageSettings(dstRootFolder);
@@ -95,10 +95,35 @@ namespace XDay.ModelBuildPipeline.Editor
             }
         }
 
-        private List<ModelBuildPipelineStageSetting> GetStageSettings(string rootFolder)
+        private static List<ModelBuildPipelineStageSetting> GetStageSettings(string rootFolder)
         {
             var settingFolder = $"{rootFolder}/{SETTING_FOLDER_NAME}";
             return EditorHelper.QueryAssets<ModelBuildPipelineStageSetting>(new string[] { settingFolder }, true);
+        }
+
+        internal void RemoveInvalidStages()
+        {
+            for (var i = m_Stages.Count - 1; i >= 0; --i)
+            {
+                if (m_Stages[i] == null)
+                {
+                    m_Stages.RemoveAt(i);
+                }
+            }
+
+            foreach (var stage in m_Stages)
+            {
+                if (stage != null)
+                {
+                    for (var i = stage.PreviousStageIDs.Count - 1; i >= 0; --i)
+                    {
+                        if (!ContainsStage(stage.PreviousStageIDs[i]))
+                        {
+                            stage.RemovePreviousStage(stage.PreviousStageIDs[i]);
+                        }
+                    }
+                }
+            }
         }
     }
 }

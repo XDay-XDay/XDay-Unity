@@ -39,16 +39,21 @@ namespace XDay.WorldAPI.Tile.Editor
         {
         }
 
-        public void Init(TileSystem tileSystem)
+        public void Init(TileSystem tileSystem, string brushFolder)
         {
             m_TileSystem = tileSystem;
-            m_BrushStyleManager = IBrushStyleManager.Create(WorldHelper.GetBrushPath());
+            m_BrushStyleManager = IBrushStyleManager.Create(brushFolder);
         }
 
         public void OnDestroy()
         {
             m_Indicator.OnDestroy();
             m_BrushStyleManager.OnDestroy();
+        }
+
+        public void ChangeBrushFolder(string path)
+        {
+            m_BrushStyleManager.ChangeBrushFolder(path);
         }
 
         public List<UIControl> CreateSceneGUIControls()

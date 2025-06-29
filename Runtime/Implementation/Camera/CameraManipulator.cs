@@ -34,7 +34,7 @@ namespace XDay.CameraAPI
         public event Action<ICameraManipulator> EventAltitudeChange;
         public event Action<ICameraManipulator> EventActiveStateChange;
         public CameraDirection Direction => m_Setup.Direction;
-        public bool EnableFocusPointClampXZ { set => m_FocusPointClamp.EnableClampXZ = value; get => m_FocusPointClamp.EnableClampXZ; }
+        public bool EnableFocusPointClamp { set => m_FocusPointClamp.EnableClampXZ = value; get => m_FocusPointClamp.EnableClampXZ; }
         public bool EnableRestore { set => m_FocusPointClamp.EnableRestore = value; get => m_FocusPointClamp.EnableRestore; }
         public bool EnableDrag { set => SetBehaviourActive(BehaviourType.Drag, value); }
         public bool EnableZoom
@@ -63,7 +63,7 @@ namespace XDay.CameraAPI
         public CameraSetup Setup => m_Setup;
         public bool IsRenderTransformChanged => m_IsRenderTransformChanged;
         public Camera Camera => m_Camera;
-       
+
         public void Init(CameraSetup setup, Camera camera, IDeviceInput input)
         {
             if (camera == null)
@@ -88,6 +88,13 @@ namespace XDay.CameraAPI
             SetPostProcessors();
 
             SetActive(false);
+
+            if (m_Setup.FocusPointBounds.width > 0 &&
+                m_Setup.FocusPointBounds.height > 0)
+            {
+                EnableFocusPointClamp = true;
+                SetFocusPointBounds(m_Setup.FocusPointBounds.min, m_Setup.FocusPointBounds.max);
+            }
         }
 
         public void OnDestroy()
@@ -351,7 +358,8 @@ namespace XDay.CameraAPI
 
         private void UpdateQueue()
         {
-            m_Queue.Sort((x, y) => {
+            m_Queue.Sort((x, y) =>
+            {
                 if (x.Layer != y.Layer)
                 {
                     return x.Layer.CompareTo(y.Layer);

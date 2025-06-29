@@ -28,7 +28,6 @@ using XDay.NavigationAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
 using XDay.AssetAPI;
-using XDay.GUIAPI;
 using System;
 
 namespace XDay.API
@@ -40,7 +39,6 @@ namespace XDay.API
         public ITaskSystem TaskSystem => m_TaskSystem;
         public INavigationManager NavigationManager => m_NavigationManager;
         public IAssetLoader WorldAssetLoader => m_WorldSystem?.WorldAssetLoader;
-        public IUIWindowManager WindowManager => m_WindowManager;
         public ITickTimer TickTimer => m_TickTimer;
         public ITickTimer FrameTimer => m_FrameTimer;
         public IEventSystem EventSystem => m_EventSystem;
@@ -77,10 +75,6 @@ namespace XDay.API
 
             m_WorldSystem.Init(worldSetupFilePath, m_AssetLoader, m_TaskSystem, m_Input);
             m_NavigationManager = INavigationManager.Create();
-            if (enableUI)
-            {
-                m_WindowManager = IUIWindowManager.Create(loader);
-            }
             m_TickTimer = ITickTimer.Create(false, 0, () => {
                 return (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
             });
@@ -93,7 +87,6 @@ namespace XDay.API
 
         public void OnDestroy()
         {
-            m_WindowManager?.OnDestroy();
             m_WorldSystem?.OnDestroy();
             m_NavigationManager?.OnDestroy();
             Log.Uninit();
@@ -104,7 +97,6 @@ namespace XDay.API
             m_TickTimer.Update();
             m_FrameTimer.Update();
             m_Input.Update();
-            m_WindowManager?.Update(dt);
             m_WorldSystem?.Update(dt);
         }
 
@@ -170,7 +162,6 @@ namespace XDay.API
         private readonly IDeviceInput m_Input;
         private readonly ITaskSystem m_TaskSystem;
         private readonly INavigationManager m_NavigationManager;
-        private readonly IUIWindowManager m_WindowManager;
         private readonly ITickTimer m_TickTimer;
         private readonly ITickTimer m_FrameTimer;
         private readonly IEventSystem m_EventSystem;

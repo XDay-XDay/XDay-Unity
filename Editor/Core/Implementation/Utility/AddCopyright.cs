@@ -26,6 +26,7 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using XDay.WorldAPI;
 
 namespace XDay.UtilityAPI.Editor
 {
@@ -34,7 +35,7 @@ namespace XDay.UtilityAPI.Editor
         [MenuItem("XDay/Other/Add Copyright")]
         static void Add()
         {
-            Run("Assets/XDay");
+            Run(WorldHelper.GetXDayPath());
             Run("Tools/XDay/XDay");
         }
 
@@ -66,6 +67,12 @@ namespace XDay.UtilityAPI.Editor
 
         private static void Run(string dir)
         {
+            if (!Directory.Exists(dir))
+            {
+                Debug.LogError($"文件夹{dir}不存在!");
+                return;
+            }
+
             foreach (var path in Directory.EnumerateFiles(dir, "*.*", SearchOption.AllDirectories))
             {
                 if (path.EndsWith(".cs"))

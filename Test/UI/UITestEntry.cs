@@ -46,7 +46,7 @@ public class UITestEntry : MonoBehaviour
     {
         m_Loader = new GameAssetLoader();
 
-        m_UIManager = IUIWindowManager.Create(m_Loader);
+        m_UIManager = IUIWindowManager.Create(m_Loader, new GameObject("UI Root"));
 
         OpenWindow();   
     }
