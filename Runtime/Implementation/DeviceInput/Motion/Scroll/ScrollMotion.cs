@@ -35,8 +35,8 @@ namespace XDay.InputAPI
         public float MoveDistance => m_Distance;
         public override MotionType Type => MotionType.MouseScroll;
 
-        public ScrollMotion(int id, float maxAngle, float interval, TouchID touchID, IDeviceInput device)
-            : base(id, device)
+        public ScrollMotion(int id, float maxAngle, float interval, TouchID touchID, IDeviceInput device, DeviceTouchType touchType)
+            : base(id, device, touchType)
         {
             m_MaxAngle = maxAngle;
             m_Interval = interval;
@@ -57,14 +57,14 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            var touchCount = m_Device.UITouchCount;
+            var touchCount = GetTouchCount();
             if (touchCount != 1)
             {
                 Reset(touchCount == 0);
                 return false;
             }
 
-            var touch = m_Device.GetUITouch(0);
+            var touch = GetTouch(0);
             if (m_Device.QueryTouchID(touch.ID) != m_TouchID)
             {
                 Reset(false);

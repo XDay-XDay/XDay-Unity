@@ -45,6 +45,11 @@ namespace XDay.WorldAPI.House.Editor
             }
         }
 
+        protected override void OnResize(int horizontal, int vertical)
+        {
+            m_Walkable = new bool[horizontal * vertical];
+        }
+
         public void SetWalkable(int x, int y, int width, int height, bool walkable)
         {
             var maxX = x + width - 1;
@@ -93,6 +98,8 @@ namespace XDay.WorldAPI.House.Editor
 
         public void CopyTo(HouseWalkableLayer layer)
         {
+            layer.Resize(HorizontalGridCount, VerticalGridCount);
+
             for (var i = 0; i < m_Walkable.Length; ++i)
             {
                 layer.m_Walkable[i] = m_Walkable[i];

@@ -21,12 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-using System.Collections.Generic;
-using UnityEngine;
-using XDay.UtilityAPI;
-
 namespace XDay.WorldAPI.Decoration
 {
     internal class DecorationObjectPool
@@ -45,7 +39,8 @@ namespace XDay.WorldAPI.Decoration
             IWorld world,
             int gridX, 
             int gridY,
-            int lod,
+            int logicLOD,
+            int renderLOD,
             int indexInTile,
             float posX,
             float posY,
@@ -54,7 +49,7 @@ namespace XDay.WorldAPI.Decoration
             bool visible)
         {
             var decoration = m_Pool.Get();
-            decoration.Init(objectID, objectIndex, world, gridX, gridY, lod, indexInTile, posX, posY, posZ, resourceMetadata);
+            decoration.Init(objectID, objectIndex, world, gridX, gridY, logicLOD, renderLOD, indexInTile, posX, posY, posZ, resourceMetadata);
             decoration.SetVisibility(visible ? WorldObjectVisibility.Invisible : WorldObjectVisibility.Visible);
             decoration.SetEnabled(enabled);
 #if DECORATION_DEBUG

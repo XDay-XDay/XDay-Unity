@@ -101,6 +101,11 @@ namespace XDay.WorldAPI.House.Editor
             m_ObjectIDs = Helper.ToArray(arr2D, VerticalGridCount, HorizontalGridCount);
         }
 
+        protected override void OnResize(int horizontal, int vertical)
+        {
+            m_ObjectIDs = new int[horizontal * vertical];
+        }
+
         private int[] m_ObjectIDs;
         private const int m_ObjectLayerVersion = 1;
     }

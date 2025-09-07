@@ -134,8 +134,8 @@ namespace XDay.CameraAPI
                 var bounceNeeded = false;
                 if (m_Manipulator.EnableFocusPointClamp)
                 {
-                    var areaMin = m_Manipulator.AreaMin;
-                    var areaMax = m_Manipulator.AreaMax;
+                    var areaMin = m_Manipulator.CurrentAreaMin;
+                    var areaMax = m_Manipulator.CurrentAreaMax;
                     var focusPoint = m_Manipulator.FocusPoint;
 
                     var direction = m_Manipulator.Setup.Direction;

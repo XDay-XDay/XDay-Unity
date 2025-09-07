@@ -78,7 +78,7 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 EditorGUILayout.BeginHorizontal();
                 {
-                    modifier.Show = EditorGUILayout.Foldout(modifier.Show, modifier.DisplayName);
+                    modifier.Show = EditorGUILayout.Foldout(modifier.Show, new GUIContent(modifier.DisplayName, modifier.Tips));
                     GUI.enabled = m_Painter.IsPainting;
                     DrawApplyButton(modifier);
                     GUI.enabled = true;
@@ -133,6 +133,7 @@ namespace XDay.WorldAPI.Tile.Editor
     {
         public bool Show { get; set; } = true;
         public abstract string DisplayName { get; }
+        public abstract string Tips { get; }
         public int Priority { get; set; } = 0;
 
         public TextureModifier(TexturePainter painter)

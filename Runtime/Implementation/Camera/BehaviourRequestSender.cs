@@ -50,7 +50,7 @@ namespace XDay.CameraAPI
             }
         }
 
-        protected abstract void OnMatch(IMotion motion, MotionState state);
+        protected abstract bool OnMatch(IMotion motion, MotionState state);
 
         protected abstract IMotion Motion { get; }
 

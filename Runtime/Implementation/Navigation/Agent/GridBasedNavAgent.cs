@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.UtilityAPI;
 
 namespace XDay.NavigationAPI
 {
@@ -32,30 +31,54 @@ namespace XDay.NavigationAPI
     {
         public IGridBasedPathFinder PathFinder { set => m_PathFinder = value; get => m_PathFinder; }
         public bool IsMoving => m_CurrentState.GetType() == typeof(Move);
-        public Quaternion Rotation { get => m_GameObject.transform.rotation; set => m_GameObject.transform.rotation = value; }
-        public Vector3 Position { get => m_GameObject.transform.position; set => m_GameObject.transform.position = value; }
+        public Quaternion Rotation 
+        {
+            get => m_Rotation;
+            set
+            {
+                m_Rotation = value;
+                if (m_Renderer != null)
+                {
+                    m_Renderer.Rotation = value;
+                }
+            }
+        }
+        public Vector3 Position
+        {
+            get => m_Position;
+            set
+            {
+                m_Position = value;
+                if (m_Renderer != null)
+                {
+                    m_Renderer.Position = value;
+                }
+            }
+        }
         public List<Vector3> Path => m_Path;
         public float MoveSpeed { get => m_MoveSpeed; set => m_MoveSpeed = value; }
         public float RotateSpeed { get => m_RotateSpeed; set => m_RotateSpeed = value; }
-
         public event Action EventStartMove;
         public event Action EventStopMove;
+        public event Action EventPositionChange;
 
-        public GridBasedNavAgent(GameObject overrideGameObject, Transform parent, Vector3 position, Quaternion rotation)
+        public GridBasedNavAgent(bool useRenderer, GameObject overrideGameObject, Transform parent, Vector3 position, Quaternion rotation)
         {
+            m_Position = position;
+            m_Rotation = rotation;
             m_States.Add(new Idle(this));
             m_States.Add(new Move(this));
             SetState<Idle>();
 
-            SetGameObject(overrideGameObject, parent, position, rotation);
+            if (useRenderer)
+            {
+                m_Renderer = new GridBasedNavAgentRenderer(overrideGameObject, parent, position, rotation);
+            }
         }
 
         public void OnDestroy()
         {
-            if (m_OverrideGameObject)
-            {
-                Helper.DestroyUnityObject(m_GameObject);
-            }
+            m_Renderer?.OnDestroy();
         }
 
         public void Update(float dt)
@@ -63,24 +86,34 @@ namespace XDay.NavigationAPI
             m_CurrentState?.Update(dt);
         }
 
-        public bool MoveTo(Vector3 target)
+        public void Stop()
+        {
+            m_Path.Clear();
+            SetState<Idle>();
+            EventStopMove?.Invoke();
+        }
+
+        public void MoveTo(Vector3 target)
         {
             if (m_PathFinder == null)
             {
-                return false;
-            }
-
-            m_PathFinder.CalculatePath(Position, target, m_TempPath, null, PathFlags.SourceSearchNearestCoordinate);
-            if (m_TempPath.Count > 1)
-            {
                 m_Path.Clear();
-                m_Path.AddRange(m_TempPath);
-                m_TempPath.Clear();
+                m_Path.Add(target);
                 SetState<Move>();
                 EventStartMove?.Invoke();
             }
-
-            return true;
+            else
+            {
+                m_PathFinder.CalculatePath(Position, target, m_TempPath, null, PathFlags.SourceSearchNearestCoordinate);
+                if (m_TempPath.Count > 1)
+                {
+                    m_Path.Clear();
+                    m_Path.AddRange(m_TempPath);
+                    m_TempPath.Clear();
+                    SetState<Move>();
+                    EventStartMove?.Invoke();
+                }
+            }
         }
 
         public void MoveTo(List<Vector3> path)
@@ -91,6 +124,10 @@ namespace XDay.NavigationAPI
                 m_Path.AddRange(path);
                 SetState<Move>();
                 EventStartMove?.Invoke();
+            }
+            else
+            {
+                Stop();
             }
         }
 
@@ -121,29 +158,16 @@ namespace XDay.NavigationAPI
             return null;
         }
 
-        private void SetGameObject(GameObject overrideGameObject, Transform parent, Vector3 position, Quaternion rotation)
-        {
-            m_OverrideGameObject = false;
-            m_GameObject = overrideGameObject;
-            if (m_GameObject == null)
-            {
-                m_OverrideGameObject = true;
-                m_GameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                m_GameObject.name = "Nav Agent";
-                m_GameObject.transform.SetPositionAndRotation(position, rotation);
-                m_GameObject.transform.SetParent(parent, true);
-            }
-        }
-
+        private Vector3 m_Position;
+        private Quaternion m_Rotation;
         private IGridBasedPathFinder m_PathFinder;
-        private List<Vector3> m_Path = new();
-        private List<Vector3> m_TempPath = new();
-        private List<State> m_States = new();
-        private bool m_OverrideGameObject;
-        private GameObject m_GameObject;
+        private readonly List<Vector3> m_Path = new();
+        private readonly List<Vector3> m_TempPath = new();
+        private readonly List<State> m_States = new();
         private State m_CurrentState;
         private float m_MoveSpeed = 3;
         private float m_RotateSpeed = 500;
+        private readonly GridBasedNavAgentRenderer m_Renderer;
     }
 }
 

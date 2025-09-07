@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -73,7 +73,7 @@ namespace XDay.ModelBuildPipeline.Editor
             return false;
         }
 
-        public ModelBuildPipelineStage CreateStage(Type type, string name)
+        public ModelBuildPipelineStage CreateStage(Type type)
         {
             if (GetStage(type) != null)
             {

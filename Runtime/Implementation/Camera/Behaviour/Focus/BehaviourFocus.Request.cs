@@ -45,6 +45,7 @@ namespace XDay.CameraAPI
                 Init(param.Layer, param.Priority, param.QueueType);
 
                 m_Param = param;
+                Interrupters = param.InterruptMask;
             }
 
             public override void OnDestroy(bool overridden)

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -21,12 +21,40 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using UnityEngine;
+using UnityEditor;
 
-namespace XDay.GUIAPI
+namespace XDay.PlayerBuildPipeline.Editor
 {
-    [AddComponentMenu("XDay/UI/TextMeshPro", 0)]
-    public class UITextMeshPro : TMPro.TextMeshProUGUI
+    internal class PlayerBuildPipelineEditor : EditorWindow
     {
+        [MenuItem("XDay/Build/Build Pipeline Window")]
+        public static PlayerBuildPipelineEditor Open()
+        {
+            return GetWindow<PlayerBuildPipelineEditor>("Player Build Pipeline");
+        }
+
+        public PlayerBuildPipeline GetActivePipeline()
+        {
+            return m_PipelineView == null ? null : m_PipelineView.Pipeline;
+        }
+
+        private void OnDisable()
+        {
+            m_PipelineView?.OnDestroy();
+        }
+
+        private void OnGUI()
+        {
+            if (m_PipelineView == null)
+            {
+                m_PipelineView = new();
+                m_PipelineView.Init(null, position.width, position.height);
+            }
+
+            m_PipelineView.Render(position.width, position.height, Repaint);
+            Repaint();
+        }
+
+        private PlayerBuildPipelineView m_PipelineView;
     }
 }

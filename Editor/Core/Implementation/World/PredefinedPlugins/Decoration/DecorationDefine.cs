@@ -36,6 +36,17 @@ namespace XDay.WorldAPI.Decoration.Editor
         public const string ROTATION_NAME = "Decoration Rotation";
         public const string SCALE_NAME = "Decoration Scale";
         public const string POSITION_NAME = "Decoration Position";
+        public const string PATTERN_NAME = "Decoration Pattern Name";
+        public const string CREATE_MODE = "DecorationSystem.CreateMode";
+        public const string REMOVE_RANGE = "DecorationSystem.RemoveRange";
+        public const string CIRCLE_RADIUS = "DecorationSystem.CircleRadius";
+        public const string RECT_WIDTH = "DecorationSystem.RectWidth";
+        public const string RECT_HEIGHT = "DecorationSystem.RectHeight";
+        public const string OBJECT_COUNT = "DecorationSystem.ObjectCount";
+        public const string SPACE = "DecorationSystem.Space";
+        public const string RANDOM = "DecorationSystem.Random";
+        public const string BORDER_SIZE = "DecorationSystem.BorderSize";
+        public const string LINE_EQUIDISTANT = "DecorationSystem.LineEquidistant";
     }
 
     [System.Flags]

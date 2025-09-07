@@ -37,17 +37,19 @@ namespace XDay.CameraAPI
     {
         public OrbitSetup Orbit { get => m_Orbit; set => m_Orbit = value; }
         public RestoreSetup Restore => m_Restore;
+        public Vector2 ReferenceResolution => m_ReferenceResolution;
         public string Name => m_Name;
         public bool ChangeFOV { get => m_ChangeFOV; set => m_ChangeFOV = value; }
+        public float FixedFOV { get => m_FixedFOV; set => m_FixedFOV = value; }
         public CameraDirection Direction { get => m_Direction; set => m_Direction = value; }
         public float MouseZoomSpeed { get => m_MouseZoomSpeed; set => m_MouseZoomSpeed = value; }
         public Rect FocusPointBounds => m_FocusPointBounds;
         public float MaxAltitude
         {
-            get => m_AltitudeManager.Max.Altitude;
+            get => m_AltitudeManager.Max == null ? 1000 : m_AltitudeManager.Max.Altitude;
             set => m_AltitudeManager.Max.Altitude = value;
         }
-        public float MinAltitude => m_AltitudeManager.Min.Altitude;
+        public float MinAltitude => m_AltitudeManager.Min == null ? 0 : m_AltitudeManager.Min.Altitude;
 
         public CameraSetup(string name)
         {
@@ -62,11 +64,16 @@ namespace XDay.CameraAPI
         public AltitudeSetup QueryAltitudeSetup(float height)
         {
             var setup = m_AltitudeManager.QuerySetup(height);
-            if (setup == null)
+            if (setup == null && Application.isPlaying)
             {
                 Debug.LogError($"setup at height {height} not found!");
             }
             return setup;
+        }
+
+        public void OnFOVChange(float fov)
+        {
+            m_AltitudeManager.OnFOVChange(fov);
         }
 
         public bool DecomposeZoomFactor(float zoomFactor, out float focalLength, out float fov)
@@ -102,12 +109,15 @@ namespace XDay.CameraAPI
 
         private string m_Name;
         private bool m_ChangeFOV = true;
+        private float m_FixedFOV = 0;
         private CameraDirection m_Direction = CameraDirection.XZ;
         private OrbitSetup m_Orbit = new();
         private AltitudeSetupManager m_AltitudeManager = new();
         private RestoreSetup m_Restore = new();
         private float m_MouseZoomSpeed = 30.0f;
         private Rect m_FocusPointBounds;
+        //参考分辨率,相机移动边界会受到分辨率影响
+        private Vector2 m_ReferenceResolution = new(1080f, 1920f);
     }
 }
 

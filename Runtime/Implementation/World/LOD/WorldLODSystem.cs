@@ -23,10 +23,12 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
     [XDaySerializableClass("World LOD System")]
+    [Preserve]
     internal partial class WorldLODSystem : IWorldLODSystem
     {
         public int LODCount { get => m_Setups.Length; set => SetLODCountInternal(value); }

@@ -26,6 +26,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using XDay.UtilityAPI;
 using XDay.WorldAPI.Editor;
+using System;
 
 namespace XDay.WorldAPI.House.Editor
 {
@@ -97,6 +98,21 @@ namespace XDay.WorldAPI.House.Editor
                 }
                 Handles.color = color;
             }
+        }
+
+        private HouseTeleporterInstance GetTeleporterInstance(GameObject gameObject)
+        {
+            foreach (var house in m_HouseInstances)
+            {
+                foreach (var teleporter in house.TeleporterInstances)
+                {
+                    if (teleporter.GameObject == gameObject)
+                    {
+                        return teleporter;
+                    }
+                }
+            }
+            return null;
         }
 
         private HouseTeleporterInstance GetTeleporterInstance(int id)
@@ -208,19 +224,20 @@ namespace XDay.WorldAPI.House.Editor
 
         private void UpdateTileCursor(Vector3 worldPosition)
         {
-            for (var i = 0; i < m_Houses.Count; ++i)
+            var house = GetActiveHouse();
+            if (house == null)
             {
-                var coord = m_Houses[i].PositionToCoordinate(worldPosition);
-                if (m_Houses.Count == 1 || m_Houses[i].IsValidCoordinate(coord.x, coord.y))
-                {
-                    var minX = coord.x - m_BrushSize / 2;
-                    var minY = coord.y - m_BrushSize / 2;
-                    var pos = (m_Houses[i].CoordinateToGridPosition(minX, minY) + m_Houses[i].CoordinateToGridPosition(minX + m_BrushSize, minY + m_BrushSize)) * 0.5f;
-                    pos.y = worldPosition.y;
-                    m_TileIndicator.Position = pos;
-                    m_TileIndicator.Size = m_BrushSize * m_Houses[i].GridSize;
-                    break;
-                }
+                return;
+            }
+            var coord = house.PositionToCoordinate(worldPosition);
+            if (house.IsValidCoordinate(coord.x, coord.y))
+            {
+                var minX = coord.x - m_BrushSize / 2;
+                var minY = coord.y - m_BrushSize / 2;
+                var pos = (house.CoordinateToGridPosition(minX, minY) + house.CoordinateToGridPosition(minX + m_BrushSize, minY + m_BrushSize)) * 0.5f;
+                pos.y = worldPosition.y;
+                m_TileIndicator.Position = pos;
+                m_TileIndicator.Size = m_BrushSize * house.GridSize;
             }
         }
 
@@ -268,6 +285,16 @@ namespace XDay.WorldAPI.House.Editor
                 }
             }
 
+            if (m_ConnectButton.Render(enabled: true))
+            {
+                Connect();
+            }
+
+            if (m_DisconnectButton.Render(enabled: true))
+            {
+                Disconnect();
+            }
+
             GUILayout.Space(20);
 
             if (activeHouse != null) 
@@ -287,6 +314,53 @@ namespace XDay.WorldAPI.House.Editor
             EditorGUILayout.EndHorizontal();
 
             DrawText();
+        }
+
+        private void Disconnect()
+        {
+            foreach (var obj in Selection.objects)
+            {
+                if (obj is GameObject gameObject)
+                {
+                    var teleporter = GetTeleporterInstance(gameObject);
+                    if (teleporter != null)
+                    {
+                        teleporter.ConnectedID = 0;
+                    }
+                }
+            }
+        }
+
+        private void Connect()
+        {
+            List<GameObject> gameObjects = new();
+            foreach (var obj in Selection.objects)
+            {
+                if (obj is GameObject gameObject)
+                {
+                    gameObjects.Add(gameObject);
+                }
+            }
+
+            if (gameObjects.Count == 2)
+            {
+                var teleporterA = GetTeleporterInstance(gameObjects[0]);
+                var teleporterB = GetTeleporterInstance(gameObjects[1]);
+                if (teleporterA != null &&
+                    teleporterB != null)
+                {
+                    teleporterA.ConnectedID = teleporterB.ConfigID;
+                    teleporterB.ConnectedID = teleporterA.ConfigID;
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("出错了", "选中两个传送点再操作", "确定");
+                }
+            }
+            else
+            {
+                EditorUtility.DisplayDialog("出错了", "选中两个传送点再操作", "确定");
+            }
         }
 
         private void DrawText()
@@ -335,6 +409,12 @@ namespace XDay.WorldAPI.House.Editor
 
                 m_SyncButton = EditorWorldHelper.CreateImageButton("sync.png", "将房间模板的修改同步到房间中");
                 m_AllControls.Add(m_SyncButton);
+
+                m_ConnectButton = EditorWorldHelper.CreateImageButton("connect.png", "连接传送点");
+                m_AllControls.Add(m_ConnectButton);
+
+                m_DisconnectButton = EditorWorldHelper.CreateImageButton("disconnect.png", "断开传送点");
+                m_AllControls.Add(m_DisconnectButton);
             }
         }
 
@@ -400,6 +480,8 @@ namespace XDay.WorldAPI.House.Editor
         private FloatField m_GridHeightField;
         private ImageButton m_InteractivePointCopyButton;
         private ImageButton m_SyncButton;
+        private ImageButton m_ConnectButton;
+        private ImageButton m_DisconnectButton;
         private List<UIControl> m_AllControls;
         [SerializeField]
         private int m_BrushSize = 1;

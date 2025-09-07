@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using UnityEngine;
 using XDay.UtilityAPI;
 using XDay.WorldAPI.Editor;
@@ -88,6 +86,11 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_BoundsDirty = false;
             }
             return m_WorldBounds;   
+        }
+
+        public Rect QueryLocalBounds()
+        {
+            return ResourceDescriptor.Prefab.QueryRectWithLocalTransform(Vector3.zero, Rotation, Scale);
         }
 
         public override void EditorDeserialize(IDeserializer deserializer, string label)
@@ -239,7 +242,6 @@ namespace XDay.WorldAPI.Decoration.Editor
         private bool m_EnableHeightAdjust = true;
         private const int m_Version = 3;
     }
-    
 }
 
 //XDay

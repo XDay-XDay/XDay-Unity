@@ -24,10 +24,12 @@
 
 
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
     [XDaySerializableClass("World Object Weak Ref")]
+    [Preserve]
     public partial class WorldObjectWeakRef : ISerializable
     {
         public int ObjectID => m_ObjectID;

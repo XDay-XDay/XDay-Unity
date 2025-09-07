@@ -22,7 +22,9 @@
  */
 
 
+using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using XDay.WorldAPI.Editor;
 
@@ -65,17 +67,37 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_Bounds = bounds;
             m_Name = name;
             m_ResourceDescriptorSystem = IEditorResourceDescriptorSystem.Create();
+            m_ResourceGroupSystem = IResourceGroupSystem.Create(false);
         }
 
         protected override void InitInternal()
         {
+            m_CreateMode = (ObjectCreateMode)EditorPrefs.GetInt(DecorationDefine.CREATE_MODE, (int)ObjectCreateMode.Single);
+            m_RemoveRange = EditorPrefs.GetFloat(DecorationDefine.REMOVE_RANGE, 5);
+            m_CoordinateGenerateSetting.CircleRadius = EditorPrefs.GetFloat(DecorationDefine.CIRCLE_RADIUS, 10);
+            m_CoordinateGenerateSetting.RectWidth = EditorPrefs.GetFloat(DecorationDefine.RECT_WIDTH, 5);
+            m_CoordinateGenerateSetting.RectHeight = EditorPrefs.GetFloat(DecorationDefine.RECT_HEIGHT, 5);
+            m_CoordinateGenerateSetting.Count = EditorPrefs.GetInt(DecorationDefine.OBJECT_COUNT, 10);
+            m_CoordinateGenerateSetting.Space = EditorPrefs.GetFloat(DecorationDefine.SPACE, 1);
+            m_CoordinateGenerateSetting.Random = EditorPrefs.GetBool(DecorationDefine.RANDOM, false);
+            m_CoordinateGenerateSetting.BorderSize = EditorPrefs.GetFloat(DecorationDefine.BORDER_SIZE, 0);
+            m_CoordinateGenerateSetting.LineEquidistant = EditorPrefs.GetBool(DecorationDefine.LINE_EQUIDISTANT, false);
+
             UndoSystem.AddUndoRedoCallback(UndoRedo);
+            UndoSystem.AddCreateObjectCallback(OnUndoCreateObject);
 
             m_ResourceDescriptorSystem.Init(World);
+
             foreach (var kv in m_Decorations)
             {
                 kv.Value.Init(World);
             }
+
+            foreach (var pattern in m_Patterns)
+            {
+                pattern.Init(World);
+            }
+
             m_PluginLODSystem.Init(World.WorldLODSystem);
 
             m_Indicator = IMeshIndicator.Create(World);
@@ -84,11 +106,16 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_ResourceGroupSystem.Init(null);
 
             ShowObjects();
+
+            Selection.selectionChanged += OnSelectionChanged;
         }
 
         protected override void UninitInternal()
         {
+            Selection.selectionChanged -= OnSelectionChanged;
+
             UndoSystem.RemoveUndoRedoCallback(UndoRedo);
+            UndoSystem.RemoveCreateObjectCallback(OnUndoCreateObject);
 
             m_Indicator.OnDestroy();
             m_ResourceDescriptorSystem.Uninit();
@@ -97,6 +124,25 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 kv.Value.Uninit();
             }
+            foreach (var pattern in m_Patterns)
+            {
+                pattern.Uninit();
+            }
+        }
+
+        private void OnUndoCreateObject(IWorldObject obj)
+        {
+            if (obj is Pattern pattern)
+            {
+                if (GetPatternIndex(pattern) == m_ActivePatternIndex)
+                {
+                    pattern.SetActive(true);
+                }
+            }
+        }
+
+        private void OnSelectionChanged()
+        {
         }
 
         public override IWorldObject QueryObjectUndo(int objectID)
@@ -106,18 +152,23 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         public override void DestroyObjectUndo(int objectID)
         {
-            var obj = World.QueryObject<DecorationObject>(objectID);
-            if (obj != null &&
-                obj.IsActive)
+            bool destroyed = DestroyDecoration(objectID);
+            if (!destroyed)
             {
-                m_Renderer.Destroy(obj, CurrentLOD, true);
+                DestroyPattern(objectID);
             }
-            DestroyObject(objectID);
         }
 
         public override void AddObjectUndo(IWorldObject obj, int lod, int objectIndex)
         {
-            AddObjectInternal(obj as DecorationObject);
+            if (obj is DecorationObject decoration)
+            {
+                AddDecoration(decoration);
+            }
+            else if (obj is Pattern pattern)
+            {
+                m_Patterns.Add(pattern);
+            }
 
             UpdateObjectLOD(obj.ID, m_ActiveLOD);
         }
@@ -171,6 +222,11 @@ namespace XDay.WorldAPI.Decoration.Editor
                         m_Renderer.SetAspect(objectID, name);
                     }
                 }
+                else
+                {
+                    var pattern = World.QueryObject<Pattern>(objectID);
+                    pattern?.SetAspect(objectID, name, aspect);
+                }
             }
             return true;
         }
@@ -194,6 +250,12 @@ namespace XDay.WorldAPI.Decoration.Editor
                 return obj.GetAspect(objectID, name);
             }
 
+            var pattern = World.QueryObject<Pattern>(objectID);
+            if (pattern != null)
+            {
+                return pattern.GetAspect(objectID, name);
+            }
+
             return null;
         }
 
@@ -201,13 +263,99 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
             m_Bounds = bounds;
         }
+        
+        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
+        {
+            SyncObjectTransforms();
+
+            base.EditorSerialize(serializer, label, converter);
+
+            serializer.WriteInt32(m_Version, "DecorationSystem.Version");
+
+            serializer.WriteString(m_Name, "Name");
+            serializer.WriteBounds(m_Bounds, "Bounds");
+
+            var allObjects = new List<DecorationObject>();
+            foreach (var p in m_Decorations)
+            {
+                allObjects.Add(p.Value);
+            }
+
+            serializer.WriteList(allObjects, "Objects", (obj, index) =>
+            {
+                serializer.WriteSerializable(obj, $"Object {index}", converter, false);
+            });
+
+            serializer.WriteList(m_Patterns, "Patterns", (pattern, index) =>
+            {
+                serializer.WriteSerializable(pattern, $"Pattern {index}", converter, false);
+            });
+
+            serializer.WriteVector2(m_GameGridSize, "Game Grid Size");
+            serializer.WriteSerializable(m_PluginLODSystem, "LOD System", converter, false);
+            serializer.WriteSerializable(m_ResourceDescriptorSystem, "Resource Descriptor System", converter, false);
+            serializer.WriteSerializable(m_ResourceGroupSystem, "Resource Group System", converter, false);
+
+            EditorPrefs.SetInt(DecorationDefine.CREATE_MODE, (int)m_CreateMode);
+            EditorPrefs.SetFloat(DecorationDefine.REMOVE_RANGE, m_RemoveRange);
+            EditorPrefs.SetFloat(DecorationDefine.CIRCLE_RADIUS, m_CoordinateGenerateSetting.CircleRadius);
+            EditorPrefs.SetFloat(DecorationDefine.RECT_WIDTH, m_CoordinateGenerateSetting.RectWidth);
+            EditorPrefs.SetFloat(DecorationDefine.RECT_HEIGHT, m_CoordinateGenerateSetting.RectHeight);
+            EditorPrefs.SetInt(DecorationDefine.OBJECT_COUNT, m_CoordinateGenerateSetting.Count);
+            EditorPrefs.SetFloat(DecorationDefine.SPACE, m_CoordinateGenerateSetting.Space);
+            EditorPrefs.SetBool(DecorationDefine.RANDOM, m_CoordinateGenerateSetting.Random);
+            EditorPrefs.SetFloat(DecorationDefine.BORDER_SIZE, m_CoordinateGenerateSetting.BorderSize);
+            EditorPrefs.SetBool(DecorationDefine.LINE_EQUIDISTANT, m_CoordinateGenerateSetting.LineEquidistant);
+        }
+
+        public override void EditorDeserialize(IDeserializer deserializer, string label)
+        {
+            base.EditorDeserialize(deserializer, label);
+
+            var version = deserializer.ReadInt32("DecorationSystem.Version");
+
+            m_Name = deserializer.ReadString("Name");
+            m_Bounds = deserializer.ReadBounds("Bounds");
+
+            var allObjects = deserializer.ReadList("Objects", (index) =>
+            {
+                return deserializer.ReadSerializable<DecorationObject>($"Object {index}", false);
+            });
+            foreach (var obj in allObjects)
+            {
+                m_Decorations.Add(obj.ID, obj);
+            }
+
+            if (version >= 3)
+            {
+                m_Patterns = deserializer.ReadList("Patterns", (index) =>
+                {
+                    return deserializer.ReadSerializable<Pattern>($"Pattern {index}", false);
+                });
+            }
+
+            m_GameGridSize = deserializer.ReadVector2("Game Grid Size");
+            m_PluginLODSystem = deserializer.ReadSerializable<IPluginLODSystem>("LOD System", false);
+            m_ResourceDescriptorSystem = deserializer.ReadSerializable<EditorResourceDescriptorSystem>("Resource Descriptor System", false);
+
+            m_ResourceGroupSystem = deserializer.ReadSerializable<IResourceGroupSystem>("Resource Group System", false);
+        }
+
+        protected override void UpdateInternal(float dt)
+        {
+            if ((m_ActivePatternIndex < 0 || m_ActivePatternIndex >= m_Patterns.Count) &&
+                m_Patterns.Count > 0)
+            {
+                SetActivePattern(0);
+            }
+        }
 
         private void UpdateObjectLOD(int objectID, int lod)
         {
             m_Renderer.UpdateObjectLOD(objectID, lod);
         }
 
-        private void AddObjectInternal(DecorationObject decoration)
+        private void AddDecoration(DecorationObject decoration)
         {
             m_Decorations.Add(decoration.ID, decoration);
 
@@ -251,8 +399,14 @@ namespace XDay.WorldAPI.Decoration.Editor
             return objects;
         }
 
-        private bool DestroyObject(int objectID)
+        private bool DestroyDecoration(int objectID)
         {
+            var obj = World.QueryObject<DecorationObject>(objectID);
+            if (obj != null &&
+                obj.IsActive)
+            {
+                m_Renderer.Destroy(obj, CurrentLOD, true);
+            }
             var ok = m_Decorations.TryGetValue(objectID, out var decoration);
             if (decoration != null)
             {
@@ -260,6 +414,21 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_Decorations.Remove(objectID);
             }
             return ok;
+        }
+
+        private bool DestroyPattern(int objectID)
+        {
+            for (var i = 0; i < m_Patterns.Count; ++i)
+            {
+                if (m_Patterns[i].ID == objectID)
+                {
+                    m_Patterns[i].Uninit();
+                    m_Patterns.RemoveAt(i);
+
+                    return true;
+                }
+            }
+            return false;
         }
 
         private DecorationObject CreateObject(int id, string assetPath, Vector3 userPosition, Quaternion userRotation, Vector3 userScale)
@@ -302,7 +471,9 @@ namespace XDay.WorldAPI.Decoration.Editor
         private ICameraVisibleAreaUpdater m_AreaUpdater;
         private CoordinateGenerateSetting m_CoordinateGenerateSetting = new();
         private Dictionary<int, DecorationObject> m_Decorations = new();
+        private List<Pattern> m_Patterns = new();
         private int m_ActiveLOD = -1;
+        private int m_ActivePatternIndex = -1;
         private IEditorResourceDescriptorSystem m_ResourceDescriptorSystem;
         private float m_RemoveRange = 5;
         private List<int> m_DirtyObjectIDs = new();
@@ -310,8 +481,6 @@ namespace XDay.WorldAPI.Decoration.Editor
         /// 导出数据范围
         /// </summary>
         private Rect m_ExportRange;
-        private const int m_Version = 1;
+        private const int m_Version = 3;
     }
 }
-
-//XDay

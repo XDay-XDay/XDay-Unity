@@ -116,6 +116,7 @@ namespace XDay.WorldAPI.Tile.Editor
                             break;
                     }
 
+#if false
                     m_ShowTileSetting = EditorGUILayout.Foldout(m_ShowTileSetting, "地块");
                     if (m_ShowTileSetting)
                     {
@@ -132,6 +133,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
                         GUI.enabled = true;
                     }
+#endif
                 });
 
                 EditorGUILayout.EndScrollView();
@@ -208,7 +210,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 DrawShowMaterialButton();
 
-                DrawTilingButton();
+                //DrawTilingButton();
 
                 if (m_Action == Action.PaintTexture)
                 {
@@ -430,7 +432,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private readonly PluginLODSystemEditor m_PluginSystemEditor = new();
         private TexturePainter m_TexturePainter = new();
         private VertexHeightPainter m_VertexHeightPainter = new();
-        private IResourceGroupSystem m_ResourceGroupSystem = IResourceGroupSystem.Create(true);
+        private IResourceGroupSystem m_ResourceGroupSystem;
         private Vector2 m_ScrollPos;
         private Popup m_OperationPopup;
         private List<UIControl> m_Controls;
@@ -454,7 +456,7 @@ namespace XDay.WorldAPI.Tile.Editor
             "贴图绘制",
             "材质设置",
             "刷地块",
-            "绘制顶点高度",
+            //"绘制顶点高度",
         };
     }
 }

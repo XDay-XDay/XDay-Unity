@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -62,9 +60,9 @@ namespace XDay.NavigationAPI
 
             public override void OnEnter()
             {
-                if (m_Agent.Path == null || 
-                    m_Agent.Path.Count <= 1)
+                if (m_Agent.Path == null)
                 {
+                    Debug.LogError("No path");
                     return;
                 }
 
@@ -99,9 +97,12 @@ namespace XDay.NavigationAPI
                         SetIdle();
                     }
                 }
-
-                m_Agent.Position = position;
-                m_Agent.Rotation = rotation;
+                else
+                {
+                    m_Agent.Position = position;
+                    m_Agent.Rotation = rotation;
+                    m_Agent.EventPositionChange?.Invoke();
+                }
             }
 
             private void SetIdle()

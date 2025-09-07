@@ -21,36 +21,45 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using UnityEngine.Scripting;
+
 namespace XDay.WorldAPI
 {
     internal partial class PluginLODSystem
     {
         [XDaySerializableClass("Plugin LOD Setup")]
+        [Preserve]
         public class PluginLODSetup : IPluginLODSetup
         {
             public float Tolerance { get => m_Tolerance; set => m_Tolerance = value; }
             public float Altitude { get => m_Height; set => m_Height = value; }
             public string Name { get => m_Name; set => m_Name = value; }
             public string TypeName => "PluginLODSetup";
+            public int RenderLOD { get => m_RenderLOD; set => m_RenderLOD = value; }
 
             public PluginLODSetup()
             {
             }
 
-            public PluginLODSetup(string name, float height, float tolerance)
+            public PluginLODSetup(string name, float height, float tolerance, int renderLOD)
             {
                 m_Name = name;
                 m_Height = height;
                 m_Tolerance = tolerance;
+                m_RenderLOD = renderLOD;
             }
 
             public void EditorDeserialize(IDeserializer deserializer, string label)
             {
-                deserializer.ReadInt32("PluginLODSystem.Version");
+                var version = deserializer.ReadInt32("PluginLODSystem.Version");
 
                 m_Name = deserializer.ReadString("Name");
                 m_Height = deserializer.ReadSingle("Height");
                 m_Tolerance = deserializer.ReadSingle("Tolerance");
+                if (version >= 2)
+                {
+                    m_RenderLOD = deserializer.ReadInt32("Render LOD");
+                }
             }
 
             public void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -60,14 +69,19 @@ namespace XDay.WorldAPI
                 serializer.WriteString(m_Name, "Name");
                 serializer.WriteSingle(m_Height, "Height");
                 serializer.WriteSingle(m_Tolerance, "Tolerance");
+                serializer.WriteInt32(m_RenderLOD, "Render LOD");
             }
 
             public void GameDeserialize(IDeserializer deserializer, string label)
             {
-                deserializer.ReadInt32("PluginLODSystem.Version");
+                var version = deserializer.ReadInt32("PluginLODSystem.Version");
 
                 m_Height = deserializer.ReadSingle("Height");
                 m_Tolerance = deserializer.ReadSingle("Tolerance");
+                if (version >= 2)
+                {
+                    m_RenderLOD = deserializer.ReadInt32("Render LOD");
+                }
             }
 
             public void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -76,20 +90,20 @@ namespace XDay.WorldAPI
 
                 serializer.WriteSingle(m_Height, "Height");
                 serializer.WriteSingle(m_Tolerance, "Tolerance");
+                serializer.WriteInt32(m_RenderLOD, "Render LOD");
             }
 
-            /// <summary>
-            /// 缓冲高度,单位米
-            /// </summary>
             [XDaySerializableField(1, "Tolerance")]
             private float m_Tolerance;
             [XDaySerializableField(1, "Height")]
             private float m_Height;
             [XDaySerializableField(1, "Name")]
             private string m_Name;
+            [XDaySerializableField(1, "Render LOD")]
+            private int m_RenderLOD;
 
-            private const int m_Version = 1;
-            private const int m_RuntimeVersion = 1;
+            private const int m_Version = 2;
+            private const int m_RuntimeVersion = 2;
         }
     }
 }

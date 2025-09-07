@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -23,15 +23,38 @@
 
 using UnityEditor;
 using UnityEditor.UI;
+using UnityEngine;
 
 namespace XDay.GUIAPI.Editor
 {
     [CustomEditor(typeof(UIImage))]
     public class UIImageEditor : ImageEditor
     {
+        private UIImage m_Target;
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            m_Target = (UIImage)target;
+        }
+
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
+            GUILayout.Space(5);
+            EditorGUILayout.LabelField("**********************************************************");
+
+            serializedObject.Update();
+
+            var field = serializedObject.FindProperty("m_EnableDynamicAtlas");
+            if (field != null)
+            {
+                EditorGUILayout.PropertyField(field);
+            }
+
+            serializedObject.ApplyModifiedProperties();
+
+            EditorGUILayout.ObjectField("Atlas Texture", m_Target.sprite != null ? m_Target.sprite.texture : null, typeof(Texture), true);
         }
     }
 }

@@ -61,7 +61,9 @@ namespace XDay.InputAPI
             }
 
             var gameObject = data.pointerCurrentRaycast.gameObject;
-            if (gameObject != null && gameObject.transform is RectTransform)
+            if (gameObject != null && 
+                gameObject.transform is RectTransform &&
+                !gameObject.transform.CompareTag(m_IgnoreTagName))
             {
                 return true;
             }
@@ -73,7 +75,6 @@ namespace XDay.InputAPI
 #if UNITY_EDITOR
             //Debug.LogWarning("Using RayCastInternal");
 #endif
-
             if (m_EventSystem != UnityEngine.EventSystems.EventSystem.current)
             {
                 m_PointerData = null;
@@ -92,6 +93,10 @@ namespace XDay.InputAPI
                 {
                     if (result.gameObject.transform is RectTransform transform)
                     {
+                        if (transform.CompareTag(m_IgnoreTagName))
+                        {
+                            return null;
+                        }
                         return transform;
                     }
                 }
@@ -103,6 +108,7 @@ namespace XDay.InputAPI
         private static UnityEngine.EventSystems.EventSystem m_EventSystem;
         private static List<RaycastResult> m_RayCastResults = new();
         private static PointerEventData m_PointerData;
+        private static string m_IgnoreTagName = "UIIgnore";
     }
 }
 

@@ -57,22 +57,14 @@ namespace XDay.WorldAPI.Tile.Editor
 
             serializer.WriteSerializable(m_ResourceDescriptorSystem, "Resource Descriptor System", converter, true);
             serializer.WriteSerializable(m_PluginLODSystem, "Plugin LOD System", converter, true);
+
             serializer.WriteQuaternion(m_Rotation, "Rotation");
-            serializer.WriteString(m_Name, "Name");
-
-            GenerateNormalTileLayer(serializer);
-
-            serializer.Uninit();
-            EditorHelper.WriteFile(serializer.Data, GetGameFilePath("tile"));
-        }
-
-        private void GenerateNormalTileLayer(ISerializer serializer)
-        {
             serializer.WriteInt32(m_XTileCount, "X Tile Count");
             serializer.WriteInt32(m_YTileCount, "Y Tile Count");
             serializer.WriteVector2(m_Origin, "Origin");
             serializer.WriteSingle(m_TileWidth, "Tile Width");
             serializer.WriteSingle(m_TileHeight, "Tile Height");
+            serializer.WriteString(m_Name, "Name");
 
             for (var y = 0; y < m_YTileCount; ++y)
             {
@@ -101,6 +93,9 @@ namespace XDay.WorldAPI.Tile.Editor
 
             var usedPrefabPaths = GetUsedTilePrefabPaths();
             serializer.WriteStringArray(usedPrefabPaths.ToArray(), "Used Tile Prefab Paths");
+
+            serializer.Uninit();
+            EditorHelper.WriteFile(serializer.Data, GetGameFilePath("tile"));
         }
 
         private void GenerateTerrainLODTileData(IObjectIDConverter translator)

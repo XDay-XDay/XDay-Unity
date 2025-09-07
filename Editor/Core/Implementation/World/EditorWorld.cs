@@ -61,6 +61,8 @@ namespace XDay.WorldAPI.Editor
         {
             base.Init();
 
+            SelectedPluginIndex = EditorPrefs.GetInt(WorldDefine.SELECTED_PLUGIN_INDEX, m_Plugins.Count > 0 ? 0 : -1);
+
             m_WorldRenderer.Root.AddComponent<NoKeyDeletion>();
 
             if (GetPlugin(m_SelectedPluginIndex) is EditorWorldPlugin selectedPlugin)
@@ -147,7 +149,7 @@ namespace XDay.WorldAPI.Editor
         {
             serializer.WriteInt32(m_Version, "EditorWorld.Version");
 
-            serializer.WriteInt32(m_SelectedPluginIndex, "Selected Plugin Index");
+            EditorPrefs.SetInt(WorldDefine.SELECTED_PLUGIN_INDEX, m_SelectedPluginIndex);
             serializer.WriteSerializable(m_LODSystem, "LOD System", converter, false);
 
             serializer.WriteSingle(m_Width, "Width");
@@ -166,9 +168,12 @@ namespace XDay.WorldAPI.Editor
 
         public void EditorDeserialize(IDeserializer deserializer, string label)
         {
-            deserializer.ReadInt32("EditorWorld.Version");
+            var version = deserializer.ReadInt32("EditorWorld.Version");
 
-            m_SelectedPluginIndex = deserializer.ReadInt32("Selected Plugin Index");
+            if (version == 1)
+            {
+                m_SelectedPluginIndex = deserializer.ReadInt32("Selected Plugin Index");
+            }
             m_LODSystem = deserializer.ReadSerializable<IWorldLODSystem>("LOD System", false);
 
             m_Width = deserializer.ReadSingle("Width");
@@ -293,6 +298,11 @@ namespace XDay.WorldAPI.Editor
             {
             }
 
+            public Rect GetVisibleAreas(Camera camera)
+            {
+                return new Rect();
+            }
+
             public void Update(Camera camera)
             {
             }
@@ -301,7 +311,7 @@ namespace XDay.WorldAPI.Editor
         private EditorWorldPluginLoader m_PluginLoader;
         [XDaySerializableField(1, "Selected Plugin")]
         private int m_SelectedPluginIndex = -1;
-        private const int m_Version = 1;
+        private const int m_Version = 2;
         private const int m_RuntimeVersion = 1;
     }
 }

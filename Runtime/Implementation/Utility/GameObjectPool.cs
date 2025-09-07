@@ -171,6 +171,11 @@ namespace XDay.UtilityAPI
 
         public GameObject TryGet(string path)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
             GameObject result = null;
 
             bool found = m_Pool.TryGetValue(path, out var objectList);

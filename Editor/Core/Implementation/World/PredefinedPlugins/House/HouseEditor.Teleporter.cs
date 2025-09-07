@@ -152,6 +152,11 @@ namespace XDay.WorldAPI.House.Editor
                     if (newIndex != oldIndex)
                     {
                         teleporter.ConnectedID = m_TeleporterInstanceIDs[newIndex];
+                        var otherTeleporter = GetTeleporterInstance(m_TeleporterInstanceIDs[newIndex]);
+                        if (otherTeleporter != null)
+                        {
+                            otherTeleporter.ConnectedID = teleporter.ConfigID;
+                        }
                     }
                     teleporter.Enabled = EditorGUILayout.Toggle("开启", teleporter.Enabled);
                 });

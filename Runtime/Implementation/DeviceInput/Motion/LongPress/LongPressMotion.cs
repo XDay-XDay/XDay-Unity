@@ -33,8 +33,8 @@ namespace XDay.InputAPI
         public Vector2 Start => m_Start;
         public override MotionType Type => MotionType.LongPress;
 
-        public LongPressMotion(int id, float duration, IDeviceInput device)
-            : base(id, device)
+        public LongPressMotion(int id, float duration, IDeviceInput device, DeviceTouchType touchType)
+            : base(id, device, touchType)
         {
             m_Duration = duration;
         }
@@ -48,14 +48,14 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            var touchCount = m_Device.ConfigurableTouchCount;
+            var touchCount = GetTouchCount();
             if (touchCount != 1)
             {
                 Reset(touchCount == 0);
                 return false;
             }
 
-            var touch = m_Device.GetConfigurableTouch(0);
+            var touch = GetTouch(0);
             if (touch.State == TouchState.Start)
             {
                 m_Start = touch.Current;

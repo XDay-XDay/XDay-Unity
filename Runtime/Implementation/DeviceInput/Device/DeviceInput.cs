@@ -70,49 +70,54 @@ namespace XDay.InputAPI
             SetDeviceType(DeviceType.Mouse);
         }
 
-        public IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Plane plane, Camera camera)
+        public IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Plane plane, float moveThreshold, Camera camera, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateInertialDragMotion(validTouchName, plane, camera, this);
+            return m_MotionSystem.CreateInertialDragMotion(validTouchName, plane, moveThreshold, camera, this, touchType);
         }
 
-        public IDragMotion CreateDragMotion(TouchID validTouchName, float touchMovingThreshold)
+        public IDragMotion CreateDragMotion(TouchID validTouchName, float touchMovingThreshold, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateDragMotion(validTouchName, touchMovingThreshold, this);
+            return m_MotionSystem.CreateDragMotion(validTouchName, touchMovingThreshold, this, touchType);
         }
 
-        public IScrollMotion CreateScrollMotion(float validInterval)
+        public IScrollMotion CreateScrollMotion(float validInterval, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateScrollMotion(validInterval, this);
+            return m_MotionSystem.CreateScrollMotion(validInterval, this, touchType);
         }
 
-        public IDoubleClickMotion CreateDoubleClickMotion(float validClickInterval)
+        public IDoubleClickMotion CreateDoubleClickMotion(float validClickInterval, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateDoubleClickMotion(validClickInterval, this);
+            return m_MotionSystem.CreateDoubleClickMotion(validClickInterval, this, touchType);
         }
 
-        public IClickMotion CreateClickMotion()
+        public IClickMotion CreateClickMotion(float moveThreshold, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateClickMotion(this);
+            return m_MotionSystem.CreateClickMotion(this, touchType, moveThreshold);
         }
 
-        public IPinchMotion CreatePinchMotion(float minAltitude, float maxAltitude, float range, Camera camera, bool enableRotate)
+        public IPinchMotion CreatePinchMotion(float minAltitude, float maxAltitude, float range, Camera camera, bool enableRotate, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreatePinchMotion(minAltitude, maxAltitude, range, camera, enableRotate, this);
+            return m_MotionSystem.CreatePinchMotion(minAltitude, maxAltitude, range, camera, enableRotate, this, touchType);
         }
 
-        public ILongPressMotion CreateLongPressMotion(float tapHoldDuration)
+        public ILongPressMotion CreateLongPressMotion(float tapHoldDuration, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateLongPressMotion(tapHoldDuration, this);
+            return m_MotionSystem.CreateLongPressMotion(tapHoldDuration, this, touchType);
         }
 
-        public IMouseScrollMotion CreateMouseScrollMotion()
+        public IMouseScrollMotion CreateMouseScrollMotion(DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateMouseScrollMotion(this);
+            return m_MotionSystem.CreateMouseScrollMotion(this, touchType);
         }
 
         public ITouch GetTouchNotStartFromUI(int index)
         {
             return m_Device.GetTouchNotStartFromUI(index);
+        }
+
+        public ITouch GetTouch(int index)
+        {
+            return m_Device.GetTouch(index);
         }
 
         public ITouch GetSceneTouchNotStartFromUI(int index)
@@ -234,6 +239,7 @@ namespace XDay.InputAPI
         ITouch GetTouchNotStartFromUI(int index);
         ITouch GetSceneTouchNotStartFromUI(int index);
         ITouch GetSceneTouch(int index);
+        ITouch GetTouch(int index);
         void Update();
     }
 }

@@ -30,16 +30,16 @@ namespace XDay.CameraAPI
     {
         internal class Sender : BehaviourRequestSender
         {
-            public Sender(CameraManipulator manipulator, IDeviceInput deviceInput, TouchID touchID)
+            public Sender(CameraManipulator manipulator, IDeviceInput deviceInput, TouchID touchID, float moveThreshold)
                 : base(manipulator, deviceInput)
             {
                 m_Motion = deviceInput.CreateInertialDragMotion(touchID,
                     manipulator.Setup.Direction == CameraDirection.XZ ? new Plane(Vector3.up, 0) : new Plane(Vector3.back, 0),
-                    manipulator.Camera);
+                    moveThreshold, manipulator.Camera, DeviceTouchType.SceneTouchNotStartFromUI);
                 SetActive(true);
             }
 
-            protected override void OnMatch(IMotion motion, MotionState state)
+            protected override bool OnMatch(IMotion motion, MotionState state)
             {
                 var req = Request.Create(
                     layer: 0, 
@@ -53,6 +53,8 @@ namespace XDay.CameraAPI
                     m_Motion.SlideDirection);
 
                 m_Manipulator.AddRequest(req);
+
+                return false;
             }
 
             protected override IMotion Motion => m_Motion;

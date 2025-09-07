@@ -59,6 +59,8 @@ namespace XDay.CameraAPI.Editor
 @"
 {
     ""Direction"":""XZ"",
+    ""Change FOV"":""true"",
+    ""Fixed FOV"":""0"",
     ""Bounds"":
     {
         ""Min"":""0,0"",

@@ -52,12 +52,13 @@ namespace XDay.CameraAPI
             set => m_Setup.MaxAltitude = value;
         }
         public float MinAltitude => m_Setup.MinAltitude;
-        public Vector2 AreaMin => m_FocusPointClamp.AreaMin;
-        public Vector2 AreaMax => m_FocusPointClamp.AreaMax;
+        public Vector2 CurrentAreaMin => m_FocusPointClamp.CurrentAreaMin;
+        public Vector2 CurrentAreaMax => m_FocusPointClamp.CurrentAreaMax;
         public Vector3 RenderPosition => m_Transform.CurrentRenderPosition;
         public Vector3 LogicPosition => m_Transform.CurrentLogicPosition;
         public Vector3 FocusPoint => m_FocusPointClamp.Position;
         public Vector3 Forward => m_Transform.CurrentRenderRotation * Vector3.forward;
+        public Vector2 ReferenceResolution => m_Setup.ReferenceResolution;
         public float FocalLength => Vector3.Distance(m_Transform.CurrentLogicPosition, FocusPoint);
         public float ZoomFactor => m_Camera.fieldOfView * FocalLength;
         public CameraSetup Setup => m_Setup;
@@ -78,10 +79,27 @@ namespace XDay.CameraAPI
             m_Camera.farClipPlane = 10000;
             m_Camera.transform.rotation = Quaternion.Euler(m_Setup.Orbit.Pitch, m_Setup.Orbit.Yaw, 0);
 
+#if UNITY_EDITOR
+            if (camera.gameObject.GetComponent<CameraDebugger>() == null)
+            {
+                var debugger = camera.gameObject.AddComponent<CameraDebugger>();
+                debugger.Init(m_Camera);
+            }
+#endif
+
             m_Transform = new CameraTransform(camera);
 
-            m_FocusPointClamp = new("Focus Point", camera.gameObject.transform, m_Setup.Direction);
-            m_FOVUpdater = new(setup, camera);
+            m_FocusPointClamp = new("Focus Point", camera.gameObject.transform, m_Setup.Direction, this);
+            m_FOVUpdater = new(setup, camera, OnFOVChangedExternally);
+
+            var minSetup = m_Setup.QueryAltitudeSetup(m_Setup.MinAltitude);
+            if (minSetup != null)
+            {
+                if (!Mathf.Approximately(camera.fieldOfView, minSetup.FOV))
+                {
+                    OnFOVChangedExternally();
+                }
+            }
 
             SetBehaviours(input);
 
@@ -95,6 +113,13 @@ namespace XDay.CameraAPI
                 EnableFocusPointClamp = true;
                 SetFocusPointBounds(m_Setup.FocusPointBounds.min, m_Setup.FocusPointBounds.max);
             }
+
+            SetPenetrationDistance(m_Setup.Restore.Distance);
+        }
+
+        private void OnFOVChangedExternally()
+        {
+            m_Setup.OnFOVChange(m_Camera.fieldOfView);
         }
 
         public void OnDestroy()
@@ -108,6 +133,11 @@ namespace XDay.CameraAPI
             {
                 UnityEngine.Object.Destroy(m_Camera.gameObject);
             }
+        }
+
+        public void FreeControl(bool free)
+        {
+            m_FreeCameraControl = free;
         }
 
         public void Focus(FocusParam param)
@@ -202,6 +232,10 @@ namespace XDay.CameraAPI
 
         public void LateUpdate()
         {
+            if (m_FreeCameraControl)
+            {
+                return;
+            }
             m_IsRenderTransformChanged = false;
 
             if (m_Camera.enabled)
@@ -339,7 +373,7 @@ namespace XDay.CameraAPI
             m_Senders.Add(new BehaviourMouseZoom.Sender(this, input));
             m_Senders.Add(new BehaviourScrollZoom.Sender(this, input));
             m_Senders.Add(new BehaviourPinch.Sender(this, input, m_Setup.Orbit.MinAltitude, m_Setup.Orbit.MaxAltitude, m_Setup.Orbit.Range, false));
-            m_Senders.Add(new BehaviourDrag.Sender(this, input, TouchID.Left));
+            m_Senders.Add(new BehaviourDrag.Sender(this, input, TouchID.Left, Mathf.Max(20, Screen.width * 0.01f)));
 
             m_Receivers.Add(BehaviourType.MouseZoom, new BehaviourMouseZoom.Receiver(this));
             m_Receivers.Add(BehaviourType.ScrollZoom, new BehaviourScrollZoom.Receiver(this, m_Setup.MouseZoomSpeed));
@@ -431,7 +465,7 @@ namespace XDay.CameraAPI
         private List<BehaviourRequestReceiver> m_ActiveReceivers = new();
         private bool m_IsRenderTransformChanged;
         private bool m_NeedDestroyCamera = false;
+        private bool m_FreeCameraControl = false;
     }
 }
 
-//XDay

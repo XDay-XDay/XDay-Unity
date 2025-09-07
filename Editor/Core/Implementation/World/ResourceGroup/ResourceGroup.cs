@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 using System;
 using System.Collections.Generic;
@@ -35,9 +34,39 @@ namespace XDay.WorldAPI.Editor
         public string Name { get => m_Name; set => m_Name = value; }
         public int Count => m_Resources.Count;
         public int SelectedIndex => m_SelectedIndex;
-        public string SelectedPath => m_SelectedIndex == -1 ? null : m_Resources[m_SelectedIndex].Path;
-        public IResourceData SelectedData => m_SelectedIndex == -1 ? null : m_Resources[m_SelectedIndex].Data;
-        public GameObject SelectedPrefab => m_SelectedIndex == -1 ? null : AssetDatabase.LoadAssetAtPath<GameObject>(m_Resources[m_SelectedIndex].Path);
+        public string SelectedPath
+        {
+            get
+            {
+                if (m_SelectedIndex >= 0 && m_SelectedIndex < m_Resources.Count)
+                {
+                    return m_Resources[m_SelectedIndex].Path;
+                }
+                return null;
+            }
+        }
+        public IResourceData SelectedData
+        {
+            get
+            {
+                if (m_SelectedIndex >= 0 && m_SelectedIndex < m_Resources.Count)
+                {
+                    return m_Resources[m_SelectedIndex].Data;
+                }
+                return null;
+            }
+        }
+        public GameObject SelectedPrefab
+        {
+            get
+            {
+                if (m_SelectedIndex >= 0 && m_SelectedIndex < m_Resources.Count)
+                {
+                    return AssetDatabase.LoadAssetAtPath<GameObject>(m_Resources[m_SelectedIndex].Path);
+                }
+                return null;
+            }
+        }
         
         public string RandomPath
         {
@@ -84,6 +113,8 @@ namespace XDay.WorldAPI.Editor
 
         public void Init(ResourceGroupSystem groupSystem, Func<IResourceData> dataCreator, EventCallbacks callbacks)
         {
+            m_SelectedIndex = EditorPrefs.GetInt(WorldDefine.RESOURCE_GROUP_SELECTED_ITEM_INDEX, m_Resources.Count > 0 ? 0 : -1);
+
             m_GroupSystem = groupSystem;
             m_ResourceDataCreator = dataCreator;
             m_EventCallbacks = callbacks;
@@ -300,17 +331,20 @@ namespace XDay.WorldAPI.Editor
         {
             serializer.WriteInt32(m_Version, "ResourceGroup.Version");
             serializer.WriteString(m_Name, "Name");
-            serializer.WriteInt32(m_SelectedIndex, "Selected Index");
             serializer.WriteList(m_Resources, "Resources", (model, index) => {
                 serializer.WriteSerializable(model, $"Resource {index}", converter, false);
             });
+            EditorPrefs.SetInt(WorldDefine.RESOURCE_GROUP_SELECTED_ITEM_INDEX, m_SelectedIndex);
         }
 
         public void EditorDeserialize(IDeserializer deserializer, string label)
         {
-            deserializer.ReadInt32("ResourceGroup.Version");
+            var version = deserializer.ReadInt32("ResourceGroup.Version");
             m_Name = deserializer.ReadString("Name");
-            m_SelectedIndex = deserializer.ReadInt32("Selected Index");
+            if (version == 1)
+            {
+                m_SelectedIndex = deserializer.ReadInt32("Selected Index");
+            }
             m_Resources = deserializer.ReadList("Resources", (index) => {
                 return deserializer.ReadSerializable<Resource>($"Resource {index}", false);
             });
@@ -324,8 +358,6 @@ namespace XDay.WorldAPI.Editor
         private List<Resource> m_Resources = new();
         private List<int> m_RemoveQueue = new();
         private Func<IResourceData> m_ResourceDataCreator;
-        private const int m_Version = 1;
+        private const int m_Version = 2;
     }
 }
-
-//XDay

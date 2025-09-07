@@ -145,13 +145,13 @@ namespace XDay.WorldAPI.Editor
             ObjectFactory(obj, worldID, actionName, relayID, lod, true, onCreate);
         }
 
-        public static void DestroyObject(IWorldObject obj, string actionName, int relayID = 0, int lod = 0)
+        public static void DestroyObject(IWorldObject obj, string actionName, int relayID = 0, int lod = 0, Action<IWorldObject> onCreate = null)
         {
             if (obj == null)
             {
                 return;
             }
-            ObjectFactory(obj, obj.WorldID, actionName, relayID, lod, false, null);
+            ObjectFactory(obj, obj.WorldID, actionName, relayID, lod, false, onCreate);
         }
 
         public static void Redo()
@@ -183,6 +183,17 @@ namespace XDay.WorldAPI.Editor
         internal static void RemoveUndoRedoCallback(Action<UndoAction, bool> callback)
         {
             EventUndoRedo -= callback;
+        }
+
+        internal static void AddCreateObjectCallback(Action<IWorldObject> callback)
+        {
+            EventCreateObject -= callback;
+            EventCreateObject += callback;
+        }
+
+        internal static void RemoveCreateObjectCallback(Action<IWorldObject> callback)
+        {
+            EventCreateObject -= callback;
         }
 
         private static bool Join(UndoActionAspect action)
@@ -307,6 +318,7 @@ namespace XDay.WorldAPI.Editor
                     var newObj = Deserialize(action);
                     onCreate?.Invoke(newObj);
                     relay.AddObjectUndo(newObj, action.LOD, action.ObjectIndex);
+                    EventCreateObject?.Invoke(newObj);
                 }
             }
             return true;
@@ -322,6 +334,7 @@ namespace XDay.WorldAPI.Editor
                     var newObj = Deserialize(action);
                     onCreate?.Invoke(newObj);
                     relay.AddObjectUndo(newObj, action.LOD, action.ObjectIndex);
+                    EventCreateObject?.Invoke(newObj);
                 }
             }
             else
@@ -455,6 +468,7 @@ namespace XDay.WorldAPI.Editor
         internal static List<UndoAction> Actions => m_Actions;
 
         private static event Action<UndoAction, bool> EventUndoRedo;
+        private static event Action<IWorldObject> EventCreateObject;
         private static UndoActionGroup m_Group;
         private static int m_Pointer = -1;
         private static List<UndoAction> m_Actions = new();

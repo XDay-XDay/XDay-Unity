@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Scripting;
+using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Decoration
 {
@@ -42,6 +43,7 @@ namespace XDay.WorldAPI.Decoration
         public override string Name { set => throw new System.NotImplementedException(); get => m_Name; }
         public DecorationSystemRenderer Renderer => m_Renderer;
         public override string TypeName => "DecorationSystem";
+        public override Bounds Bounds => m_Bounds;
 
         public DecorationSystem()
         {
@@ -122,6 +124,7 @@ namespace XDay.WorldAPI.Decoration
         {
             m_UpdateNeeded = true;
             grid.ActiveStateCounter++;
+            Debug.Assert(grid.ActiveStateCounter == 1);
         }
 
         public void HideGrid(GridData grid)
@@ -140,10 +143,11 @@ namespace XDay.WorldAPI.Decoration
             return null;
         }
 
-        public void DestroyDecoration(DecorationObject decoration, int prevLOD, int lod)
+        public void DestroyDecoration(DecorationObject decoration, int prevOrNextLOD, int curLOD, bool forceChange)
         {
-            if (!ModelChanged(prevLOD, lod, m_DecorationMetaData.LODResourceChangeMasks[decoration.ObjectIndex]))
+            if (!forceChange && !ModelChanged(prevOrNextLOD, curLOD, m_DecorationMetaData.LODResourceChangeMasks[decoration.ObjectIndex]))
             {
+                //Debug.LogError($"destroy model lod {Mathf.Min(prevOrNextLOD, curLOD)}=>{Mathf.Max(prevOrNextLOD, curLOD)} at index {decoration.ObjectIndex} not changed!");
                 return;
             }
 
@@ -157,12 +161,13 @@ namespace XDay.WorldAPI.Decoration
             }
         }
 
-        public void CreateDecoration(int indexInGrid, int gridX, int gridY, int prevLOD, int curLOD)
+        public void CreateDecoration(int indexInGrid, int gridX, int gridY, int prevOrNextLOD, int curLOD, bool forceChange)
         {
             var grid = GetGrid(gridX, gridY);
             var objectIndex = grid.GetObjectIndex(indexInGrid, curLOD);
-            if (!ModelChanged(prevLOD, curLOD, m_DecorationMetaData.LODResourceChangeMasks[objectIndex]))
+            if (!forceChange && !ModelChanged(prevOrNextLOD, curLOD, m_DecorationMetaData.LODResourceChangeMasks[objectIndex]))
             {
+                //Debug.LogError($"create model lod {Mathf.Min(prevOrNextLOD, curLOD)}=>{Mathf.Max(prevOrNextLOD, curLOD)} at index {objectIndex} not changed!");
                 return;
             }
 
@@ -190,7 +195,7 @@ namespace XDay.WorldAPI.Decoration
                     invisible = true;
                 }
 
-                decoration = m_DecorationPool.Get(objectID, IsSetEnabled(objectID), objectIndex, World, grid.X, grid.Y, curLOD, indexInGrid, position.x, position.y, position.z, resourceMetadata, invisible);
+                decoration = m_DecorationPool.Get(objectID, IsSetEnabled(objectID), objectIndex, World, grid.X, grid.Y, curLOD, m_LODSystem.GetRenderLOD(curLOD), indexInGrid, position.x, position.y, position.z, resourceMetadata, invisible);
                 m_VisibleObjects.Add(objectID, decoration);
                 m_ToggleActiveState?.Invoke(decoration);
             }
@@ -341,23 +346,24 @@ namespace XDay.WorldAPI.Decoration
             return m_ResourceMetadata[resourceMetadataIndex].QueryLODGroup(lod);
         }
 
-        private bool ModelChanged(int prevLOD, int curLOD, byte changeMasks)
+        private bool ModelChanged(int prevOrNextLOD, int curLOD, byte changeMasks)
         {
-#if true
-            //有bug,暂时关闭model changed功能
-            return true;
-#else
-            if (prevLOD == curLOD)
+            if (prevOrNextLOD == curLOD)
             {
                 return true;
             }
 
-            if ((changeMasks & (1 << Mathf.Max(curLOD, prevLOD))) != 0)
+            if (prevOrNextLOD > curLOD)
             {
-                return true;
+                (prevOrNextLOD, curLOD) = (curLOD, prevOrNextLOD);
             }
-            return false;
-#endif
+            ///取changeMask的第min到max位,和0xff比较,如果为0表示从prevLOD到curLOD没有模型变换或隐藏行为
+            var mask = Helper.ExtractBits(changeMasks, prevOrNextLOD, curLOD);
+            if ((mask & 0xff) == 0)
+            {
+                return false;
+            }
+            return true;
         }
 
         private void DestroyVisibleObjects()
@@ -372,7 +378,7 @@ namespace XDay.WorldAPI.Decoration
 
             foreach (var decoration in decorations)
             {
-                DestroyDecoration(decoration, -1, decoration.LOD);
+                DestroyDecoration(decoration, -1, decoration.LogicLOD, false);
             }
             Debug.Assert(m_VisibleObjects.Count == 0);
             m_VisibleObjects.Clear();
@@ -404,7 +410,7 @@ namespace XDay.WorldAPI.Decoration
                     var grid = GetGrid(x, y);
                     if (grid != null)
                     {
-                        ShowGridObjects(x, y, false, changeLOD: true);
+                        ShowGridObjects(x, y, false, changeLOD: true, false);
                     }
                 }
             }
@@ -419,7 +425,14 @@ namespace XDay.WorldAPI.Decoration
                     var grid = GetGrid(x, y);
                     if (grid != null)
                     {
-                        ShowGridObjects(x, y, true, changeLOD: true);
+                        bool becomeVisible = false;
+                        if (y < oldMin.y || y > oldMax.y ||
+                            x < oldMin.x || x > oldMax.x)
+                        {
+                            becomeVisible = true;
+                        }
+
+                        ShowGridObjects(x, y, true, changeLOD: true, becomeVisible);
                     }
                 }
             }
@@ -459,7 +472,7 @@ namespace XDay.WorldAPI.Decoration
             return new RectInt(min.x, min.y, max.x - min.x, max.y - min.y);
         }
 
-        private void ShowGridObjects(int x, int y, bool visible, bool changeLOD)
+        private void ShowGridObjects(int x, int y, bool visible, bool changeLOD, bool becomeVisible)
         {
             var prevLOD = changeLOD ? m_LODSystem.PreviousLOD : m_LODSystem.CurrentLOD;
             var grid = GetGrid(x, y);
@@ -471,7 +484,7 @@ namespace XDay.WorldAPI.Decoration
                 {
                     m_Tasks.Add(task);
                 }
-                task.Init(prevLOD, FrameTaskDecorationToggle.Type.Activate);
+                task.Init(prevLOD, FrameTaskDecorationToggle.Type.Activate, becomeVisible);
             }
             else
             {
@@ -480,7 +493,7 @@ namespace XDay.WorldAPI.Decoration
                 {
                     m_Tasks.Add(task);
                 }
-                task.Init(m_LODSystem.CurrentLOD, FrameTaskDecorationToggle.Type.Deactivate);
+                task.Init(m_LODSystem.CurrentLOD, FrameTaskDecorationToggle.Type.Deactivate, becomeVisible);
             }
         }
 
@@ -511,7 +524,7 @@ namespace XDay.WorldAPI.Decoration
                             if (y < newMin.y || y > newMax.y ||
                             x < newMin.x || x > newMax.x)
                             {
-                                ShowGridObjects(x, y, false, changeLOD: false);   
+                                ShowGridObjects(x, y, false, changeLOD: false, false);   
                             }
                         }
                     }
@@ -526,7 +539,7 @@ namespace XDay.WorldAPI.Decoration
                             if (y < oldMin.y || y > oldMax.y ||
                             x < oldMin.x || x > oldMax.x)
                             {
-                                ShowGridObjects(x, y, true, changeLOD: false);
+                                ShowGridObjects(x, y, true, changeLOD: false, false);
                             }
                         }
                     }
@@ -566,6 +579,12 @@ namespace XDay.WorldAPI.Decoration
                 return true;
             }
             return enabled;
+        }
+
+        internal DecorationObject GetObject(int id)
+        {
+            m_VisibleObjects.TryGetValue(id, out var obj);
+            return obj;
         }
 
         protected override void LoadGameDataInternal(string pluginName, IWorld world)

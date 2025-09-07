@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -23,6 +23,7 @@
 
 #if UNITY_EDITOR
 
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,6 +37,23 @@ namespace XDay.UtilityAPI
 {
     public static class EditorHelper
     {
+        public static bool IsPluginMarkedAsEditorOnly(PluginImporter importer)
+        {
+            if (importer != null)
+            {
+                if (importer.GetCompatibleWithEditor() &&
+                    !importer.GetCompatibleWithPlatform(BuildTarget.Android) &&
+                    !importer.GetCompatibleWithPlatform(BuildTarget.iOS) &&
+                    !importer.GetCompatibleWithPlatform(BuildTarget.StandaloneWindows) &&
+                    !importer.GetCompatibleWithPlatform(BuildTarget.StandaloneOSX))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static void HorizontalLine()
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
@@ -858,6 +876,13 @@ namespace XDay.UtilityAPI
 
                 Handles.color = originalColor;
             }
+        }
+
+        public static string GetJsonValue(string jsonFilePath, string key)
+        {
+            var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(jsonFilePath));
+            dict.TryGetValue(key, out var value);
+            return value;
         }
     }
 }

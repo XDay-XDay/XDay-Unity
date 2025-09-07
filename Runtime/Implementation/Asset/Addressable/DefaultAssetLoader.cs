@@ -29,6 +29,10 @@ namespace XDay.AssetAPI
 {
     public class DefaultAssetLoader : IAssetLoader
     {
+        public DefaultAssetLoader()
+        {
+        }
+
         public void OnDestroy()
         {
         }

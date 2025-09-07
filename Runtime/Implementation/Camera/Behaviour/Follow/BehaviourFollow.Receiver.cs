@@ -65,6 +65,7 @@ namespace XDay.CameraAPI
             {
                 SetState(State.Catch);
                 m_Target = request.Param.Target;
+                m_MinFollowSpeed = request.Param.MinFollowSpeed;
                 m_Interrupters = request.Interrupters;
                 m_OnTargetFollowed = request.Param.TargetFollowedCallback;
                 m_TargetAltitude = request.Param.TargetAltitude;
@@ -257,7 +258,7 @@ namespace XDay.CameraAPI
             private float m_CatchSpeed;
             private AnimationCurve m_SpeedModulator;
             private Action m_OnTargetFollowed;
-            private const float m_MinFollowSpeed = 200;
+            private float m_MinFollowSpeed;
             private BehaviourMask m_Interrupters;
             private Ticker m_ZoomTicker = new();
             private Ticker m_LagTicker = new();

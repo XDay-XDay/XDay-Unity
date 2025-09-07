@@ -49,8 +49,8 @@ namespace XDay.WorldAPI.Tile.Editor
     }
 
     [WorldPluginMetadata("地表层", "tile_editor_data", typeof(TileSystemCreateWindow), true)]
-    internal sealed partial class TileSystem : EditorWorldPlugin, 
-        IHeightDataSource, 
+    internal sealed partial class TileSystem : EditorWorldPlugin,
+        IHeightDataSource,
         IWalkableObjectSource,
         IWorldBakeable
     {
@@ -118,7 +118,7 @@ namespace XDay.WorldAPI.Tile.Editor
         {
         }
 
-        public TileSystem(TileSystemCreateInfo createInfo) 
+        public TileSystem(TileSystemCreateInfo createInfo)
             : base(createInfo.ID, createInfo.ObjectIndex)
         {
             m_ResourceDescriptorSystem = new EditorResourceDescriptorSystem();
@@ -136,11 +136,17 @@ namespace XDay.WorldAPI.Tile.Editor
             m_OptimizeMesh = createInfo.OptimizeMesh;
             m_GenerateMeshCollider = createInfo.GenerateMeshCollider;
             m_GetGroundHeightInGame = createInfo.GetGroundHeightInGame;
+			m_ResourceGroupSystem = IResourceGroupSystem.Create(true);
             m_BrushFolder = EditorPrefs.GetString("XDay.BrushFolder");
         }
 
         protected override void InitInternal()
         {
+            m_ShowGrid = EditorPrefs.GetBool(TileDefine.SHOW_GRID, true);
+            m_ShowMaterial = EditorPrefs.GetBool(TileDefine.SHOW_MATERIAL, true);
+            m_ShowTileSetting = EditorPrefs.GetBool(TileDefine.SHOW_TILE_SETTING, false);
+            m_ShowMaterialConfig = EditorPrefs.GetBool(TileDefine.SHOW_MATERIAL_CONFIG, true);
+
             (World as World).AddPostInitializer(typeof(TileObject), OnInitTileObject);
 
             m_Indicator = IMeshIndicator.Create(World);
@@ -167,7 +173,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 for (var j = 0; j < m_XTileCount; ++j)
                 {
                     var tile = m_Tiles[i * m_XTileCount + j];
-                    if (tile != null && 
+                    if (tile != null &&
                         tile.SetVisibility(WorldObjectVisibility.Visible))
                     {
                         m_Renderer.ToggleActiveState(tile, j, i);
@@ -269,7 +275,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 for (var i = 0; i < m_Tiles.Length; ++i)
                 {
-                    if (m_Tiles[i] != null && 
+                    if (m_Tiles[i] != null &&
                         m_Tiles[i].ID == tileID)
                     {
                         m_Tiles[i].Uninit();
@@ -306,7 +312,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public Vector2Int UnrotatedPositionToCoordinate(float x, float z)
         {
-            return new Vector2Int(Mathf.FloorToInt(x / m_TileWidth), Mathf.FloorToInt(z/ m_TileHeight));
+            return new Vector2Int(Mathf.FloorToInt(x / m_TileWidth), Mathf.FloorToInt(z / m_TileHeight));
         }
 
         public Vector3 CoordinateToUnrotatedPosition(int x, int y)
@@ -349,16 +355,13 @@ namespace XDay.WorldAPI.Tile.Editor
         {
             base.EditorDeserialize(deserializer, label);
 
-            var version = deserializer.ReadInt32("TileSystem.Version");
+            deserializer.ReadInt32("TileSystem.Version");
 
             m_TexturePainter = deserializer.ReadSerializable<TexturePainter>("Texture Painter", false);
             m_TexturePainter ??= new TexturePainter();
 
-            if (version >= 2)
-            {
-                m_VertexHeightPainter = deserializer.ReadSerializable<VertexHeightPainter>("Vertex Height Painter", false);
-                m_VertexHeightPainter ??= new VertexHeightPainter();
-            }
+            m_VertexHeightPainter = deserializer.ReadSerializable<VertexHeightPainter>("Vertex Height Painter", false);
+            m_VertexHeightPainter ??= new VertexHeightPainter();
 
             m_ResourceGroupSystem = deserializer.ReadSerializable<IResourceGroupSystem>("Resource Group System", false);
             m_PluginLODSystem = deserializer.ReadSerializable<IPluginLODSystem>("Plugin LOD System", false);
@@ -393,31 +396,16 @@ namespace XDay.WorldAPI.Tile.Editor
 
             m_ShowMaterialConfig = deserializer.ReadBoolean("Show Material Setting");
 
-            if (version >= 3)
-            {
-                m_GetGroundHeightInGame = deserializer.ReadBoolean("Get Ground Height In Game");
-                m_GenerateMeshCollider = deserializer.ReadBoolean("Generate Mesh Collider");
-                m_OptimizeMesh = deserializer.ReadBoolean("Optimize Mesh");
-                m_CreateHeightMeshAsPrefab = deserializer.ReadBoolean("Create Height Mesh As Prefab");
-                m_GenerateOBJMeshFile = deserializer.ReadBoolean("Generate OBJ Mesh File");
-                m_ClipMinHeight = deserializer.ReadSingle("Clip Minimum Height");
-                m_CreateMaterialForGroundPrefab = deserializer.ReadBoolean("Create Material For Ground Prefab");
-            }
-
-            if (version >= 4)
-            {
-                m_ShowGrid = deserializer.ReadBoolean("Show Grid");
-            }
-
-            if (version >= 5)
-            {
-                m_ShowMaterial = deserializer.ReadBoolean("Show Material");
-            }
-
-            if (version >= 6)
-            {
-                m_BrushFolder = deserializer.ReadString("Brush Folder");
-            }
+            m_GetGroundHeightInGame = deserializer.ReadBoolean("Get Ground Height In Game");
+            m_GenerateMeshCollider = deserializer.ReadBoolean("Generate Mesh Collider");
+            m_OptimizeMesh = deserializer.ReadBoolean("Optimize Mesh");
+            m_CreateHeightMeshAsPrefab = deserializer.ReadBoolean("Create Height Mesh As Prefab");
+            m_GenerateOBJMeshFile = deserializer.ReadBoolean("Generate OBJ Mesh File");
+            m_ClipMinHeight = deserializer.ReadSingle("Clip Minimum Height");
+            m_CreateMaterialForGroundPrefab = deserializer.ReadBoolean("Create Material For Ground Prefab");
+            m_ShowGrid = deserializer.ReadBoolean("Show Grid");
+            m_ShowMaterial = deserializer.ReadBoolean("Show Material");
+			m_BrushFolder = deserializer.ReadString("Brush Folder");
         }
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -472,10 +460,15 @@ namespace XDay.WorldAPI.Tile.Editor
 
             serializer.WriteBoolean(m_ShowGrid, "Show Grid");
             serializer.WriteBoolean(m_ShowMaterial, "Show Material");
-
-            serializer.WriteString(m_BrushFolder, "Brush Folder");
+			
+			serializer.WriteString(m_BrushFolder, "Brush Folder");
 
             m_TexturePainter.SaveToFile();
+
+            EditorPrefs.SetBool(TileDefine.SHOW_GRID, m_ShowGrid);
+            EditorPrefs.SetBool(TileDefine.SHOW_MATERIAL, m_ShowMaterial);
+            EditorPrefs.SetBool(TileDefine.SHOW_TILE_SETTING, m_ShowTileSetting);
+            EditorPrefs.SetBool(TileDefine.SHOW_MATERIAL_CONFIG, m_ShowMaterialConfig);
         }
 
         private Vector3 CoordinateToRotatedPosition(int x, int y)
@@ -582,6 +575,8 @@ namespace XDay.WorldAPI.Tile.Editor
         private bool m_ShowMaterialConfig = true;
         private GridMesh m_Grid;
         private string m_BrushFolder;
-        private const int m_Version = 6;
+        private const int m_Version = 1;
     }
 }
+
+//XDay

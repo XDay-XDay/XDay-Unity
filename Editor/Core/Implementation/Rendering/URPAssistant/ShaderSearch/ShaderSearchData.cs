@@ -34,6 +34,7 @@ namespace ShaderTool
         public string File;
         public string Detail;
         public int LineNumber;
+        public bool ShowDetail = false;
 
         public override string ToString()
         {
@@ -53,7 +54,7 @@ namespace ShaderTool
     {
         public List<SearchResult> Results = new();
         public bool ShowDetail = false;
-        public bool MatchWord = true;
+        public bool MatchWord = false;
 
         public void AddResult(SearchResult result)
         {

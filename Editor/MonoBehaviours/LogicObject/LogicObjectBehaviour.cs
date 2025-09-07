@@ -79,7 +79,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
     [CanEditMultipleObjects]
     [CustomEditor(typeof(LogicObjectBehaviour))]
-    class DecorationObjectBehaviourEditor : UnityEditor.Editor
+    class LogicObjectBehaviourEditor : UnityEditor.Editor
     {
         private void OnEnable()
         {

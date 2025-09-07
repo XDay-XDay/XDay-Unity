@@ -38,7 +38,7 @@ namespace XDay.NavigationAPI
 
         public IGridNavigationAgent Create(GameObject overrideGameObject, Transform parent, Vector3 position, Quaternion rotation)
         {
-            return new GridBasedNavAgent(overrideGameObject, parent, position, rotation);
+            return new GridBasedNavAgent(true, overrideGameObject, parent, position, rotation);
         }
     }
 }

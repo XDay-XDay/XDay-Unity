@@ -57,10 +57,22 @@ namespace XDay.WorldAPI.LogicObject.Editor
             m_Bounds = bounds;
             m_Name = name;
             m_ResourceDescriptorSystem = IEditorResourceDescriptorSystem.Create();
+            m_ResourceGroupSystem = IResourceGroupSystem.Create(false);
         }
 
         protected override void InitInternal()
         {
+            m_CreateMode = (ObjectCreateMode)EditorPrefs.GetInt(LogicObjectDefine.CREATE_MODE, (int)ObjectCreateMode.Single);
+            m_RemoveRange = EditorPrefs.GetFloat(LogicObjectDefine.REMOVE_RANGE, 5);
+            m_CoordinateGenerateSetting.CircleRadius = EditorPrefs.GetFloat(LogicObjectDefine.CIRCLE_RADIUS, 10);
+            m_CoordinateGenerateSetting.RectWidth = EditorPrefs.GetFloat(LogicObjectDefine.RECT_WIDTH, 5);
+            m_CoordinateGenerateSetting.RectHeight = EditorPrefs.GetFloat(LogicObjectDefine.RECT_HEIGHT, 5);
+            m_CoordinateGenerateSetting.Count = EditorPrefs.GetInt(LogicObjectDefine.OBJECT_COUNT, 10);
+            m_CoordinateGenerateSetting.Space = EditorPrefs.GetFloat(LogicObjectDefine.SPACE, 1);
+            m_CoordinateGenerateSetting.Random = EditorPrefs.GetBool(LogicObjectDefine.RANDOM, false);
+            m_CoordinateGenerateSetting.BorderSize = EditorPrefs.GetFloat(LogicObjectDefine.BORDER_SIZE, 0);
+            m_CoordinateGenerateSetting.LineEquidistant = EditorPrefs.GetBool(LogicObjectDefine.LINE_EQUIDISTANT, false);
+
             if (m_Groups.Count == 0)
             {
                 var group = new LogicObjectGroup(World.AllocateObjectID(), 0, "Default Group");
@@ -155,6 +167,65 @@ namespace XDay.WorldAPI.LogicObject.Editor
             {
                 Debug.Assert(false, $"todo {obj.GetType()}");
             }
+        }
+
+        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
+        {
+            SyncObjectTransforms();
+
+            base.EditorSerialize(serializer, label, converter);
+
+            serializer.WriteInt32(m_Version, "LogicObjectSystem.Version");
+
+            serializer.WriteString(m_Name, "Name");
+            serializer.WriteBounds(m_Bounds, "Bounds");
+
+            //sync object names
+            foreach (var group in m_Groups)
+            {
+                foreach (var obj in group.Objects)
+                {
+                    var gameObject = m_Renderer.QueryObject(obj.ID);
+                    obj.Name = gameObject.name;
+                }
+            }
+
+            serializer.WriteList(m_Groups, "Groups", (group, index) =>
+            {
+                serializer.WriteSerializable(group, $"Group {index}", converter, false);
+            });
+
+            serializer.WriteSerializable(m_ResourceDescriptorSystem, "Resource Descriptor System", converter, false);
+            serializer.WriteSerializable(m_ResourceGroupSystem, "Resource Group System", converter, false);
+
+            EditorPrefs.SetInt(LogicObjectDefine.CREATE_MODE, (int)m_CreateMode);
+            EditorPrefs.SetFloat(LogicObjectDefine.REMOVE_RANGE, m_RemoveRange);
+            EditorPrefs.SetFloat(LogicObjectDefine.CIRCLE_RADIUS, m_CoordinateGenerateSetting.CircleRadius);
+            EditorPrefs.SetFloat(LogicObjectDefine.RECT_WIDTH, m_CoordinateGenerateSetting.RectWidth);
+            EditorPrefs.SetFloat(LogicObjectDefine.RECT_HEIGHT, m_CoordinateGenerateSetting.RectHeight);
+            EditorPrefs.SetInt(LogicObjectDefine.OBJECT_COUNT, m_CoordinateGenerateSetting.Count);
+            EditorPrefs.SetFloat(LogicObjectDefine.SPACE, m_CoordinateGenerateSetting.Space);
+            EditorPrefs.SetBool(LogicObjectDefine.RANDOM, m_CoordinateGenerateSetting.Random);
+            EditorPrefs.SetFloat(LogicObjectDefine.BORDER_SIZE, m_CoordinateGenerateSetting.BorderSize);
+            EditorPrefs.SetBool(LogicObjectDefine.LINE_EQUIDISTANT, m_CoordinateGenerateSetting.LineEquidistant);
+        }
+
+        public override void EditorDeserialize(IDeserializer deserializer, string label)
+        {
+            base.EditorDeserialize(deserializer, label);
+
+            var version = deserializer.ReadInt32("LogicObjectSystem.Version");
+
+            m_Name = deserializer.ReadString("Name");
+            m_Bounds = deserializer.ReadBounds("Bounds");
+
+            m_Groups = deserializer.ReadList("Groups", (index) =>
+            {
+                return deserializer.ReadSerializable<LogicObjectGroup>($"Group {index}", false);
+            });
+
+            m_ResourceDescriptorSystem = deserializer.ReadSerializable<EditorResourceDescriptorSystem>("Resource Descriptor System", false);
+            m_ResourceGroupSystem = deserializer.ReadSerializable<IResourceGroupSystem>("Resource Group System", false);
         }
 
         public void SetEnabled(int objectID, bool enabled, int lod, bool forceSet)
@@ -375,7 +446,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         private IEditorResourceDescriptorSystem m_ResourceDescriptorSystem;
         private float m_RemoveRange = 5;
         private List<int> m_DirtyObjectIDs = new();
-        private const int m_Version = 2;
+        private const int m_Version = 3;
         private int m_CurrentGroupID = 0;
     }
 }

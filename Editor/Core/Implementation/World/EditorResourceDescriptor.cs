@@ -36,7 +36,7 @@ namespace XDay.WorldAPI.Editor
         public string PathPrefix => m_Prefix;
         public GameObject Prefab => m_Prefab;
         public Rect Bounds { get => m_Bounds; set => m_Bounds = value; }
-        public override bool IsValid => m_Prefab != null;
+        public override bool IsValid => !string.IsNullOrEmpty(m_LOD0);
         public override string TypeName => "EditorResourceDescriptor";
 
         public EditorResourceDescriptor()

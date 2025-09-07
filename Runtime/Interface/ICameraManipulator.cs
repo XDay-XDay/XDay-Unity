@@ -114,6 +114,7 @@ namespace XDay.CameraAPI
         public RequestQueueType QueueType = RequestQueueType.Replace;
         public int Priority = 0;
         public int Layer = 0;
+        public float MinFollowSpeed = 200.0f;
     }
 
     /// <summary>
@@ -174,6 +175,8 @@ namespace XDay.CameraAPI
         /// get camera instance
         /// </summary>
         Camera Camera { get; }
+
+        CameraSetup Setup { get; }
         /// <summary>
         /// camera current position
         /// </summary>
@@ -187,11 +190,19 @@ namespace XDay.CameraAPI
         /// </summary>
         float MaxAltitude { get; set; }
 
+        Vector2 ReferenceResolution { get; }
+
         Vector3 Forward { get; }
 
         CameraDirection Direction { get; }
 
         void OnDestroy();
+
+        /// <summary>
+        ///  release camera control
+        /// </summary>
+        /// <param name="free"></param>
+        void FreeControl(bool free);
 
         /// <summary>
         /// limit camera horizontal movement range

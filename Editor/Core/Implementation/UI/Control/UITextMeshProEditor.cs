@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -25,7 +25,7 @@ using TMPro.EditorUtilities;
 
 namespace XDay.GUIAPI.Editor
 {
-    [UnityEditor.CustomEditor(typeof(UITextMeshPro))]
+    [UnityEditor.CustomEditor(typeof(TextMeshPro3D))]
     public class UITextMeshProEditor : TMP_EditorPanelUI
     {
         public override void OnInspectorGUI()

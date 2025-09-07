@@ -89,27 +89,42 @@ namespace XDay.InputAPI
             var scroll = Input.mouseScrollDelta;
             var mousePos = Input.mousePosition;
 
-            var start = false;
+            var anyStart = false;
             for (var i = 0; i < m_Touches.Length; ++i)
             {
+                //down和up可能同一帧触发,应该是个unity的bug,这样就忽略这次点击
+                var validTouch = true;
+                var start = false;
                 var state = ButtonState.Idle;
                 if (Input.GetMouseButtonDown(i))
                 {
+                    anyStart = true;
                     start = true;
                     state = ButtonState.Start;
                 }
-                else if (Input.GetMouseButton(i))
+
+                if (Input.GetMouseButtonUp(i))
                 {
-                    state = ButtonState.Touching;
-                }
-                else if (Input.GetMouseButtonUp(i))
-                {
+                    if (start) 
+                    {
+                        validTouch = false;
+                    }
                     state = ButtonState.Finish;
                 }
-
-                if (state != ButtonState.Idle ||(scroll != Vector2.zero && i == 2))
+                else if (Input.GetMouseButton(i))
                 {
-                    UpdateTouch(i, mousePos, state, scroll, m_DeviceInput);
+                    if (!start)
+                    {
+                        state = ButtonState.Touching;
+                    }
+                }
+
+                if (validTouch)
+                {
+                    if (state != ButtonState.Idle || (scroll != Vector2.zero && i == 2))
+                    {
+                        UpdateTouch(i, mousePos, state, scroll, m_DeviceInput);
+                    }
                 }
             }
 
@@ -140,10 +155,12 @@ namespace XDay.InputAPI
                             anySceneTouchStart = true;
                         }
                     }
+
+                    m_ActiveTouches.Add(touch);
                 }
             }
 
-            if (start)
+            if (anyStart)
             {
                 EventAnyTouchBegin?.Invoke(mousePos);
             }
@@ -152,6 +169,11 @@ namespace XDay.InputAPI
             {
                 EventAnySceneTouchBegin?.Invoke(mousePos);
             }
+        }
+
+        public ITouch GetTouch(int index)
+        {
+            return m_ActiveTouches[index];
         }
 
         public ITouch GetSceneTouchNotStartFromUI(int index)
@@ -230,6 +252,7 @@ namespace XDay.InputAPI
             m_SceneTouches.Clear();
             m_TouchesNotStartFromUI.Clear();
             m_SceneTouchesNotFromUI.Clear();
+            m_ActiveTouches.Clear();
 
             for (var i = 0; i < m_PendingTouchIndices.Count; ++i)
             {
@@ -254,6 +277,15 @@ namespace XDay.InputAPI
             return 0;
         }
 
+        private readonly List<MouseTouch> m_TouchesNotStartFromUI = new();
+        private readonly List<MouseTouch> m_UITouches = new();
+        private readonly List<MouseTouch> m_SceneTouches = new();
+        private readonly List<MouseTouch> m_SceneTouchesNotFromUI = new();
+        private readonly List<MouseTouch> m_ActiveTouches = new();
+        private readonly List<int> m_PendingTouchIndices = new();
+        private readonly MouseTouch[] m_Touches;
+        private readonly IDeviceInput m_DeviceInput;
+
         private enum ButtonState
         {
             Idle = 0,
@@ -261,14 +293,6 @@ namespace XDay.InputAPI
             Touching,
             Finish,
         }
-
-        private List<MouseTouch> m_TouchesNotStartFromUI = new();
-        private List<MouseTouch> m_UITouches = new();
-        private List<MouseTouch> m_SceneTouches = new();
-        private List<MouseTouch> m_SceneTouchesNotFromUI = new();
-        private List<int> m_PendingTouchIndices = new();
-        private MouseTouch[] m_Touches;
-        private IDeviceInput m_DeviceInput;
     }
 }
 

@@ -31,10 +31,12 @@ using System.Threading;
 using UnityEngine;
 using XDay.AssetAPI;
 using System;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
     [XDaySerializableClass("World")]
+    [Preserve]
     public abstract partial class World : IWorld, ISerializable
     {
         public IWorldManager WorldManager => m_WorldManager;

@@ -22,19 +22,22 @@
  */
 
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace XDay.InputAPI
 {
     internal abstract class Motion : IMotion
     {
         public int ID => m_ID;
-        public bool Enabled { get => m_Enabled;set=>m_Enabled = value; }
+        public bool Enabled { get => m_Enabled; set=> m_Enabled = value; }
         public abstract MotionType Type { get; }
 
-        public Motion(int id, IDeviceInput device)
+        public Motion(int id, IDeviceInput device, DeviceTouchType touchType)
         {
             m_ID = id;
             m_Device = device;
+            m_TouchType = touchType;
         }
 
         public virtual void Update()
@@ -66,32 +69,101 @@ namespace XDay.InputAPI
         protected void OnMatch()
         {
             m_State ??= MotionState.Start;
-            EventMatch?.Invoke(this, m_State.GetValueOrDefault());
+
+            foreach (var callback in m_MatchCallbacks)
+            {
+                var stop = callback.Action.Invoke(this, m_State.GetValueOrDefault());
+                if (stop)
+                {
+                    break;
+                }
+            }
             if (m_State == MotionState.Start)
             {
                 m_State = MotionState.Running;
             }
         }
 
-        public void AddMatchCallback(Action<IMotion, MotionState> callback)
+        public void AddMatchCallback(Func<IMotion, MotionState, bool> callback, int priority)
         {
-            EventMatch -= callback;
-            EventMatch += callback;
+            m_MatchCallbacks.Add(new Callback() { Action = callback, Priority = priority});
+            m_MatchCallbacks.Sort((a, b) => { return a.Priority.CompareTo(b.Priority); });
         }
 
-        public void RemoveMatchCallback(Action<IMotion, MotionState> callback)
+        public void RemoveMatchCallback(Func<IMotion, MotionState, bool> callback)
         {
-            EventMatch -= callback;
+            for (var i = 0; i < m_MatchCallbacks.Count; ++i)
+            {
+                if (m_MatchCallbacks[i].Action == callback)
+                {
+                    m_MatchCallbacks.RemoveAt(i);
+                    return;
+                }
+            }
+        }
+
+        protected int GetTouchCount()
+        {
+            switch (m_TouchType)
+            {
+                case DeviceTouchType.Configurable:
+                    return m_Device.ConfigurableTouchCount;
+                case DeviceTouchType.SceneTouch:
+                    return m_Device.SceneTouchCount;
+                case DeviceTouchType.UITouch:
+                    return m_Device.UITouchCount;
+                case DeviceTouchType.Touch:
+                    return m_Device.TouchCount;
+                case DeviceTouchType.TouchNotStartFromUI:
+                    return m_Device.TouchCountNotStartFromUI;
+                case DeviceTouchType.SceneTouchNotStartFromUI:
+                    return m_Device.SceneTouchCountNotStartFromUI;
+                default:
+                    Debug.Assert(false, $"Unknown touch type: {m_TouchType}");
+                    break;
+            }
+            return 0;
+        }
+
+        protected ITouch GetTouch(int index)
+        {
+            switch (m_TouchType)
+            {
+                case DeviceTouchType.Configurable:
+                    return m_Device.GetConfigurableTouch(index);
+                case DeviceTouchType.SceneTouch:
+                    return m_Device.GetSceneTouch(index);
+                case DeviceTouchType.UITouch:
+                    return m_Device.GetUITouch(index);
+                case DeviceTouchType.Touch:
+                    return m_Device.GetTouch(index);
+                case DeviceTouchType.TouchNotStartFromUI:
+                    return m_Device.GetTouchNotStartFromUI(index);
+                case DeviceTouchType.SceneTouchNotStartFromUI:
+                    return m_Device.GetSceneTouchNotStartFromUI(index);
+                default:
+                    Debug.Assert(false, $"Unknown touch type: {m_TouchType}");
+                    break;
+            }
+            return null;
         }
 
         protected abstract void OnReset();
         protected abstract bool Match();
 
-        private int m_ID;
+        private readonly int m_ID;
         private bool m_Enabled = true;
-        private event Action<IMotion, MotionState> EventMatch;
+        private readonly List<Callback> m_MatchCallbacks = new();
         private MotionState? m_State;
+        protected DeviceTouchType m_TouchType;
         protected IDeviceInput m_Device;
+
+        private class Callback
+        {
+            public int Priority = 0;
+            //返回true会让Priority值更大的Action不被调用
+            public Func<IMotion, MotionState, bool> Action;
+        }
     }
 }
 

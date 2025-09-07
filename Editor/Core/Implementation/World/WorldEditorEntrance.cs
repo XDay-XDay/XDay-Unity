@@ -41,6 +41,7 @@ namespace XDay.WorldAPI.Editor
         {
             SetEvents(clear: true);
             SetEvents(clear: false);
+            autoRepaintOnSceneChange = true;
         }
 
         private void OnDisable()

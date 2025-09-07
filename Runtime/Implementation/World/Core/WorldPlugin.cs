@@ -26,9 +26,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
+    [Preserve]
     public abstract class WorldPlugin : WorldObject, IWorldPlugin
     {
         public abstract string Name { get; set; }

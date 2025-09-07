@@ -36,12 +36,13 @@ namespace XDay.InputAPI
         public int TouchCount => m_TrackedTouches.Count;
         public override MotionType Type => MotionType.InertialDrag;
 
-        public InertialDragMotion(int id, TouchID touchID, Camera camera, Plane plane, IDeviceInput device)
-            : base(id, device)
+        public InertialDragMotion(int id, TouchID touchID, Camera camera, Plane plane, float moveThreshold, IDeviceInput device, DeviceTouchType touchType)
+            : base(id, device, touchType)
         {
             m_TouchID = touchID;
             m_Camera = camera;
             m_Plane = plane;
+            m_MoveThreshold = moveThreshold;
             m_TouchPool = IObjectPool<TouchData>.Create(
                 createFunc:() => { 
                     return new TouchData();
@@ -62,13 +63,14 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            if (m_Device.ConfigurableTouchCount != 1)
+            var touchCount = GetTouchCount();
+            if (touchCount != 1)
             {
-                Reset(m_Device.ConfigurableTouchCount == 0);
+                Reset(touchCount == 0);
                 return false;
             }
 
-            var touch = m_Device.GetConfigurableTouch(0);
+            var touch = GetTouch(0);
             if (m_Device.QueryTouchID(touch.ID) != m_TouchID)
             {
                 Reset(false);
@@ -149,7 +151,7 @@ namespace XDay.InputAPI
         private float m_DragTime = 0;
         private Vector3 m_DragOffset;
         private Vector3 m_SlideDirection;
-        private float m_MoveThreshold = 5.0f;
+        private float m_MoveThreshold;
         private Vector3 m_Start;
         private Camera m_Camera;
         private float m_DragDistance = 0;

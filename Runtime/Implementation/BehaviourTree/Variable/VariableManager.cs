@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -59,8 +59,10 @@ namespace XDay.BehaviourTreeAPI
 
         public VariableManager()
         {
+#if UNITY_EDITOR
             EventVariableAdded += OnAddVariable;
             EventVariableRemoved += OnRemoveVariable;
+#endif
         }
 
         public Variable<T> CreateVariable<T>(string name)

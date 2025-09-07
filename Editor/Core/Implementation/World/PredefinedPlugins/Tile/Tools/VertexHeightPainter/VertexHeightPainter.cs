@@ -41,6 +41,17 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public void Init(TileSystem tileSystem, string brushFolder)
         {
+            m_ShowBrush = EditorPrefs.GetBool(TileDefine.VERTEX_PAINT_SHOW_BRUSH, true);
+            m_Show = EditorPrefs.GetBool(TileDefine.VERTEX_PAINT_SHOW, true);
+            m_PaintHeightParameters.Intensity = EditorPrefs.GetFloat(TileDefine.VERTEX_PAINT_INTENSITY, 0.01f);
+            m_PaintHeightParameters.PaintInOneTile = EditorPrefs.GetBool(TileDefine.VERTEX_PAINT_ONE_TILE, false);
+            m_PaintHeightParameters.Range = EditorPrefs.GetFloat(TileDefine.VERTEX_PAINT_RANGE, 70);
+            m_PaintHeightParameters.TargetHeight = EditorPrefs.GetFloat(TileDefine.VERTEX_PAINT_TARGET_HEIGHT, 10);
+            m_PaintHeightParameters.SupressVertexHeightThreshold = EditorPrefs.GetFloat(TileDefine.VERTEX_PAINT_SUPPRESS_VERTEX_HEIGHT_THRESHOLD, 0.1f);
+            m_PaintHeightParameters.SmoothBrush = EditorPrefs.GetBool(TileDefine.VERTEX_PAINT_SMOOTH_BRUSH, false);
+            m_PaintHeightParameters.Mode = (HeightMode)EditorPrefs.GetInt(TileDefine.VERTEX_PAINT_MODE, (int)HeightMode.ChangeHeight);
+            m_PaintHeightParameters.KeepEdgeVertexHeight = EditorPrefs.GetBool(TileDefine.VERTEX_PAINT_KEEP_EDGE_VERTEX_HEIGHT, false);
+
             m_TileSystem = tileSystem;
             m_BrushStyleManager = IBrushStyleManager.Create(brushFolder);
         }
@@ -215,42 +226,28 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public void EditorDeserialize(IDeserializer deserializer, string label)
         {
-            var version = deserializer.ReadInt32("Version");
-            
-            m_ShowBrush = deserializer.ReadBoolean("Show Brush");
-            m_Show = deserializer.ReadBoolean("Show");
+            deserializer.ReadInt32("Version");
 
-            if (version >= 2)
-            {
-                m_PaintHeightParameters.Intensity = deserializer.ReadSingle("Intensity");
-                m_PaintHeightParameters.PaintInOneTile = deserializer.ReadBoolean("Paint In One Tile");
-                m_PaintHeightParameters.Range = deserializer.ReadSingle("Range");
-                m_PaintHeightParameters.Resolution = deserializer.ReadInt32("Resolution");
-                m_PaintHeightParameters.TargetHeight = deserializer.ReadSingle("Target Height");
-                m_PaintHeightParameters.SupressVertexHeightThreshold = deserializer.ReadSingle("Supress Vertex Height Threshold");
-                m_PaintHeightParameters.SmoothBrush = deserializer.ReadBoolean("Smooth Brush");
-                m_PaintHeightParameters.KeepEdgeVertexHeight = deserializer.ReadBoolean("Keep Edge Vertex Height");
-                m_PaintHeightParameters.ClipMaskSize = deserializer.ReadInt32("Clip Mask Size");
-                m_PaintHeightParameters.Mode = (HeightMode)deserializer.ReadInt32("Mode");
-                m_PaintHeightParameters.ClipLODType = (ClipLODType)deserializer.ReadSingle("Clip LOD Type");
-            }
+            m_PaintHeightParameters.Resolution = deserializer.ReadInt32("Resolution");
+            m_PaintHeightParameters.ClipMaskSize = deserializer.ReadInt32("Clip Mask Size");
+            m_PaintHeightParameters.ClipLODType = (ClipLODType)deserializer.ReadSingle("Clip LOD Type");
         }
 
         public void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
             serializer.WriteInt32(m_Version, "Version");
-            serializer.WriteBoolean(m_ShowBrush, "Show Brush");
-            serializer.WriteBoolean(m_Show, "Show");
-            serializer.WriteSingle(m_PaintHeightParameters.Intensity, "Intensity");
-            serializer.WriteBoolean(m_PaintHeightParameters.PaintInOneTile, "Paint In One Tile");
-            serializer.WriteSingle(m_PaintHeightParameters.Range, "Range");
+            EditorPrefs.SetBool(TileDefine.VERTEX_PAINT_SHOW_BRUSH, m_ShowBrush);
+            EditorPrefs.SetBool(TileDefine.VERTEX_PAINT_SHOW, m_Show);
+            EditorPrefs.SetFloat(TileDefine.VERTEX_PAINT_INTENSITY, m_PaintHeightParameters.Intensity);
+            EditorPrefs.SetBool(TileDefine.VERTEX_PAINT_ONE_TILE, m_PaintHeightParameters.PaintInOneTile);
+            EditorPrefs.SetFloat(TileDefine.VERTEX_PAINT_RANGE, m_PaintHeightParameters.Range);
+            EditorPrefs.SetFloat(TileDefine.VERTEX_PAINT_TARGET_HEIGHT, m_PaintHeightParameters.TargetHeight);
+            EditorPrefs.SetFloat(TileDefine.VERTEX_PAINT_SUPPRESS_VERTEX_HEIGHT_THRESHOLD, m_PaintHeightParameters.SupressVertexHeightThreshold);
+            EditorPrefs.SetBool(TileDefine.VERTEX_PAINT_SMOOTH_BRUSH, m_PaintHeightParameters.SmoothBrush);
+            EditorPrefs.SetInt(TileDefine.VERTEX_PAINT_MODE, (int)m_PaintHeightParameters.Mode);
+            EditorPrefs.SetBool(TileDefine.VERTEX_PAINT_KEEP_EDGE_VERTEX_HEIGHT, m_PaintHeightParameters.KeepEdgeVertexHeight);
             serializer.WriteInt32(m_PaintHeightParameters.Resolution, "Resolution");
-            serializer.WriteSingle(m_PaintHeightParameters.TargetHeight, "Target Height");
-            serializer.WriteSingle(m_PaintHeightParameters.SupressVertexHeightThreshold, "Supress Vertex Height Threshold");
-            serializer.WriteBoolean(m_PaintHeightParameters.SmoothBrush, "Smooth Brush");
-            serializer.WriteBoolean(m_PaintHeightParameters.KeepEdgeVertexHeight, "Keep Edge Vertex Height");
             serializer.WriteInt32(m_PaintHeightParameters.ClipMaskSize, "Clip Mask Size");
-            serializer.WriteInt32((int)m_PaintHeightParameters.Mode, "Mode");
             serializer.WriteSingle((int)m_PaintHeightParameters.ClipLODType, "Clip LOD Type");
         }
 
@@ -386,7 +383,7 @@ namespace XDay.WorldAPI.Tile.Editor
             EditorGUILayout.LabelField("按下[或]键修改笔刷大小");
         }
 
-        private const int m_Version = 2;
+        private const int m_Version = 1;
         private readonly IBrushIndicator m_Indicator = IBrushIndicator.Create();
         private IBrushStyleManager m_BrushStyleManager;
         private bool m_ShowBrush = true;

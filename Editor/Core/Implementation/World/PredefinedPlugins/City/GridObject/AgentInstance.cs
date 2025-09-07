@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -75,13 +75,13 @@ namespace XDay.WorldAPI.City.Editor
             }
         }
 
-        public bool MoveTo(Vector2 guiScreenPoint)
+        public void MoveTo(Vector2 guiScreenPoint)
         {
             var world = WorldEditor.WorldManager.FirstWorld;
             var worldPosition =  Helper.GUIRayCastWithXZPlane(guiScreenPoint, world.CameraManipulator.Camera);
             var targetCoord = OwnerGrid.PositionToCoordinate(worldPosition);
             var endPos = OwnerGrid.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
-            return m_Agent.MoveTo(endPos);
+            m_Agent.MoveTo(endPos);
         }
 
         public void SetNavigationData(IGridBasedPathFinder pathFinder)

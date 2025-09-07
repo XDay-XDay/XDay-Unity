@@ -21,29 +21,48 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using UnityEngine;
 
 namespace XDay.CameraAPI
 {
     internal class FieldOfViewUpdater
     {
-        public FieldOfViewUpdater(CameraSetup setup, Camera camera) 
+        public float CurrentFOV => m_CurrentFOV;
+
+        public FieldOfViewUpdater(CameraSetup setup, Camera camera, Action onFOVChangedExternally) 
         {
             m_Setup = setup;
+            m_CurrentFOV = camera.fieldOfView;
+            m_OnFOVChangedExternally = onFOVChangedExternally;
 
             Update(camera, camera.transform.position.y);
         }
 
         public void Update(Camera camera, float height)
         {
+            //fov被非相机库逻辑修改了
+            if (m_CurrentFOV != camera.fieldOfView)
+            {
+                m_OnFOVChangedExternally?.Invoke();
+                m_CurrentFOV = camera.fieldOfView;
+            }
+
             if (m_Setup.ChangeFOV)
             {
-                m_Setup.FOVAtAltitude(height, out var fov);
+                var fov = m_Setup.FixedFOV;
+                if (fov <= 0)
+                {
+                    m_Setup.FOVAtAltitude(height, out fov);
+                }
                 camera.fieldOfView = fov;
+                m_CurrentFOV = fov;
             }
         }
 
         private CameraSetup m_Setup;
+        private float m_CurrentFOV;
+        private Action m_OnFOVChangedExternally;
     }
 }
 

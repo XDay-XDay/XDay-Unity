@@ -35,7 +35,8 @@ namespace XDay.UtilityAPI.Shape.Editor
         public class ShapeBuilderCreateInfo
         {
             public DelegateOnCreateShape CreateShape { get; set; }
-            public DelegateSnapVertex SnapVertex { get; set; }
+            public DelegateSnapVertexLocal SnapVertexLocal { get; set; }
+            public DelegateSnapVertexWorld SnapVertexWorld { get; set; }
             public DelegateGetVertexLocalPosition GetVertexLocalPosition { get; set; }
             public DelegateGetVertexCount GetVertexCount { get; set; }
             public DelegateRepaintInspector RepaintInspector { get; set; }
@@ -55,16 +56,16 @@ namespace XDay.UtilityAPI.Shape.Editor
         }
 
         public bool IsCreatingShape => m_VertexOfCreatingShape.Count > 0;
-        public int PickedVertexIndex 
+        public List<int> PickedVertexIndices
         { 
-            get => m_PickedVertexIndex;
-            set => m_PickedVertexIndex = value;
+            get => m_PickedVertexIndices;
         }
 
         public ShapeBuilder(ShapeBuilderCreateInfo createInfo)
         {
             m_OnCreateShape = createInfo.CreateShape;
-            m_SnapVertex = createInfo.SnapVertex;
+            m_SnapVertexLocal = createInfo.SnapVertexLocal;
+            m_SnapVertexWorld = createInfo.SnapVertexWorld;
             m_RepaintInspector = createInfo.RepaintInspector;
             m_WorldToLocal = createInfo.ConvertWorldToLocal;
             m_WorldToLocal ??= (Vector3 pos) => { return pos; };
@@ -82,7 +83,7 @@ namespace XDay.UtilityAPI.Shape.Editor
             m_IsValidCreateState = true;
             m_GizmoVertices = new Vector3[0];
             m_VertexOfCreatingShape.Clear();
-            m_PickedVertexIndex = -1;
+            m_PickedVertexIndices.Clear();
         }
 
         public void DrawSceneGUI(float vertexDisplaySize, float planeHeight, Operation operation)
@@ -130,7 +131,7 @@ namespace XDay.UtilityAPI.Shape.Editor
         #region Vertex Operation
         private void VertexHitTest(Vector3 worldPosition, float boxColliderSize)
         {
-            PickedVertexIndex = -1;
+            m_PickedVertexIndices.Clear();
             if (m_PickShape != null)
             {
                 bool picked = m_PickShape.Invoke(worldPosition);
@@ -145,8 +146,7 @@ namespace XDay.UtilityAPI.Shape.Editor
             {
                 if (IsHitOneVertex(localPosition, m_GetVertexLocalPosition.Invoke(i), boxColliderSize))
                 {
-                    PickedVertexIndex = i;
-                    break;
+                    m_PickedVertexIndices.Add(i);
                 }
             }
         }
@@ -161,23 +161,26 @@ namespace XDay.UtilityAPI.Shape.Editor
 
         private void MoveVertex(bool startMoving, Vector3 worldPosition)
         {
-            if (m_PickedVertexIndex >= 0)
+            if (m_PickedVertexIndices.Count > 0)
             {
-                var localPosition = m_WorldToLocal.Invoke(worldPosition);
-                m_MovementUpdater.Update(localPosition.ToVector2());
-
-                var movedOffset = m_MovementUpdater.GetMovement().ToVector3XZ();
-                var originalPosition = m_GetVertexLocalPosition(m_PickedVertexIndex);
-                var newPosition = movedOffset + originalPosition;
-
-                if (m_SnapVertex != null)
+                foreach (var vertexIndex in m_PickedVertexIndices)
                 {
-                    newPosition = m_SnapVertex.Invoke(newPosition);
-                }
+                    var localPosition = m_WorldToLocal.Invoke(worldPosition);
+                    m_MovementUpdater.Update(localPosition.ToVector2());
 
-                if (startMoving || newPosition != originalPosition)
-                {
-                    m_MoveVertex?.Invoke(startMoving, m_PickedVertexIndex, movedOffset);
+                    var movedOffset = m_MovementUpdater.GetMovement().ToVector3XZ();
+                    var originalPosition = m_GetVertexLocalPosition(vertexIndex);
+                    var newPosition = movedOffset + originalPosition;
+
+                    if (m_SnapVertexLocal != null)
+                    {
+                        newPosition = m_SnapVertexLocal.Invoke(newPosition);
+                    }
+
+                    if (startMoving || newPosition != originalPosition)
+                    {
+                        m_MoveVertex?.Invoke(startMoving, vertexIndex, movedOffset);
+                    }
                 }
             }
         }
@@ -201,22 +204,26 @@ namespace XDay.UtilityAPI.Shape.Editor
                 var index = Helper.FindClosestEdgeOnProjection(localPosition, m_TempContainer);
                 if (m_InsertVertex(index, localPosition))
                 {
-                    PickedVertexIndex = index;
+                    m_PickedVertexIndices.Clear();
+                    m_PickedVertexIndices.Add(index);
                 }
             }
         }
 
         private void DeleteVertex()
         {
-            if (m_PickedVertexIndex >= 0)
+            if (m_PickedVertexIndices.Count > 0)
             {
                 if (m_GetVertexCount.Invoke() > 3)
                 {
                     if (m_DeleteVertex != null)
                     {
-                        if (m_DeleteVertex.Invoke(m_PickedVertexIndex))
+                        for (var i = m_PickedVertexIndices.Count - 1; i >= 0; --i)
                         {
-                            PickedVertexIndex = -1;
+                            if (m_DeleteVertex.Invoke(m_PickedVertexIndices[i]))
+                            {
+                                m_PickedVertexIndices.RemoveAt(i);
+                            }
                         }
                     }
                 }
@@ -316,6 +323,11 @@ namespace XDay.UtilityAPI.Shape.Editor
 
             if (m_IsValidCreateState && m_IsLeftButtonPressed)
             {
+                if (m_SnapVertexWorld != null)
+                {
+                    worldPosition = m_SnapVertexWorld(worldPosition);
+                }
+
                 m_VertexOfCreatingShape.Add(worldPosition);
                 if (m_VertexOfCreatingShape.Count == 1)
                 {
@@ -349,11 +361,12 @@ namespace XDay.UtilityAPI.Shape.Editor
         private readonly IMover m_MovementUpdater = IMover.Create();
         private bool m_IsLeftButtonPressed;
         private bool m_IsValidCreateState = true;
-        private int m_PickedVertexIndex = -1;
+        private List<int> m_PickedVertexIndices = new();
         private readonly List<Vector3> m_VertexOfCreatingShape = new();
         private Vector3[] m_GizmoVertices = new Vector3[0];
         private readonly List<Vector3> m_TempContainer = new();
-        private readonly DelegateSnapVertex m_SnapVertex;
+        private readonly DelegateSnapVertexLocal m_SnapVertexLocal;
+        private readonly DelegateSnapVertexWorld m_SnapVertexWorld;
         private readonly DelegateRepaintInspector m_RepaintInspector;
         private readonly DelegateConvertWorldToLocal m_WorldToLocal;
         private readonly DelegateOnCreateShape m_OnCreateShape;
@@ -371,7 +384,8 @@ namespace XDay.UtilityAPI.Shape.Editor
     public delegate void DelegateMoveVertex(bool startMoving, int index, Vector3 moveOffset);
     public delegate bool DelegateInsertVertex(int index, Vector3 localPosition);
     public delegate bool DelegateDeleteVertex(int index);
-    public delegate Vector3 DelegateSnapVertex(Vector3 localPosition);
+    public delegate Vector3 DelegateSnapVertexLocal(Vector3 localPosition);
+    public delegate Vector3 DelegateSnapVertexWorld(Vector3 worldPosition);
     public delegate Vector3 DelegateGetVertexLocalPosition(int index);
     public delegate int DelegateGetVertexCount();
     public delegate void DelegateRepaintInspector();

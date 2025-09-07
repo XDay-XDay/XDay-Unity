@@ -35,6 +35,11 @@ namespace XDay.WorldAPI.Decoration
         public DecorationSystemRenderer(DecorationSystem system)
         {
             m_Root = new GameObject(system.Name);
+#if UNITY_EDITOR
+            var debugger = m_Root.AddComponent<DecorationSystemDebugger>();
+            debugger.Init(system.World);
+            debugger.Show = false;
+#endif
             m_Root.transform.SetParent(system.World.Root.transform, true);
 
             m_InstanceRendererManager = new InstanceRenderManager(m_Root.transform, 

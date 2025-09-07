@@ -80,11 +80,62 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
+        private void ActionCreateObjectFromPattern()
+        {
+            var pattern = GetPattern(m_ActivePatternIndex);
+            if (pattern == null)
+            {
+                return;
+            }
+
+            var evt = Event.current;
+
+            var cursorPos = Helper.GUIRayCastWithXZPlane(evt.mousePosition, World.CameraManipulator.Camera);
+            pattern.SetPosition(cursorPos);
+
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Q && evt.shift == false)
+            {
+                pattern.Rotate(m_RotationDelta);
+                evt.Use();
+            }
+
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.W && evt.shift == false)
+            {
+                pattern.Rotate(-m_RotationDelta);
+                evt.Use();
+            }
+
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.A && evt.shift == false)
+            {
+                pattern.Scale(m_ScaleDelta);
+                evt.Use();
+            }
+
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.S && evt.shift == false)
+            {
+                pattern.Scale(-m_ScaleDelta);
+                evt.Use();
+            }
+
+            if (evt.type == EventType.MouseDown && evt.button == 0)
+            {
+                for (var i = 0; i < pattern.ItemCount; i++)
+                {
+                    var ok = pattern.GetItemInfo(i, out var prefabPath, out var worldPosition, out var worldScale, out var worldRotation);
+                    if (ok)
+                    {
+                        var decoration = CreateObject(World.AllocateObjectID(), prefabPath, worldPosition, worldRotation, worldScale);
+                        UndoSystem.CreateObject(decoration, World.ID, DecorationDefine.ADD_DECORATION_NAME, ID, CurrentLOD);
+                    }
+                }
+            }
+        }
+
         private void ActionCloneObject(Vector3 offset)
         {
             UndoSystem.NextGroupAndJoin();
 
-            var objectIDs = QueryRootObjectSelection();
+            var objectIDs = QueryRootObjectSelectionIDs();
             CloneObjects(new List<int>(objectIDs), offset);
         }
 
@@ -101,7 +152,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                         return lodCount <= 8;
                     });
 
-                    var newBounds = EditorGUILayout.RectField("Bounds", m_Bounds.ToRect());
+                    var newBounds = EditorGUILayout.RectField("范围", m_Bounds.ToRect());
                     SetBounds(newBounds.ToBounds());
 
                     m_ResourceGroupSystem.InspectorGUI();
@@ -168,7 +219,20 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
-        private HashSet<int> QueryRootObjectSelection()
+        private List<DecorationObject> QueryRootObjectSelection()
+        {
+            List<DecorationObject> ret = new();
+            var ids = QueryRootObjectSelectionIDs();
+            foreach (var id in ids)
+            {
+                var obj = QueryObjectUndo(id) as DecorationObject;
+                Debug.Assert(obj != null);
+                ret.Add(obj);
+            }
+            return ret;
+        }
+
+        private HashSet<int> QueryRootObjectSelectionIDs()
         {
             var rootObjectIDs = new HashSet<int>();
             foreach (var gameObject in Selection.gameObjects)
@@ -176,7 +240,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 var behaviour = gameObject.GetComponentInParent<DecorationObjectBehaviour>(true);
                 if (behaviour != null)
                 {
-                    rootObjectIDs.Add(behaviour.ObjectID);   
+                    rootObjectIDs.Add(behaviour.ObjectID);
                 }
             }
             return rootObjectIDs;
@@ -204,6 +268,11 @@ namespace XDay.WorldAPI.Decoration.Editor
                 }
                 else if (evt.keyCode == KeyCode.Alpha4 && evt.control)
                 {
+                    ChangeOperation(Action.UsePattern);
+                    evt.Use();
+                }
+                else if (evt.keyCode == KeyCode.Alpha5 && evt.control)
+                {
                     ChangeOperation(Action.DeleteObject);
                     evt.Use();
                 }
@@ -227,6 +296,8 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                 DrawAdjustObjectHeight();
 
+                DrawCreatePattern();
+
                 GUILayout.Space(30);
 
                 switch (m_Action)
@@ -240,20 +311,29 @@ namespace XDay.WorldAPI.Decoration.Editor
                             DrawRemoveObjectFromLOD();
                         }
                         break;
-                    case Action.DeleteObject:
-                        {
-                            m_RemoveRange = m_RadiusField.Render(m_RemoveRange, 40);
-                            break;
-                        }
-                    case Action.CreateObject:
-                        {
-                            ActionAddObject();
-                            break;
-                        }
-                    default:
-                        Debug.Assert(false, "todo");
-                        break;
                 }
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            switch (m_Action)
+            {
+                case Action.DeleteObject:
+                    {
+                        m_RemoveRange = m_RadiusField.Render(m_RemoveRange, 25);
+                        break;
+                    }
+                case Action.CreateObject:
+                    {
+                        DrawAddObjectGUI();
+                        break;
+                    }
+                case Action.UsePattern:
+                    {
+                        DrawUsePatternGUI();
+                        break;
+                    }
             }
             EditorGUILayout.EndHorizontal();
 
@@ -269,25 +349,28 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_PopupOperation = new Popup("操作", "", 130);
                 m_Controls.Add(m_PopupOperation);
 
-                m_ObjectCountField = new IntField("个数", "", 80);
+                m_ObjectCountField = new IntField("个数", "", 70);
                 m_Controls.Add(m_ObjectCountField);
 
                 m_PopupActiveLOD = new Popup("LOD", "", 80);
                 m_Controls.Add(m_PopupActiveLOD);
 
-                m_HeightField = new FloatField("高", "", 80);
+                m_PopupPattern = new Popup("集合", "", 130);
+                m_Controls.Add(m_PopupPattern);
+
+                m_HeightField = new FloatField("高", "", 60);
                 m_Controls.Add(m_HeightField);
 
                 m_RotationField = new FloatField("旋转角度", "", 100);
                 m_Controls.Add(m_RotationField);
 
-                m_ScaleField = new FloatField("缩放", "", 100);
+                m_ScaleField = new FloatField("缩放", "", 60);
                 m_Controls.Add(m_ScaleField);
 
-                m_SpaceField = new FloatField("间隔", "物体之间的最小间隔", 90);
+                m_SpaceField = new FloatField("间隔", "物体之间的最小间隔", 60);
                 m_Controls.Add(m_SpaceField);
 
-                m_BorderSizeField = new FloatField("边界", "沿形状边界生成物体", 90);
+                m_BorderSizeField = new FloatField("边界", "沿形状边界生成物体", 60);
                 m_Controls.Add(m_BorderSizeField);
 
                 m_ButtonQueryObjectCountInActiveLOD = EditorWorldHelper.CreateImageButton("number.png", "显示当前LOD中的物体数量");
@@ -306,13 +389,16 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_ButtonAdjustObjectHeight = EditorWorldHelper.CreateImageButton("adjust.png", "物体自适应地形高度");
                 m_Controls.Add(m_ButtonAdjustObjectHeight);
 
-                m_WidthField = new FloatField("宽", "", 80);
+                m_ButtonCreatePattern = EditorWorldHelper.CreateImageButton("pattern.png", "创建集合");
+                m_Controls.Add(m_ButtonCreatePattern);
+
+                m_WidthField = new FloatField("宽", "", 60);
                 m_Controls.Add(m_WidthField);
 
                 m_ButtonRemoveObjectFromActiveLOD = EditorWorldHelper.CreateImageButton("remove.png", "将选中物体从当前LOD中删除");
                 m_Controls.Add(m_ButtonRemoveObjectFromActiveLOD);
 
-                m_GeometryPopup = new Popup("形状", "", 130);
+                m_GeometryPopup = new Popup("形状", "", 90);
                 m_Controls.Add(m_GeometryPopup);
 
                 m_ButtonSycnObjectTransforms = EditorWorldHelper.CreateImageButton("refresh.png", "同步物体坐标");
@@ -320,6 +406,12 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                 m_ButtonDeleteObjects = EditorWorldHelper.CreateImageButton("delete.png", "删除物体");
                 m_Controls.Add(m_ButtonDeleteObjects);
+
+                m_RenamePatternButton = EditorWorldHelper.CreateImageButton("rename.png", "修改集合名称");
+                m_Controls.Add(m_RenamePatternButton);
+
+                m_DeletePatternButton = EditorWorldHelper.CreateImageButton("remove.png", "删除集合");
+                m_Controls.Add(m_DeletePatternButton);
 
                 m_ButtonCloneObjects = EditorWorldHelper.CreateImageButton("clone.png", "复制物体");
                 m_Controls.Add(m_ButtonCloneObjects);
@@ -331,14 +423,15 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_ButtonEqualSpace.Active = m_CoordinateGenerateSetting.LineEquidistant;
                 m_Controls.Add(m_ButtonEqualSpace);
 
-                m_RadiusField = new FloatField("半径", "", 80);
+                m_RadiusField = new FloatField("半径", "", 60);
                 m_Controls.Add(m_RadiusField);
             }
         }
 
         private void ActionSetObjectLOD()
         {
-            m_SceneSelectionTool.SceneGUI(World.CameraManipulator.Camera, (min, max) => {
+            m_SceneSelectionTool.SceneGUI(World.CameraManipulator.Camera, (min, max) =>
+            {
                 var size = max - min;
                 var center = (min + max) * 0.5f;
                 var decorations = QueryObjectsInRectangle(center, size.x, size.z);
@@ -359,26 +452,29 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_ActiveLOD = lod;
                 foreach (var decoration in m_Decorations.Values)
                 {
-                    var oldLODPath = decoration.ResourceDescriptor.GetPath(oldLOD);
-                    var newLODPath = decoration.ResourceDescriptor.GetPath(lod);
-                    if (newLODPath == oldLODPath)
+                    if (decoration.ResourceDescriptor != null)
                     {
-                        var existInNewLOD = decoration.ExistsInLOD(lod);
-                        var existInOldLOD = decoration.ExistsInLOD(oldLOD);
-                        if (!existInOldLOD && existInNewLOD)
+                        var oldLODPath = decoration.ResourceDescriptor.GetPath(oldLOD);
+                        var newLODPath = decoration.ResourceDescriptor.GetPath(lod);
+                        if (newLODPath == oldLODPath)
                         {
-                            UpdateObjectLOD(decoration.ID, lod);
-                            SetEnabled(decoration.ID, true, lod, false);
+                            var existInNewLOD = decoration.ExistsInLOD(lod);
+                            var existInOldLOD = decoration.ExistsInLOD(oldLOD);
+                            if (!existInOldLOD && existInNewLOD)
+                            {
+                                UpdateObjectLOD(decoration.ID, lod);
+                                SetEnabled(decoration.ID, true, lod, false);
+                            }
+                            else if (!existInNewLOD && existInOldLOD)
+                            {
+                                UpdateObjectLOD(decoration.ID, lod);
+                            }
                         }
-                        else if (!existInNewLOD && existInOldLOD)
+                        else
                         {
-                            UpdateObjectLOD(decoration.ID, lod);
+                            SetEnabled(decoration.ID, false, oldLOD, alwaysChange);
+                            SetEnabled(decoration.ID, true, lod, alwaysChange);
                         }
-                    }
-                    else
-                    {
-                        SetEnabled(decoration.ID, false, oldLOD, alwaysChange);
-                        SetEnabled(decoration.ID, true, lod, alwaysChange);
                     }
                 }
             }
@@ -393,7 +489,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             UndoSystem.NextGroup();
 
-            foreach (var objectID in QueryRootObjectSelection())
+            foreach (var objectID in QueryRootObjectSelectionIDs())
             {
                 var decoration = World.QueryObject<DecorationObject>(objectID);
                 LODLayerMask layerMask = 0;
@@ -447,6 +543,25 @@ namespace XDay.WorldAPI.Decoration.Editor
                 {
                     m_LODNames[i] = $"{i}";
                 }
+            }
+        }
+
+        private void QueryPatternNames()
+        {
+            if (m_PatternNames == null ||
+                m_PatternNames.Length != m_Patterns.Count)
+            {
+                m_PatternNames = new string[m_Patterns.Count];
+            }
+
+            for (var i = 0; i < m_Patterns.Count; i++)
+            {
+                m_PatternNames[i] = m_Patterns[i].Name;
+            }
+
+            if(m_Patterns.Count > 0 && m_ActivePatternIndex < 0)
+            {
+                SetActivePattern(0);
             }
         }
 
@@ -534,82 +649,6 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
-        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
-        {
-            SyncObjectTransforms();
-
-            base.EditorSerialize(serializer, label, converter);
-
-            serializer.WriteInt32(m_Version, "DecorationSystem.Version");
-
-            serializer.WriteInt32((int)m_CreateMode, "Create Mode");
-            serializer.WriteString(m_Name, "Name");
-            serializer.WriteSingle(m_RemoveRange, "Remove Range");
-            serializer.WriteBounds(m_Bounds, "Bounds");
-
-            serializer.WriteSingle(m_CoordinateGenerateSetting.CircleRadius, "Circle Radius");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.RectWidth, "Rect Width");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.RectHeight, "Rect Height");
-            serializer.WriteInt32(m_CoordinateGenerateSetting.Count, "Object Count");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.Space, "Space");
-            serializer.WriteBoolean(m_CoordinateGenerateSetting.Random, "Random");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.BorderSize, "Border Size");
-            serializer.WriteBoolean(m_CoordinateGenerateSetting.LineEquidistant, "Line Equidistant");
-
-            var allObjects = new List<DecorationObject>();
-            foreach (var p in m_Decorations)
-            {
-                allObjects.Add(p.Value);
-            }
-
-            serializer.WriteList(allObjects, "Objects", (obj, index) =>
-            {
-                serializer.WriteSerializable(obj, $"Object {index}", converter, false);
-            });
-
-            serializer.WriteVector2(m_GameGridSize, "Game Grid Size");
-            serializer.WriteSerializable(m_PluginLODSystem, "LOD System", converter, false);
-            serializer.WriteSerializable(m_ResourceDescriptorSystem, "Resource Descriptor System", converter, false);
-
-            serializer.WriteSerializable(m_ResourceGroupSystem, "Resource Group System", converter, false);
-        }
-
-        public override void EditorDeserialize(IDeserializer deserializer, string label)
-        {
-            base.EditorDeserialize(deserializer, label);
-
-            deserializer.ReadInt32("DecorationSystem.Version");
-
-            m_CreateMode = (ObjectCreateMode)deserializer.ReadInt32("Create Mode");
-            m_Name = deserializer.ReadString("Name");
-            m_RemoveRange = deserializer.ReadSingle("Remove Range");
-            m_Bounds = deserializer.ReadBounds("Bounds");
-
-            m_CoordinateGenerateSetting.CircleRadius = deserializer.ReadSingle("Circle Radius");
-            m_CoordinateGenerateSetting.RectWidth = deserializer.ReadSingle("Rect Width");
-            m_CoordinateGenerateSetting.RectHeight = deserializer.ReadSingle("Rect Height");
-            m_CoordinateGenerateSetting.Count = deserializer.ReadInt32("Object Count");
-            m_CoordinateGenerateSetting.Space = deserializer.ReadSingle("Space");
-            m_CoordinateGenerateSetting.Random = deserializer.ReadBoolean("Random");
-            m_CoordinateGenerateSetting.BorderSize = deserializer.ReadSingle("Border Size");
-            m_CoordinateGenerateSetting.LineEquidistant = deserializer.ReadBoolean("Line Equidistant");
-
-            var allObjects = deserializer.ReadList("Objects", (index) =>
-            {
-                return deserializer.ReadSerializable<DecorationObject>($"Object {index}", false);
-            });
-            foreach (var obj in allObjects)
-            {
-                m_Decorations.Add(obj.ID, obj);
-            }
-
-            m_GameGridSize = deserializer.ReadVector2("Game Grid Size");
-            m_PluginLODSystem = deserializer.ReadSerializable<IPluginLODSystem>("LOD System", false);
-            m_ResourceDescriptorSystem = deserializer.ReadSerializable<EditorResourceDescriptorSystem>("Resource Descriptor System", false);
-
-            m_ResourceGroupSystem = deserializer.ReadSerializable<IResourceGroupSystem>("Resource Group System", false);
-        }
-
         private void DrawDescription()
         {
             if (m_LabelStyle == null)
@@ -671,17 +710,26 @@ namespace XDay.WorldAPI.Decoration.Editor
             Handles.color = oldColor;
         }
 
-        private void ActionAddObject()
+        private void DrawUsePatternGUI()
+        {
+            EditorGUILayout.BeginHorizontal();
+            DrawPatternSelection();
+            DrawRenamePattern();
+            DrawDeletePattern();
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawAddObjectGUI()
         {
             if (m_CreateMode == ObjectCreateMode.Single)
             {
                 m_Rotation = m_RotationField.Render(m_Rotation, 50);
-                m_Scale = m_ScaleField.Render(m_Scale, 50);
+                m_Scale = m_ScaleField.Render(m_Scale, 25);
             }
 
             GUI.enabled = m_CreateMode == ObjectCreateMode.Multiple;
 
-            var shape = (GeometryType)m_GeometryPopup.Render((int)m_GeometryType, m_ShapeNames, 40);
+            var shape = (GeometryType)m_GeometryPopup.Render((int)m_GeometryType, m_ShapeNames, 25);
             SetGeometryType(shape);
 
             var enabled = true;
@@ -692,17 +740,17 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             var old = GUI.enabled;
             GUI.enabled = enabled;
-            m_CoordinateGenerateSetting.Count = m_ObjectCountField.Render(m_CoordinateGenerateSetting.Count, 40);
+            m_CoordinateGenerateSetting.Count = m_ObjectCountField.Render(m_CoordinateGenerateSetting.Count, 25);
             GUI.enabled = old;
 
             if (m_GeometryType == GeometryType.Circle)
             {
-                m_CoordinateGenerateSetting.CircleRadius = m_RadiusField.Render(m_CoordinateGenerateSetting.CircleRadius, 40);
+                m_CoordinateGenerateSetting.CircleRadius = m_RadiusField.Render(m_CoordinateGenerateSetting.CircleRadius, 25);
             }
             else if (m_GeometryType == GeometryType.Rectangle)
             {
-                m_CoordinateGenerateSetting.RectWidth = m_WidthField.Render(m_CoordinateGenerateSetting.RectWidth, 40);
-                m_CoordinateGenerateSetting.RectHeight = m_HeightField.Render(m_CoordinateGenerateSetting.RectHeight, 40);
+                m_CoordinateGenerateSetting.RectWidth = m_WidthField.Render(m_CoordinateGenerateSetting.RectWidth, 15);
+                m_CoordinateGenerateSetting.RectHeight = m_HeightField.Render(m_CoordinateGenerateSetting.RectHeight, 15);
             }
             else if (m_GeometryType == GeometryType.Line)
             {
@@ -711,8 +759,8 @@ namespace XDay.WorldAPI.Decoration.Editor
                     m_CoordinateGenerateSetting.LineEquidistant = m_ButtonEqualSpace.Active;
                 }
             }
-            m_CoordinateGenerateSetting.Space = m_SpaceField.Render(m_CoordinateGenerateSetting.Space, 40);
-            m_CoordinateGenerateSetting.BorderSize = m_BorderSizeField.Render(m_CoordinateGenerateSetting.BorderSize, 40);
+            m_CoordinateGenerateSetting.Space = m_SpaceField.Render(m_CoordinateGenerateSetting.Space, 25);
+            m_CoordinateGenerateSetting.BorderSize = m_BorderSizeField.Render(m_CoordinateGenerateSetting.BorderSize, 25);
 
             if (m_ButtonRandom.Render(true, GUI.enabled))
             {
@@ -726,8 +774,8 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
             if (m_ButtonDeleteObjects.Render(Inited))
             {
-                UndoSystem.NextGroup();
-                var objectIDs = QueryRootObjectSelection();
+                UndoSystem.NextGroupAndJoin();
+                var objectIDs = QueryRootObjectSelectionIDs();
                 foreach (var objectID in objectIDs)
                 {
                     UndoSystem.DestroyObject(QueryObjectUndo(objectID), DecorationDefine.REMOVE_DECORATION_NAME, ID);
@@ -744,7 +792,8 @@ namespace XDay.WorldAPI.Decoration.Editor
                     new ParameterWindow.Vector3Parameter("复制体坐标偏移", "", new Vector3(10, 0, 10)),
                 };
 
-                ParameterWindow.Open("复制物体", parameters, (p) => {
+                ParameterWindow.Open("复制物体", parameters, (p) =>
+                {
                     bool ok = ParameterWindow.GetVector3(p[0], out var offset);
                     if (ok)
                     {
@@ -778,6 +827,58 @@ namespace XDay.WorldAPI.Decoration.Editor
             ChangeOperation((Action)m_PopupOperation.Render((int)m_Action, m_ActionNames, 35));
         }
 
+        private void DrawPatternSelection()
+        {
+            QueryPatternNames();
+
+            var newIndex = m_PopupPattern.Render(m_ActivePatternIndex, m_PatternNames, 30);
+            if (newIndex != m_ActivePatternIndex)
+            {
+                SetActivePattern(newIndex);
+            }
+        }
+
+        private void SetActivePattern(int index)
+        {
+            if (m_ActivePatternIndex == index)
+            {
+                return;
+            }
+
+            var pattern = GetPattern(m_ActivePatternIndex);
+            if (pattern != null)
+            {
+                pattern.SetActive(false);
+            }
+            m_ActivePatternIndex = index;
+            pattern = GetPattern(m_ActivePatternIndex);
+            if (pattern != null)
+            {
+                pattern.SetActive(true);
+            }
+        }
+
+        private Pattern GetPattern(int index)
+        {
+            if (index >= 0 && index < m_Patterns.Count)
+            {
+                return m_Patterns[index];
+            }
+            return null;
+        }
+
+        private Pattern FindPattern(string name)
+        {
+            foreach (var pattern in m_Patterns)
+            {
+                if (pattern.Name == name)
+                {
+                    return pattern;
+                }
+            }
+            return null;
+        }
+
         private void DrawLODSelection()
         {
             QueryLODNames();
@@ -808,6 +909,85 @@ namespace XDay.WorldAPI.Decoration.Editor
                     return false;
                 });
             }
+        }
+
+        private void DrawCreatePattern()
+        {
+            if (m_ButtonCreatePattern.Render(Inited && (m_Action == Action.Select || m_Action == Action.EditLOD)))
+            {
+                var decorations = QueryRootObjectSelection();
+                if (decorations.Count > 0)
+                {
+                    UndoSystem.NextGroupAndJoin();
+                    var pattern = new Pattern(World.AllocateObjectID(), m_Patterns.Count, GetUniquePatternName("New Pattern"), decorations);
+                    UndoSystem.CreateObject(pattern, World.ID, "Create Decoration Pattern", ID);
+                }
+            }
+        }
+
+        private string GetUniquePatternName(string name)
+        {
+            var idx = 0;
+            while (true)
+            {
+                var newName = $"{name}_{idx}";
+                if (FindPattern(newName) == null)
+                {
+                    return newName;
+                }
+                ++idx;
+            }
+        }
+
+        private void DrawRenamePattern()
+        {
+            var pattern = GetPattern(m_ActivePatternIndex);
+            if (m_RenamePatternButton.Render(Inited && pattern != null))
+            {
+                RenamePattern(pattern);
+            }
+        }
+
+        private void DrawDeletePattern()
+        {
+            var activePattern = GetPattern(m_ActivePatternIndex);
+            if (m_DeletePatternButton.Render(Inited && activePattern != null))
+            {
+                UndoSystem.DestroyObject(activePattern, "Destroy Pattern", ID, 0);
+            }
+        }
+
+        private int GetPatternIndex(Pattern pattern)
+        {
+            for (var i = 0; i < m_Patterns.Count; ++i)
+            {
+                if (m_Patterns[i] == pattern)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private void RenamePattern(Pattern pattern)
+        {
+            var parameters = new List<ParameterWindow.Parameter>()
+                {
+                    new ParameterWindow.StringParameter("新名称", "", pattern.Name),
+                };
+            ParameterWindow.Open("修改集合名称", parameters, (p) =>
+            {
+                var ok = ParameterWindow.GetString(p[0], out var name);
+                if (ok)
+                {
+                    if (FindPattern(name) == null)
+                    {
+                        UndoSystem.SetAspect(pattern, DecorationDefine.PATTERN_NAME, IAspect.FromString(name), "Set Pattern Name", ID, UndoActionJoinMode.None);
+                        return true;
+                    }
+                }
+                return false;
+            });
         }
 
         private void DrawAdjustObjectHeight()
@@ -844,7 +1024,6 @@ namespace XDay.WorldAPI.Decoration.Editor
                         }
                     }
                 }
-                
             }
         }
 
@@ -908,6 +1087,10 @@ namespace XDay.WorldAPI.Decoration.Editor
                     DrawCreateRange();
                 }
             }
+            else if (m_Action == Action.UsePattern)
+            {
+                ActionCreateObjectFromPattern();
+            }
             else
             {
                 if (m_Action != Action.Select)
@@ -957,7 +1140,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                         UndoSystem.NextGroup();
                     }
 
-                    CreateObjects(new List<Vector3>() { worldPosition}, m_Rotation, m_Scale, false);
+                    CreateObjects(new List<Vector3>() { worldPosition }, m_Rotation, m_Scale, false);
                 }
             }
         }
@@ -1049,8 +1232,8 @@ namespace XDay.WorldAPI.Decoration.Editor
             var center = Helper.GUIRayCastWithXZPlane(evt.mousePosition, World.CameraManipulator.Camera);
 
             List<Vector3> coordinates = null;
-            if (evt.type == EventType.MouseDown && 
-                evt.alt == false && 
+            if (evt.type == EventType.MouseDown &&
+                evt.alt == false &&
                 evt.button == 0)
             {
                 if (Vector3.Distance(m_LastGenerationCenter, center) > m_MinSpace)
@@ -1085,7 +1268,8 @@ namespace XDay.WorldAPI.Decoration.Editor
             List<Vector3> coordinates = null;
             if (m_GeometryType == GeometryType.Polygon)
             {
-                m_PolygonTool.SceneUpdate(Color.green, (polygon) => {
+                m_PolygonTool.SceneUpdate(Color.green, (polygon) =>
+                {
                     m_LastOperation = new CoordinateGenerateOperation(polygon);
 
                     coordinates = GeneratePolygonCoordinates(polygon);
@@ -1094,7 +1278,8 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
             else if (m_GeometryType == GeometryType.Line)
             {
-                m_LineTool.SceneUpdate(Color.green, (start, end) => {
+                m_LineTool.SceneUpdate(Color.green, (start, end) =>
+                {
                     m_LastOperation = new CoordinateGenerateOperation(start, end);
 
                     coordinates = GenerateLineCoordinates(start, end);
@@ -1150,6 +1335,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             Select,
             EditLOD,
             CreateObject,
+            UsePattern,
             DeleteObject,
             CloneObject,
         }
@@ -1159,14 +1345,17 @@ namespace XDay.WorldAPI.Decoration.Editor
         private bool m_ClearOperation = false;
         private ImageButton m_ButtonRemoveObjectFromActiveLOD;
         private Popup m_PopupActiveLOD;
+        private Popup m_PopupPattern;
         private FloatField m_BorderSizeField;
         private ImageButton m_ButtonDeleteObjects;
+        private ImageButton m_RenamePatternButton;
+        private ImageButton m_DeletePatternButton;
         private ImageButton m_ButtonCloneObjects;
         private FloatField m_RadiusField;
         private Popup m_PopupOperation;
         private IntField m_ObjectCountField;
         private ImageButton m_ButtonSycnObjectTransforms;
-        private IResourceGroupSystem m_ResourceGroupSystem = IResourceGroupSystem.Create(false);
+        private IResourceGroupSystem m_ResourceGroupSystem;
         private ImageButton m_ButtonQueryObjectCountInActiveLOD;
         private ToggleImageButton m_ButtonRandom;
         private FloatField m_SpaceField;
@@ -1182,9 +1371,11 @@ namespace XDay.WorldAPI.Decoration.Editor
         private GUIStyle m_LabelStyle;
         private ImageButton m_ButtonAddObjectsToActiveLOD;
         private ImageButton m_ButtonAdjustObjectHeight;
+        private ImageButton m_ButtonCreatePattern;
         private List<UIControl> m_Controls;
         private SceneSelectionTool m_SceneSelectionTool = new();
         private string[] m_LODNames;
+        private string[] m_PatternNames;
         private Vector2 m_ScrollPos;
         private PolygonTool m_PolygonTool = new();
         private GeometryType m_GeometryType = GeometryType.Circle;
@@ -1209,9 +1400,9 @@ namespace XDay.WorldAPI.Decoration.Editor
             "选择",
             "编辑LOD",
             "创建物体",
+            "使用集合",
             "删除物体",
         };
     }
 }
 
-//XDay

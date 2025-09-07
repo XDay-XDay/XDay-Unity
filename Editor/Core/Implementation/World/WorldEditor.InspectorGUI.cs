@@ -305,7 +305,7 @@ namespace XDay.WorldAPI.Editor
                 m_PluginList = new Popup("", "", 200);
                 m_Controls.Add(m_PluginList);
 
-                m_VisibilityToggle = EditorWorldHelper.CreateToggleImageButton(true, "show.png", "显隐层");
+                m_VisibilityToggle = EditorWorldHelper.CreateToggleImageButton(true, "show.png", "显示/隐藏层");
                 m_Controls.Add(m_VisibilityToggle);
 
                 m_ResetWorld = EditorWorldHelper.CreateImageButton("reset.png", "重置地图");

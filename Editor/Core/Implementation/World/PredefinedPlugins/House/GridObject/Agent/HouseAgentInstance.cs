@@ -102,14 +102,14 @@ namespace XDay.WorldAPI.House.Editor
         }
 
         //在同一个房间内移动
-        public bool MoveInsideHouse(Vector2 guiScreenPoint, House house)
+        public void MoveInsideHouse(Vector2 guiScreenPoint, House house)
         {
             var world = WorldEditor.WorldManager.FirstWorld;
             var worldPosition = Helper.GUIRayCastWithXZPlane(guiScreenPoint, world.CameraManipulator.Camera, house.Position.y);
             var targetCoord = house.PositionToCoordinate(worldPosition);
             var endPos = house.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
             endPos.y = worldPosition.y;
-            return m_Agent.MoveTo(endPos);
+            m_Agent.MoveTo(endPos);
         }
 
         public bool CanMove()
@@ -154,7 +154,7 @@ namespace XDay.WorldAPI.House.Editor
         }
 
         [SerializeField]
-        int m_TemplateID;
+        private int m_TemplateID;
         private HouseAgentTemplate m_Template;
         private IGridNavigationAgent m_Agent;
         private Animator m_Animator;

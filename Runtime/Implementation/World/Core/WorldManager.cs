@@ -25,9 +25,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using XDay.InputAPI;
 using XDay.AssetAPI;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
+    [Preserve]
     public partial class WorldManager : IWorldManager
     {
         public IWorld FirstWorld => m_Worlds.Count > 0 ? m_Worlds[0] : null;

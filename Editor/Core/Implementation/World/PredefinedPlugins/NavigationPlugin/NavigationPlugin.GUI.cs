@@ -48,14 +48,18 @@ namespace XDay.WorldAPI.Navigation.Editor
                         var worldPosition = Helper.GUIRayCastWithXZPlane(e.mousePosition, World.CameraManipulator.Camera);
                         bool ready = m_PathFinder.Set(worldPosition);
                         SceneView.RepaintAll();
-                        if (ready && m_LastBuiltResult != null)
+                        if (ready /*&& m_LastBuiltResult != null*/)
                         {
+                            List<Vector3> path = new();
+#if false
                             m_NavigationSystem = new();
                             m_NavigationSystem.Init(m_LastBuiltResult.MeshVertices, m_LastBuiltResult.MeshIndices);
-                            List<Vector3> path = new();
                             m_NavigationSystem.FindPath(m_PathFinder.Start, m_PathFinder.End, path, null);
                             m_DrawPath.SetVertices(path);
                             m_Renderer.Debugger.Init(m_NavigationSystem);
+#else
+                            m_NavMap.FindPath(m_PathFinder.Start, m_PathFinder.End, path);
+#endif
                         }
                     }
                 }
@@ -64,6 +68,8 @@ namespace XDay.WorldAPI.Navigation.Editor
 
                 HandleUtility.AddDefaultControl(0);
             }
+
+            m_NavMap?.Draw();
         }
 
         protected override void SceneViewControlInternal(Rect sceneViewRect)

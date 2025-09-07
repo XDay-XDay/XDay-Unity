@@ -52,6 +52,11 @@ namespace XDay.CameraAPI
         {
             return value |= ((BehaviourMask)(1 << (int)type));
         }
+
+        public static BehaviourMask Remove(this BehaviourMask value, BehaviourType type)
+        {
+            return value &= ~((BehaviourMask)(1 << (int)type));
+        }
     }
 
     internal enum BehaviourState

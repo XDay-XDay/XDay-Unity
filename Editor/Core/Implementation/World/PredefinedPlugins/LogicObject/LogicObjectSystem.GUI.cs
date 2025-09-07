@@ -457,76 +457,6 @@ namespace XDay.WorldAPI.LogicObject.Editor
             }
         }
 
-        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
-        {
-            SyncObjectTransforms();
-
-            base.EditorSerialize(serializer, label, converter);
-
-            serializer.WriteInt32(m_Version, "LogicObjectSystem.Version");
-
-            serializer.WriteInt32((int)m_CreateMode, "Create Mode");
-            serializer.WriteString(m_Name, "Name");
-            serializer.WriteSingle(m_RemoveRange, "Remove Range");
-            serializer.WriteBounds(m_Bounds, "Bounds");
-
-            serializer.WriteSingle(m_CoordinateGenerateSetting.CircleRadius, "Circle Radius");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.RectWidth, "Rect Width");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.RectHeight, "Rect Height");
-            serializer.WriteInt32(m_CoordinateGenerateSetting.Count, "Object Count");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.Space, "Space");
-            serializer.WriteBoolean(m_CoordinateGenerateSetting.Random, "Random");
-            serializer.WriteSingle(m_CoordinateGenerateSetting.BorderSize, "Border Size");
-            serializer.WriteBoolean(m_CoordinateGenerateSetting.LineEquidistant, "Line Equidistant");
-
-            //sync object names
-            foreach (var group in m_Groups)
-            {
-                foreach (var obj in group.Objects)
-                {
-                    var gameObject = m_Renderer.QueryObject(obj.ID);
-                    obj.Name = gameObject.name;
-                }
-            }
-
-            serializer.WriteList(m_Groups, "Groups", (group, index) =>
-            {
-                serializer.WriteSerializable(group, $"Group {index}", converter, false);
-            });
-
-            serializer.WriteSerializable(m_ResourceDescriptorSystem, "Resource Descriptor System", converter, false);
-            serializer.WriteSerializable(m_ResourceGroupSystem, "Resource Group System", converter, false);
-        }
-
-        public override void EditorDeserialize(IDeserializer deserializer, string label)
-        {
-            base.EditorDeserialize(deserializer, label);
-
-            var version = deserializer.ReadInt32("LogicObjectSystem.Version");
-
-            m_CreateMode = (ObjectCreateMode)deserializer.ReadInt32("Create Mode");
-            m_Name = deserializer.ReadString("Name");
-            m_RemoveRange = deserializer.ReadSingle("Remove Range");
-            m_Bounds = deserializer.ReadBounds("Bounds");
-
-            m_CoordinateGenerateSetting.CircleRadius = deserializer.ReadSingle("Circle Radius");
-            m_CoordinateGenerateSetting.RectWidth = deserializer.ReadSingle("Rect Width");
-            m_CoordinateGenerateSetting.RectHeight = deserializer.ReadSingle("Rect Height");
-            m_CoordinateGenerateSetting.Count = deserializer.ReadInt32("Object Count");
-            m_CoordinateGenerateSetting.Space = deserializer.ReadSingle("Space");
-            m_CoordinateGenerateSetting.Random = deserializer.ReadBoolean("Random");
-            m_CoordinateGenerateSetting.BorderSize = deserializer.ReadSingle("Border Size");
-            m_CoordinateGenerateSetting.LineEquidistant = deserializer.ReadBoolean("Line Equidistant");
-
-            m_Groups = deserializer.ReadList("Groups", (index) =>
-            {
-                return deserializer.ReadSerializable<LogicObjectGroup>($"Group {index}", false);
-            });
-
-            m_ResourceDescriptorSystem = deserializer.ReadSerializable<EditorResourceDescriptorSystem>("Resource Descriptor System", false);
-            m_ResourceGroupSystem = deserializer.ReadSerializable<IResourceGroupSystem>("Resource Group System", false);
-        }
-
         private void DrawDescription()
         {
             if (m_LabelStyle == null)
@@ -1042,17 +972,6 @@ namespace XDay.WorldAPI.LogicObject.Editor
 
         private void OnSelectionChanged()
         {
-            EditorApplication.delayCall += () =>
-            {
-                EditorWindow.GetWindow<WorldEditorEntrance>().Repaint();
-                //// 强制所有Inspector窗口刷新
-                //var inspectorType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.InspectorWindow");
-                //var inspectors = Resources.FindObjectsOfTypeAll(inspectorType);
-                //foreach (var inspector in inspectors)
-                //{
-                //    (inspector as EditorWindow)?.Repaint();
-                //}
-            };
         }
 
         private void OnAddGroupProperty(LogicObjectGroup group, INamedAspect property)
@@ -1095,7 +1014,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         private Popup m_GroupsPopup;
         private IntField m_ObjectCountField;
         private ImageButton m_ButtonSycnObjectTransforms;
-        private IResourceGroupSystem m_ResourceGroupSystem = IResourceGroupSystem.Create(false);
+        private IResourceGroupSystem m_ResourceGroupSystem;
         private ImageButton m_ButtonQueryObjectCountInActiveGroup;
         private ImageButton m_AddGroupButton;
         private ImageButton m_RemoveGroupButton;

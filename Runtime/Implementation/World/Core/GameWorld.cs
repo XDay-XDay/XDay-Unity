@@ -24,11 +24,13 @@
 using XDay.CameraAPI;
 using UnityEngine;
 using XDay.AssetAPI;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
     public delegate void CameraAltitudeChangeCallback(float oldAltitude, float newAltitude);
 
+    [Preserve]
     internal partial class GameWorld : World
     {
         public event LODChangeCallback EventLODChanged;
@@ -42,7 +44,7 @@ namespace XDay.WorldAPI
         }
 
         public GameWorld(IWorldManager worldManager, WorldSetup setup, IAssetLoader assetLoader, ICameraManipulator manipulator, ISerializableFactory serializableFactory, WorldPluginLoader pluginLoader, float width = 0, float height = 0)
-            : base(worldManager, setup, new SLGCameraVisibleAreaCalculator(), assetLoader, manipulator, serializableFactory, width, height)
+            : base(worldManager, setup, new SLGCameraVisibleAreaCalculator(manipulator == null ? false : manipulator.Direction == CameraDirection.XY), assetLoader, manipulator, serializableFactory, width, height)
         {
             m_PluginLoader = pluginLoader;
         }

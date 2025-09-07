@@ -129,6 +129,14 @@ namespace XDay.WorldAPI.House.Editor
                 CreateHouseInstance(house);
             }
 
+            if (GUILayout.Button("重置大小", GUILayout.MaxWidth(70)))
+            {
+                if (EditorUtility.DisplayDialog("注意", "确定重新计算大小?重置后格子需要重刷", "确定", "取消"))
+                {
+                    house.GetLayer<HouseWalkableLayer>().Resize(house.HorizontalGridCount, house.VerticalGridCount);
+                }
+            }
+
             if (GUILayout.Button(new GUIContent("删除", "删除房间模板"), GUILayout.MaxWidth(35)))
             {
                 if (EditorUtility.DisplayDialog("注意", "确定删除房间模板?", "确定", "取消"))

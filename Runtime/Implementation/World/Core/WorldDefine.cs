@@ -37,6 +37,9 @@ namespace XDay.WorldAPI
         public const string EDITOR_ONLY_TAG = "EditorOnly";
         public const string WORLD_EDITOR_NAME = "XDay World Editor";
         public const string LAST_OPEN_FILE_PATH = "Last Open File Path";
+        public const string SELECTED_PLUGIN_INDEX = "Selected Plugin Index";
+        public const string SELECTED_RESOURCE_GROUP_INDEX = "Selected Resource Group Index";
+        public const string RESOURCE_GROUP_SELECTED_ITEM_INDEX = "Resource Group Selected Item Index";
     }
 }
 

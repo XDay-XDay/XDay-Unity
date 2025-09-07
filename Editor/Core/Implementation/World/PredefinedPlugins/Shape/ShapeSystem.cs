@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -47,6 +46,8 @@ namespace XDay.WorldAPI.Shape.Editor
         }
         public override Bounds Bounds => m_Bounds;
         public override string TypeName => "EditorShapeSystem";
+        public bool ShowVertexIndex => m_ShowVertexIndex;
+        public float VertexDisplaySize => m_VertexDisplaySize;
 
         public ShapeSystem()
         {
@@ -62,8 +63,6 @@ namespace XDay.WorldAPI.Shape.Editor
         protected override void InitInternal()
         {
             Selection.selectionChanged += OnSelectionChanged;
-
-            InitBuilder();
 
             foreach (var kv in m_Shapes)
             {
@@ -127,6 +126,18 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             if (!base.SetAspect(objectID, name, aspect))
             {
+                if (name == ShapeDefine.SHAPE_VERTEX_INDEX_NAME)
+                {
+                    m_ShowVertexIndex = aspect.GetBoolean();
+                    return true;
+                }
+
+                if (name == ShapeDefine.SHAPE_VERTEX_DISPLAY_SIZE)
+                {
+                    m_VertexDisplaySize = aspect.GetSingle();
+                    return true;
+                }
+
                 var obj = World.QueryObject<ShapeObject>(objectID);
                 if (obj != null)
                 {
@@ -146,6 +157,16 @@ namespace XDay.WorldAPI.Shape.Editor
             if (aspect != null)
             {
                 return aspect;
+            }
+
+            if (name == ShapeDefine.SHAPE_VERTEX_DISPLAY_SIZE)
+            {
+                return IAspect.FromSingle(m_VertexDisplaySize);
+            }
+
+            if (name == ShapeDefine.SHAPE_VERTEX_INDEX_NAME)
+            {
+                return IAspect.FromBoolean(m_ShowVertexIndex);
             }
 
             var obj = World.QueryObject<ShapeObject>(objectID);
@@ -169,23 +190,75 @@ namespace XDay.WorldAPI.Shape.Editor
             m_Renderer.Create(shape);
         }
 
-        private bool DestroyObject(int objectID)
+        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
+        {
+            base.EditorSerialize(serializer, label, converter);
+
+            serializer.WriteInt32(m_Version, "ShapeSystem.Version");
+            serializer.WriteString(m_Name, "Name");
+            serializer.WriteBounds(m_Bounds, "Bounds");
+            serializer.WriteBoolean(m_ShowVertexIndex, "Show Vertex Index");
+            serializer.WriteSingle(m_VertexDisplaySize, "Vertex Display Size");
+
+            var allObjects = new List<ShapeObject>();
+            foreach (var p in m_Shapes)
+            {
+                allObjects.Add(p.Value);
+            }
+
+            serializer.WriteList(allObjects, "Objects", (obj, index) =>
+            {
+                serializer.WriteSerializable(obj, $"Object {index}", converter, false);
+            });
+        }
+
+        public override void EditorDeserialize(IDeserializer deserializer, string label)
+        {
+            base.EditorDeserialize(deserializer, label);
+
+            deserializer.ReadInt32("ShapeSystem.Version");
+
+            m_Name = deserializer.ReadString("Name");
+            m_Bounds = deserializer.ReadBounds("Bounds");
+            m_ShowVertexIndex = deserializer.ReadBoolean("Show Vertex Index");
+            m_VertexDisplaySize = deserializer.ReadSingle("Vertex Display Size");
+
+            var allObjects = deserializer.ReadList("Objects", (index) =>
+            {
+                return deserializer.ReadSerializable<ShapeObject>($"Object {index}", false);
+            });
+            foreach (var obj in allObjects)
+            {
+                m_Shapes.Add(obj.ID, obj);
+            }
+        }
+
+        private bool DestroyObject(int shapeID)
         {
             foreach (var shape in m_Shapes.Values)
             {
-                if (shape.ID == objectID)
+                if (shape.ID == shapeID)
                 {
                     shape.Uninit();
                     m_Shapes.Remove(shape.ID);
-                    if (objectID == m_ActiveShapeID)
-                    {
-                        SetActiveShape(0);
-                    }
+                    RemovePickInfo(shapeID);
                     return true;
                 }
             }
-            Debug.Assert(false, $"Destroy object {objectID} failed!");
+            Debug.Assert(false, $"Destroy object {shapeID} failed!");
             return false;
+        }
+
+        private void RemovePickInfo(int shapeID)
+        {
+            for (var i = m_PickedShapes.Count - 1; i >= 0; i--)
+            {
+                if (m_PickedShapes[i].ShapeID == shapeID)
+                {
+                    m_PickedShapes.RemoveAt(i);
+                    break;
+                }
+            }
         }
 
         private ShapeObject CloneObject(int id, int objectIndex, ShapeObject obj)
@@ -214,6 +287,8 @@ namespace XDay.WorldAPI.Shape.Editor
         private ShapeSystemRenderer m_Renderer;
         private Bounds m_Bounds;
         private Dictionary<int, ShapeObject> m_Shapes = new();
+        private float m_VertexDisplaySize = 5f;
+        private bool m_ShowVertexIndex = false;
         private const int m_Version = 1;
     }
 }

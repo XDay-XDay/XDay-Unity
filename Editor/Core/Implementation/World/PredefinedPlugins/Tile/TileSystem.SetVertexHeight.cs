@@ -213,7 +213,7 @@ namespace XDay.WorldAPI.Tile.Editor
         //计算这个tile的uv
         void CalculateTileUV(TileObject tile)
         {
-            if (tile == null)
+            if (tile == null || string.IsNullOrEmpty(tile.AssetPath))
             {
                 return;
             }

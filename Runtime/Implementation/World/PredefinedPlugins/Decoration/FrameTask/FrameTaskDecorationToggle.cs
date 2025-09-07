@@ -41,15 +41,16 @@ namespace XDay.WorldAPI.Decoration
 
         public void Reset()
         {
-            m_PrevLOD = -1;
+            m_PrevOrNextLOD = -1;
             m_Type = Type.Undefined;
             m_NextObjectIndex = 0;
         }
 
-        public void Init(int prevLOD, Type type)
+        public void Init(int prevOrNextLOD, Type type, bool becomeVisible)
         {
             Debug.Assert(type != Type.Undefined);
-            m_PrevLOD = prevLOD;
+            m_PrevOrNextLOD = prevOrNextLOD;
+            m_BecomeVisible = becomeVisible;
             if (m_Type != type)
             {
                 var gridData = m_System.GetGrid(m_GridX, m_GridY);
@@ -88,7 +89,7 @@ namespace XDay.WorldAPI.Decoration
                 var obj = m_System.QueryVisibleObject(m_GridX, m_GridY, m_LOD, m_NextObjectIndex);
                 if (obj != null)
                 {
-                    m_System.DestroyDecoration(obj, m_PrevLOD, m_LOD);
+                    m_System.DestroyDecoration(obj, m_PrevOrNextLOD, m_LOD, gridData.ActiveStateCounter == 0);
                 }
                 ++m_NextObjectIndex;
                 if (watch.ElapsedSeconds > GameDefine.MAX_TASK_TIME_SECONDS_PER_FRAME)
@@ -105,7 +106,7 @@ namespace XDay.WorldAPI.Decoration
             var objectCount = gridData.GetObjectCount(m_LOD);
             while (m_NextObjectIndex < objectCount)
             {
-                m_System.CreateDecoration(m_NextObjectIndex, m_GridX, m_GridY, m_PrevLOD, m_LOD);
+                m_System.CreateDecoration(m_NextObjectIndex, m_GridX, m_GridY, m_PrevOrNextLOD, m_LOD, m_BecomeVisible);
                 ++m_NextObjectIndex;
                 if (watch.ElapsedSeconds > GameDefine.MAX_TASK_TIME_SECONDS_PER_FRAME)
                 {
@@ -126,7 +127,9 @@ namespace XDay.WorldAPI.Decoration
         private Type m_Type = Type.Undefined;
         private readonly DecorationSystem m_System;
         private readonly int m_ObjectCount;
-        private int m_PrevLOD;
+        private int m_PrevOrNextLOD;
+        //为true表示切换LOD时Tile从不可见到可见
+        private bool m_BecomeVisible;
         private readonly int m_LOD;
         private int m_NextObjectIndex = 0;
         private readonly int m_GridX;

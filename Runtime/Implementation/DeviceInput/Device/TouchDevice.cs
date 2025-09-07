@@ -111,6 +111,11 @@ namespace XDay.InputAPI
             return m_SceneTouches[index];
         }
 
+        public ITouch GetTouch(int index)
+        {
+            return m_ActiveTouches[index];
+        }
+
         private bool UpdateTouch(int index, out Vector2 touchPos)
         {
             DeviceTouch deviceTouch = null;
@@ -176,6 +181,8 @@ namespace XDay.InputAPI
                 {
                     m_TouchesNotStartFromUI.Add(deviceTouch);
                 }
+
+                m_ActiveTouches.Add(deviceTouch);
             }
             else
             {
@@ -220,6 +227,7 @@ namespace XDay.InputAPI
             m_SceneTouchesNotStartFromUI.Clear();
             m_UITouches.Clear();
             m_TouchesNotStartFromUI.Clear();
+            m_ActiveTouches.Clear();
 
             for (var i = 0; i < m_PendingTouchIndices.Count; i++)
             {
@@ -237,6 +245,7 @@ namespace XDay.InputAPI
         private List<DeviceTouch> m_TouchesNotStartFromUI = new();
         private List<DeviceTouch> m_SceneTouches = new();
         private List<DeviceTouch> m_SceneTouchesNotStartFromUI = new();
+        private List<DeviceTouch> m_ActiveTouches = new();
         private List<DeviceTouch> m_Touches = new();
         private bool m_AnySceneTouchBegin = false;
     }

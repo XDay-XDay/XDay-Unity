@@ -22,9 +22,11 @@
  */
 
 using System.Collections.Generic;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
+    [Preserve]
     public class ResourceDescriptorSystem : IResourceDescriptorSystem
     {
         public virtual string TypeName => "ResourceDescriptorSystem";
@@ -42,6 +44,10 @@ namespace XDay.WorldAPI
                 if (d.IsValid)
                 {
                     m_Descriptors.TryAdd(d.GetPath(0), d);
+                }
+                else
+                {
+                    d.Uninit();
                 }
             }
             m_UninitedDescriptors = null;
@@ -90,4 +96,3 @@ namespace XDay.WorldAPI
     }
 }
 
-//XDay

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XDay.AssetAPI;
 using System;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
@@ -45,6 +46,7 @@ namespace XDay.WorldAPI
         OnlyInEditor,
     }
 
+    [Preserve]
     public interface IWorldObject : ISerializable
     {
         int ID { get; }
@@ -64,6 +66,7 @@ namespace XDay.WorldAPI
 
     public delegate void LODChangeCallback(int oldLOD, int newLOD);
 
+    [Preserve]
     public interface IWorld
     {
         int ID { get; }
@@ -87,6 +90,7 @@ namespace XDay.WorldAPI
         T QueryObject<T>(int objectID) where T : class, IWorldObject;
         T QueryPlugin<T>() where T : class, IWorldPlugin;
         T QueryPlugin<T>(string name) where T : class, IWorldPlugin;
+        int QueryPluginIndex(IWorldPlugin plugin);
         List<T> QueryPlugins<T>() where T : class, IWorldPlugin;
         IWorldPlugin GetPlugin(int index);
         bool HasPlugin(System.Type type);
@@ -118,6 +122,7 @@ namespace XDay.WorldAPI
         Vector2 ExpandSize { get; set; }
 
         void Update(Camera camera);
+        Rect GetVisibleAreas(Camera camera);
         void DebugDraw();
     }
 
@@ -147,6 +152,7 @@ namespace XDay.WorldAPI
         int QueryLODGroup(int lod);
     }
 
+    [Preserve]
     public interface IResourceDescriptorSystem : ISerializable
     {
         void Init(IWorld world);

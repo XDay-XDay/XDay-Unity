@@ -35,6 +35,7 @@ namespace XDay.WorldAPI.Shape.Editor
         public const string SCALE_NAME = "Shape Scale";
         public const string POSITION_NAME = "Shape Position";
         public const string COLOR_NAME = "Shape Color";
+        public const string VERTEX_POSITION_NAME = "Vertex Position";
     }
 }
 

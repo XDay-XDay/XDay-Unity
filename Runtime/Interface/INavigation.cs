@@ -46,6 +46,8 @@ namespace XDay.NavigationAPI
             return new GridBasedAStarPathFinder(taskSystem, gridData, neighbourCount);
         }
 
+        IGridData GridData { get; }
+
         UniTask CalculatePathAsync(Vector3 source, 
             Vector3 target, 
             List<Vector3> path, 
@@ -103,20 +105,29 @@ namespace XDay.NavigationAPI
     {
         static IGridNavigationAgent Create(GameObject overrideGameObject, Transform parent, Vector3 position, Quaternion rotation)
         {
-            return new GridBasedNavAgent(overrideGameObject, parent, position, rotation);
+            return new GridBasedNavAgent(true, overrideGameObject, parent, position, rotation);
         }
 
+        static IGridNavigationAgent Create(Vector3 position, Quaternion rotation)
+        {
+            return new GridBasedNavAgent(false, null, null, position, rotation);
+        }
+
+        event Action EventStartMove; 
+        event Action EventPositionChange; 
+        event Action EventStopMove; 
         bool IsMoving { get; }
-        IGridBasedPathFinder PathFinder { set; get; }
+        IGridBasedPathFinder PathFinder { get; set; }
         float MoveSpeed { get; set; }
         float RotateSpeed { get; set; }
-        event Action EventStartMove; 
-        event Action EventStopMove; 
+        Vector3 Position { get; set; }
+        Quaternion Rotation { get; set; }
 
         void OnDestroy();
         void Update(float dt);
-        bool MoveTo(Vector3 target);
+        void MoveTo(Vector3 target);
         void MoveTo(List<Vector3> path);
+        void Stop();
     }
 }
 

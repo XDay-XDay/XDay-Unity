@@ -23,12 +23,14 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
     public delegate void LODCountChangeCallback(int oldCount, int newCount);
 
     [XDaySerializableClass("PluginLODSystem")]
+    [Preserve]
     internal partial class PluginLODSystem : IPluginLODSystem
     {
         public event LODChangeCallback EventLODChanged;
@@ -51,7 +53,7 @@ namespace XDay.WorldAPI
             m_LODs = new(lodCount);
             for (var i = 0; i < lodCount; ++i)
             {
-                m_LODs.Add(new PluginLODSetup($"LOD {i}", i * 100, 0));
+                m_LODs.Add(new PluginLODSetup($"LOD {i}", i * 100, 0, i));
             }
         }
 
@@ -75,7 +77,7 @@ namespace XDay.WorldAPI
 
         public void AddLOD(string name, float altitude, float tolerance)
         {
-            m_LODs.Add(new PluginLODSetup(name, altitude, tolerance));
+            m_LODs.Add(new PluginLODSetup(name, altitude, tolerance, m_LODs.Count));
         }
 
         public bool ValidateLODName()
@@ -207,6 +209,11 @@ namespace XDay.WorldAPI
             });
         }
 
+        public int GetRenderLOD(int curLOD)
+        {
+            return m_LODs[curLOD].RenderLOD;
+        }
+
         private void SetLODCountInternal(int newCount)
         {
             var oldCount = m_LODs.Count;
@@ -223,7 +230,7 @@ namespace XDay.WorldAPI
             {
                 for (var i = 0; i < oldCount; ++i)
                 {
-                    newLODs[i] = new PluginLODSetup(m_LODs[i].Name, m_LODs[i].Altitude, m_LODs[i].Tolerance);
+                    newLODs[i] = new PluginLODSetup(m_LODs[i].Name, m_LODs[i].Altitude, m_LODs[i].Tolerance, m_LODs[i].RenderLOD);
                 }
 
                 var prevLODAltitude = 0.0f;
@@ -236,7 +243,7 @@ namespace XDay.WorldAPI
                 for (var i = 0; i < addedCount; ++i)
                 {
                     var lod = oldCount + i;
-                    newLODs[lod] = new PluginLODSetup(worldLODSystem.GetLODName(lod), prevLODAltitude + 100, 0);
+                    newLODs[lod] = new PluginLODSetup(worldLODSystem.GetLODName(lod), prevLODAltitude + 100, 0, lod);
                     prevLODAltitude = newLODs[lod].Altitude;
                 }
             }
@@ -244,7 +251,7 @@ namespace XDay.WorldAPI
             {
                 for (var i = 0; i < newCount; ++i)
                 {
-                    newLODs[i] = new PluginLODSetup(m_LODs[i].Name, m_LODs[i].Altitude, m_LODs[i].Tolerance);
+                    newLODs[i] = new PluginLODSetup(m_LODs[i].Name, m_LODs[i].Altitude, m_LODs[i].Tolerance, m_LODs[i].RenderLOD);
                 }
             }
 

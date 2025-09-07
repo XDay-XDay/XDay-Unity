@@ -155,20 +155,20 @@ namespace XDay.InputAPI
         /// <param name="camera">camera</param>
         /// <param name="enableRotate">whether rotation is enabled</param>
         /// <returns></returns>
-        IPinchMotion CreatePinchMotion(float minHeight, float maxHeight, float range, Camera camera, bool enableRotate);
+        IPinchMotion CreatePinchMotion(float minHeight, float maxHeight, float range, Camera camera, bool enableRotate, DeviceTouchType touchType = DeviceTouchType.TouchNotStartFromUI);
 
         /// <summary>
         /// create a mouse scroll gesture motion
         /// </summary>
         /// <returns></returns>
-        IMouseScrollMotion CreateMouseScrollMotion();
+        IMouseScrollMotion CreateMouseScrollMotion(DeviceTouchType touchType = DeviceTouchType.Configurable);
 
         /// <summary>
         /// create a long press gesture motion
         /// </summary>
         /// <param name="pressDuration">press time when long press action should be triggered</param>
         /// <returns></returns>
-        ILongPressMotion CreateLongPressMotion(float pressDuration);
+        ILongPressMotion CreateLongPressMotion(float pressDuration, DeviceTouchType touchType = DeviceTouchType.Configurable);
 
         /// <summary>
         /// create inertial drag gesture motion
@@ -176,27 +176,27 @@ namespace XDay.InputAPI
         /// <param name="validTouchName">valid button</param>
         /// <param name="camera">camera</param>
         /// <returns></returns>
-        IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Plane plane, Camera camera);
+        IInertialDragMotion CreateInertialDragMotion(TouchID validTouchName, Plane plane, float moveThreshold, Camera camera, DeviceTouchType touchType = DeviceTouchType.Configurable);
 
         /// <summary>
         /// create a one finger scroll gesture motion
         /// </summary>
         /// <param name="validInterval"></param>
         /// <returns></returns>
-        IScrollMotion CreateScrollMotion(float validInterval = 0.2f);
+        IScrollMotion CreateScrollMotion(float validInterval, DeviceTouchType touchType = DeviceTouchType.UITouch);
 
         /// <summary>
         /// create a double click gesture motion
         /// </summary>
         /// <param name="validClickInterval">min time interval when double click take effects</param>
         /// <returns></returns>
-        IDoubleClickMotion CreateDoubleClickMotion(float validClickInterval);
+        IDoubleClickMotion CreateDoubleClickMotion(float validClickInterval, DeviceTouchType touchType = DeviceTouchType.Configurable);
 
         /// <summary>
         /// create a single click gesture motion
         /// </summary>
         /// <returns></returns>
-        IClickMotion CreateClickMotion();
+        IClickMotion CreateClickMotion(float moveThreshold, DeviceTouchType touchType = DeviceTouchType.Configurable);
 
         /// <summary>
         /// create a drag gesture motion
@@ -204,7 +204,7 @@ namespace XDay.InputAPI
         /// <param name="validTouchName"></param>
         /// <param name="touchMovingThreshold"></param>
         /// <returns></returns>
-        IDragMotion CreateDragMotion(TouchID validTouchName, float touchMovingThreshold);
+        IDragMotion CreateDragMotion(TouchID validTouchName, float touchMovingThreshold, DeviceTouchType touchType = DeviceTouchType.TouchNotStartFromUI);
 
         /// <summary>
         /// set touch device type
@@ -223,6 +223,7 @@ namespace XDay.InputAPI
         ITouch GetConfigurableTouch(int index);
         ITouch GetTouchNotStartFromUI(int index);
         ITouch GetUITouch(int index);
+        ITouch GetTouch(int index);
         TouchID QueryTouchID(int touchID);
 
         void Update();
@@ -294,6 +295,16 @@ namespace XDay.InputAPI
         End,
     }
 
+    public enum DeviceTouchType
+    {
+        SceneTouch,
+        UITouch,
+        Touch,
+        TouchNotStartFromUI,
+        SceneTouchNotStartFromUI,
+        Configurable,
+    }
+
     /// <summary>
     /// motion base interface
     /// </summary>
@@ -306,8 +317,8 @@ namespace XDay.InputAPI
         /// add triggers when motion pattern match
         /// </summary>
         /// <param name="trigger"></param>
-        void AddMatchCallback(Action<IMotion, MotionState> trigger);
-        void RemoveMatchCallback(Action<IMotion, MotionState> trigger);
+        void AddMatchCallback(Func<IMotion, MotionState, bool> trigger, int priority = 0);
+        void RemoveMatchCallback(Func<IMotion, MotionState, bool> trigger);
     }
 
     /// <summary>

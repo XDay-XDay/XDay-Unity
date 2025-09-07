@@ -36,7 +36,7 @@ namespace XDay.WorldAPI.House.Editor
         public override bool IsActive => m_Enabled;
         public override string TypeName => "EditorHouse";
         public IEditorResourceDescriptor ResourceDescriptor => m_ResourceDescriptor.ToObject<IEditorResourceDescriptor>();
-        public GameObject Prefab => AssetDatabase.LoadAssetAtPath<GameObject>(GetPath());
+        public GameObject Prefab => AssetDatabase.LoadAssetAtPath<GameObject>(GetPath(0));
         public GameObject Root => m_Root;
         public GameObject InteractivePointRoot => m_InteractivePointRoot;
         public GameObject TeleporterRoot => m_TeleporterRoot;
@@ -55,7 +55,15 @@ namespace XDay.WorldAPI.House.Editor
                 return bounds;
             }
         }
-        public Bounds WorldBounds => m_Collider.bounds;
+        public Bounds WorldBounds
+        {
+            get
+            {
+                Vector3 size = Vector3.Scale(m_Root.transform.lossyScale, m_Collider.size);
+                Vector3 center = m_Root.transform.position + m_Root.transform.TransformVector(m_Collider.center);
+                return new Bounds(center, size);
+            }
+        }
         public override bool AllowUndo => false;
         public string Name 
         {
@@ -69,7 +77,14 @@ namespace XDay.WorldAPI.House.Editor
                 }
             }
         }
-        public float WorldHeight => m_Collider.bounds.min.y + m_GridHeight;
+        public float WorldHeight
+        {
+            get
+            {
+                var bounds = Helper.CalculateBoxColliderWorldBounds(m_Collider);
+                return bounds.min.y + m_GridHeight;
+            }
+        }
         public float GridHeight => m_GridHeight;
         public float GridSize => m_GridSize;
         public Quaternion RotationInverse => Quaternion.Inverse(Rotation);
@@ -133,15 +148,10 @@ namespace XDay.WorldAPI.House.Editor
             m_AgentRoot = CreateItemRoot("机器人");
             m_InteractivePointRoot = CreateItemRoot("交互点");
             m_TeleporterRoot = CreateItemRoot("传送点");
-            m_Collider = m_Root.transform.GetComponentInChildren<UnityEngine.BoxCollider>();
-            Debug.Assert(m_Collider != null, $"房间{m_Model.name}没有BoxCollider");
-            if (m_Collider == null)
-            {
-                m_Collider = m_Root.AddComponent<UnityEngine.BoxCollider>();
-            }
-            Physics.SyncTransforms();
-            var horizontalGridCount = Mathf.CeilToInt(m_Collider.size.x / m_GridSize);
-            var verticalGridCount = Mathf.CeilToInt(m_Collider.size.z / m_GridSize);
+
+            var bounds = Helper.CalculateBoxColliderWorldBounds(m_Collider);
+            var horizontalGridCount = Mathf.CeilToInt(Mathf.Abs(bounds.size.x) / m_GridSize);
+            var verticalGridCount = Mathf.CeilToInt(Mathf.Abs(bounds.size.z) / m_GridSize);
             m_Grid = new HouseGrid("House Grid", horizontalGridCount, verticalGridCount, m_GridSize, m_Root.transform, m_GridHeight + m_LayerOffset, GetOffset())
             {
                 IsLineActive = m_ShowGrid
@@ -156,7 +166,7 @@ namespace XDay.WorldAPI.House.Editor
             var offset = GetOffset();
             foreach (var layer in m_Layers)
             {
-                layer.Initialize(m_Root.transform, new Vector3(offset.x, offset.y + m_GridHeight, offset.z));
+                layer.Initialize(m_Root.transform, new Vector3(offset.x, offset.y + m_GridHeight, offset.z), false);
             }
             GetLayer<HouseWalkableLayer>().IsActive = m_ShowWalkableLayer;
 
@@ -188,9 +198,15 @@ namespace XDay.WorldAPI.House.Editor
 
         private void CreateModel()
         {
-            m_Model = World.AssetLoader.LoadGameObject(GetPath());
-            Helper.HideGameObject(m_Model);
+            m_Model = World.AssetLoader.LoadGameObject(GetPath(0));
             m_Model.transform.SetParent(m_Root.transform, false);
+            m_Collider = m_Root.transform.GetComponentInChildren<UnityEngine.BoxCollider>();
+            Debug.Assert(m_Collider != null, $"房间{m_Model.name}没有BoxCollider");
+            if (m_Collider == null)
+            {
+                m_Collider = m_Root.AddComponent<UnityEngine.BoxCollider>();
+            }
+            Physics.SyncTransforms();
         }
 
         protected override void OnUninit()
@@ -289,21 +305,24 @@ namespace XDay.WorldAPI.House.Editor
 
         public Vector3 CoordinateToGridCenterPosition(int x, int y)
         {
+            var bounds = Helper.CalculateBoxColliderWorldBounds(m_Collider);
             var localX = m_GridSize * (x + 0.5f);
             var localZ = m_GridSize * (y + 0.5f);
-            return m_Collider.bounds.min + Rotation * new Vector3(localX, 0, localZ);
+            return bounds.min + Rotation * new Vector3(localX, 0, localZ);
         }
 
         public Vector3 CoordinateToGridPosition(int x, int y)
         {
+            var bounds = Helper.CalculateBoxColliderWorldBounds(m_Collider);
             var localX = m_GridSize * x;
             var localZ = m_GridSize * y;
-            return m_Collider.bounds.min + Rotation * new Vector3(localX, 0, localZ);
+            return bounds.min + Rotation * new Vector3(localX, 0, localZ);
         }
 
         public Vector2Int PositionToCoordinate(Vector3 worldPos)
         {
-            var localPosition = RotationInverse * (worldPos - m_Collider.bounds.min);
+            var bounds = Helper.CalculateBoxColliderWorldBounds(m_Collider);
+            var localPosition = RotationInverse * (worldPos - bounds.min);
 
             var xCoord = Mathf.FloorToInt(localPosition.x / m_GridSize);
             var yCoord = Mathf.FloorToInt(localPosition.z / m_GridSize);
@@ -972,6 +991,7 @@ namespace XDay.WorldAPI.House.Editor
         public bool ContainsPoint(Vector3 point)
         {
             var worldBounds = LocalBounds.Transform(Root.transform);
+            point.y += 0.1f;
             return worldBounds.Contains(point);
         }
 
@@ -1083,12 +1103,16 @@ namespace XDay.WorldAPI.House.Editor
             return offset;
         }
 
-        private string GetPath()
+        public string GetPath(int lod)
         {
-            var path = ResourceDescriptor.GetPath(0);
+            if (ResourceDescriptor == null)
+            {
+                return HouseEditor.PlaceholderModelPath;
+            }
+            var path = ResourceDescriptor.GetPath(lod);
             if (!World.AssetLoader.Exists(path))
             {
-                Debug.LogError($"模型{path}未找到,使用临时模型{HouseEditor.PlaceholderModelPath}");
+                Debug.LogError($"房间{m_Name}模型{path}未找到,使用临时模型{HouseEditor.PlaceholderModelPath}");
                 return HouseEditor.PlaceholderModelPath;
             }
             return path;

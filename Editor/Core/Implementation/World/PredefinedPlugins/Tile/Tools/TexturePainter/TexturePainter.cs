@@ -57,6 +57,16 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public void Init(Action refreshFunc, TileSystem tileSystem, string brushFolder)
         {
+            m_RangeChange = EditorPrefs.GetInt(TileDefine.TEXTURE_RANGE_CHANGE_SETTING, 10);
+            m_Intensity = EditorPrefs.GetFloat(TileDefine.TEXTURE_INTENSITY_SETTING, 0.25f);
+            m_IntensityChange = EditorPrefs.GetFloat(TileDefine.TEXTURE_INTENSITY_CHANGE_SETTING, 0.05f);
+            m_Angle = EditorPrefs.GetFloat(TileDefine.TEXTURE_ANGLE, 0);
+            m_BrushRandomAngle = EditorPrefs.GetBool(TileDefine.TEXTURE_BRUSH_RANDOM_ANGLE, true);
+            m_ShowBrush = EditorPrefs.GetBool(TileDefine.TEXTURE_SHOW_BRUSH, true);
+            m_Show = EditorPrefs.GetBool(TileDefine.TEXTURE_SHOW, true);
+            m_Range = EditorPrefs.GetInt(TileDefine.TEXTURE_RANGE, 128);
+            m_Channel = EditorPrefs.GetInt(TileDefine.TEXTURE_CHANNEL, 2);
+
             m_RefreshFunc = refreshFunc;
             m_TileSystem = tileSystem;
             m_BrushStyleManager = IBrushStyleManager.Create(brushFolder);
@@ -84,13 +94,13 @@ namespace XDay.WorldAPI.Tile.Editor
             m_BrushStrengthField = new FloatField("强度", "", 100);
             controls.Add(m_BrushStrengthField);
 
-            m_ButtonEndPaint = EditorWorldHelper.CreateImageButton("end.png", "");
+            m_ButtonEndPaint = EditorWorldHelper.CreateImageButton("end.png", "结束绘制Mask贴图");
             controls.Add(m_ButtonEndPaint);
 
             m_BrushSizeField = new IntField("大小", "", 80);
             controls.Add(m_BrushSizeField);
 
-            m_ButtonBeginPaint = EditorWorldHelper.CreateImageButton("start.png", "");
+            m_ButtonBeginPaint = EditorWorldHelper.CreateImageButton("start.png", "开始绘制Mask贴图");
             controls.Add(m_ButtonBeginPaint);
 
             m_ButtonPaintOneTile = EditorWorldHelper.CreateToggleImageButton(m_PaintOneTile, "single.png", "只绘制一个tile的贴图");
@@ -248,36 +258,27 @@ namespace XDay.WorldAPI.Tile.Editor
         {
             deserializer.ReadInt32("Version");
             m_NormalizeColor = deserializer.ReadBoolean("Normalize Color");
-            m_RangeChange = deserializer.ReadInt32("Range Change");
-            m_Intensity = deserializer.ReadSingle("Intensity");
-            m_BrushRandomAngle = deserializer.ReadBoolean("Brush Random Angle");
-            m_ShowBrush = deserializer.ReadBoolean("Show Brush");
-            m_IntensityChange = deserializer.ReadSingle("Intensity Change");
-            m_Angle = deserializer.ReadSingle("Angle");
             m_Resolution = deserializer.ReadInt32("Resolution");
             m_IgnoreAlpha = deserializer.ReadBoolean("Ignore Alpha");
-            m_Show = deserializer.ReadBoolean("Show");
             m_MaskName = deserializer.ReadString("Mask Name");
-            m_Range = deserializer.ReadInt32("Range");
-            m_Channel = deserializer.ReadInt32("Channel");
         }
 
         public void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
             serializer.WriteInt32(m_Version, "Version");
             serializer.WriteBoolean(m_NormalizeColor, "Normalize Color");
-            serializer.WriteInt32(m_RangeChange, "Range Change");
-            serializer.WriteSingle(m_Intensity, "Intensity");
-            serializer.WriteBoolean(m_BrushRandomAngle, "Brush Random Angle");
-            serializer.WriteBoolean(m_ShowBrush, "Show Brush");
-            serializer.WriteSingle(m_IntensityChange, "Intensity Change");
-            serializer.WriteSingle(m_Angle, "Angle");
             serializer.WriteInt32(m_Resolution, "Resolution");
             serializer.WriteBoolean(m_IgnoreAlpha, "Ignore Alpha");
-            serializer.WriteBoolean(m_Show, "Show");
             serializer.WriteString(m_MaskName, "Mask Name");
-            serializer.WriteInt32(m_Range, "Range");
-            serializer.WriteInt32(m_Channel, "Channel");
+            EditorPrefs.SetInt(TileDefine.TEXTURE_RANGE_CHANGE_SETTING, m_RangeChange);
+            EditorPrefs.SetFloat(TileDefine.TEXTURE_INTENSITY_SETTING, m_Intensity);
+            EditorPrefs.SetFloat(TileDefine.TEXTURE_INTENSITY_CHANGE_SETTING, m_IntensityChange);
+            EditorPrefs.SetFloat(TileDefine.TEXTURE_ANGLE, m_Angle);
+            EditorPrefs.SetBool(TileDefine.TEXTURE_BRUSH_RANDOM_ANGLE, m_BrushRandomAngle);
+            EditorPrefs.SetBool(TileDefine.TEXTURE_SHOW_BRUSH, m_ShowBrush);
+            EditorPrefs.SetBool(TileDefine.TEXTURE_SHOW, m_Show);
+            EditorPrefs.SetInt(TileDefine.TEXTURE_RANGE, m_Range);
+            EditorPrefs.SetInt(TileDefine.TEXTURE_CHANNEL, m_Channel);
         }
 
         private void DrawStyle()
@@ -356,7 +357,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private Dictionary<Texture2D, Material> m_TextureToMaterial;
         private Dictionary<Texture2D, ImportSetting> m_TextureToImportSetting;
         private Dictionary<Texture2D, List<Vector2Int>> m_TextureToTileCoordinates;
-        private const int m_Version = 1;
+        private const int m_Version = 2;
         private FloatField m_BrushStrengthField;
         private IntField m_BrushSizeField;
         private ImageButton m_ButtonEndPaint;

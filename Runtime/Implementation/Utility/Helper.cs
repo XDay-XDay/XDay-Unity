@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -105,7 +105,7 @@ namespace XDay.UtilityAPI
             return absPath;
         }
 
-        public static string ToUnityPath(string path)
+        public static string ToUnityPath(string path, string prefix = "Assets")
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -114,7 +114,7 @@ namespace XDay.UtilityAPI
 
             path = ToNixSlash(path);
 
-            var index = path.IndexOf("Assets/", System.StringComparison.Ordinal);
+            var index = path.IndexOf($"{prefix}/", System.StringComparison.Ordinal);
             if (index >= 0)
             {
                 return path[index..];
@@ -266,6 +266,11 @@ namespace XDay.UtilityAPI
                 LE(b.max.x, a.max.x) &&
                 LE(b.max.y, a.max.y) &&
                 LE(b.max.z, a.max.z);
+        }
+
+        public static Vector3 ToVector3XY(this Vector2 v)
+        {
+            return new Vector3(v.x, v.y, 0);
         }
 
         public static Vector3 ToVector3XZ(this Vector2 v)
@@ -2028,7 +2033,74 @@ namespace XDay.UtilityAPI
             builder.Append(color.a.ToString("X2"));
             return builder.ToString();
         }
-		
+
+        public static byte ExtractBits(byte value, int startBit, int endBit)
+        {
+#if UNITY_EDITOR
+            // 参数校验
+            if (startBit < 0 || startBit > 7)
+                throw new ArgumentOutOfRangeException(nameof(startBit), "Must be between 0 and 7");
+            if (endBit < 0 || endBit > 7)
+                throw new ArgumentOutOfRangeException(nameof(endBit), "Must be between 0 and 7");
+            if (startBit > endBit)
+                throw new ArgumentException("Start bit cannot be greater than end bit");
+#endif
+            // 创建掩码 (从 startBit 到 endBit 的位设为1)
+            int maskLength = endBit - startBit + 1;
+            byte mask = (byte)((1 << maskLength) - 1);
+            // 应用掩码并右移对齐到第0位
+            byte result = (byte)((value >> startBit) & mask);
+            return result;
+        }
+
+        public static List<string> SearchFiles(string folder, string extension)
+        {
+            List<string> ret = new();
+            var allFiles = Directory.GetFiles(folder, $"*.*", SearchOption.AllDirectories);
+            foreach (var filePath in allFiles)
+            {
+                if (filePath.ToLower().EndsWith(".dll"))
+                {
+                    var unityFilePath = ToUnityPath(filePath, folder);
+                    if (!string.IsNullOrEmpty(unityFilePath))
+                    {
+                        ret.Add(unityFilePath);
+                    }
+                    else
+                    {
+                        Debug.LogError($"无效路径: {filePath}");
+                    }
+                }
+            }
+            return ret;
+        }
+
+        public static float GetAnimLength(Animator animator)
+        {
+            float maxLength = 0;
+            foreach (var clip in animator.runtimeAnimatorController.animationClips)
+            {
+                if (clip.length > maxLength)
+                {
+                    maxLength = clip.length;
+                }
+            }
+            return Mathf.Max(0, maxLength);
+        }
+
+        public static float GetAnimLength(Animator animator, string clipName)
+        {
+            foreach (var clip in animator.runtimeAnimatorController.animationClips)
+            {
+                if (clip.name == clipName)
+                {
+                    return clip.length;
+                }
+            }
+            Debug.LogError($"clip {clipName} not found!");
+            return 0;
+        }
+
         private const double m_DegToRad = 0.0174532924;
     }
 }

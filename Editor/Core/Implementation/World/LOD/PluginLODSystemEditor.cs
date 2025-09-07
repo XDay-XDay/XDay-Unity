@@ -81,6 +81,7 @@ namespace XDay.WorldAPI.Editor
                         EditorGUILayout.EndHorizontal();
 
                         lod.Tolerance = EditorGUILayout.FloatField(new GUIContent("缓冲高度(米)", ""), lod.Tolerance);
+                        lod.RenderLOD = EditorGUILayout.IntField(new GUIContent("模型LOD", "使用哪个LOD的模型"), lod.RenderLOD);
                     });   
                 }
             }

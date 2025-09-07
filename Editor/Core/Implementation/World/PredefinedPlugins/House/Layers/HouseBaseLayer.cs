@@ -61,9 +61,9 @@ namespace XDay.WorldAPI.House.Editor
             m_GridSize = gridSize;
         }
 
-        public void Initialize(Transform parent, Vector3 localPosition)
+        public void Initialize(Transform parent, Vector3 localPosition, bool show)
         {
-            CreateRoot(m_Name, parent, localPosition);
+            CreateRoot(m_Name, parent, localPosition, show);
 
             OnInitialize();
 
@@ -74,10 +74,16 @@ namespace XDay.WorldAPI.House.Editor
 
         public void OnDestroy()
         {
-            m_GridMesh.OnDestroy();
+            if (m_GridMesh != null)
+            {
+                m_GridMesh.OnDestroy();
+            }
             Helper.DestroyUnityObject(m_Texture);
+            m_Texture = null;
             Helper.DestroyUnityObject(RootGameObject);
+            RootGameObject = null;
             Helper.DestroyUnityObject(m_GridMaterial);
+            m_GridMaterial = null;
         }
 
         public void SetHeight(float height, Vector3 offset)
@@ -95,6 +101,28 @@ namespace XDay.WorldAPI.House.Editor
             m_Texture.Apply();
         }
 
+        public void Resize(int horizontal, int vertical)
+        {
+            if (horizontal != m_HorizontalGridCount ||
+                vertical != m_VerticalGridCount)
+            {
+                m_HorizontalGridCount = horizontal;
+                m_VerticalGridCount = vertical;
+
+                var parent = RootGameObject.transform.parent;
+                var localPosition = RootGameObject.transform.localPosition;
+                var name = RootGameObject.name;
+
+                CreateRoot(name, parent, localPosition, RootGameObject.activeSelf);
+
+                OnResize(horizontal, vertical);
+
+                UpdateColors();
+            }
+        }
+
+        protected abstract void OnResize(int horizontal, int vertical);
+
         public void UpdateColors()
         {
             var colors = new Color32[m_HorizontalGridCount * m_VerticalGridCount];
@@ -109,10 +137,12 @@ namespace XDay.WorldAPI.House.Editor
             SetGridColors(colors);
         }
 
-        void CreateRoot(string name, Transform parent, Vector3 localPosition)
+        private void CreateRoot(string name, Transform parent, Vector3 localPosition, bool show)
         {
+            OnDestroy();
+
             RootGameObject = new GameObject(name);
-            RootGameObject.SetActive(false);
+            RootGameObject.SetActive(show);
             Helper.HideGameObject(RootGameObject);
 
             var filter = RootGameObject.AddComponent<MeshFilter>();
@@ -178,6 +208,7 @@ namespace XDay.WorldAPI.House.Editor
 
         void CreateTexture()
         {
+            Helper.DestroyUnityObject(m_Texture);
             m_Texture = new Texture2D(m_HorizontalGridCount, m_VerticalGridCount, TextureFormat.RGBA32, false);
             m_Texture.wrapMode = TextureWrapMode.Clamp;
             m_Texture.filterMode = FilterMode.Point;

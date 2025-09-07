@@ -28,12 +28,12 @@ namespace XDay.UtilityAPI
     [ExecuteInEditMode]
     public class DisplayName : MonoBehaviour
     {
-        public void Create(string name, Camera camera, bool show)
+        public void Create(string text, Camera camera, bool show)
         {
             m_Camera = camera;
             m_TextGameObject = new GameObject("Text");
             m_TextMesh = m_TextGameObject.AddComponent<TextMesh>();
-            m_TextMesh.text = name;
+            m_TextMesh.text = text;
             m_TextMesh.color = Color.black;
             m_TextMesh.fontSize = 40;
             m_TextMesh.font.material.renderQueue = 3500;

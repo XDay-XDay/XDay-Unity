@@ -147,6 +147,11 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
 
             var gameObject = GetFromPool(decoration, lod);
+            if (gameObject == null)
+            {
+                return;
+            }
+
             gameObject.AddOrGetComponent<NoKeyDeletion>();
             var transform = gameObject.transform;
             transform.localScale = decoration.Scale;
@@ -220,6 +225,11 @@ namespace XDay.WorldAPI.Decoration.Editor
 
         private GameObject GetFromPool(DecorationObject decoration, int lod)
         {
+            if (decoration.ResourceDescriptor == null)
+            {
+                return null;
+            }
+
             var obj = m_Pool.Get(decoration.ResourceDescriptor.GetPath(lod));
             SetLayer(decoration, obj, lod);
             return obj;
@@ -237,4 +247,3 @@ namespace XDay.WorldAPI.Decoration.Editor
         private readonly Dictionary<int, GameObject> m_GameObjects = new();
     }
 }
-

@@ -51,7 +51,7 @@ internal partial class WorldPreview : MonoBehaviour
 
         m_XDay = IXDayContext.Create(EditorHelper.QueryAssetFilePath<WorldSetupManager>(), new EditorWorldAssetLoader(), true, true);
         var world = await m_XDay.WorldManager.LoadWorldAsync("", () => Camera);
-        world.CameraVisibleAreaCalculator.ExpandSize = new Vector2(50, 50);
+        //world.CameraVisibleAreaCalculator.ExpandSize = new Vector2(50, 50);
         world.CameraManipulator.SetPosition(CameraPosition);
 
         Fix64 f = (Fix64)12.1;

@@ -22,10 +22,12 @@
  */
 
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
     [XDaySerializableClass("World Object")]
+    [Preserve]
     public abstract partial class WorldObject : IWorldObject
     {
         public virtual bool IsActive => EnabledInternal && VisibilityInternal == WorldObjectVisibility.Visible;

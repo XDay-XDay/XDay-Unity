@@ -94,7 +94,7 @@ namespace ShaderTool
         {
             int lineNo = 0;
             List<Entry> ret = new();
-            int lineLength = 3;
+            int lineLength = 15;
             Queue<string> lineHistory = new();
 
             var iter = File.ReadLines(file).GetEnumerator();
@@ -123,7 +123,7 @@ namespace ShaderTool
                         entry.LineNumber = lineNo;
                         entry.Text = line;
                         entry.File = file;
-                        entry.Detail = CreateDetail(lineHistory.ToArray());
+                        entry.Detail = CreateDetail(lineHistory.ToArray(), file);
                         ret.Add(entry);
                     }
                 }
@@ -142,7 +142,7 @@ namespace ShaderTool
                         entry.LineNumber = lineNo;
                         entry.Text = line;
                         entry.File = file;
-                        entry.Detail = CreateDetail(lineHistory.ToArray());
+                        entry.Detail = CreateDetail(lineHistory.ToArray(), file);
                         ret.Add(entry);
 
                         start = pos + content.Length;
@@ -157,9 +157,10 @@ namespace ShaderTool
             return ret;
         }
 
-        string CreateDetail(string[] prev)
+        string CreateDetail(string[] prev, string fileName)
         {
             StringBuilder builder = new();
+            builder.AppendLine($"File: \"{fileName}\"");
             for (var i = 0; i < prev.Length; ++i)
             {
                 if (i < prev.Length - 1)

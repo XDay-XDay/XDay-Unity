@@ -32,8 +32,8 @@ namespace XDay.InputAPI
         public Vector2 Current => m_Current;
         public override MotionType Type => MotionType.Drag;
 
-        public DragMotion(int id, TouchID touchID, float moveThreshold, IDeviceInput device)
-            : base(id, device)
+        public DragMotion(int id, TouchID touchID, float moveThreshold, IDeviceInput device, DeviceTouchType touchType)
+            : base(id, device, touchType)
         {
             m_TouchID = touchID;
             m_MoveThreshold = moveThreshold;
@@ -49,14 +49,14 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            var touchCount = m_Device.TouchCountNotStartFromUI;
+            var touchCount = GetTouchCount();
             if (touchCount != 1)
             {
                 Reset(touchCount == 0);
                 return false;
             }
 
-            var touch = m_Device.GetTouchNotStartFromUI(0);
+            var touch = GetTouch(0);
             if (m_Device.QueryTouchID(touch.ID) != m_TouchID)
             {
                 Reset(false);

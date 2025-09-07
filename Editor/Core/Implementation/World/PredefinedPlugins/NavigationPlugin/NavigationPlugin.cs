@@ -75,6 +75,13 @@ namespace XDay.WorldAPI.Navigation.Editor
             m_Renderer.CreateNavMeshRenderer(m_LastBuiltResult);
         }
 
+        public void SetNavMap(NavMap navMap)
+        {
+            m_NavMap?.OnDestroy();
+
+            m_NavMap = navMap;
+        }
+
         private void OnSelectionChanged()
         {
         }
@@ -105,15 +112,6 @@ namespace XDay.WorldAPI.Navigation.Editor
         {
             if (!base.SetAspect(objectID, name, aspect))
             {
-                //var obj = World.QueryObject<ShapeObject>(objectID);
-                //if (obj != null)
-                //{
-                //    var ok = obj.SetAspect(objectID, name, aspect);
-                //    if (ok)
-                //    {
-                //        m_Renderer.SetAspect(objectID, name);
-                //    }
-                //}
             }
             return true;
         }
@@ -273,8 +271,9 @@ namespace XDay.WorldAPI.Navigation.Editor
         private bool m_EnableDepthTest = false;
         private NavigationPluginRenderer m_Renderer;
         private PathFinderGizmo m_PathFinder = new();
-        private MyNavigationSystem m_NavigationSystem;
+        //private MyNavigationSystem m_NavigationSystem;
         private NavMeshBuildResult m_LastBuiltResult;
+        private NavMap m_NavMap;
         private NavMeshBuildSettings m_BuildParam = new()
         {
             overrideTileSize = false,

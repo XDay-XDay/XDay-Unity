@@ -23,9 +23,11 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
+    [Preserve]
     public class ResourceDescriptor : WorldObject, IResourceDescriptor
     {
         public List<int> LODs => m_LODs;

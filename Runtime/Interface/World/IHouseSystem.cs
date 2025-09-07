@@ -76,6 +76,15 @@ namespace XDay.WorldAPI.House
         bool FindPath(Vector3 start, Vector3 end, List<List<Vector3>> pathInRooms);
 
         /// <summary>
+        /// 获取途经的各个房间中的路径分段
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="paths"></param>
+        /// <returns></returns>
+        bool FindPath(Vector3 start, Vector3 end, List<Vector3> paths);
+
+        /// <summary>
         /// 设置传送点开关状态
         /// </summary>
         /// <param name="configID"></param>
@@ -155,5 +164,18 @@ namespace XDay.WorldAPI.House
         /// <param name="position"></param>
         /// <returns></returns>
         bool Contains(Vector3 position);
+
+        /// <summary>
+        /// 获取左边传送点坐标
+        /// </summary>
+        /// <returns></returns>
+        Vector3 GetLeftTeleporterPosition();
+
+        /// <summary>
+        /// 获取房间内随机坐标
+        /// </summary>
+        /// <param name="curPos">当前坐标,不会生成当前坐标所在格子的坐标</param>
+        /// <returns></returns>
+        Vector3 GetRandomWalkablePosition(Vector3 curPos);
     }
 }

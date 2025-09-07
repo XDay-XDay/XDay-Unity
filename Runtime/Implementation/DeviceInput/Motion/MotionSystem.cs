@@ -36,44 +36,44 @@ namespace XDay.InputAPI
             }
         }
 
-        public ScrollMotion CreateScrollMotion(float interval, IDeviceInput device)
+        public ScrollMotion CreateScrollMotion(float interval, IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new ScrollMotion(AllocateID, 16.0f, interval, TouchID.Left, device));
+            return AddMotion(new ScrollMotion(AllocateID, 16.0f, interval, TouchID.Left, device, touchType));
         }
 
-        public InertialDragMotion CreateInertialDragMotion(TouchID name, Plane plane, Camera camera, IDeviceInput device)
+        public InertialDragMotion CreateInertialDragMotion(TouchID name, Plane plane, float moveThreshold, Camera camera, IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new InertialDragMotion(AllocateID, name, camera, plane, device));
+            return AddMotion(new InertialDragMotion(AllocateID, name, camera, plane, moveThreshold, device, touchType));
         }
 
-        public PinchMotion CreatePinchMotion(float minHeight, float maxHeight, float range, Camera camera, bool enableRotation, IDeviceInput device)
+        public PinchMotion CreatePinchMotion(float minHeight, float maxHeight, float range, Camera camera, bool enableRotation, IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new PinchMotion(AllocateID, minHeight, maxHeight, range, camera, enableRotation, device));
+            return AddMotion(new PinchMotion(AllocateID, minHeight, maxHeight, range, camera, enableRotation, device, touchType));
         }
 
-        public MouseScrollMotion CreateMouseScrollMotion(IDeviceInput device)
+        public MouseScrollMotion CreateMouseScrollMotion(IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new MouseScrollMotion(AllocateID, device));
+            return AddMotion(new MouseScrollMotion(AllocateID, device, touchType));
         }
 
-        public DoubleClickMotion CreateDoubleClickMotion(float clickInterval, IDeviceInput device)
+        public DoubleClickMotion CreateDoubleClickMotion(float clickInterval, IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new DoubleClickMotion(AllocateID, clickInterval, device));
+            return AddMotion(new DoubleClickMotion(AllocateID, clickInterval, device, touchType));
         }
 
-        public LongPressMotion CreateLongPressMotion(float duration, IDeviceInput device)
+        public LongPressMotion CreateLongPressMotion(float duration, IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new LongPressMotion(AllocateID, duration, device));
+            return AddMotion(new LongPressMotion(AllocateID, duration, device, touchType));
         }
 
-        public ClickMotion CreateClickMotion(IDeviceInput device)
+        public ClickMotion CreateClickMotion(IDeviceInput device, DeviceTouchType touchType, float moveThreshold)
         {
-            return AddMotion(new ClickMotion(AllocateID, device));
+            return AddMotion(new ClickMotion(AllocateID, device, touchType, moveThreshold));
         }
 
-        public DragMotion CreateDragMotion(TouchID name, float moveThreshold, IDeviceInput device)
+        public DragMotion CreateDragMotion(TouchID name, float moveThreshold, IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new DragMotion(AllocateID, name, moveThreshold, device));
+            return AddMotion(new DragMotion(AllocateID, name, moveThreshold, device, touchType));
         }
 
         public void RemoveMotion(int id)

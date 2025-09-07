@@ -451,41 +451,6 @@ namespace XDay.WorldAPI.Attribute.Editor
             return layer.CoordinateToPosition(coord.x, coord.y);
         }
 
-        public override void EditorSerialize(ISerializer writer, string label, IObjectIDConverter converter)
-        {
-            base.EditorSerialize(writer, label, converter);
-
-            writer.WriteInt32(m_EditorVersion, "EditorAttributeSystem.Version");
-
-            writer.WriteString(m_Name, "Name");
-            writer.WriteObjectID(m_ActiveLayerID, "Active Layer ID",converter);
-
-            List<LayerBase> layers = new(m_Layers);
-            writer.WriteList(layers, "Layers", (LayerBase layer, int index) =>
-            {
-                writer.WriteSerializable(layer, $"Layer {index}", converter, gameData: false);
-            });
-        }
-
-        public override void EditorDeserialize(IDeserializer reader, string label)
-        {
-            base.EditorDeserialize(reader, label);
-
-            reader.ReadInt32("EditorAttributeSystem.Version");
-
-            m_Name = reader.ReadString("Name");
-            m_ActiveLayerID = reader.ReadInt32("Active Layer ID");
-
-            var layers = reader.ReadList("Layers", (int index) =>
-            {
-                return reader.ReadSerializable<LayerBase>($"Layer {index}", gameData: false);
-            });
-            foreach (var layer in layers)
-            {
-                m_Layers.Add(layer);
-            }
-        }
-
         private void ParseGridAttribute(string text, out IntBounds2D bounds, out int layerID)
         {
             var index = text.IndexOf(GridAttributeName);
@@ -736,6 +701,5 @@ namespace XDay.WorldAPI.Attribute.Editor
         private GUIStyle m_TipsStyle;
         private List<AttributeSystemHook> m_Hooks;
         public const string GridAttributeName = "GridAttribute";
-        private const int m_EditorVersion = 1;
     }
 }

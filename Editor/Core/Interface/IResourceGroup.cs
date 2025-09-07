@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using XDay.SerializationAPI;
 using System;
 using UnityEngine;
 
@@ -79,6 +78,8 @@ namespace XDay.WorldAPI.Editor
         {
             return new EditorResourceDescriptorSystem();
         }
+
+        bool AutoRemoveInvalidDescriptorsWhenSave { get; set; }
 
         IEditorResourceDescriptor CreateDescriptorIfNotExists(string path, IWorld world);
     }

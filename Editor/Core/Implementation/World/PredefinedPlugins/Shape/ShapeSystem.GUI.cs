@@ -26,84 +26,27 @@ using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 using XDay.UtilityAPI.Editor;
-using XDay.UtilityAPI.Shape.Editor;
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
     internal partial class ShapeSystem
     {
-        private void InitBuilder()
+        private Vector3 SnapVertexWorld(Vector3 worldPosition)
         {
-            var createInfo = new ShapeBuilder.ShapeBuilderCreateInfo
+            float r2 = m_VertexDisplaySize * m_VertexDisplaySize;
+            foreach (var shape in m_Shapes.Values)
             {
-                CreateShape = (worldVertices) => 
+                var localPosition = shape.TransformToLocalPosition(worldPosition);
+                foreach (var localPos in shape.LocalPolygon)
                 {
-                    var center = Helper.CalculateCenterAndLocalVertices(worldVertices, out var localVertices);
-                    var shape = new ShapeObject(World.AllocateObjectID(), m_Shapes.Count, localVertices, center);
-                    UndoSystem.CreateObject(shape, World.ID, ShapeDefine.ADD_SHAPE_NAME, ID, 0);
-                },
-                SnapVertex = null,
-                PickShape = (worldPosition) =>
-                {
-                    var shapeID = FindShape(worldPosition);
-                    if (shapeID != 0)
+                    if ((localPos - localPosition).sqrMagnitude <= r2)
                     {
-                        SetActiveShape(shapeID);
+                        return shape.TransformToWorldPosition(localPos);
                     }
-                    return m_ActiveShapeID != 0;
-                },
-                GetVertexLocalPosition = (index) => 
-                {
-                    var shape = GetActiveShape();
-                    var localPos = shape.GetVertexPosition(index);
-                    return localPos;
-                },
-                GetVertexCount = () => 
-                {
-                    var shape = GetActiveShape();
-                    if (shape == null)
-                    {
-                        return 0;
-                    }
-                    return shape.VertexCount; 
-                },
-                ConvertWorldToLocal = (worldPos) => 
-                {
-                    var shape = GetActiveShape();
-                    return shape.TransformToLocalPosition(worldPos); 
-                },
-                RepaintInspector = null,
-
-                MoveVertex = (startMoving, index, moveOffset) =>
-                {
-                    var shape = GetActiveShape();
-                    var action = new UndoActionMoveShapeVertex("Move Shape Vertex", UndoSystem.Group, ID, shape.ID, index, moveOffset);
-                    UndoSystem.PerformCustomAction(action, true);
-                },
-                MoveShape = (startMoving, moveOffset) =>
-                {
-                    var shape = GetActiveShape();
-                    var action = new UndoActionMoveShape("Move Shape", UndoSystem.Group, ID, shape.ID, moveOffset);
-                    UndoSystem.PerformCustomAction(action, true);
-                },
-                InsertVertex = (index, localPosition) =>
-                {
-                    var shape = GetActiveShape();
-                    var action = new UndoActionInsertShapeVertex("Insert Shape Vertex", UndoSystem.Group, ID, shape.ID, index, localPosition);
-                    UndoSystem.PerformCustomAction(action, true);
-                    return true;
-                },
-                DeleteVertex = (index) =>
-                {
-                    var shape = GetActiveShape();
-                    var action = new UndoActionDeleteShapeVertex("Delete Shape Vertex", UndoSystem.Group, ID, shape.ID, index);
-                    UndoSystem.PerformCustomAction(action, true);
-                    return true;
                 }
-            };
-
-            m_Builder = new ShapeBuilder(createInfo);
+            }
+            return worldPosition;
         }
 
         protected override void InspectorGUIInternal()
@@ -169,13 +112,23 @@ namespace XDay.WorldAPI.Shape.Editor
                 }
                 DrawDeleteObjects();
                 DrawCloneObjects();
+                DrawCombineObjects();
                 DrawShowVertexIndex();
+                DrawCreateNavMap();
                 DrawVertexDisplaySize();
                 GUILayout.Space(30);
             }
             EditorGUILayout.EndHorizontal();
 
             DrawDescription();
+        }
+
+        private void DrawCreateNavMap()
+        {
+            if (m_ButtonCreateNavMap.Render(Inited))
+            {
+                CreateNavMap();
+            }
         }
 
         private void CreateUIControls()
@@ -190,8 +143,8 @@ namespace XDay.WorldAPI.Shape.Editor
                 m_ColorField = new ColorField("颜色", "", 100);
                 m_Controls.Add(m_ColorField);
 
-                m_ShowVertexIndex = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐顶点序号");
-                m_Controls.Add(m_ShowVertexIndex);
+                m_ShowVertexIndexButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐顶点序号");
+                m_Controls.Add(m_ShowVertexIndexButton);
 
                 m_ButtonDeleteObjects = EditorWorldHelper.CreateImageButton("delete.png", "删除物体");
                 m_Controls.Add(m_ButtonDeleteObjects);
@@ -199,8 +152,14 @@ namespace XDay.WorldAPI.Shape.Editor
                 m_ButtonCloneObjects = EditorWorldHelper.CreateImageButton("clone.png", "复制物体");
                 m_Controls.Add(m_ButtonCloneObjects);
 
+                m_ButtonCombineObjects = EditorWorldHelper.CreateImageButton("combine.png", "合并顶点");
+                m_Controls.Add(m_ButtonCombineObjects);
+
                 m_ButtonRenameObjects = EditorWorldHelper.CreateImageButton("rename.png", "修改物体名称");
                 m_Controls.Add(m_ButtonRenameObjects);
+
+                m_ButtonCreateNavMap = EditorWorldHelper.CreateImageButton("create.png", "创建NavMap");
+                m_Controls.Add(m_ButtonCreateNavMap);
 
                 m_VertexSizeField = new FloatField("顶点大小", "", 100);
                 m_Controls.Add(m_VertexSizeField);
@@ -232,45 +191,6 @@ namespace XDay.WorldAPI.Shape.Editor
             }
         }
 
-        public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
-        {
-            base.EditorSerialize(serializer, label, converter);
-
-            serializer.WriteInt32(m_Version, "ShapeSystem.Version");
-            serializer.WriteString(m_Name, "Name");
-            serializer.WriteBounds(m_Bounds, "Bounds");
-
-            var allObjects = new List<ShapeObject>();
-            foreach (var p in m_Shapes)
-            {
-                allObjects.Add(p.Value);
-            }
-
-            serializer.WriteList(allObjects, "Objects", (obj, index) =>
-            {
-                serializer.WriteSerializable(obj, $"Object {index}", converter, false);
-            });
-        }
-
-        public override void EditorDeserialize(IDeserializer deserializer, string label)
-        {
-            base.EditorDeserialize(deserializer, label);
-
-            deserializer.ReadInt32("ShapeSystem.Version");
-
-            m_Name = deserializer.ReadString("Name");
-            m_Bounds = deserializer.ReadBounds("Bounds");
-
-            var allObjects = deserializer.ReadList("Objects", (index) =>
-            {
-                return deserializer.ReadSerializable<ShapeObject>($"Object {index}", false);
-            });
-            foreach (var obj in allObjects)
-            {
-                m_Shapes.Add(obj.ID, obj);
-            }
-        }
-
         private void DrawDescription()
         {
             if (m_LabelStyle == null)
@@ -295,6 +215,18 @@ namespace XDay.WorldAPI.Shape.Editor
             }
         }
 
+        private void DrawCombineObjects()
+        {
+            if (m_ButtonCombineObjects.Render(Inited))
+            {
+                var combiner = new ShapeCombiner();
+                var shapes = new List<ShapeObject>();
+                shapes.AddRange(m_Shapes.Values);
+                combiner.Combine(shapes, m_VertexDisplaySize, m_Bounds.min.ToVector2(), m_Bounds.max.ToVector2());
+                SceneView.RepaintAll();
+            }
+        }
+
         private void DrawCloneObjects()
         {
             if (m_ButtonCloneObjects.Render(Inited))
@@ -304,7 +236,8 @@ namespace XDay.WorldAPI.Shape.Editor
                     new ParameterWindow.Vector3Parameter("复制体坐标偏移", "", new Vector3(10, 0, 10)),
                 };
 
-                ParameterWindow.Open("复制物体", parameters, (p) => {
+                ParameterWindow.Open("复制物体", parameters, (p) =>
+                {
                     bool ok = ParameterWindow.GetVector3(p[0], out var offset);
                     if (ok)
                     {
@@ -318,7 +251,7 @@ namespace XDay.WorldAPI.Shape.Editor
 
         private void DrawRenameObjects()
         {
-            var shape = GetActiveShape();
+            var shape = GetFirstActiveShape();
             if (shape != null)
             {
                 if (m_ButtonRenameObjects.Render(Inited))
@@ -346,11 +279,8 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             if (m_Action != Operation.Select)
             {
-                var shape = GetActiveShape();
-                m_Builder.DrawSceneGUI(
-                    vertexDisplaySize: shape == null ? 1 : shape.VertexDisplaySize,
-                    shape == null ? 0 : shape.Position.y,
-                    m_Action == Operation.Create ? ShapeBuilder.Operation.Create : ShapeBuilder.Operation.Edit);
+                var shape = GetFirstActiveShape();
+                DrawSceneGUI(vertexDisplaySize: shape == null ? 1 : m_VertexDisplaySize, shape == null ? 0 : shape.Position.y, m_Action);
             }
 
             DrawBounds();
@@ -400,23 +330,13 @@ namespace XDay.WorldAPI.Shape.Editor
             Selection.objects = gameObjects.ToArray();
         }
 
-        private ShapeObject GetActiveShape()
+        private ShapeObject GetFirstActiveShape()
         {
-            return QueryObjectUndo(m_ActiveShapeID) as ShapeObject;
-        }
-
-        private int FindShape(Vector3 worldPosition)
-        {
-            int shapeID = 0;
-            foreach (var shape in m_Shapes.Values)
+            if (m_PickedShapes.Count == 0)
             {
-                if (shape.Hit(worldPosition))
-                {
-                    shapeID = shape.ID;
-                    break;
-                }
+                return null;
             }
-            return shapeID;
+            return QueryObjectUndo(m_PickedShapes[0].ShapeID) as ShapeObject;
         }
 
         public void UpdateRenderer(int objectID)
@@ -431,20 +351,16 @@ namespace XDay.WorldAPI.Shape.Editor
 
         private void DrawShowVertexIndex()
         {
-            var shape = GetActiveShape();
-            if (shape != null)
+            m_ShowVertexIndexButton.Active = m_ShowVertexIndex;
+            if (m_ShowVertexIndexButton.Render(true, Inited))
             {
-                m_ShowVertexIndex.Active = shape.ShowVertexIndex;
-                if (m_ShowVertexIndex.Render(true, Inited))
-                {
-                    UndoSystem.SetAspect(shape, ShapeDefine.SHAPE_VERTEX_INDEX_NAME, IAspect.FromBoolean(m_ShowVertexIndex.Active), "Show Shape Vertex Index", 0, UndoActionJoinMode.Both);
-                }
+                UndoSystem.SetAspect(this, ShapeDefine.SHAPE_VERTEX_INDEX_NAME, IAspect.FromBoolean(m_ShowVertexIndexButton.Active), "Show Shape Vertex Index", 0, UndoActionJoinMode.Both);
             }
         }
 
         private void DrawColor()
         {
-            var shape = GetActiveShape();
+            var shape = GetFirstActiveShape();
             if (shape != null)
             {
                 var newColor = m_ColorField.Render(shape.Color, 50);
@@ -468,55 +384,62 @@ namespace XDay.WorldAPI.Shape.Editor
             }
         }
 
-        private void SetActiveShape(int shapeID)
+        private void SetActiveShapes(List<ShapePickInfo> shapes)
         {
-            if (shapeID != m_ActiveShapeID)
+            if (shapes.Count == 1 && m_PickedShapes.Count == 1)
             {
-                var oldShape = QueryObjectUndo(m_ActiveShapeID) as ShapeObject;
-                if (oldShape != null)
+                if (shapes[0].ShapeID == m_PickedShapes[0].ShapeID)
                 {
-                    oldShape.UseOverriddenColor(false);
+                    if (shapes[0].VertexIndex >= 0)
+                    {
+                        m_PickedShapes[0].VertexIndex = shapes[0].VertexIndex;
+                    }
+                    return;
                 }
-                m_ActiveShapeID = shapeID;
-                var shape = GetActiveShape();
-                if (shape != null)
+            }
+
+            foreach (var shape in m_PickedShapes)
+            {
+                var oldShape = QueryObjectUndo(shape.ShapeID) as ShapeObject;
+                oldShape?.UseOverriddenColor(false);
+            }
+            m_PickedShapes = shapes;
+            foreach (var shape in m_PickedShapes)
+            {
+                if (QueryObjectUndo(shape.ShapeID) is ShapeObject newShape)
                 {
-                    shape.UseOverriddenColor(true);
-                    shape.SetOverriddenColor(Color.green);
-                    var gameObject = m_Renderer.QueryGameObject(shape.ID);
+                    newShape.UseOverriddenColor(true);
+                    newShape.SetOverriddenColor(Color.green);
+                    var gameObject = m_Renderer.QueryGameObject(newShape.ID);
                     if (gameObject != null)
                     {
                         Selection.activeGameObject = gameObject;
                     }
                 }
-
-                EditorWindow.GetWindow<WorldEditorEntrance>().Repaint();
             }
+            EditorWindow.GetWindow<WorldEditorEntrance>().Repaint();
         }
 
         private void DrawProperties()
         {
-            var shape = GetActiveShape();
+            var shape = GetFirstActiveShape();
             if (shape != null)
             {
+                shape.CustomID = EditorGUILayout.IntField("Custom ID", shape.CustomID);
                 shape.AreaID = EditorGUILayout.IntField("Area ID", shape.AreaID);
                 shape.Attribute = (ObstacleAttribute)EditorGUILayout.EnumFlagsField("Attribute", shape.Attribute);
                 shape.Height = EditorGUILayout.FloatField("Height", shape.Height);
 
-                m_AspectContainerEditor.Draw(canEdit:true, shape.AspectContainer);
+                m_AspectContainerEditor.Draw(canEdit: true, shape.AspectContainer);
             }
         }
 
         private void DrawVertexDisplaySize()
         {
-            var shape = GetActiveShape();
-            if (shape != null) 
+            float value = m_VertexSizeField.Render(m_VertexDisplaySize, 60);
+            if (!Mathf.Approximately(value, m_VertexDisplaySize))
             {
-                float value = m_VertexSizeField.Render(shape.VertexDisplaySize, 60);
-                if (!Mathf.Approximately(value, shape.VertexDisplaySize))
-                {
-                    UndoSystem.SetAspect(shape, ShapeDefine.SHAPE_VERTEX_DISPLAY_SIZE, IAspect.FromSingle(value), "Shape Vertex Display Size", 0, UndoActionJoinMode.None);
-                }
+                UndoSystem.SetAspect(this, ShapeDefine.SHAPE_VERTEX_DISPLAY_SIZE, IAspect.FromSingle(value), "Shape Vertex Display Size", 0, UndoActionJoinMode.None);
             }
         }
 
@@ -540,10 +463,13 @@ namespace XDay.WorldAPI.Shape.Editor
                     return;
                 }
 
-                var shapeObject = GetShapeObjectFromGameObject(gameObject);
-                if (shapeObject != null)
+                if (m_PickedShapes.Count <= 1)
                 {
-                    SetActiveShape(shapeObject.ID);
+                    var shapeObject = GetShapeObjectFromGameObject(gameObject);
+                    if (shapeObject != null)
+                    {
+                        SetActiveShapes(new List<ShapePickInfo>() { new ShapePickInfo(shapeObject.ID, -1) });
+                    }
                 }
             };
         }
@@ -555,18 +481,18 @@ namespace XDay.WorldAPI.Shape.Editor
             Create,
         }
 
-        private int m_ActiveShapeID = 0;
         private ImageButton m_ButtonDeleteObjects;
         private ImageButton m_ButtonCloneObjects;
+        private ImageButton m_ButtonCombineObjects;
         private ImageButton m_ButtonRenameObjects;
+        private ImageButton m_ButtonCreateNavMap;
         private FloatField m_VertexSizeField;
         private ColorField m_ColorField;
-        private ToggleImageButton m_ShowVertexIndex;
+        private ToggleImageButton m_ShowVertexIndexButton;
         private GUIStyle m_LabelStyle;
         private List<UIControl> m_Controls;
         private Vector2 m_ScrollPos;
         private bool m_Show = true;
-        private ShapeBuilder m_Builder;
         private Popup m_PopupOperation;
         private Operation m_Action = Operation.Select;
         private AspectContainerEditor m_AspectContainerEditor = new();

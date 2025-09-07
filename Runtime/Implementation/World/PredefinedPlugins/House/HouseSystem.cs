@@ -206,6 +206,14 @@ namespace XDay.WorldAPI.House
             return m_Graph.FindPath(start, end, startHouse, endHouse, pathInRooms);
         }
 
+        public bool FindPath(Vector3 start, Vector3 end, List<Vector3> paths)
+        {
+            var startHouse = SearchHouse(start) as HouseData;
+            var endHouse = SearchHouse(end) as HouseData;
+
+            return m_Graph.FindPath(start, end, startHouse, endHouse, paths);
+        }
+
         public void SetTeleporterState(int configID, bool on)
         {
             foreach (var house in m_Houses)
@@ -239,4 +247,3 @@ namespace XDay.WorldAPI.House
         private HouseGraph m_Graph;
     }
 }
-

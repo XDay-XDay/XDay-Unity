@@ -38,11 +38,13 @@ namespace XDay.CameraAPI
                 SetActive(true);
             }
 
-            protected override void OnMatch(IMotion motion, MotionState state)
+            protected override bool OnMatch(IMotion motion, MotionState state)
             {
                 var request = Request.Create(layer: 0, priority: 0, RequestQueueType.Replace, m_Motion.Center, m_Motion.ZoomRate, state, m_Motion.IsRotating, m_Motion.DragDistance, m_Motion.SlideDirection);
 
                 m_Manipulator.AddRequest(request);
+
+                return false;
             }
 
             protected override IMotion Motion => m_Motion;

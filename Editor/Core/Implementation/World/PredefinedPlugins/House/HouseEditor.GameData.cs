@@ -21,9 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEditor;
+using UnityEngine;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.House.Editor
@@ -38,7 +40,61 @@ namespace XDay.WorldAPI.House.Editor
                 return;
             }
 
-            ValidateIDs();
+            bool ok = ValidateIDs(errorMessage);
+            if (!ok)
+            {
+                return;
+            }
+
+            ok = ValidatePositions();
+            if (!ok)
+            {
+                return;
+            }
+        }
+
+        /// <summary>
+        /// 检查物体坐标是否有效
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        private bool ValidatePositions()
+        {
+            StringBuilder builder = new();
+            foreach (var houseInstance in m_HouseInstances)
+            {
+                foreach (var teleporter in houseInstance.TeleporterInstances)
+                {
+                    var coord = houseInstance.PositionToCoordinate(teleporter.WorldPosition);
+                    if (!houseInstance.IsWalkable(coord.x, coord.y))
+                    {
+                        builder.AppendLine($"\"{houseInstance.Name}\"的传送点\"{teleporter.Name}\"坐标不可通行,无法传送!");
+                    }
+                }
+
+                foreach (var interactivePoint in houseInstance.InteractivePointInstance)
+                {
+                    var startCoord = houseInstance.PositionToCoordinate(interactivePoint.Start.Position);
+                    if (!houseInstance.IsWalkable(startCoord.x, startCoord.y))
+                    {
+                        builder.AppendLine($"\"{houseInstance.Name}\"的交互点\"{interactivePoint.Name}\"的起点坐标不可通行!");
+                    }
+
+                    var endCoord = houseInstance.PositionToCoordinate(interactivePoint.End.Position);
+                    if (!houseInstance.IsWalkable(endCoord.x, endCoord.y))
+                    {
+                        builder.AppendLine($"\"{houseInstance.Name}\"的交互点\"{interactivePoint.Name}\"的终点坐标不可通行!");
+                    }
+                }
+            }
+
+            if (builder.Length > 0)
+            {
+                var errorMsg = builder.ToString().Substring(0, 60);
+                EditorUtility.DisplayDialog("有以下报错,可以导出数据,但是角色无法正确寻路", errorMsg, "确定");
+                Debug.LogError(errorMsg);
+            }
+
+            return true;
         }
 
         protected override void GenerateGameDataInternal(IObjectIDConverter converter)
@@ -54,14 +110,18 @@ namespace XDay.WorldAPI.House.Editor
                 serializer.WriteInt32(house.ConfigID, "House Config ID");
                 serializer.WriteString(house.Name, "House Name");
                 serializer.WriteVector3(house.Position, "House Position");
-                serializer.WriteString(house.ResourceDescriptor.GetPath(0), "House Prefab Path");
+                serializer.WriteString(house.GetPath(0), "House Prefab Path");
                 serializer.WriteSingle(house.GridSize, "Grid Size");
                 serializer.WriteSingle(house.GridHeight, "Grid Height");
                 serializer.WriteBounds(house.WorldBounds, "World Bounds");
+                if (house.WorldBounds.extents == Vector3.zero)
+                {
+                    Debug.LogError($"{house.Name} invalid world bounds");
+                }
                 serializer.WriteInt32(house.HorizontalGridCount, "Horizontal Grid Count");
                 serializer.WriteInt32(house.VerticalGridCount, "Vertical Grid Count");
-                var layer = house.GetLayer<HouseWalkableLayer>();
-                serializer.WriteBooleanArray(layer.Walkable, "Walkable");
+                var walkable = GetWalkable(house);
+                serializer.WriteBooleanArray(walkable, "Walkable");
 
                 var teleporterCount = house.TeleporterInstances.Count;
                 serializer.WriteInt32(teleporterCount, "Teleporter Count");
@@ -91,22 +151,44 @@ namespace XDay.WorldAPI.House.Editor
             EditorHelper.WriteFile(serializer.Data, GetGameFilePath("house"));
         }
 
-        private bool ValidateIDs()
+        private bool[] GetWalkable(HouseInstance house)
         {
-            StringBuilder builder = new();
+            bool[] walkable = new bool[house.HorizontalGridCount * house.VerticalGridCount];
+            var layer = house.GetLayer<HouseWalkableLayer>();
+            var idx = 0;
+            for (var i = 0; i < house.VerticalGridCount; ++i)
+            {
+                for (var j = 0; j < house.HorizontalGridCount; ++j)
+                {
+                    var k = i * layer.HorizontalGridCount + j;
+                    if (k >= layer.Walkable.Length || k < 0)
+                    {
+                        walkable[idx] = false;
+                    }
+                    else
+                    {
+                        walkable[idx] = layer.Walkable[k];
+                    }
+                    ++idx;
+                }
+            }
+            return walkable;
+        }
 
+        private bool ValidateIDs(StringBuilder errorMsg)
+        {
             Dictionary<int, HouseInstance> houses = new();
             foreach (var houseInstance in m_HouseInstances)
             {
                 if (houseInstance.ConfigID == 0)
                 {
-                    builder.AppendLine($"{houseInstance.Name}的ID为0");
+                    errorMsg.AppendLine($"{houseInstance.Name}的ID为0");
                 }
                 else
                 {
                     if (houses.ContainsKey(houseInstance.ConfigID))
                     {
-                        builder.AppendLine($"{houseInstance.Name}的ID和{houses[houseInstance.ConfigID].Name}相同");
+                        errorMsg.AppendLine($"{houseInstance.Name}的ID和{houses[houseInstance.ConfigID].Name}相同");
                     }
                     else
                     {
@@ -119,13 +201,13 @@ namespace XDay.WorldAPI.House.Editor
                 {
                     if (teleporter.ConfigID == 0)
                     {
-                        builder.AppendLine($"房间{houseInstance.Name}的传送点{teleporter.Name}的ID为0");
+                        errorMsg.AppendLine($"房间{houseInstance.Name}的传送点{teleporter.Name}的ID为0");
                     }
                     else
                     {
                         if (teleporters.ContainsKey(teleporter.ConfigID))
                         {
-                            builder.AppendLine($"房间{houseInstance.Name}的传送点{teleporter.Name}的ID和{teleporters[teleporter.ConfigID].Name}相同");
+                            errorMsg.AppendLine($"房间{houseInstance.Name}的传送点{teleporter.Name}的ID和{teleporters[teleporter.ConfigID].Name}相同");
                         }
                         else
                         {
@@ -139,13 +221,13 @@ namespace XDay.WorldAPI.House.Editor
                 {
                     if (interactivePoint.ConfigID == 0)
                     {
-                        builder.AppendLine($"房间{houseInstance.Name}的交互点{interactivePoint.Name}的ID为0");
+                        errorMsg.AppendLine($"房间{houseInstance.Name}的交互点{interactivePoint.Name}的ID为0");
                     }
                     else
                     {
                         if (interactorPoints.ContainsKey(interactivePoint.ConfigID))
                         {
-                            builder.AppendLine($"房间{houseInstance.Name}的交互点{interactivePoint.Name}的ID和{interactorPoints[interactivePoint.ConfigID].Name}相同");
+                            errorMsg.AppendLine($"房间{houseInstance.Name}的交互点{interactivePoint.Name}的ID和{interactorPoints[interactivePoint.ConfigID].Name}相同");
                         }
                         else
                         {
@@ -155,12 +237,7 @@ namespace XDay.WorldAPI.House.Editor
                 }
             }
 
-            if (builder.Length > 0)
-            {
-                EditorUtility.DisplayDialog("出错了", builder.ToString(), "确定");
-            }
-
-            return builder.Length == 0;
+            return errorMsg.Length == 0;
         }
 
         private const int m_RuntimeVersion = 1;

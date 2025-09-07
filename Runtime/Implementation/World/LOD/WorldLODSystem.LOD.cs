@@ -24,10 +24,12 @@
 
 
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
     [XDaySerializableClass("World LOD Setup")]
+    [Preserve]
     internal partial class WorldLODSetup : IWorldLODSetup, ISerializable
     {
         public string Name { get => m_Name; set => m_Name = value; }

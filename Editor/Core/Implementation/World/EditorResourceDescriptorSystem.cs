@@ -33,6 +33,7 @@ namespace XDay.WorldAPI.Editor
     {
         public override string TypeName => "EditorResourceDescriptorSystem";
         public string GameTypeName => "ResourceDescriptorSystem";
+        public bool AutoRemoveInvalidDescriptorsWhenSave { get => m_AutoRemoveInvalidDescriptors; set => m_AutoRemoveInvalidDescriptors = value; }
 
         public IEditorResourceDescriptor CreateDescriptorIfNotExists(string path, IWorld world)
         {
@@ -66,7 +67,10 @@ namespace XDay.WorldAPI.Editor
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
-            //RemoveExpiredDescriptors();
+            if (m_AutoRemoveInvalidDescriptors)
+            {
+                RemoveExpiredDescriptors();
+            }
 
             serializer.WriteInt32(m_Version, "EditorResourceDescriptorSystem.Version");
 
@@ -147,6 +151,7 @@ namespace XDay.WorldAPI.Editor
 
         private const int m_Version = 1;
         private const int m_RuntimeVersion = 1;
+        private bool m_AutoRemoveInvalidDescriptors = false;
     }
 }
 

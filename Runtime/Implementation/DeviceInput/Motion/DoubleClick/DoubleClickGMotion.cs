@@ -32,8 +32,8 @@ namespace XDay.InputAPI
         public Vector2 Start => m_Start;
         public override MotionType Type => MotionType.DoubleClick;
 
-        public DoubleClickMotion(int id, float maxClickInterval, IDeviceInput device)
-            : base(id, device)
+        public DoubleClickMotion(int id, float maxClickInterval, IDeviceInput device, DeviceTouchType touchType)
+            : base(id, device, touchType)
         {
             m_MaxClickThreshold = maxClickInterval;
         }
@@ -49,7 +49,7 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            var touchCount = m_Device.ConfigurableTouchCount;
+            var touchCount = GetTouchCount();
             if (touchCount != 1 && m_State == State.Idle)
             {
                 Reset(touchCount == 0);
@@ -58,7 +58,7 @@ namespace XDay.InputAPI
 
             if (touchCount == 1)
             {
-                var touch = m_Device.GetConfigurableTouch(0);
+                var touch = GetTouch(0);
                 if (touch.State == TouchState.Start)
                 {
                     if (m_State == State.Idle)

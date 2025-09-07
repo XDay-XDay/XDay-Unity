@@ -173,6 +173,14 @@ namespace XDay.CameraAPI
                 Assign();
             }
 
+            internal void OnFOVChange(float fov)
+            {
+                foreach (var setup in m_Setups)
+                {
+                    setup.SetFOV(fov);
+                }
+            }
+
             private void Assign()
             {
                 m_Min = QuerySetupInternal("min");
@@ -272,9 +280,14 @@ namespace XDay.CameraAPI
             {
                 m_Name = name;
                 m_Altitude = altitude;
-                m_FOV = fov;
                 m_FocalLength = focalLength;
-                m_ZoomFactor = focalLength * fov;
+                SetFOV(fov);
+            }
+
+            public void SetFOV(float fov)
+            {
+                m_FOV = fov;
+                m_ZoomFactor = m_FocalLength * fov;
             }
 
             private string m_Name;

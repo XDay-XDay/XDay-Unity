@@ -166,12 +166,12 @@ namespace XDay.WorldAPI.House
         {
             var localX = m_GridSize * (x + 0.5f);
             var localZ = m_GridSize * (y + 0.5f);
-            return Position + new Vector3(localX, 0, localZ);
+            return m_WorldBounds.min + new Vector3(localX, 0, localZ);
         }
 
         public Vector2Int PositionToCoordinate(Vector3 worldPos)
         {
-            var localPosition = worldPos - Position;
+            var localPosition = worldPos - m_WorldBounds.min;
             var xCoord = Mathf.FloorToInt(localPosition.x / m_GridSize);
             var yCoord = Mathf.FloorToInt(localPosition.z / m_GridSize);
             return new Vector2Int(xCoord, yCoord);
@@ -241,12 +241,32 @@ namespace XDay.WorldAPI.House
 
         public bool Contains(Vector3 position)
         {
+            position.y += 0.2f;
             return m_WorldBounds.Contains(position);
         }
 
         public void FindPath(Vector3 start, Vector3 end, List<Vector3> path)
         {
             m_PathFinder.CalculatePath(start, end, path);
+        }
+
+        public Vector3 GetLeftTeleporterPosition()
+        {
+            if (m_Teleporters.Count == 0)
+            {
+                return Vector3.zero;
+            }
+            return m_Teleporters[0].WorldPosition;
+        }
+
+        public Vector3 GetRandomWalkablePosition(Vector3 curPos)
+        {
+            var curCoord = PositionToCoordinate(curPos);
+            var x = UnityEngine.Random.Range(m_WorldBounds.min.x, m_WorldBounds.max.x);
+            var z = UnityEngine.Random.Range(m_WorldBounds.min.z, m_WorldBounds.max.z);
+            var newCoord = PositionToCoordinate(new Vector3(x, 0, z));
+            var ret = FindNearestWalkableCoordinate(newCoord.x, newCoord.y, 10);
+            return CoordinateToGridCenterPosition(ret.x, ret.y);
         }
 
         private readonly int m_ConfigID;

@@ -42,16 +42,16 @@ namespace XDay.UtilityAPI.Editor
 
         private void DrawBlurSetting()
         {
-            m_ShowBlur = EditorGUILayout.Foldout(m_ShowBlur, "模糊设置");
+            m_ShowBlur = EditorGUILayout.Foldout(m_ShowBlur, new GUIContent("模糊设置", "对笔刷添加模糊效果"));
             if (m_ShowBlur)
             {
                 EditorHelper.IndentLayout(() =>
                 {
                     EditorGUILayout.BeginHorizontal();
 
-                    m_BlurPassCount = Mathf.Clamp(EditorGUILayout.IntField(new GUIContent("模糊次数", ""), m_BlurPassCount), 1, m_BlurPassCountMax);
+                    m_BlurPassCount = Mathf.Clamp(EditorGUILayout.IntField(new GUIContent("模糊次数", "次数越大越模糊"), m_BlurPassCount), 1, m_BlurPassCountMax);
 
-                    if (WorldHelper.ImageButton("blur.png", "模糊笔刷"))
+                    if (WorldHelper.ImageButton("blur.png", "添加笔刷模糊"))
                     {
                         (SelectedStyle as BrushStyle)?.Blur(m_BlurPassCount);
                     }

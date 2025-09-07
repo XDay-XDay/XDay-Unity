@@ -31,6 +31,7 @@ namespace XDay.WorldAPI.Tile.Editor
     internal class BlurModifier : TextureModifier
     {
         public override string DisplayName => "模糊";
+        public override string Tips => "模糊Mask贴图";
 
         public BlurModifier(TexturePainter painter, int passCount)
             : base(painter)

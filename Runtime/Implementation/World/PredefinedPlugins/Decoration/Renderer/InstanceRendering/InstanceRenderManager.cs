@@ -88,7 +88,7 @@ namespace XDay.WorldAPI.Decoration
                 }
                 else
                 {
-                    var batch = QueryBatch(decoration.GPUBatchID, decoration.LOD);
+                    var batch = QueryBatch(decoration.GPUBatchID, decoration.RenderLOD);
                     var instanceIndex = batch.AddInstance(decoration.Position, decoration.Rotation, decoration.Scale);
 
                     renderer = m_RendererPool.Get();
@@ -98,7 +98,7 @@ namespace XDay.WorldAPI.Decoration
             }
             else
             {
-                var data = m_AnimationPrefabManager.GetBatchData(decoration.GPUBatchID, decoration.LOD);
+                var data = m_AnimationPrefabManager.GetBatchData(decoration.GPUBatchID, decoration.RenderLOD);
                 var animator = m_AnimatorManager.CreateInstance(data, decoration.Position, decoration.Scale, decoration.Rotation);
                 animator.Play(m_DefaultAnimName);
                 m_Animators.Add(decoration.ID, animator);

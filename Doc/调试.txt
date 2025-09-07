@@ -1,0 +1,21 @@
+﻿查看GameObject
+    HDGRemoteDebugger
+Android传输文件
+    AirDrop
+    adb
+调试
+    夜神模拟器 adb connect 127.0.0.1:62001
+代码是否剔除
+    Il2CppDumper + DotPeek查看编译后DLL
+class.dex反编译
+    dex-tools的d2j-dex2jar.bat将dex转换成jar文件 
+    java decompiler将反编译jar文件
+反编译apk文件
+    apktool.jar同目录下创建apktool.bat文件,执行apktool d xxx.apk,内容如下
+    @echo off
+    java -jar "%~dp0apktool.jar" %*
+unity AssetBundle破解
+    AssetRipper
+Crash调试
+    Logcat查看crash log,记录行号,解压符号表,用llvm-addr2line -f -e .\libil2cpp.so 0000000002c53b0c命令查看堆栈信息,
+    llvm-addr2line在D:\6000.0.29f1c1\Editor\Data\PlaybackEngines\AndroidPlayer\NDK\toolchains\llvm\prebuilt\windows-x86_64\bin里

@@ -88,6 +88,10 @@ namespace XDay.WorldAPI.Tile.Editor
             gameObject.tag = WorldDefine.EDITOR_ONLY_TAG;
             gameObject.transform.localPosition = tile.Position;
             gameObject.transform.SetParent(m_Root.transform, false);
+            if (gameObject.GetComponent<NoKeyDeletion>() == null)
+            {
+                gameObject.AddComponent<NoKeyDeletion>();
+            }
             UpdateMesh(x, y, false);
         }
 

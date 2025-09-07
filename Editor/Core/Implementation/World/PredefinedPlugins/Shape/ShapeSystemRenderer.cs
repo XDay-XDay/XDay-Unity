@@ -96,6 +96,12 @@ namespace XDay.WorldAPI.Shape.Editor
                 return;
             }
 
+            if (name.StartsWith(ShapeDefine.VERTEX_POSITION_NAME))
+            {
+                m_Renderers[objectID].SetDirty();
+                return;
+            }
+
             if (name == ShapeDefine.COLOR_NAME)
             {
                 return;

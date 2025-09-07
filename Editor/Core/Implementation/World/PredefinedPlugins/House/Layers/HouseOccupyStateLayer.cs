@@ -118,6 +118,11 @@ namespace XDay.WorldAPI.House.Editor
             m_IsEmpty = Helper.ToArray(arr2D, VerticalGridCount, HorizontalGridCount);
         }
 
+        protected override void OnResize(int horizontal, int vertical)
+        {
+            m_IsEmpty = new bool[vertical * horizontal];
+        }
+
         //tile是否是空地
         private bool[] m_IsEmpty;
         private const int m_OccupyStateLayerVersion = 1;

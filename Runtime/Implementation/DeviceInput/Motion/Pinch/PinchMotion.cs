@@ -39,8 +39,7 @@ namespace XDay.InputAPI
         public Camera Camera => m_Camera;
         public override MotionType Type => MotionType.Pinch;
 
-        public PinchMotion(int id, float minAltitude, float maxAltitude, float range, Camera camera, bool enableRotate, IDeviceInput device)
-            : base(id, device)
+        public PinchMotion(int id, float minAltitude, float maxAltitude, float range, Camera camera, bool enableRotate, IDeviceInput device, DeviceTouchType touchType) : base(id, device, touchType)
         {
             m_Idle = new(this);
             m_Rotate = new(this);
@@ -64,14 +63,14 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            if (m_Device.TouchCountNotStartFromUI != 2)
+            if (GetTouchCount() != 2)
             {
                 Reset(true);
                 return false;
             }
 
-            var touch0 = m_Device.GetTouchNotStartFromUI(0);
-            var touch1 = m_Device.GetTouchNotStartFromUI(1);
+            var touch0 = GetTouch(0);
+            var touch1 = GetTouch(1);
 
             return m_CurrentPhase.Match(touch0, touch1);
         }

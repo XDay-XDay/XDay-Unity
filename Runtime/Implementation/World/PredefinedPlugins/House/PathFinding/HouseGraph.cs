@@ -38,6 +38,61 @@ namespace XDay.WorldAPI.House
             CreateEdges(houses);
         }
 
+        public bool FindPath(Vector3 start, Vector3 end, HouseData startHouse, HouseData targetHouse, List<Vector3> paths)
+        {
+            if (startHouse == null || targetHouse == null)
+            {
+                Debug.LogError($"起点{start}或终点{end}不在房间内,无法寻路!");
+                return false;
+            }
+
+            if (startHouse == targetHouse)
+            {
+                //同一个房间内
+                startHouse.FindPath(start, end, paths);
+                return paths.Count > 0;
+            }
+
+            var startNode = CreateVirtualNode(START_NODE_ID, "Start", start, startHouse);
+            var endNode = CreateVirtualNode(END_NODE_ID, "End", end, targetHouse);
+
+            m_GraphPathFinder = new(m_Edges, m_TaskSystem);
+            List<IGraphEdge> edges = new();
+            m_GraphPathFinder.CalculatePath(startNode, endNode, edges);
+
+            for (var i = 0; i < edges.Count; ++i)
+            {
+                var edge = edges[i];
+                var from = edge.From;
+                var to = edge.To;
+
+                if (from.GridData == to.GridData)
+                {
+                    var house = from.GridData as HouseData;
+                    m_Temp.Clear();
+                    house.FindPath(from.Position, to.Position, m_Temp);
+                    paths.AddRange(m_Temp);
+                    m_Temp.Clear();
+                }
+            }
+
+            RemoveVirtualNodeEdges(startHouse);
+            RemoveVirtualNodeEdges(targetHouse);
+            foreach (var edge in m_VirtualEdges)
+            {
+                bool ok = m_Edges.Remove(edge);
+                Debug.Assert(ok);
+            }
+            m_VirtualEdges.Clear();
+
+            bool removed = m_Nodes.Remove(startNode);
+            Debug.Assert(removed);
+            removed = m_Nodes.Remove(endNode);
+            Debug.Assert(removed);
+
+            return paths.Count > 0;
+        }
+
         public bool FindPath(Vector3 start, Vector3 end, HouseData startHouse, HouseData targetHouse, List<List<Vector3>> pathInRooms)
         {
             if (startHouse == null || targetHouse == null)
@@ -284,7 +339,8 @@ namespace XDay.WorldAPI.House
         private List<IGraphNode> m_Nodes;
         private List<IGraphEdge> m_Edges;
         private List<IGraphEdge> m_VirtualEdges = new();
-
+        private List<Vector3> m_Temp = new();
+            
         private const int START_NODE_ID = 1999999;
         private const int END_NODE_ID = 2999999;
         private ITaskSystem m_TaskSystem;

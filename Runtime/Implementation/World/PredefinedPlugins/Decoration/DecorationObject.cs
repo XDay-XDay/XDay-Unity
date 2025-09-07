@@ -22,16 +22,19 @@
  */
 
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI.Decoration
 {
+    [Preserve]
     internal class DecorationObject : WorldObject
     {
         public override Vector3 Scale { get => m_ResourceMetadata.Scale; set => throw new System.NotImplementedException(); }
         public override Quaternion Rotation { get => m_ResourceMetadata.Rotation; set => throw new System.NotImplementedException(); }
         public override Vector3 Position { get => m_PositionInGrid; set => m_PositionInGrid = value; }
-        public int LOD => m_LOD;
-        public string Path => m_ResourceMetadata.ResourceDescriptor.GetPath(m_LOD);
+        public int LogicLOD => m_LogicLOD;
+        public int RenderLOD => m_RenderLOD;
+        public string Path => m_ResourceMetadata.ResourceDescriptor.GetPath(m_RenderLOD);
         public int IndexInGrid => m_IndexInGrid;
         public int GridX => m_GridX;
         public int GridY => m_GridY;
@@ -54,7 +57,8 @@ namespace XDay.WorldAPI.Decoration
             IWorld world,
             int gridX,
             int gridY,
-            int lod, 
+            int logicLOD, 
+            int renderLOD,
             int index,
             float posX,
             float posY,
@@ -66,7 +70,8 @@ namespace XDay.WorldAPI.Decoration
             m_Ref = 1;
             m_GridX = gridX;
             m_GridY = gridY;
-            m_LOD = lod;
+            m_LogicLOD = logicLOD;
+            m_RenderLOD = renderLOD;
             m_IndexInGrid = index;
             m_PositionInGrid.x = posX;
             m_PositionInGrid.y = posY;
@@ -128,7 +133,11 @@ namespace XDay.WorldAPI.Decoration
         private int m_GridX;
         private int m_GridY;
         private int m_IndexInGrid;
-        private int m_LOD;
+        /// <summary>
+        /// 不同的逻辑LOD可以对应不同的RenderLOD
+        /// </summary>
+        private int m_LogicLOD;
+        private int m_RenderLOD;
         private ResourceMetadata m_ResourceMetadata;
         private Vector3 m_PositionInGrid;
         private WorldObjectVisibility m_Visibility;

@@ -36,7 +36,6 @@ namespace XDay.UtilityAPI.Shape.Editor
             var createInfo = new ShapeBuilder.ShapeBuilderCreateInfo
             {
                 CreateShape = null,
-                SnapVertex = null,
                 GetVertexLocalPosition = (int index) => 
                 {
                     return m_Colliders[0].GetVertexPosition(index);

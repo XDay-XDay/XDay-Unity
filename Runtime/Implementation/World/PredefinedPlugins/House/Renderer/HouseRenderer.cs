@@ -40,27 +40,35 @@ namespace XDay.WorldAPI.House
             foreach (var interactivePoint in house.InteractivePoints)
             {
                 var startPoint = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                startPoint.name = $"{house.Name} start";
+                startPoint.name = $"{house.Name} 交互点 start";
+                startPoint.transform.localScale = Vector3.one * 0.2f;
                 startPoint.transform.SetParent(obj.transform);
                 startPoint.transform.SetPositionAndRotation(interactivePoint.StartPosition, interactivePoint.StartRotation);
                 var endPoint = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                endPoint.name = $"{house.Name} end";
+                endPoint.name = $"{house.Name} 交互点 end";
+                endPoint.transform.localScale = Vector3.one * 0.2f;
                 endPoint.transform.SetParent(obj.transform);
                 endPoint.transform.SetPositionAndRotation(interactivePoint.EndPosition, interactivePoint.EndRotation);
             }
              
             m_WalkableStateDebugger = new WalkableStateDebugger(house.Name + "walkable", house.HorizontalGridCount, house.VerticalGridCount, house.GridSize, house.GridHeight, house.Walkable);
-            m_WalkableStateDebugger.Initialize(m_Root.transform, new Vector3(0, house.GridHeight, 0));
+
+            var offset = house.WorldBounds.min - house.Position;
+            m_WalkableStateDebugger.Initialize(m_Root.transform, new Vector3(offset.x, offset.y + house.GridHeight, offset.z));
             m_WalkableStateDebugger.IsActive = true;
+
+            m_Grid = new HouseGrid("House Grid", house.HorizontalGridCount, house.VerticalGridCount, house.GridSize, m_Root.transform, house.GridHeight + 0.05f, offset);
         }
 
         public void OnDestroy()
         {
+            m_Grid.OnDestroy();
             m_WalkableStateDebugger.OnDestroy();
             Helper.DestroyUnityObject(m_Root);
         }
 
         private GameObject m_Root;
         private WalkableStateDebugger m_WalkableStateDebugger;
+        private HouseGrid m_Grid;
     }
 }

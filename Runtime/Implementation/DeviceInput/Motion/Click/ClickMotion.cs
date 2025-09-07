@@ -30,9 +30,10 @@ namespace XDay.InputAPI
         public Vector2 Start => m_Start;
         public override MotionType Type => MotionType.Click;
 
-        public ClickMotion(int id, IDeviceInput device)
-            : base(id, device)
+        public ClickMotion(int id, IDeviceInput device, DeviceTouchType touchType, float threshold)
+            : base(id, device, touchType)
         {
+            m_MovingThreshold = threshold;
         }
 
         protected override void OnReset()
@@ -42,30 +43,33 @@ namespace XDay.InputAPI
 
         protected override bool Match()
         {
-            var touchCount = m_Device.ConfigurableTouchCount;
+            var touchCount = GetTouchCount();
             if (touchCount != 1)
             {
                 Reset(touchCount == 0);
                 return false;
             }
 
-            var touch = m_Device.GetConfigurableTouch(0);
+            var touch = GetTouch(0);
             if (touch.State == TouchState.Start)
             {
                 m_Start = touch.Current;
             }
 
-            if (touch.State == TouchState.Finish &&
-                (m_Start - touch.Current).sqrMagnitude <= m_MovingThreshold * m_MovingThreshold)
+            if (touch.State == TouchState.Finish)
             {
-                return true;   
+                var distance = (m_Start - touch.Current).sqrMagnitude;
+                if (distance <= m_MovingThreshold * m_MovingThreshold)
+                {
+                    return true;
+                }
             }
 
             return false;
         }
 
         private Vector2 m_Start;
-        private float m_MovingThreshold = 5;
+        private float m_MovingThreshold;
     }
 }
 

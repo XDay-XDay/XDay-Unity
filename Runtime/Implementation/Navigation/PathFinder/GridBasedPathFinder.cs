@@ -30,6 +30,8 @@ namespace XDay.NavigationAPI
 {
     internal partial class GridBasedAStarPathFinder : IGridBasedPathFinder
     {
+        public IGridData GridData => m_GridData;
+
         public GridBasedAStarPathFinder(ITaskSystem taskSystem, IGridData gridData, int neighbourCount)
         {
             m_TaskSystem = taskSystem;
@@ -96,12 +98,12 @@ namespace XDay.NavigationAPI
         }
 
         private bool CalculateCoordinates(Vector3 source, Vector3 target, PathFlags flags, 
-            out Vector2Int sourceCoord, out Vector2Int targetCoord, out Vector3 sourcePos, out Vector3 targetPos)
+            out Vector2Int sourceCoord, out Vector2Int targetCoord)
         {
             sourceCoord = m_GridData.PositionToCoordinate(source);
             targetCoord = m_GridData.PositionToCoordinate(target);
-            sourcePos = m_GridData.CoordinateToGridCenterPosition(sourceCoord.x, sourceCoord.y);
-            targetPos = m_GridData.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
+            //sourcePos = m_GridData.CoordinateToGridCenterPosition(sourceCoord.x, sourceCoord.y);
+            //targetPos = m_GridData.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
 
             if (!m_GridData.IsWalkable(sourceCoord.x, sourceCoord.y))
             {
@@ -112,7 +114,7 @@ namespace XDay.NavigationAPI
                 }
 
                 sourceCoord = m_GridData.FindNearestWalkableCoordinate(sourceCoord.x, sourceCoord.y, targetCoord, 10);
-                sourcePos = m_GridData.CoordinateToGridCenterPosition(sourceCoord.x, sourceCoord.y);
+                //sourcePos = m_GridData.CoordinateToGridCenterPosition(sourceCoord.x, sourceCoord.y);
             }
             if (!m_GridData.IsWalkable(sourceCoord.x, sourceCoord.y))
             {
@@ -128,7 +130,7 @@ namespace XDay.NavigationAPI
                     return false;
                 }
                 targetCoord = m_GridData.FindNearestWalkableCoordinate(targetCoord.x, targetCoord.y, 10);
-                targetPos = m_GridData.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
+                //targetPos = m_GridData.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
             }
 
             if (!m_GridData.IsWalkable(targetCoord.x, targetCoord.y))
@@ -164,7 +166,7 @@ namespace XDay.NavigationAPI
         {
             result.Clear();
 
-            bool ok = CalculateCoordinates(source, target, flags, out var sourceCoord, out var targetCoord, out var sourcePos, out var targetPos);
+            bool ok = CalculateCoordinates(source, target, flags, out var sourceCoord, out var targetCoord);
             if (!ok)
             {
                 return;
@@ -181,7 +183,7 @@ namespace XDay.NavigationAPI
                 if (minCostNode.X == targetCoord.x &&
                     minCostNode.Y == targetCoord.y)
                 {
-                    MakePath(context, sourceCoord, targetCoord, sourcePos, targetPos, minCostNode, result);
+                    MakePath(context, sourceCoord, targetCoord, source, target, minCostNode, result);
                     break;
                 }
 
@@ -191,7 +193,7 @@ namespace XDay.NavigationAPI
                         minCostNode.X != sourceCoord.x || 
                         minCostNode.Y != sourceCoord.y)
                     {
-                        MakePath(context, sourceCoord, targetCoord, sourcePos, targetPos, minCostNode, result);
+                        MakePath(context, sourceCoord, targetCoord, source, target, minCostNode, result);
 
                         var teleporterCoord = m_GridData.GetConnectedTeleporterCoordinate(minCostNode.X, minCostNode.Y);
                         var teleporterSource = m_GridData.CoordinateToGridCenterPosition(teleporterCoord.x, teleporterCoord.y);

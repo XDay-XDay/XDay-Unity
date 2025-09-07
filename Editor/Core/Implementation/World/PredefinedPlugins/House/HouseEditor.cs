@@ -259,6 +259,16 @@ namespace XDay.WorldAPI.House.Editor
             }
             var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(AssetDatabase.GetAssetPath(newPrefab), World);
             house.ReplaceModel(descriptor);
+
+            foreach (var instance in m_HouseInstances)
+            {
+                if (instance.HouseID == house.ID)
+                {
+                    instance.ReplaceModel(descriptor);
+                }
+            }
+
+            EditorUtility.DisplayDialog("注意", "替换房间模型后需要保存然后重新打开地图编辑器", "确定");
         }
 
         public HouseInstance CreateHouseInstance(House house, string name)
@@ -566,6 +576,6 @@ namespace XDay.WorldAPI.House.Editor
         private int m_ActiveHouseInstanceID = 0;
         private ScenePrefab m_ScenePrefab = new();
         private HouseGraph m_HouseGraph;
-        private string m_PlaceholderModelPath;
+        private string m_PlaceholderModelPath = "Assets/Arts/Models/CityBuilding/shengtainongchang/Prefabs/P_City_shengtai_Building_shengtainongchang_01_LV1.baked.prefab";
     }
 }

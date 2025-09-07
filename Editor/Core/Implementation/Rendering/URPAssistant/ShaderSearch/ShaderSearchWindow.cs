@@ -141,8 +141,12 @@ namespace ShaderTool
                                 EditorHelper.OpenCSFile(entry.File, entry.LineNumber);
                             }
                             EditorGUILayout.TextField(entry.Text);
+                            if (GUILayout.Button("Detail", GUILayout.MaxWidth(50)))
+                            {
+                                entry.ShowDetail = !entry.ShowDetail;
+                            }
                             EditorGUILayout.EndHorizontal();
-                            if (m_SearchData.ShowDetail)
+                            if (entry.ShowDetail || m_SearchData.ShowDetail)
                             {
                                 EditorGUILayout.TextArea(entry.Detail);
                             }

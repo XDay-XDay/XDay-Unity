@@ -21,13 +21,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-using XDay.SerializationAPI;
 using XDay.UtilityAPI.Editor;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 namespace XDay.WorldAPI.Editor
 {
@@ -78,6 +76,8 @@ namespace XDay.WorldAPI.Editor
 
         public void Init(Func<IResourceData> creator)
         {
+            m_SelectedGroupIndex = EditorPrefs.GetInt(WorldDefine.SELECTED_RESOURCE_GROUP_INDEX, m_Groups.Count > 0 ? 0 : -1);
+
             m_ResourceDataCreator = creator;
 
             var callbacks = CreateEventCallbacks();
@@ -148,7 +148,7 @@ namespace XDay.WorldAPI.Editor
         {
             serializer.WriteInt32(m_Version, "ResourceGroupSystem.Version");
             serializer.WriteBoolean(m_CheckTransform, "Check Transform");
-            serializer.WriteInt32(m_SelectedGroupIndex, "Selected Group");
+            EditorPrefs.SetInt(WorldDefine.SELECTED_RESOURCE_GROUP_INDEX, m_SelectedGroupIndex);
             serializer.WriteList(m_Groups, "Groups", (group, index) =>
             {
                 serializer.WriteSerializable(group, $"Group {index}", converter, false);
@@ -157,9 +157,12 @@ namespace XDay.WorldAPI.Editor
 
         public void EditorDeserialize(IDeserializer deserializer, string label)
         {
-            deserializer.ReadInt32("ResourceGroupSystem.Version");
+            var version = deserializer.ReadInt32("ResourceGroupSystem.Version");
             m_CheckTransform = deserializer.ReadBoolean("Check Transform");
-            m_SelectedGroupIndex = deserializer.ReadInt32("Selected Group");
+            if (version == 1)
+            {
+                m_SelectedGroupIndex = deserializer.ReadInt32("Selected Group");
+            }
             m_Groups = deserializer.ReadList("Groups", (index) =>
             {
                 return deserializer.ReadSerializable<ResourceGroup>($"Group {index}", false);
@@ -252,7 +255,7 @@ namespace XDay.WorldAPI.Editor
         private string[] m_GroupNames = new string[0];
         private bool m_ShowGroup = true;
         private bool m_CheckTransform;
-        private const int m_Version = 1;
+        private const int m_Version = 2;
     }
 }
 

@@ -22,6 +22,7 @@
  */
 
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
 {
@@ -38,6 +39,7 @@ namespace XDay.WorldAPI
     /// <summary>
     /// world lod system
     /// </summary>
+    [Preserve]
     public interface IWorldLODSystem : ISerializable
     {
         int LODCount { get; set; }
@@ -67,16 +69,19 @@ namespace XDay.WorldAPI
     /// <summary>
     /// world plugin lod setting
     /// </summary>
+    [Preserve]
     public interface IPluginLODSetup : ISerializable
     {
         string Name { get; set; }
         float Altitude { get; set; }
         float Tolerance { get; set; }
+        int RenderLOD { get; set; }
     }
 
     /// <summary>
     /// world plugin lod system
     /// </summary>
+    [Preserve]
     public interface IPluginLODSystem : ISerializable
     {
         static IPluginLODSystem Create(int lodCount)
@@ -96,5 +101,6 @@ namespace XDay.WorldAPI
         int QueryLOD(float altitude);
         IPluginLODSetup GetLOD(int index);
         void AddLOD(string name, float altitude, float tolerance = 0);
+        int GetRenderLOD(int curLOD);
     }
 }

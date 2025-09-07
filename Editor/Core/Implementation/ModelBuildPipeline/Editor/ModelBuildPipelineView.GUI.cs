@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -718,7 +718,7 @@ namespace XDay.ModelBuildPipeline.Editor
             menu.AddItem(new GUIContent($"{group}/{typeName}"), false, () =>
             {
                 m_CreateWindowPosition = mousePos;
-                m_Pipeline.CreateStage(type, type.Name);
+                m_Pipeline.CreateStage(type);
             });
         }
 
@@ -797,7 +797,7 @@ namespace XDay.ModelBuildPipeline.Editor
 
             EditorGUIUtility.labelWidth = 100;
             var oldIndex = m_Pipelines.IndexOf(m_Pipeline);
-            var index = EditorGUILayout.Popup("Build Pipelines", oldIndex, m_PipelineNames);
+            var index = EditorGUILayout.Popup("Pipelines", oldIndex, m_PipelineNames);
             if (index != oldIndex)
             {
                 SetPipeline(m_Pipelines[index]);
@@ -847,13 +847,6 @@ namespace XDay.ModelBuildPipeline.Editor
             {
                 m_PipelineNames[i] = $"{i}-{pipelines[i].name}";
             }
-        }
-
-        private void CreateStageMenu(Vector2 pos)
-        {
-            GenericMenu menu = new();
-            AddStageMenuItems(menu, pos);
-            menu.ShowAsContext();
         }
 
         private void AddStageMenuItems(GenericMenu menu, Vector2 mousePos)

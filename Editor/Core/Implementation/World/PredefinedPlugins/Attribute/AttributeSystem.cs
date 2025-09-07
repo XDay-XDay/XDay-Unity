@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -216,6 +214,41 @@ namespace XDay.WorldAPI.Attribute.Editor
             }
         }
 
+        public override void EditorSerialize(ISerializer writer, string label, IObjectIDConverter converter)
+        {
+            base.EditorSerialize(writer, label, converter);
+
+            writer.WriteInt32(m_EditorVersion, "EditorAttributeSystem.Version");
+
+            writer.WriteString(m_Name, "Name");
+            writer.WriteObjectID(m_ActiveLayerID, "Active Layer ID", converter);
+
+            List<LayerBase> layers = new(m_Layers);
+            writer.WriteList(layers, "Layers", (LayerBase layer, int index) =>
+            {
+                writer.WriteSerializable(layer, $"Layer {index}", converter, gameData: false);
+            });
+        }
+
+        public override void EditorDeserialize(IDeserializer reader, string label)
+        {
+            base.EditorDeserialize(reader, label);
+
+            reader.ReadInt32("EditorAttributeSystem.Version");
+
+            m_Name = reader.ReadString("Name");
+            m_ActiveLayerID = reader.ReadInt32("Active Layer ID");
+
+            var layers = reader.ReadList("Layers", (int index) =>
+            {
+                return reader.ReadSerializable<LayerBase>($"Layer {index}", gameData: false);
+            });
+            foreach (var layer in layers)
+            {
+                m_Layers.Add(layer);
+            }
+        }
+
         private LayerBase GetLayer(string name)
         {
             foreach (var layer in m_Layers)
@@ -255,17 +288,14 @@ namespace XDay.WorldAPI.Attribute.Editor
 
         [SerializeField]
         private string m_Name;
-        
         [SerializeField]
         private int m_BrushSize = 10;
-
         [SerializeField]
         private int m_ActiveLayerID = 0;
-
         [SerializeField]
         private SortedSet<LayerBase> m_Layers = new(Comparer<LayerBase>.Create((x, y) => x.ObjectIndex.CompareTo(y.ObjectIndex)));
-
         private AttributeSystemRenderer m_Renderer;
+        private const int m_EditorVersion = 1;
     }
 }
 

@@ -34,6 +34,29 @@ namespace XDay.WorldAPI.Tile.Editor
         public const string SHADER_SINGLE_PROPERTY_NAME = "Single";
         public const string TILE_ROOT_TAG = "Tile Root";
         public const string TILE_MATERIAL_ID_NAME = "Material ID";
+        public const string SHOW_TILE_SETTING = "TileSystem.ShowTileSetting";
+        public const string SHOW_GRID = "TileSystem.ShowGrid";
+        public const string SHOW_MATERIAL = "TileSystem.ShowMaterial";
+        public const string SHOW_MATERIAL_CONFIG = "TileSystem.ShowMaterialConfig";
+        public const string TEXTURE_RANGE_CHANGE_SETTING = "TileSystem.TextureRangeChange";
+        public const string TEXTURE_INTENSITY_SETTING = "TileSystem.TextureIntensitySetting";
+        public const string TEXTURE_INTENSITY_CHANGE_SETTING = "TileSystem.TextureIntensityChangeSetting";
+        public const string TEXTURE_ANGLE = "TileSystem.TextureAngle";
+        public const string TEXTURE_BRUSH_RANDOM_ANGLE = "TileSystem.TextureBrushRandomAngle";
+        public const string TEXTURE_SHOW_BRUSH = "TileSystem.ShowBrush";
+        public const string TEXTURE_SHOW = "TileSystem.Show";
+        public const string TEXTURE_RANGE = "TileSystem.TextureRange";
+        public const string TEXTURE_CHANNEL = "TileSystem.TextureChannel";
+        public const string VERTEX_PAINT_SHOW_BRUSH = "TileSystem.VertexPaint.ShowBrush";
+        public const string VERTEX_PAINT_SHOW = "TileSystem.VertexPaint.Show";
+        public const string VERTEX_PAINT_INTENSITY = "TileSystem.VertexPaint.Intensity";
+        public const string VERTEX_PAINT_ONE_TILE = "TileSystem.VertexPaint.OneTile";
+        public const string VERTEX_PAINT_RANGE = "TileSystem.VertexPaint.Range";
+        public const string VERTEX_PAINT_TARGET_HEIGHT = "TileSystem.VertexPaint.TargetHeight";
+        public const string VERTEX_PAINT_SUPPRESS_VERTEX_HEIGHT_THRESHOLD = "TileSystem.VertexPaint.SuppressVertexHeightThreshold";
+        public const string VERTEX_PAINT_SMOOTH_BRUSH = "TileSystem.VertexPaint.SmoothBrush";
+        public const string VERTEX_PAINT_MODE = "TileSystem.VertexPaint.Mode";
+        public const string VERTEX_PAINT_KEEP_EDGE_VERTEX_HEIGHT = "TileSystem.VertexPaint.KeepEdgeVertexHeight";
     }
 }
 

@@ -35,8 +35,8 @@ namespace XDay
             m_Min = min;
             m_GridSize = gridSize;
 
-            m_XCellCount = FixedMath.FloorToInt((max.X - min.X) / gridSize).IntValue;
-            m_YCellCount = FixedMath.FloorToInt((max.Y - min.Y) / gridSize).IntValue;
+            m_XCellCount = FixedMath.CeilToInt((max.X - min.X) / gridSize).IntValue;
+            m_YCellCount = FixedMath.CeilToInt((max.Y - min.Y) / gridSize).IntValue;
             m_Cells = new Cell[m_XCellCount * m_YCellCount];
             for (var i = 0; i < m_Cells.Length; ++i)
             {

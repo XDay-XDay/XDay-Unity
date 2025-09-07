@@ -31,9 +31,11 @@ namespace XDay.WorldAPI.Shape.Editor
 {
     public class ShapeObject : WorldObject, IObstacle
     {
+        internal ShapeSystem ShapeSystem => m_ShapeSystem;
         public bool Walkable => m_Attribute.HasFlag(ObstacleAttribute.Walkable);
         public ObstacleAttribute Attribute { get => m_Attribute; set => m_Attribute = value; }
         public int AreaID { get => m_AreaID; set => m_AreaID = value; }
+        public int CustomID { get => m_CustomID; set => m_CustomID = value; }
         public float Height { get => m_Height; set => m_Height = value; }
         public override Vector3 Scale { get => m_Scale; set => m_Scale = value; }
         public override Vector3 Position { get => m_Position; set => m_Position = value; }
@@ -42,10 +44,9 @@ namespace XDay.WorldAPI.Shape.Editor
         public Color RenderColor => m_UseOverriddenColor ? m_OverriddenColor : m_Color;
         public Color Color => m_Color;
         public int VertexCount => m_Polygon.VertexCount;
-        public float VertexDisplaySize => m_VertexDisplaySize;
-        public bool ShowVertexIndex => m_ShowVertexIndex;
         public IAspectContainer AspectContainer => m_AspectContainer;
         public List<Vector3> VerticesCopy => m_Polygon.VerticesCopy;
+        public List<Vector3> LocalPolygon => m_Polygon.Vertices;
         public List<Vector3> WorldPolygon
         {
             get
@@ -81,29 +82,32 @@ namespace XDay.WorldAPI.Shape.Editor
         {
         }
 
-        public ShapeObject(int id, int index, List<Vector3> localVertices, Vector3 position) 
+        public ShapeObject(int id, int index, int shapeSystemID, List<Vector3> localVertices, Vector3 position) 
             : base(id, index)
         {
+            m_ShapeSystemID = shapeSystemID;
             m_Polygon = new Polygon(localVertices);
             Position = position;
         }
 
         protected override void OnInit()
         {
+            m_ShapeSystem = World.QueryObject<ShapeSystem>(m_ShapeSystemID);
         }
 
         protected override void OnUninit()
         {
         }
 
-        public bool Hit(Vector3 worldPos)
+        public bool Hit(Vector3 worldPos, float radius, out int index)
         {
-            float halfSize = m_VertexDisplaySize * 0.5f;
+            index = -1;
             var localPos = TransformToLocalPosition(worldPos);
-            foreach (var vert in m_Polygon.Vertices)
+            for (var i = 0; i < m_Polygon.Vertices.Count; ++i)
             {
-                if ((vert - localPos).sqrMagnitude <= halfSize * halfSize)
+                if ((m_Polygon.Vertices[i] - localPos).sqrMagnitude <= radius * radius)
                 {
+                    index = i;
                     return true;
                 }
             }
@@ -148,6 +152,11 @@ namespace XDay.WorldAPI.Shape.Editor
             return m_Polygon.GetVertexPosition(index);
         }
 
+        public Vector3 GetVertexWorldPosition(int index)
+        {
+            return TransformToWorldPosition(m_Polygon.GetVertexPosition(index));
+        }
+
         public List<Vector3> GetPolyonInLocalSpace()
         {
             return m_Polygon.Vertices;
@@ -180,13 +189,12 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             base.GameSerialize(serializer, label, converter);
             serializer.WriteInt32(m_Version, "ShapeObject.Version");
+            serializer.WriteObjectID(m_ShapeSystemID, "Shape System ID", converter);
             serializer.WriteBoolean(m_Enabled, "Is Enabled");
             serializer.WriteVector3(m_Position, "Position");
             serializer.WriteQuaternion(m_Rotation, "Rotation");
             serializer.WriteVector3(m_Scale, "Scale");
             serializer.WriteString(m_Name, "Name");
-            serializer.WriteBoolean(m_ShowVertexIndex, "Show Vertex Index");
-            serializer.WriteSingle(m_VertexDisplaySize, "Vertex Display Size");
             serializer.WriteColor(m_Color, "Color");
             serializer.WriteVector3List(m_Polygon.Vertices, "Vertices");
             serializer.WriteStructure("Aspect Container", () =>
@@ -195,6 +203,7 @@ namespace XDay.WorldAPI.Shape.Editor
             });
             serializer.WriteSingle(m_Height, "Height");
             serializer.WriteInt32(m_AreaID, "Area ID");
+            serializer.WriteInt32(m_CustomID, "Custom ID");
             serializer.WriteInt32((int)m_Attribute, "Attribute");
         }
 
@@ -202,13 +211,12 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             base.EditorDeserialize(deserializer, label);
             var version = deserializer.ReadInt32("ShapeObject.Version");
+            m_ShapeSystemID = deserializer.ReadInt32("Shape System ID");
             m_Enabled = deserializer.ReadBoolean("Is Enabled");
             m_Position = deserializer.ReadVector3("Position");
             m_Rotation = deserializer.ReadQuaternion("Rotation");
             m_Scale = deserializer.ReadVector3("Scale");
             m_Name = deserializer.ReadString("Name");
-            m_ShowVertexIndex = deserializer.ReadBoolean("Show Vertex Index");
-            m_VertexDisplaySize = deserializer.ReadSingle("Vertex Display Size");
             m_Color = deserializer.ReadColor("Color");
             var vertices = deserializer.ReadVector3List("Vertices");
             m_Polygon = new Polygon(vertices);
@@ -219,6 +227,7 @@ namespace XDay.WorldAPI.Shape.Editor
             });
             m_Height = deserializer.ReadSingle("Height");
             m_AreaID = deserializer.ReadInt32("Area ID");
+            m_CustomID = deserializer.ReadInt32("Custom ID");
             m_Attribute = (ObstacleAttribute)deserializer.ReadInt32("Attribute");
         }
 
@@ -238,18 +247,6 @@ namespace XDay.WorldAPI.Shape.Editor
             if (name == ShapeDefine.SHAPE_NAME)
             {
                 m_Name = aspect.GetString();
-                return true;
-            }
-
-            if (name == ShapeDefine.SHAPE_VERTEX_INDEX_NAME)
-            {
-                m_ShowVertexIndex = aspect.GetBoolean();
-                return true;
-            }
-
-            if (name == ShapeDefine.SHAPE_VERTEX_DISPLAY_SIZE)
-            {
-                m_VertexDisplaySize = aspect.GetSingle();
                 return true;
             }
 
@@ -277,6 +274,14 @@ namespace XDay.WorldAPI.Shape.Editor
                 return true;
             }
 
+            if (name.StartsWith(ShapeDefine.VERTEX_POSITION_NAME))
+            {
+                var tokens = name.Split("-");
+                var index = int.Parse(tokens[1]);
+                m_Polygon.SetVertexPosition(index, aspect.GetVector3());
+                return true;
+            }
+
             return false;
         }
 
@@ -291,16 +296,6 @@ namespace XDay.WorldAPI.Shape.Editor
             if (name == ShapeDefine.ENABLE_SHAPE_NAME)
             {
                 return IAspect.FromBoolean(m_Enabled);
-            }
-
-            if (name == ShapeDefine.SHAPE_VERTEX_DISPLAY_SIZE)
-            {
-                return IAspect.FromSingle(m_VertexDisplaySize);
-            }
-
-            if (name == ShapeDefine.SHAPE_VERTEX_INDEX_NAME)
-            {
-                return IAspect.FromBoolean(m_ShowVertexIndex);
             }
 
             if (name == ShapeDefine.SHAPE_NAME)
@@ -328,16 +323,19 @@ namespace XDay.WorldAPI.Shape.Editor
                 return IAspect.FromColor(Color);
             }
 
+            if (name.StartsWith(ShapeDefine.VERTEX_POSITION_NAME))
+            {
+                var tokens = name.Split("-");
+                var index = int.Parse(tokens[1]);
+                return IAspect.FromVector3(m_Polygon.GetVertexPosition(index));
+            }
+
             Debug.Assert(false, $"Unknown aspect {name}");
             return null;
         }
 
         [SerializeField]
         private Polygon m_Polygon;
-        [SerializeField]
-        private bool m_ShowVertexIndex = false;
-        [SerializeField]
-        private float m_VertexDisplaySize = 1.0f;
         [SerializeField]
         private Vector3 m_Position;
         [SerializeField]
@@ -355,11 +353,16 @@ namespace XDay.WorldAPI.Shape.Editor
         [SerializeField]
         private int m_AreaID = 0;
         [SerializeField]
+        private int m_CustomID = 0;
+        [SerializeField]
         private float m_Height = 0;
         [SerializeField]
         private ObstacleAttribute m_Attribute;
+        [SerializeField]
+        private int m_ShapeSystemID;
         private Color m_OverriddenColor = Color.white;
         private bool m_UseOverriddenColor = false;
+        private ShapeSystem m_ShapeSystem;
         private const int m_Version = 1;
     }
 }
