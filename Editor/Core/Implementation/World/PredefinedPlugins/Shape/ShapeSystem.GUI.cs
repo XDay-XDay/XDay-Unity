@@ -22,6 +22,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -35,14 +36,18 @@ namespace XDay.WorldAPI.Shape.Editor
         private Vector3 SnapVertexWorld(Vector3 worldPosition)
         {
             float r2 = m_VertexDisplaySize * m_VertexDisplaySize;
-            foreach (var shape in m_Shapes.Values)
+
+            foreach (var layer in m_Layers)
             {
-                var localPosition = shape.TransformToLocalPosition(worldPosition);
-                foreach (var localPos in shape.LocalPolygon)
+                foreach (var shape in layer.Shapes.Values)
                 {
-                    if ((localPos - localPosition).sqrMagnitude <= r2)
+                    var localPosition = shape.TransformToLocalPosition(worldPosition);
+                    foreach (var localPos in shape.LocalPolygon)
                     {
-                        return shape.TransformToWorldPosition(localPos);
+                        if ((localPos - localPosition).sqrMagnitude <= r2)
+                        {
+                            return shape.TransformToWorldPosition(localPos);
+                        }
                     }
                 }
             }
@@ -117,10 +122,53 @@ namespace XDay.WorldAPI.Shape.Editor
                 DrawCreateNavMap();
                 DrawVertexDisplaySize();
                 GUILayout.Space(30);
+
+                DrawLayerSelection();
+                DrawLayerVisibilityButton();
+                DrawLayerButtons();
             }
             EditorGUILayout.EndHorizontal();
 
             DrawDescription();
+        }
+
+        private void DrawLayerButtons()
+        {
+            if (m_AddLayerButton.Render(Inited))
+            {
+                CommandAddLayer();
+            }
+
+            if (m_RemoveLayerButton.Render(Inited))
+            {
+                CommandDeleteLayer();
+            }
+
+            if (m_EditLayerNameButton.Render(Inited))
+            {
+                CommandEditLayerName();
+            }
+        }
+
+        private void DrawLayerSelection()
+        {
+            UpdateLayerNames();
+            var layerIndex = GetLayerIndex(m_CurrentLayerID);
+            var newLayerIndex = m_LayersPopup.Render(layerIndex, m_LayerNames, 40);
+            SetCurrentLayer(newLayerIndex);
+        }
+
+        private void DrawLayerVisibilityButton()
+        {
+            var layer = GetCurrentLayer();
+            if (layer != null)
+            {
+                m_LayerVisibilityButton.Active = layer.IsEnabled();
+            }
+            if (m_LayerVisibilityButton.Render(true, GUI.enabled && layer != null))
+            {
+                SetLayerVisibility(m_CurrentLayerID, m_LayerVisibilityButton.Active);
+            }
         }
 
         private void DrawCreateNavMap()
@@ -143,6 +191,14 @@ namespace XDay.WorldAPI.Shape.Editor
                 m_ColorField = new ColorField("颜色", "", 100);
                 m_Controls.Add(m_ColorField);
 
+                m_LayersPopup = new Popup("当前层", "", 170);
+                m_Controls.Add(m_LayersPopup);
+                m_AddLayerButton = CreateIconButton("add.png", "新建层");
+                m_RemoveLayerButton = CreateIconButton("remove.png", "删除当前层");
+                m_EditLayerNameButton = CreateIconButton("edit.png", "编辑层名称");
+                m_LayerVisibilityButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐组");
+                m_Controls.Add(m_LayerVisibilityButton);
+
                 m_ShowVertexIndexButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐顶点序号");
                 m_Controls.Add(m_ShowVertexIndexButton);
 
@@ -163,14 +219,6 @@ namespace XDay.WorldAPI.Shape.Editor
 
                 m_VertexSizeField = new FloatField("顶点大小", "", 100);
                 m_Controls.Add(m_VertexSizeField);
-            }
-        }
-
-        private void ShowObjects()
-        {
-            foreach (var kv in m_Shapes)
-            {
-                m_Renderer.ToggleVisibility(kv.Value);
             }
         }
 
@@ -198,7 +246,12 @@ namespace XDay.WorldAPI.Shape.Editor
                 m_LabelStyle = new GUIStyle(GUI.skin.label);
             }
 
-            EditorGUILayout.LabelField($"物体总数: {m_Shapes.Count}, 范围: {m_Bounds.min:F0}到{m_Bounds.max:F0}米");
+            var shapeCount = 0;
+            foreach (var kv in m_Layers)
+            {
+                shapeCount += kv.Shapes.Count;
+            }
+            EditorGUILayout.LabelField($"物体总数: {shapeCount}, 范围: {m_Bounds.min:F0}到{m_Bounds.max:F0}米");
             EditorGUILayout.LabelField("Ctrl+1/Ctrl+2/Ctrl+3切换操作");
         }
 
@@ -221,7 +274,11 @@ namespace XDay.WorldAPI.Shape.Editor
             {
                 var combiner = new ShapeCombiner();
                 var shapes = new List<ShapeObject>();
-                shapes.AddRange(m_Shapes.Values);
+                foreach (var layer in m_Layers)
+                {
+                    shapes.AddRange(layer.Shapes.Values);
+                }
+                
                 combiner.Combine(shapes, m_VertexDisplaySize, m_Bounds.min.ToVector2(), m_Bounds.max.ToVector2());
                 SceneView.RepaintAll();
             }
@@ -287,7 +344,10 @@ namespace XDay.WorldAPI.Shape.Editor
 
             SceneView.RepaintAll();
 
-            m_Renderer.Update();
+            foreach (var layer in m_Layers)
+            {
+                layer.Update();
+            }
         }
 
         private void DrawBounds()
@@ -312,7 +372,7 @@ namespace XDay.WorldAPI.Shape.Editor
             foreach (var objID in objects)
             {
                 var obj = QueryObjectUndo(objID) as ShapeObject;
-                var shape = CloneObject(World.AllocateObjectID(), m_Shapes.Count, obj);
+                var shape = CloneObject(World.AllocateObjectID(), obj.Layer.Shapes.Count, obj);
                 if (shape != null)
                 {
                     UndoSystem.CreateObject(shape, World.ID, ShapeDefine.ADD_SHAPE_NAME, ID, 0);
@@ -323,9 +383,9 @@ namespace XDay.WorldAPI.Shape.Editor
             }
 
             List<Object> gameObjects = new();
-            foreach (var dec in newObjects)
+            foreach (var shape in newObjects)
             {
-                gameObjects.Add(m_Renderer.QueryGameObject(dec.ID));
+                gameObjects.Add(shape.Layer.Renderer.QueryGameObject(shape.ID));
             }
             Selection.objects = gameObjects.ToArray();
         }
@@ -341,7 +401,8 @@ namespace XDay.WorldAPI.Shape.Editor
 
         public void UpdateRenderer(int objectID)
         {
-            m_Renderer.SetDirty(objectID);
+            var shape = World.QueryObject<ShapeObject>(objectID);
+            shape.Layer.Renderer.SetDirty(objectID);
         }
 
         private void DrawOperation()
@@ -410,7 +471,7 @@ namespace XDay.WorldAPI.Shape.Editor
                 {
                     newShape.UseOverriddenColor(true);
                     newShape.SetOverriddenColor(Color.green);
-                    var gameObject = m_Renderer.QueryGameObject(newShape.ID);
+                    var gameObject = newShape.Layer.Renderer.QueryGameObject(newShape.ID);
                     if (gameObject != null)
                     {
                         Selection.activeGameObject = gameObject;
@@ -445,12 +506,15 @@ namespace XDay.WorldAPI.Shape.Editor
 
         private ShapeObject GetShapeObjectFromGameObject(GameObject gameObject)
         {
-            var objectID = m_Renderer.QueryObjectID(gameObject);
-            if (objectID == 0)
+            foreach (var layer in m_Layers)
             {
-                return null;
+                var id = layer.Renderer.QueryObjectID(gameObject);
+                if (id != 0)
+                {
+                    return QueryObjectUndo(id) as ShapeObject;
+                }
             }
-            return QueryObjectUndo(objectID) as ShapeObject;
+            return null;
         }
 
         private void OnSelectionChanged()
@@ -474,6 +538,122 @@ namespace XDay.WorldAPI.Shape.Editor
             };
         }
 
+        private ImageButton CreateIconButton(string textureName, string tooltip)
+        {
+            var button = EditorWorldHelper.CreateImageButton(textureName, tooltip);
+            m_Controls.Add(button);
+            return button;
+        }
+
+
+        private void UpdateLayerNames()
+        {
+            if (m_LayerNames == null || m_LayerNames.Length != m_Layers.Count)
+            {
+                m_LayerNames = new string[m_Layers.Count];
+            }
+
+            var idx = 0;
+            foreach (var layer in m_Layers)
+            {
+                m_LayerNames[idx] = layer.Name;
+                ++idx;
+            }
+        }
+
+        private void SetLayerVisibility(int layerID, bool show)
+        {
+            var layer = GetLayer(layerID);
+            if (layer != null)
+            {
+                UndoSystem.SetAspect(layer, "Layer Visibility", IAspect.FromBoolean(show), "Set Layer Visibility", ID, UndoActionJoinMode.Both);
+            }
+        }
+
+        private void CommandAddLayer()
+        {
+            var input = new List<ParameterWindow.Parameter>()
+            {
+                new ParameterWindow.StringParameter("名称", "", "Layer"),
+            };
+            ParameterWindow.Open("新建子层", input, (items) =>
+            {
+                var ok = ParameterWindow.GetString(items[0], out var name);
+                if (ok)
+                {
+                    if (GetLayer(name) == null)
+                    {
+                        var layer = new ShapeSystemLayer(World.AllocateObjectID(), m_Layers.Count, name);
+
+                        UndoSystem.CreateObject(layer, World.ID, "Add Shape System Layer", ID, lod: 0);
+
+                        m_CurrentLayerID = m_Layers[^1].ID;
+
+                        return true;
+                    }
+                    else
+                    {
+                        EditorUtility.DisplayDialog("Error", $"layer {name} already exists", "OK");
+                    }
+                }
+                return false;
+            });
+        }
+
+        private void CommandDeleteLayer()
+        {
+            if (m_CurrentLayerID != 0)
+            {
+                var layer = GetCurrentLayer();
+                UndoSystem.DestroyObject(layer, "Delete Shape System Layer", ID, lod: 0);
+                if (m_Layers.Count > 0)
+                {
+                    m_CurrentLayerID = m_Layers[0].ID;
+                }
+                else
+                {
+                    m_CurrentLayerID = 0;
+                }
+            }
+        }
+
+        private void CommandEditLayerName()
+        {
+            if (m_CurrentLayerID == 0)
+            {
+                return;
+            }
+
+            var layer = GetLayer(m_CurrentLayerID);
+            var input = new List<ParameterWindow.Parameter>()
+            {
+                new ParameterWindow.StringParameter("名称", "", layer.Name),
+            };
+            ParameterWindow.Open("修改层名", input, (items) =>
+            {
+                var ok = ParameterWindow.GetString(items[0], out var name);
+                if (ok)
+                {
+                    if (GetLayer(name) == null)
+                    {
+                        UndoSystem.SetAspect(layer, 
+                            "Layer Name", 
+                            IAspect.FromString(name), 
+                            "Set Shape System Layer Name", 
+                            ID, 
+                            UndoActionJoinMode.NextJoin);
+
+                        return true;
+                    }
+                    else
+                    {
+                        EditorUtility.DisplayDialog("出错了", $"层名{name}已经存在", "确定");
+                    }
+                }
+                return false;
+            });
+        }
+
         private enum Operation
         {
             Select,
@@ -489,6 +669,11 @@ namespace XDay.WorldAPI.Shape.Editor
         private FloatField m_VertexSizeField;
         private ColorField m_ColorField;
         private ToggleImageButton m_ShowVertexIndexButton;
+        private Popup m_LayersPopup;
+        private ImageButton m_AddLayerButton;
+        private ImageButton m_RemoveLayerButton;
+        private ImageButton m_EditLayerNameButton;
+        private ToggleImageButton m_LayerVisibilityButton;
         private GUIStyle m_LabelStyle;
         private List<UIControl> m_Controls;
         private Vector2 m_ScrollPos;
@@ -496,6 +681,7 @@ namespace XDay.WorldAPI.Shape.Editor
         private Popup m_PopupOperation;
         private Operation m_Action = Operation.Select;
         private AspectContainerEditor m_AspectContainerEditor = new();
+        private string[] m_LayerNames;
         private string[] m_ActionNames = new string[]
         {
             "选择",

@@ -236,9 +236,6 @@ namespace XDay.AssetPipeline.Editor
         private List<AssetPipelineStage> m_SortedStages = new();
         [SerializeField]
         private int m_NextID;
-        //小的排在更前面
-        [SerializeField]
-        private int m_SortOrder = 0;
         private event Action<AssetPipelineStage> m_EventCreateStage;
         private event Action<AssetPipelineStage> m_EventDestroyStage;
         //编辑器显示

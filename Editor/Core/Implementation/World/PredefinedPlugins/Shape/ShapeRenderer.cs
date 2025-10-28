@@ -100,9 +100,9 @@ namespace XDay.WorldAPI.Shape.Editor
             {
                 for (var i = 0; i < m_GizmoVertices.Count; ++i)
                 {
-                    Handles.SphereHandleCap(0, m_GizmoVertices[i], Quaternion.identity, m_ShapeObject.ShapeSystem.VertexDisplaySize, EventType.Repaint);
+                    Handles.SphereHandleCap(0, m_GizmoVertices[i], Quaternion.identity, m_ShapeObject.Layer.System.VertexDisplaySize, EventType.Repaint);
 
-                    if (m_ShapeObject.ShapeSystem.ShowVertexIndex)
+                    if (m_ShapeObject.Layer.System.ShowVertexIndex)
                     {
                         var color = Handles.color;
                         GUI.skin.label.normal.textColor = Color.red;

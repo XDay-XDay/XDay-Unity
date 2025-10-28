@@ -43,7 +43,7 @@ namespace XDay.WorldAPI.Editor
             return serializer.Data;
         }
 
-        public IWorldObject Deserialize(int worldID, string type, byte[] data, int id, int objectIndex, bool init)
+        public IWorldObject Deserialize(int worldID, string type, byte[] data, int id, int objectIndex, bool callInit)
         {
             var deserializer = IDeserializer.CreateBinary(new MemoryStream(data), m_SerializableFactory);
             var obj = Activator.CreateInstance(Type.GetType(type)) as WorldObject;
@@ -53,7 +53,7 @@ namespace XDay.WorldAPI.Editor
                 obj.ID = id;
                 obj.ObjectIndex = objectIndex;
             }
-            if (init)
+            if (callInit)
             {
                 var world = m_WorldSystem.QueryWorld(worldID);
                 obj.Init(world);

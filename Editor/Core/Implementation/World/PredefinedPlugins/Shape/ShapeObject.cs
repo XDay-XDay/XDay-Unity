@@ -31,7 +31,7 @@ namespace XDay.WorldAPI.Shape.Editor
 {
     public class ShapeObject : WorldObject, IObstacle
     {
-        internal ShapeSystem ShapeSystem => m_ShapeSystem;
+        internal ShapeSystemLayer Layer => m_ShapeSystemLayer;
         public bool Walkable => m_Attribute.HasFlag(ObstacleAttribute.Walkable);
         public ObstacleAttribute Attribute { get => m_Attribute; set => m_Attribute = value; }
         public int AreaID { get => m_AreaID; set => m_AreaID = value; }
@@ -82,17 +82,17 @@ namespace XDay.WorldAPI.Shape.Editor
         {
         }
 
-        public ShapeObject(int id, int index, int shapeSystemID, List<Vector3> localVertices, Vector3 position) 
+        public ShapeObject(int id, int index, int shapeLayerID, List<Vector3> localVertices, Vector3 position) 
             : base(id, index)
         {
-            m_ShapeSystemID = shapeSystemID;
+            m_ShapeLayerID = shapeLayerID;
             m_Polygon = new Polygon(localVertices);
             Position = position;
         }
 
         protected override void OnInit()
         {
-            m_ShapeSystem = World.QueryObject<ShapeSystem>(m_ShapeSystemID);
+            m_ShapeSystemLayer = World.QueryObject<ShapeSystemLayer>(m_ShapeLayerID);
         }
 
         protected override void OnUninit()
@@ -189,7 +189,7 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             base.GameSerialize(serializer, label, converter);
             serializer.WriteInt32(m_Version, "ShapeObject.Version");
-            serializer.WriteObjectID(m_ShapeSystemID, "Shape System ID", converter);
+            serializer.WriteObjectID(m_ShapeLayerID, "Shape System Layer ID", converter);
             serializer.WriteBoolean(m_Enabled, "Is Enabled");
             serializer.WriteVector3(m_Position, "Position");
             serializer.WriteQuaternion(m_Rotation, "Rotation");
@@ -211,7 +211,7 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             base.EditorDeserialize(deserializer, label);
             var version = deserializer.ReadInt32("ShapeObject.Version");
-            m_ShapeSystemID = deserializer.ReadInt32("Shape System ID");
+            m_ShapeLayerID = deserializer.ReadInt32("Shape System Layer ID");
             m_Enabled = deserializer.ReadBoolean("Is Enabled");
             m_Position = deserializer.ReadVector3("Position");
             m_Rotation = deserializer.ReadQuaternion("Rotation");
@@ -335,6 +335,8 @@ namespace XDay.WorldAPI.Shape.Editor
         }
 
         [SerializeField]
+        private int m_LayerID;
+        [SerializeField]
         private Polygon m_Polygon;
         [SerializeField]
         private Vector3 m_Position;
@@ -359,10 +361,10 @@ namespace XDay.WorldAPI.Shape.Editor
         [SerializeField]
         private ObstacleAttribute m_Attribute;
         [SerializeField]
-        private int m_ShapeSystemID;
+        private int m_ShapeLayerID;
         private Color m_OverriddenColor = Color.white;
         private bool m_UseOverriddenColor = false;
-        private ShapeSystem m_ShapeSystem;
+        private ShapeSystemLayer m_ShapeSystemLayer;
         private const int m_Version = 1;
     }
 }

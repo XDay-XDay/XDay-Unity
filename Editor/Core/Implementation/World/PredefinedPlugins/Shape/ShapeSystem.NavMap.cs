@@ -34,10 +34,18 @@ namespace XDay.WorldAPI.Shape.Editor
     {
         private NavMap CreateNavMap()
         {
+            var layer = GetLayer("Obstacle");
+
+            if (layer == null)
+            {
+                Debug.LogError("Obstacle layer not found!");
+                return null;
+            }
+
             List<Vector3> vertices = new();
             List<List<int>> areas = new();
             List<int> areaTypes = new();
-            foreach (var shape in m_Shapes.Values)
+            foreach (var shape in layer.Shapes.Values)
             {
                 List<int> area = new();
                 List<Vector3> shapeWorldVertices = new();

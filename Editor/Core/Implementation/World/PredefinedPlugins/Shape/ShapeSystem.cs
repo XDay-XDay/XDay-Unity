@@ -64,22 +64,21 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             Selection.selectionChanged += OnSelectionChanged;
 
-            foreach (var kv in m_Shapes)
-            {
-                kv.Value.Init(World);
-            }
-
             m_Renderer = new ShapeSystemRenderer(World.Root.transform, this);
 
-            ShowObjects();
+            foreach (var layer in m_Layers)
+            {
+                layer.Init(World, m_Renderer.Root.transform, this);
+            }
         }
 
         protected override void UninitInternal()
         {
             m_Renderer.OnDestroy();
-            foreach (var kv in m_Shapes)
+
+            foreach (var layer in m_Layers)
             {
-                kv.Value.Uninit();
+                layer.Uninit();
             }
 
             Selection.selectionChanged -= OnSelectionChanged;
@@ -92,17 +91,39 @@ namespace XDay.WorldAPI.Shape.Editor
 
         public override void DestroyObjectUndo(int objectID)
         {
-            var obj = World.QueryObject<ShapeObject>(objectID);
-            if (obj != null)
+            var shape = World.QueryObject<ShapeObject>(objectID);
+            if (shape != null)
             {
-                m_Renderer.Destroy(obj);
+                DestroyShape(objectID);
             }
-            DestroyObject(objectID);
+            else
+            {
+                var layer = World.QueryObject<ShapeSystemLayer>(objectID);
+                if (layer != null)
+                {
+                    DestroyLayer(layer);
+                }
+                else
+                {
+                    Debug.Assert(false);
+                }
+            }
         }
 
         public override void AddObjectUndo(IWorldObject obj, int lod, int objectIndex)
         {
-            AddObjectInternal(obj as ShapeObject);
+            if (obj is ShapeObject shape)
+            {
+                AddShape(shape);
+            }
+            else if (obj is ShapeSystemLayer layer)
+            {
+                AddLayer(layer);
+            }
+            else
+            {
+                Debug.Assert(false, $"unknown object {obj.GetType()}");
+            }
         }
 
         public void SetEnabled(int objectID, bool enabled, bool forceSet)
@@ -113,7 +134,14 @@ namespace XDay.WorldAPI.Shape.Editor
                 if (forceSet ||
                     obj.SetEnabled(enabled))
                 {
-                    m_Renderer.ToggleVisibility(obj);
+                    foreach (var layer in m_Layers)
+                    {
+                        if (layer.Contains(objectID))
+                        {
+                            layer.Renderer.ToggleVisibility(obj);
+                            break;
+                        }
+                    }
                 }
             }
             else
@@ -144,7 +172,14 @@ namespace XDay.WorldAPI.Shape.Editor
                     var ok = obj.SetAspect(objectID, name, aspect);
                     if (ok)
                     {
-                        m_Renderer.SetAspect(objectID, name);
+                        foreach (var layer in m_Layers)
+                        {
+                            if (layer.Contains(objectID))
+                            {
+                                layer.Renderer.SetAspect(objectID, name);
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -178,16 +213,21 @@ namespace XDay.WorldAPI.Shape.Editor
             return null;
         }
 
-        private void AddObjectInternal(ShapeObject shape)
+        private void AddShape(ShapeObject shape)
         {
-            m_Shapes.Add(shape.ID, shape);
+            shape.Layer.AddObject(shape);
 
             if (shape.GetVisibility() == WorldObjectVisibility.Undefined)
             {
                 shape.SetVisibility(WorldObjectVisibility.Visible);
             }
 
-            m_Renderer.Create(shape);
+            shape.Layer.Renderer.Create(shape);
+        }
+
+        private void AddLayer(ShapeSystemLayer layer)
+        {
+            m_Layers.Add(layer);
         }
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
@@ -200,15 +240,9 @@ namespace XDay.WorldAPI.Shape.Editor
             serializer.WriteBoolean(m_ShowVertexIndex, "Show Vertex Index");
             serializer.WriteSingle(m_VertexDisplaySize, "Vertex Display Size");
 
-            var allObjects = new List<ShapeObject>();
-            foreach (var p in m_Shapes)
+            serializer.WriteList(m_Layers, "Layers", (layer, index) =>
             {
-                allObjects.Add(p.Value);
-            }
-
-            serializer.WriteList(allObjects, "Objects", (obj, index) =>
-            {
-                serializer.WriteSerializable(obj, $"Object {index}", converter, false);
+                serializer.WriteSerializable(layer, $"Layer {index}", converter, false);
             });
         }
 
@@ -223,30 +257,32 @@ namespace XDay.WorldAPI.Shape.Editor
             m_ShowVertexIndex = deserializer.ReadBoolean("Show Vertex Index");
             m_VertexDisplaySize = deserializer.ReadSingle("Vertex Display Size");
 
-            var allObjects = deserializer.ReadList("Objects", (index) =>
+            m_Layers = deserializer.ReadList("Layer", (index) =>
             {
-                return deserializer.ReadSerializable<ShapeObject>($"Object {index}", false);
+                return deserializer.ReadSerializable<ShapeSystemLayer>($"Layer {index}", false);
             });
-            foreach (var obj in allObjects)
-            {
-                m_Shapes.Add(obj.ID, obj);
-            }
         }
 
-        private bool DestroyObject(int shapeID)
+        private bool DestroyShape(int shapeID)
         {
-            foreach (var shape in m_Shapes.Values)
+            var shape = World.QueryObject<ShapeObject>(shapeID);
+            DestroyObjectRenderer(shape);
+
+            foreach (var layer in m_Layers)
             {
-                if (shape.ID == shapeID)
+                if (layer.DestroyObject(shapeID))
                 {
-                    shape.Uninit();
-                    m_Shapes.Remove(shape.ID);
                     RemovePickInfo(shapeID);
                     return true;
                 }
             }
-            Debug.Assert(false, $"Destroy object {shapeID} failed!");
             return false;
+        }
+
+        private void DestroyLayer(ShapeSystemLayer layer)
+        {
+            layer.Uninit();
+            m_Layers.Remove(layer);
         }
 
         private void RemovePickInfo(int shapeID)
@@ -275,20 +311,101 @@ namespace XDay.WorldAPI.Shape.Editor
 
         List<IObstacle> IObstacleSource.GetObstacles()
         {
-            List<IObstacle> obstacles = new();
-            foreach (var kv in m_Shapes)
+            var layer = GetLayer("Obstacle");
+            if (layer != null)
             {
-                obstacles.Add(kv.Value);
+                return layer.GetObstacles();
             }
-            return obstacles;
+            return new();
+        }
+
+        private ShapeSystemLayer GetLayer(string name)
+        {
+            foreach (var layer in m_Layers)
+            {
+                if (layer.Name == name)
+                {
+                    return layer;
+                }
+            }
+            return null;
+        }
+
+        internal ShapeSystemLayer GetLayer(int layerID)
+        {
+            foreach (var layer in m_Layers)
+            {
+                if (layer.ID == layerID)
+                {
+                    return layer;
+                }
+            }
+            return null;
+        }
+
+        public int GetLayerIndex(int layerID)
+        {
+            var idx = 0;
+            foreach (var layer in m_Layers)
+            {
+                if (layer.ID == layerID)
+                {
+                    return idx;
+                }
+                ++idx;
+            }
+            return -1;
+        }
+
+        private void DestroyObjectRenderer(ShapeObject obj)
+        {
+            foreach (var layer in m_Layers)
+            {
+                if (layer.Renderer.Destroy(obj))
+                {
+                    break;
+                }
+            }
+        }
+
+        private ShapeSystemLayer GetCurrentLayer()
+        {
+            if (m_CurrentLayerID == 0)
+            {
+                return null;
+            }
+
+            return World.QueryObject<ShapeSystemLayer>(m_CurrentLayerID);
+        }
+
+        private void SetCurrentLayer(int layerIndex)
+        {
+            if (layerIndex >= 0 && layerIndex < m_Layers.Count)
+            {
+                var idx = 0;
+                foreach (var layer in m_Layers)
+                {
+                    if (idx == layerIndex)
+                    {
+                        m_CurrentLayerID = layer.ID;
+                        return;
+                    }
+                    ++idx;
+                }
+            }
+            else
+            {
+                m_CurrentLayerID = 0;
+            }
         }
 
         private string m_Name;
         private ShapeSystemRenderer m_Renderer;
         private Bounds m_Bounds;
-        private Dictionary<int, ShapeObject> m_Shapes = new();
+        private List<ShapeSystemLayer> m_Layers = new();
         private float m_VertexDisplaySize = 5f;
         private bool m_ShowVertexIndex = false;
+        private int m_CurrentLayerID = 0;
         private const int m_Version = 1;
     }
 }

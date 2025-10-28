@@ -26,6 +26,7 @@ using UnityEngine;
 using UnityEditor;
 using XDay.UtilityAPI;
 using XDay.WorldAPI.Editor;
+using System;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
@@ -48,7 +49,8 @@ namespace XDay.WorldAPI.Shape.Editor
             {
                 m_VertexOfCreatingShape.RemoveAt(m_VertexOfCreatingShape.Count - 1);
                 var center = Helper.CalculateCenterAndLocalVertices(m_VertexOfCreatingShape, out var localVertices);
-                var shape = new ShapeObject(World.AllocateObjectID(), m_Shapes.Count, ID, localVertices, center);
+                var layer = GetCurrentLayer();
+                var shape = new ShapeObject(World.AllocateObjectID(), layer.ShapeCount, ID, localVertices, center);
                 UndoSystem.CreateObject(shape, World.ID, ShapeDefine.ADD_SHAPE_NAME, ID, 0);
             }
 
@@ -77,11 +79,15 @@ namespace XDay.WorldAPI.Shape.Editor
         private void HitTest(Vector3 worldPosition)
         {
             List<ShapePickInfo> pickedShapes = new();
-            foreach (var shape in m_Shapes.Values)
+
+            foreach (var layer in m_Layers)
             {
-                if (shape.Hit(worldPosition, m_VertexDisplaySize * 0.5f, out var index))
+                foreach (var shape in layer.Shapes.Values)
                 {
-                    pickedShapes.Add(new ShapePickInfo(shape.ID, index));
+                    if (shape.Hit(worldPosition, m_VertexDisplaySize * 0.5f, out var index))
+                    {
+                        pickedShapes.Add(new ShapePickInfo(shape.ID, index));
+                    }
                 }
             }
 
@@ -165,6 +171,11 @@ namespace XDay.WorldAPI.Shape.Editor
 
         private void DrawSceneGUI(float vertexDisplaySize, float planeHeight, Operation operation)
         {
+            if (GetCurrentLayer() == null)
+            {
+                return;
+            }
+
             if (operation == Operation.Create)
             {
                 DrawCreateModeSceneGUI(vertexDisplaySize, planeHeight);

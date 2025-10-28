@@ -52,11 +52,11 @@ namespace XDay.WorldAPI.Attribute.Editor
             var layer = QueryLayer(m_ActiveLayerID);
             if (layer != null)
             {
-                m_GroupVisibilityButton.Active = layer.IsEnabled();
+                m_LayerVisibilityButton.Active = layer.IsEnabled();
             }
-            if (m_GroupVisibilityButton.Render(true, GUI.enabled && layer != null))
+            if (m_LayerVisibilityButton.Render(true, GUI.enabled && layer != null))
             {
-                SetLayerVisibility(m_ActiveLayerID, m_GroupVisibilityButton.Active);
+                SetLayerVisibility(m_ActiveLayerID, m_LayerVisibilityButton.Active);
             }
 
             if (layer != null)
@@ -287,21 +287,19 @@ namespace XDay.WorldAPI.Attribute.Editor
                 m_TypePopup = new Popup("类型", "", 120);
                 m_Controls.Add(m_TypePopup);
 
-                m_LayersPopup = new Popup("当前层", "", 170);
-                m_Controls.Add(m_LayersPopup);
-
                 m_BrushSizeControl = new IntField("笔刷大小", "", 100);
                 m_Controls.Add(m_BrushSizeControl);
 
                 m_ColorField = new ColorField("颜色", "", 100);
                 m_Controls.Add(m_ColorField);
 
+                m_LayersPopup = new Popup("当前层", "", 170);
+                m_Controls.Add(m_LayersPopup);
                 m_AddLayerButton = CreateIconButton("add.png", "新建层");
                 m_RemoveLayerButton = CreateIconButton("remove.png", "删除当前层");
                 m_EditLayerNameButton = CreateIconButton("edit.png", "编辑层名称");
-
-                m_GroupVisibilityButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐组");
-                m_Controls.Add(m_GroupVisibilityButton);
+                m_LayerVisibilityButton = EditorWorldHelper.CreateToggleImageButton(false, "show.png", "显隐组");
+                m_Controls.Add(m_LayerVisibilityButton);
 
                 m_ShowGrid = EditorWorldHelper.CreateToggleImageButton(false, "grid.png", "显隐格子");
                 m_Controls.Add(m_ShowGrid);
@@ -690,12 +688,12 @@ namespace XDay.WorldAPI.Attribute.Editor
         private Popup m_OperationPopup;
         private Popup m_TypePopup;
         private IntField m_BrushSizeControl;
-        private Popup m_LayersPopup;
         private ColorField m_ColorField;
+        private Popup m_LayersPopup;
         private ImageButton m_AddLayerButton;
         private ImageButton m_RemoveLayerButton;
         private ImageButton m_EditLayerNameButton;
-        private ToggleImageButton m_GroupVisibilityButton;
+        private ToggleImageButton m_LayerVisibilityButton;
         private ToggleImageButton m_ShowGrid;
         private List<UIControl> m_Controls;
         private GUIStyle m_TipsStyle;
