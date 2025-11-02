@@ -26,7 +26,7 @@ using UnityEngine;
 using XDay;
 using XDay.NavigationAPI;
 
-namespace Framework.Map.Navigation
+namespace XDay.UtilityAPI.Editor.Navigation
 {
     public class GridData : IGridData
     {

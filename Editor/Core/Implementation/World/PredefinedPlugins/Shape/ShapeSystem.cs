@@ -48,6 +48,7 @@ namespace XDay.WorldAPI.Shape.Editor
         public override string TypeName => "EditorShapeSystem";
         public bool ShowVertexIndex => m_ShowVertexIndex;
         public float VertexDisplaySize => m_VertexDisplaySize;
+        public ShapeSystemRenderer Renderer => m_Renderer;
 
         public ShapeSystem()
         {
@@ -68,7 +69,7 @@ namespace XDay.WorldAPI.Shape.Editor
 
             foreach (var layer in m_Layers)
             {
-                layer.Init(World, m_Renderer.Root.transform, this);
+                layer.Init(World);
             }
         }
 
@@ -166,18 +167,33 @@ namespace XDay.WorldAPI.Shape.Editor
                     return true;
                 }
 
-                var obj = World.QueryObject<ShapeObject>(objectID);
-                if (obj != null)
+                if (name == "Layer Name")
                 {
-                    var ok = obj.SetAspect(objectID, name, aspect);
-                    if (ok)
+                    var layer = QueryObjectUndo(objectID) as ShapeSystemLayer;
+                    layer.Name = aspect.GetString();
+                    layer.Renderer.SetAspect(objectID, name);
+                }
+                else if (name == "Layer Visibility")
+                {
+                    var layer = QueryObjectUndo(objectID) as ShapeSystemLayer;
+                    layer.SetEnabled(aspect.GetBoolean());
+                    layer.Renderer.SetAspect(objectID, name);
+                }
+                else
+                {
+                    var obj = World.QueryObject<ShapeObject>(objectID);
+                    if (obj != null)
                     {
-                        foreach (var layer in m_Layers)
+                        var ok = obj.SetAspect(objectID, name, aspect);
+                        if (ok)
                         {
-                            if (layer.Contains(objectID))
+                            foreach (var layer in m_Layers)
                             {
-                                layer.Renderer.SetAspect(objectID, name);
-                                break;
+                                if (layer.Contains(objectID))
+                                {
+                                    layer.Renderer.SetAspect(objectID, name);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -192,6 +208,18 @@ namespace XDay.WorldAPI.Shape.Editor
             if (aspect != null)
             {
                 return aspect;
+            }
+
+            if (name == "Layer Name")
+            {
+                var layer = QueryObjectUndo(objectID) as ShapeSystemLayer;
+                return IAspect.FromString(layer.Name);
+            }
+
+            if (name == "Layer Visibility")
+            {
+                var layer = QueryObjectUndo(objectID) as ShapeSystemLayer;
+                return IAspect.FromBoolean(layer.IsEnabled());
             }
 
             if (name == ShapeDefine.SHAPE_VERTEX_DISPLAY_SIZE)
@@ -239,6 +267,7 @@ namespace XDay.WorldAPI.Shape.Editor
             serializer.WriteBounds(m_Bounds, "Bounds");
             serializer.WriteBoolean(m_ShowVertexIndex, "Show Vertex Index");
             serializer.WriteSingle(m_VertexDisplaySize, "Vertex Display Size");
+            serializer.WriteObjectID(m_CurrentLayerID, "Current Layer ID", converter);
 
             serializer.WriteList(m_Layers, "Layers", (layer, index) =>
             {
@@ -256,6 +285,7 @@ namespace XDay.WorldAPI.Shape.Editor
             m_Bounds = deserializer.ReadBounds("Bounds");
             m_ShowVertexIndex = deserializer.ReadBoolean("Show Vertex Index");
             m_VertexDisplaySize = deserializer.ReadSingle("Vertex Display Size");
+            m_CurrentLayerID = deserializer.ReadInt32("Current Layer ID");
 
             m_Layers = deserializer.ReadList("Layer", (index) =>
             {

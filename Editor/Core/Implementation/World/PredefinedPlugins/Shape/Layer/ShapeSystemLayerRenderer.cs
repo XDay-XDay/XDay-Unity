@@ -63,6 +63,18 @@ namespace XDay.WorldAPI.Shape.Editor
         {
             var shape = m_Layer.System.World.QueryObject<ShapeObject>(objectID);
 
+            if (name == "Layer Name")
+            {
+                Root.name = m_Layer.Name;
+                return;
+            }
+
+            if (name == "Layer Visibility")
+            {
+                Root.SetActive(m_Layer.IsActive);
+                return;
+            }
+
             if (name == ShapeDefine.ENABLE_SHAPE_NAME)
             {
                 ToggleVisibility(shape);
@@ -172,9 +184,12 @@ namespace XDay.WorldAPI.Shape.Editor
 
         public void Update()
         {
-            foreach (var renderer in m_Renderers.Values)
+            if (Root.activeInHierarchy)
             {
-                renderer.Draw(true);
+                foreach (var renderer in m_Renderers.Values)
+                {
+                    renderer.Draw(true);
+                }
             }
         }
 

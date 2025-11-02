@@ -583,7 +583,7 @@ namespace XDay.WorldAPI.Shape.Editor
                 {
                     if (GetLayer(name) == null)
                     {
-                        var layer = new ShapeSystemLayer(World.AllocateObjectID(), m_Layers.Count, name);
+                        var layer = new ShapeSystemLayer(World.AllocateObjectID(), m_Layers.Count, name, ID);
 
                         UndoSystem.CreateObject(layer, World.ID, "Add Shape System Layer", ID, lod: 0);
 

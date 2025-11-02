@@ -30,40 +30,39 @@ namespace XDay.WorldAPI.Shape.Editor
     internal class ShapeSystemLayer : WorldObject
     {
         public ShapeSystemLayerRenderer Renderer => m_Renderer;
-        public ShapeSystem System => m_System;
+        public ShapeSystem System => World.QueryObject<ShapeSystem>(m_ShapeSystemID);
         public override string TypeName => "ShapeSystemLayer";
-        public string Name => m_Name;
+        public string Name { get => m_Name; set => m_Name = value; }
         public Dictionary<int, ShapeObject> Shapes => m_Shapes;
         public int ShapeCount => Shapes.Count;
+        protected override bool EnabledInternal { get => m_Visible; set => m_Visible = value; }
+        protected override WorldObjectVisibility VisibilityInternal
+        {
+            set { }
+            get => WorldObjectVisibility.Visible;
+        }
 
         public ShapeSystemLayer()
         {
         }
 
-        public ShapeSystemLayer(int id, int index, string name)
+        public ShapeSystemLayer(int id, int index, string name, int shapeSystemID)
             : base(id, index)
         {
             m_Name = name;
-        }
-
-        public virtual void Init(IWorld world, Transform parent, ShapeSystem system)
-        {
-            base.Init(world);
-
-            m_System = system;
-
-            foreach (var kv in m_Shapes)
-            {
-                kv.Value.Init(world);
-            }
-
-            m_Renderer = new ShapeSystemLayerRenderer(parent, this);
-
-            ShowObjects();
+            m_ShapeSystemID = shapeSystemID;
         }
 
         protected override void OnInit()
         {
+            foreach (var kv in m_Shapes)
+            {
+                kv.Value.Init(World);
+            }
+
+            m_Renderer = new ShapeSystemLayerRenderer(System.Renderer.Root.transform, this);
+
+            ShowObjects();
         }
 
         protected override void OnUninit()
@@ -128,8 +127,11 @@ namespace XDay.WorldAPI.Shape.Editor
             base.EditorSerialize(serializer, label, converter);
 
             serializer.WriteInt32(m_EditorVersion, "ShapeSystemLayer.Version");
+
             serializer.WriteString(m_Name, "Name");
-            
+            serializer.WriteBoolean(m_Visible, "Visible");
+            serializer.WriteObjectID(m_ShapeSystemID, "Shape System ID", converter);
+
             var allObjects = new List<ShapeObject>();
             foreach (var p in m_Shapes)
             {
@@ -149,6 +151,8 @@ namespace XDay.WorldAPI.Shape.Editor
             deserializer.ReadInt32("ShapeSystemLayer.Version");
 
             m_Name = deserializer.ReadString("Name");
+            m_Visible = deserializer.ReadBoolean("Visible");
+            m_ShapeSystemID = deserializer.ReadInt32("Shape System ID");
 
             var allObjects = deserializer.ReadList("Objects", (index) =>
             {
@@ -161,9 +165,11 @@ namespace XDay.WorldAPI.Shape.Editor
         }
 
         private string m_Name;
-        private ShapeSystem m_System;
+        private int m_ShapeSystemID;
         private Dictionary<int, ShapeObject> m_Shapes = new();
         private ShapeSystemLayerRenderer m_Renderer = null;
+        [SerializeField]
+        private bool m_Visible = true;
         private const int m_EditorVersion = 1;
     }
 }

@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using XDay.UtilityAPI;
 
 namespace XDay.AnimationAPI.Editor
 {
@@ -171,7 +172,7 @@ namespace XDay.AnimationAPI.Editor
                 }
             }
 
-            var textureSize = NextPOTSize(transformData.Count);
+            var textureSize = Helper.NextPOTSize(transformData.Count);
             if (textureSize.x > AnimationDefine.MAX_TEXTURE_SIZE ||
                 textureSize.y > AnimationDefine.MAX_TEXTURE_SIZE)
             {
@@ -190,30 +191,6 @@ namespace XDay.AnimationAPI.Editor
             };
 
             return textureData;
-        }
-
-        public static Vector2Int NextPOTSize(int pixelCount)
-        {
-            var size = Mathf.CeilToInt(Mathf.Sqrt(pixelCount));
-            if (Mathf.NextPowerOfTwo(size) == size)
-            {
-                return new Vector2Int(size, size);
-            }
-
-            var textureHeight = Mathf.NextPowerOfTwo(size);
-            var textureWidth = textureHeight;
-            while (textureHeight != 0)
-            {
-                if (pixelCount > textureWidth * textureHeight)
-                {
-                    return new Vector2Int(textureWidth, textureHeight * 2);
-                }
-
-                textureHeight /= 2;
-            }
-
-            Debug.Assert(false);
-            return Vector2Int.zero;
         }
 
         private int GetIndex(Transform[] transforms, Transform transform)

@@ -50,7 +50,7 @@ namespace XDay.WorldAPI.Shape.Editor
                 m_VertexOfCreatingShape.RemoveAt(m_VertexOfCreatingShape.Count - 1);
                 var center = Helper.CalculateCenterAndLocalVertices(m_VertexOfCreatingShape, out var localVertices);
                 var layer = GetCurrentLayer();
-                var shape = new ShapeObject(World.AllocateObjectID(), layer.ShapeCount, ID, localVertices, center);
+                var shape = new ShapeObject(World.AllocateObjectID(), layer.ShapeCount, layer.ID, localVertices, center);
                 UndoSystem.CreateObject(shape, World.ID, ShapeDefine.ADD_SHAPE_NAME, ID, 0);
             }
 

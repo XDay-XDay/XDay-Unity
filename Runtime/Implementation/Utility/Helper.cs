@@ -183,6 +183,39 @@ namespace XDay.UtilityAPI
             return center;
         }
 
+        //xz plane,得到的center有可能在多边形外部
+        //https://en.wikipedia.org/wiki/Centroid#:~:text=PE%2BPF)%2B3PG.%7D-,Of%20a%20polygon,-%5Bedit%5D
+        public static Vector3 CalculatePolygonCenter(List<Vector3> polygonVertices)
+        {
+            int n = polygonVertices.Count;
+            float x = 0;
+            float z = 0;
+            for (int i = 0; i < n; ++i)
+            {
+                var cur = polygonVertices[i];
+                var next = polygonVertices[(i + 1) % n];
+                x += (cur.x + next.x) * (cur.x * next.z - next.x * cur.z);
+                z += (cur.z + next.z) * (cur.x * next.z - next.x * cur.z);
+            }
+            float area = CalculatePolygonSignedArea(polygonVertices);
+            x /= (area * 6);
+            z /= (area * 6);
+            return new Vector3(x, 0, z);
+        }
+
+        public static float CalculatePolygonSignedArea(List<Vector3> polygonVertices)
+        {
+            float signedArea = 0;
+            int n = polygonVertices.Count;
+            for (int i = 0; i < n; ++i)
+            {
+                var cur = polygonVertices[i];
+                var next = polygonVertices[(i + 1) % n];
+                signedArea += (cur.x * next.z - next.x * cur.z);
+            }
+            return signedArea * 0.5f;
+        }
+
         public static T AddOrGetComponent<T>(this GameObject obj) where T : Component
         {
             if (!obj.TryGetComponent<T>(out var comp))
@@ -441,6 +474,24 @@ namespace XDay.UtilityAPI
             return 0;
         }
 
+        public static Vector3 RotateY(Vector3 dir, float angle)
+        {
+            Quaternion q = Quaternion.Euler(0, angle, 0);
+            return q * dir;
+        }
+
+        public static float GetAngleBetween(Vector3 dirA, Vector3 dirB)
+        {
+            float angle = Vector3.Angle(dirA, dirB);
+            var p = Vector3.Cross(dirA, dirB);
+            if (p.y > 0)
+            {
+                return angle;
+            }
+
+            return -angle;
+        }
+
         public static float GetAngleBetween(Vector2 dir0, Vector2 dir1)
         {
             dir0.Normalize();
@@ -483,6 +534,19 @@ namespace XDay.UtilityAPI
                 return true;
             }
             return false;
+        }
+
+        public static bool Approximately(Vector3 a, Vector3 b, float esp = 0.0001f)
+        {
+            return Approximately(a.x, b.x, esp) &&
+                   Approximately(a.y, b.y, esp) &&
+                   Approximately(a.z, b.z, esp);
+        }
+
+        public static bool Approximately(Vector2 a, Vector2 b, float esp = 0.0001f)
+        {
+            return Approximately(a.x, b.x, esp) &&
+                   Approximately(a.y, b.y, esp);
         }
 
         public static bool Approximately(float a, float b, float esp = 0.0001f)
@@ -1092,6 +1156,70 @@ namespace XDay.UtilityAPI
             var rbIn = PointInPolygon(new Vector3(max.x, 0, min.z), polygon);
             var centerIn = PointInPolygon((min + max) / 2, polygon);
             return lbIn || rtIn || centerIn || ltIn || rbIn;
+        }
+
+        public static bool PointInPolygon2D(Vector3 p, Vector3[] polygon)
+        {
+            if (polygon == null || polygon.Length < 3)
+            {
+                return false;
+            }
+
+            int numVerts = polygon.Length;
+            Vector3 p0 = polygon[numVerts - 1];
+            bool bYFlag0 = (p0.z >= p.z);
+
+            bool bInside = false;
+            for (int j = 0; j < numVerts; ++j)
+            {
+                Vector3 p1 = polygon[j];
+                bool bYFlag1 = (p1.z >= p.z);
+                if (bYFlag0 != bYFlag1)
+                {
+                    if (((p1.z - p.z) * (p0.x - p1.x) >= (p1.x - p.x) * (p0.z - p1.z)) == bYFlag1)
+                    {
+                        bInside = !bInside;
+                    }
+                }
+
+                // Move to the next pair of vertices, retaining info as possible.
+                bYFlag0 = bYFlag1;
+                p0 = p1;
+            }
+
+            return bInside;
+        }
+
+        public static bool PointInPolygon2D(Vector3 p, List<Vector3> polygon)
+        {
+            if (polygon == null || polygon.Count < 3)
+            {
+                return false;
+            }
+
+            int numVerts = polygon.Count;
+            Vector3 p0 = polygon[numVerts - 1];
+            bool bYFlag0 = (p0.z >= p.z);
+
+            bool bInside = false;
+            for (int j = 0; j < numVerts; ++j)
+            {
+                Vector3 p1 = polygon[j];
+                bool bYFlag1 = (p1.z >= p.z);
+                if (bYFlag0 != bYFlag1)
+                {
+                    if (((p1.z - p.z) * (p0.x - p1.x) >= (p1.x - p.x) * (p0.z - p1.z)) == bYFlag1)
+                    {
+                        bInside = !bInside;
+                    }
+                }
+
+                // Move to the next pair of vertices, retaining info as possible.
+                bYFlag0 = bYFlag1;
+                p0 = p1;
+            }
+
+            return bInside;
         }
 
         public static bool PointInRect(Vector2 p, Vector2 rectMin, Vector2 rectMax)
@@ -1738,7 +1866,7 @@ namespace XDay.UtilityAPI
             bool includeInherited = false
         ) where TAttribute : Attribute
         {
-            List<FieldInfo> result = new List<FieldInfo>();
+            List<FieldInfo> result = new();
             BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
             Type currentType = targetType;
@@ -1788,6 +1916,20 @@ namespace XDay.UtilityAPI
             return ret;
         }
 
+        public static List<T> GetReverseList<T>(List<T> list)
+        {
+            var newList = new List<T>(list);
+            int n = newList.Count / 2;
+            for (int i = 0; i < n; ++i)
+            {
+                T temp = newList[i];
+                int k = newList.Count - 1 - i;
+                newList[i] = newList[k];
+                newList[k] = temp;
+            }
+            return newList;
+        }
+
         public static void ReverseList<T>(List<T> list)
         {
             int n = list.Count / 2;
@@ -1811,7 +1953,6 @@ namespace XDay.UtilityAPI
                 array[k] = temp;
             }
         }
-
 
         /// <summary>
         /// 获取当前gui游标坐标
@@ -1923,6 +2064,34 @@ namespace XDay.UtilityAPI
                 builder.Append($"{s} ");
             }
             return builder.ToString();
+        }
+
+        public static bool SegmentSegmentIntersectionTest2D(
+            Vector2 aStart,
+            Vector2 aEnd,
+            Vector2 bStart,
+            Vector2 bEnd,
+            out Vector2 intersectionPoint)
+        {
+            intersectionPoint = Vector2.zero;
+            Vector2 da = aEnd - aStart;
+            Vector2 db = bEnd - bStart;
+            float delta = da.y * db.x - da.x * db.y;
+            if (Mathf.Approximately(delta, 0))
+            {
+                return false;
+            }
+
+            Vector2 k = bStart - aStart;
+            float ta = (k.y * db.x - k.x * db.y) / delta;
+            float tb = (k.y * da.x - k.x * da.y) / delta;
+            if (ta >= 0 && ta < 1.0f && tb >= 0 && tb < 1.0f)
+            {
+                intersectionPoint = aStart + ta * da;
+                return true;
+            }
+
+            return false;
         }
 
         public static bool TriangleRayIntersectionTest3D(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 rayOrigin, Vector3 rayDirection, out Vector3 barycentricCoordinate, out Vector3 normal, out float distance)
@@ -2099,6 +2268,30 @@ namespace XDay.UtilityAPI
             }
             Debug.LogError($"clip {clipName} not found!");
             return 0;
+        }
+
+        public static Vector2Int NextPOTSize(int pixelCount)
+        {
+            var size = Mathf.CeilToInt(Mathf.Sqrt(pixelCount));
+            if (Mathf.NextPowerOfTwo(size) == size)
+            {
+                return new Vector2Int(size, size);
+            }
+
+            var textureHeight = Mathf.NextPowerOfTwo(size);
+            var textureWidth = textureHeight;
+            while (textureHeight != 0)
+            {
+                if (pixelCount > textureWidth * textureHeight)
+                {
+                    return new Vector2Int(textureWidth, textureHeight * 2);
+                }
+
+                textureHeight /= 2;
+            }
+
+            Debug.Assert(false);
+            return Vector2Int.zero;
         }
 
         private const double m_DegToRad = 0.0174532924;
