@@ -26,13 +26,13 @@ using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 
-namespace XDay.WorldAPI.Shape.Editor
+namespace XDay.WorldAPI.Region.Editor
 {
-    internal partial class ShapeSystemLayerRenderer
+    internal partial class RegionSystemLayerRenderer
     {
         public GameObject Root => m_Root;
 
-        public ShapeSystemLayerRenderer(Transform parent, ShapeSystemLayer layer)
+        public RegionSystemLayerRenderer(Transform parent, RegionSystemLayer layer)
         {
             m_Root = new GameObject(layer.Name);
             m_Root.transform.SetParent(parent, true);
@@ -61,7 +61,7 @@ namespace XDay.WorldAPI.Shape.Editor
 
         public void SetAspect(int objectID, string name)
         {
-            var shape = m_Layer.System.World.QueryObject<ShapeObject>(objectID);
+            var region = m_Layer.System.World.QueryObject<RegionObject>(objectID);
 
             if (name == "Layer Name")
             {
@@ -75,46 +75,22 @@ namespace XDay.WorldAPI.Shape.Editor
                 return;
             }
 
-            if (name == ShapeDefine.ENABLE_SHAPE_NAME)
+            if (name == RegionDefine.ENABLE_REGION_NAME)
             {
-                ToggleVisibility(shape);
+                ToggleVisibility(region);
                 return;
             }
 
-            if (name == ShapeDefine.SHAPE_NAME)
+            if (name == RegionDefine.REGION_NAME)
             {
                 if (m_Renderers.TryGetValue(objectID, out var renderer))
                 {
-                    renderer.Root.name = shape.Name;
+                    renderer.Root.name = region.Name;
                 }
                 return;
             }
 
-            if (name == ShapeDefine.ROTATION_NAME)
-            {
-                QueryGameObject(objectID).transform.rotation = shape.Rotation;
-                return;
-            }
-
-            if (name == ShapeDefine.SCALE_NAME)
-            {
-                QueryGameObject(objectID).transform.localScale = shape.Scale;
-                return;
-            }
-
-            if (name == ShapeDefine.POSITION_NAME)
-            {
-                QueryGameObject(objectID).transform.position = shape.Position;
-                return;
-            }
-
-            if (name.StartsWith(ShapeDefine.VERTEX_POSITION_NAME))
-            {
-                m_Renderers[objectID].SetDirty();
-                return;
-            }
-
-            if (name == ShapeDefine.COLOR_NAME)
+            if (name == RegionDefine.COLOR_NAME)
             {
                 return;
             }
@@ -122,7 +98,7 @@ namespace XDay.WorldAPI.Shape.Editor
             Debug.Assert(false, $"OnSetAspect todo: {name}");
         }
 
-        public bool Destroy(ShapeObject data)
+        public bool Destroy(RegionObject data)
         {
             if (m_Renderers.TryGetValue(data.ID, out var renderer))
             {
@@ -133,15 +109,15 @@ namespace XDay.WorldAPI.Shape.Editor
             return false;
         }
 
-        public void Create(ShapeObject shape)
+        public void Create(RegionObject region)
         {
-            if (m_Renderers.ContainsKey(shape.ID))
+            if (m_Renderers.ContainsKey(region.ID))
             {
                 return;
             }
 
-            var renderer = new ShapeObjectRenderer(shape, m_Root.transform);
-            m_Renderers.Add(shape.ID, renderer);
+            var renderer = new RegionRenderer(region, m_Root.transform);
+            m_Renderers.Add(region.ID, renderer);
 
             foreach (var kv in m_Renderers)
             {
@@ -150,7 +126,7 @@ namespace XDay.WorldAPI.Shape.Editor
             }
         }
 
-        public void ToggleVisibility(ShapeObject obj)
+        public void ToggleVisibility(RegionObject obj)
         {
             if (m_Renderers.TryGetValue(obj.ID, out var renderer))
             {
@@ -193,9 +169,9 @@ namespace XDay.WorldAPI.Shape.Editor
             }
         }
 
-        private readonly ShapeSystemLayer m_Layer;
+        private readonly RegionSystemLayer m_Layer;
         private readonly GameObject m_Root;
-        private readonly Dictionary<int, ShapeObjectRenderer> m_Renderers = new();
+        private readonly Dictionary<int, RegionRenderer> m_Renderers = new();
     }
 }
 

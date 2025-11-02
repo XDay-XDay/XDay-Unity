@@ -28,11 +28,11 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
-    internal class ShapeRenderer
+    internal class ShapeObjectRenderer
     {
         public GameObject Root => m_Root;
 
-        public ShapeRenderer(ShapeObject shape, Transform parent)
+        public ShapeObjectRenderer(ShapeObject shape, Transform parent)
         {
             m_ShapeObject = shape;
             m_Root = new GameObject(shape.Name);

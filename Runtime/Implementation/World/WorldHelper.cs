@@ -95,6 +95,7 @@ namespace XDay.WorldAPI
 
         public static string GetXDayPath()
         {
+            GetResourcePath("", "Icon");
             return Helper.GetFolderPath(Helper.GetFolderPath(Helper.GetFolderPath(m_ResourceDir)));
         }
 
