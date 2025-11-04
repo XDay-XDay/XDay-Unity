@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace XDay.WorldAPI.Editor
 {
     [XDaySerializableClass("World")]
-    internal partial class EditorWorld : World
+    public partial class EditorWorld : World
     {
         public void Load(string filePath)
         {
@@ -66,11 +66,11 @@ namespace XDay.WorldAPI.Editor
             var serializer = ISerializer.CreateBinary();
             if (isEditor)
             {
-                EditorSerialize(serializer, "", new ToPersistentID());
+                EditorSerialize(serializer, "", new ToPersistentID(0));
             }
             else
             {
-                GameSerialize(serializer, "", new ToPersistentID());
+                GameSerialize(serializer, "", new ToPersistentID(0));
             }
             serializer.Uninit();
 

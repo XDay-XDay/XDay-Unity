@@ -122,11 +122,12 @@ namespace XDay.WorldAPI.Editor
                             if (oldCount != newLODCount)
                             {
                                 onLODCountChanged?.Invoke(oldCount, newLODCount);
+                                return true;
                             }
                         }
                     }
 
-                    return true;
+                    return false;
                 });
             }
 

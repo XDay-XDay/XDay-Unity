@@ -29,6 +29,7 @@ namespace XDay.WorldAPI.Editor
     public interface IWorldBakeable
     {
         Bounds Bounds { get; }
+        bool EnableBake { get; }
 
         List<GameObject> GetObjectsInRangeAtHeight(Vector3 minPos, Vector3 maxPos, float cameraHeight);
         void DestroyGameObjects(List<GameObject> gameObjects);

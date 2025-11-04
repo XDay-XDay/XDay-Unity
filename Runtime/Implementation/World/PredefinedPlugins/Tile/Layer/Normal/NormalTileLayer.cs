@@ -27,7 +27,14 @@ namespace XDay.WorldAPI.Tile
 {
     internal class NormalTileLayer : TileLayerBase
     {
-        public NormalTileLayer(string name, int xTileCount, int yTileCount, float tileWidth, float tileHeight, Vector2 origin, NormalTileData[] tiles, string[] usedTilePrefabPaths)
+        public NormalTileLayer(string name, 
+            int xTileCount, 
+            int yTileCount, 
+            float tileWidth, 
+            float tileHeight, 
+            Vector2 origin, 
+            NormalTileData[] tiles, 
+            string[] usedTilePrefabPaths)
             : base(name, xTileCount, yTileCount, tileWidth, tileHeight, origin)
         {
             m_Tiles = tiles;
@@ -175,6 +182,19 @@ namespace XDay.WorldAPI.Tile
             }
 
             return 0;
+        }
+
+        internal override void UpdateMaterialInRange(float minX, float minZ, float maxX, float maxZ, TileMaterialUpdaterTiming timing)
+        {
+            var minCoord = WorldPositionToCoordinate(minX, minZ);
+            var maxCoord = WorldPositionToCoordinate(maxX, maxZ);
+
+            m_Renderer.UpdateMaterialInRange(minCoord.x - 1, minCoord.y - 1, maxCoord.x + 1, maxCoord.y + 1, timing);
+        }
+
+        protected override void OnSetTileMaterialUpdater()
+        {
+            m_Renderer.OnSetTileMaterialUpdater();
         }
 
         private NormalTileData[] m_Tiles;

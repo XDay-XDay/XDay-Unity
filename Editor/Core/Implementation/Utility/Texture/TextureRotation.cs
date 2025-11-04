@@ -68,6 +68,7 @@ namespace XDay.UtilityAPI.Editor
             m_AlphaMaterial = new Material(AssetDatabase.LoadAssetAtPath<Shader>(WorldHelper.GetShaderPath("Brush.shader")));
 
             var gameObject = new GameObject("Texture Rotation Camera");
+            gameObject.tag = "EditorOnly";
             m_BakeCamera = gameObject.AddComponent<Camera>();
             m_BakeCamera.clearFlags = CameraClearFlags.SolidColor;
             m_BakeCamera.transform.position = new Vector3(0, 10.0f, 0);
@@ -79,6 +80,7 @@ namespace XDay.UtilityAPI.Editor
             Helper.HideGameObject(gameObject);
 
             m_Quad = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            m_Quad.tag = "EditorOnly";
             //m_Quad.layer = LayerMask.NameToLayer(m_BakeObjectLayerName);
             m_Quad.DestroyComponent<UnityEngine.Collider>();
             m_Quad.SetActive(false);

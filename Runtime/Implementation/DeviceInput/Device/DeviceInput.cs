@@ -95,14 +95,19 @@ namespace XDay.InputAPI
             return m_MotionSystem.CreateClickMotion(this, touchType, moveThreshold);
         }
 
+        public IMultiClickMotion CreateMultiClickMotion(float moveThreshold, DeviceTouchType touchType)
+        {
+            return m_MotionSystem.CreateMultiClickMotion(this, touchType, moveThreshold);
+        }
+
         public IPinchMotion CreatePinchMotion(float minAltitude, float maxAltitude, float range, Camera camera, bool enableRotate, DeviceTouchType touchType)
         {
             return m_MotionSystem.CreatePinchMotion(minAltitude, maxAltitude, range, camera, enableRotate, this, touchType);
         }
 
-        public ILongPressMotion CreateLongPressMotion(float tapHoldDuration, DeviceTouchType touchType)
+        public ILongPressMotion CreateLongPressMotion(float tapHoldDuration, float moveThreshold, DeviceTouchType touchType)
         {
-            return m_MotionSystem.CreateLongPressMotion(tapHoldDuration, this, touchType);
+            return m_MotionSystem.CreateLongPressMotion(tapHoldDuration, moveThreshold, this, touchType);
         }
 
         public IMouseScrollMotion CreateMouseScrollMotion(DeviceTouchType touchType)

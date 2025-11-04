@@ -32,6 +32,7 @@ namespace XDay.WorldAPI.Tile
         public bool HasHeightData => m_HasHeightData;
         public float[] VertexHeights => m_VertexHeights;
         public int MeshResolution => m_MeshResolution;
+        public bool MaskSet { get => m_MaskSet; set => m_MaskSet = value; }
 
         public NormalTileData(string path, float[] vertexHeights, bool hasHeightData)
         {
@@ -92,6 +93,7 @@ namespace XDay.WorldAPI.Tile
         private bool m_HasHeightData = false;
         private readonly float[] m_VertexHeights;
         private int m_MeshResolution;
+        private bool m_MaskSet = false;
     }
 }
 

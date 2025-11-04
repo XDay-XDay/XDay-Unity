@@ -43,6 +43,8 @@ namespace XDay.UtilityAPI.Editor
             }
         }
 
+        public bool Valid => !string.IsNullOrEmpty(m_StyleTextureFolder) && Directory.Exists(m_StyleTextureFolder);
+
         public BrushStyleManager(string styleTextureFolder)
         {
             m_TextureRotation = new TextureRotation();

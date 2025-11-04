@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -213,10 +213,10 @@ namespace XDay.WorldAPI.City.Editor
         private string m_Name;
         private LargeMesh m_GridMesh;
         private Material m_GridMaterial;
+        private Texture2D m_Texture;
         private int m_HorizontalGridCount;
         private int m_VerticalGridCount;
         private float m_GridSize;
-        private Texture2D m_Texture;
         private protected Grid m_Grid;
         private const int m_BaseVersion = 1;
     }

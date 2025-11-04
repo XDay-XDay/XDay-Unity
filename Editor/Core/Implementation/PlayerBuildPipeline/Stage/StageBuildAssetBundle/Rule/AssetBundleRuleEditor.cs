@@ -25,6 +25,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
+using System;
 
 namespace XDay.PlayerBuildPipeline.Editor
 {
@@ -40,10 +41,10 @@ namespace XDay.PlayerBuildPipeline.Editor
 
     public partial class AssetBundleRuleEditor : EditorWindow
     {
-        [MenuItem("XDay/Asset/Asset Bundle Rule Window")]
+        [MenuItem("XDay/Asset/Asset Bundle Rule Editor")]
         private static void Open()
         {
-            GetWindow<AssetBundleRuleEditor>("Asset Bundle Rule").Show();
+            GetWindow<AssetBundleRuleEditor>("Asset Bundle Rule Editor").Show();
         }
 
         private void OnGUI()
@@ -51,28 +52,18 @@ namespace XDay.PlayerBuildPipeline.Editor
             GUI.enabled = m_TreeView != null;
             GUI.enabled = true;
 
-            if (GUI.Button(new Rect(0, 0, position.width, 20), "Start"))
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Start"))
             {
-                var config = EditorHelper.QueryAsset<AssetBundleRuleConfig>();
-                if (config == null)
-                {
-                    EditorUtility.DisplayDialog("出错了", "没有找到AssetBundleRuleConfig,在Assets目录下创建默认配置", "确定");
-                    config = ScriptableObject.CreateInstance<AssetBundleRuleConfig>();
-                    AssetDatabase.CreateAsset(config, "Assets/AssetBundleRuleConfig.asset");
-                    AssetDatabase.Refresh();
-                }
-
-                m_State = new TreeViewState();
-
-                var headerState = CreateMultiColumnHeaderState();
-                var multiColumnHeader = new MultiColumnHeader(headerState);
-                multiColumnHeader.ResizeToFit();
-
-                m_TreeView = new AssetBundleRuleTreeView(m_State, multiColumnHeader);
-                m_TreeView.Build(config);
+                Start();
             }
+            if (GUILayout.Button("Save"))
+            {
+                Save();
+            }
+            EditorGUILayout.EndHorizontal();
 
-            float offset = 130;
+            float offset = 40;
             if (m_TreeView != null)
             {
                 m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
@@ -80,6 +71,33 @@ namespace XDay.PlayerBuildPipeline.Editor
                 m_TreeView.OnGUI(rect);
                 EditorGUILayout.EndScrollView();
             }
+        }
+
+        private void Save()
+        {
+            EditorUtility.SetDirty(m_TreeView.Config);
+            AssetDatabase.SaveAssets();
+        }
+
+        private void Start()
+        {
+            var config = EditorHelper.QueryAsset<AssetBundleRuleConfig>();
+            if (config == null)
+            {
+                EditorUtility.DisplayDialog("出错了", "没有找到AssetBundleRuleConfig,在Assets目录下创建默认配置", "确定");
+                config = ScriptableObject.CreateInstance<AssetBundleRuleConfig>();
+                AssetDatabase.CreateAsset(config, "Assets/AssetBundleRuleConfig.asset");
+                AssetDatabase.Refresh();
+            }
+
+            m_State = new TreeViewState();
+
+            var headerState = CreateMultiColumnHeaderState();
+            var multiColumnHeader = new MultiColumnHeader(headerState);
+            multiColumnHeader.ResizeToFit();
+
+            m_TreeView = new AssetBundleRuleTreeView(m_State, multiColumnHeader);
+            m_TreeView.Build(config);
         }
 
         private MultiColumnHeaderState CreateMultiColumnHeaderState()

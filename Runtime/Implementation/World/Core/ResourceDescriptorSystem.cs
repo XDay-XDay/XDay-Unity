@@ -43,7 +43,13 @@ namespace XDay.WorldAPI
                 d.Init(world);
                 if (d.IsValid)
                 {
-                    m_Descriptors.TryAdd(d.GetPath(0), d);
+                    m_Descriptors.TryGetValue(d.GetPath(0), out var list);
+                    if (list == null)
+                    {
+                        list = new();
+                        m_Descriptors[d.GetPath(0)] = list;
+                    }
+                    list.Add(d);
                 }
                 else
                 {
@@ -57,7 +63,10 @@ namespace XDay.WorldAPI
         {
             foreach (var kv in m_Descriptors)
             {
-                kv.Value.Uninit();
+                foreach (var d in kv.Value)
+                {
+                    d.Uninit();
+                }
             }
             m_Descriptors.Clear();
         }
@@ -78,8 +87,12 @@ namespace XDay.WorldAPI
             {
                 return null;
             }
-            m_Descriptors.TryGetValue(path, out var descriptor);
-            return descriptor;
+            m_Descriptors.TryGetValue(path, out var list);
+            if (list != null && list.Count > 0)
+            {
+                return list[0];
+            }
+            return null;
         }
 
         protected virtual IResourceDescriptor CreateDescriptor(int id, int index, string path)
@@ -91,8 +104,7 @@ namespace XDay.WorldAPI
         public virtual void EditorDeserialize(IDeserializer deserializer, string label) { }
         public virtual void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter) {}
 
-        protected Dictionary<string, IResourceDescriptor> m_Descriptors = new();
+        protected Dictionary<string, List<IResourceDescriptor>> m_Descriptors = new();
         protected List<IResourceDescriptor> m_UninitedDescriptors = new();
     }
 }
-

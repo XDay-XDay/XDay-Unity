@@ -85,6 +85,7 @@ namespace XDay.WorldAPI
         IGameObjectPool GameObjectPool { get; }
         ICameraVisibleAreaCalculator CameraVisibleAreaCalculator { get; }
         IWorldLODSystem WorldLODSystem { get; }
+        bool ShowDebugInfo { get; set; }
 
         int AllocateObjectID();
         T QueryObject<T>(int objectID) where T : class, IWorldObject;

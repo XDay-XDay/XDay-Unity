@@ -25,8 +25,16 @@ using System.Collections.Generic;
 
 namespace XDay.WorldAPI
 {
+    /// <summary>
+    /// 将临时ID转换为序列化ID,不同类型的ID分段设置
+    /// </summary>
     public class ToPersistentID : IObjectIDConverter
     {
+        public ToPersistentID(int idOffset)
+        {
+            m_IDOffset = idOffset;
+        }
+
         public int Convert(int id)
         {
             if (id != 0)
@@ -37,7 +45,7 @@ namespace XDay.WorldAPI
                     return fileID;
                 }
 
-                fileID = ++m_NextPersistentID;
+                fileID = ++m_NextPersistentID + m_IDOffset;
                 m_ObjectIDToPersistentID.Add(id, fileID);
                 return fileID;
             }
@@ -46,6 +54,7 @@ namespace XDay.WorldAPI
         }
 
         private int m_NextPersistentID;
+        private int m_IDOffset;
         private Dictionary<int, int> m_ObjectIDToPersistentID = new();
     }
 

@@ -58,7 +58,6 @@ namespace XDay.CameraAPI
         public Vector3 LogicPosition => m_Transform.CurrentLogicPosition;
         public Vector3 FocusPoint => m_FocusPointClamp.Position;
         public Vector3 Forward => m_Transform.CurrentRenderRotation * Vector3.forward;
-        public Vector2 ReferenceResolution => m_Setup.ReferenceResolution;
         public float FocalLength => Vector3.Distance(m_Transform.CurrentLogicPosition, FocusPoint);
         public float ZoomFactor => m_Camera.fieldOfView * FocalLength;
         public CameraSetup Setup => m_Setup;
@@ -438,7 +437,10 @@ namespace XDay.CameraAPI
             m_Transform.CurrentLogicPosition = m_FocusPointClamp.Clamp(
                 m_Transform.CurrentLogicPosition,
                 m_Transform.CurrentLogicRotation * Vector3.forward,
-                Setup.Orbit.Pitch, MinAltitude, MaxAltitude, m_Camera);
+                Setup.Orbit.Pitch, 
+                MinAltitude, 
+                MaxAltitude, 
+                m_Camera);
 
             m_Transform.UpdateLogicTransform();
         }
@@ -450,6 +452,11 @@ namespace XDay.CameraAPI
             var camera = cameraObj.AddComponent<Camera>();
             camera.transform.position = new Vector3(0, 30, -30);
             return camera;
+        }
+
+        public float QueryAltitude(string name)
+        {
+            return m_Setup.QueryAltitude(name);
         }
 
         private Camera m_Camera;

@@ -149,8 +149,14 @@ namespace XDay.WorldAPI.Decoration.Editor
                 {
                     m_PluginLODSystemEditor.InspectorGUI(LODSystem, null, "LOD", (lodCount) =>
                     {
+                        if(lodCount > 8)
+                        {
+                            EditorUtility.DisplayDialog("出错了", "LOD数不能超过8个", "确定");
+                        }
                         return lodCount <= 8;
                     });
+
+                    m_EnableInstanceRendering = EditorGUILayout.ToggleLeft("开启Instance渲染", m_EnableInstanceRendering);
 
                     var newBounds = EditorGUILayout.RectField("范围", m_Bounds.ToRect());
                     SetBounds(newBounds.ToBounds());
@@ -214,7 +220,10 @@ namespace XDay.WorldAPI.Decoration.Editor
                 var worldPosition = Helper.GUIRayCastWithXZPlane(evt.mousePosition, World.CameraManipulator.Camera);
                 foreach (var obj in QueryObjectsInRectangle(worldPosition, m_RemoveRange * 2, m_RemoveRange * 2))
                 {
-                    UndoSystem.DestroyObject(obj, DecorationDefine.REMOVE_DECORATION_NAME, ID);
+                    if (obj.IsActive)
+                    {
+                        UndoSystem.DestroyObject(obj, DecorationDefine.REMOVE_DECORATION_NAME, ID);
+                    }
                 }
             }
         }
@@ -297,6 +306,8 @@ namespace XDay.WorldAPI.Decoration.Editor
                 DrawAdjustObjectHeight();
 
                 DrawCreatePattern();
+
+                DrawTagFilter();
 
                 GUILayout.Space(30);
 
@@ -391,6 +402,9 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                 m_ButtonCreatePattern = EditorWorldHelper.CreateImageButton("pattern.png", "创建集合");
                 m_Controls.Add(m_ButtonCreatePattern);
+
+                m_ButtonFilterByTag = EditorWorldHelper.CreateImageButton("filter.png", "按照Tag显示物体");
+                m_Controls.Add(m_ButtonFilterByTag);
 
                 m_WidthField = new FloatField("宽", "", 60);
                 m_Controls.Add(m_WidthField);
@@ -925,6 +939,30 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
+        private void DrawTagFilter()
+        {
+            if (m_ButtonFilterByTag.Render(Inited))
+            {
+                TagWindow.Open("根据Tag显示物体", m_TagState, (visibleTags, tagState) =>
+                {
+                    UndoSystem.NextGroupAndJoin();
+                    var show = IAspect.FromBoolean(true);
+                    var hide = IAspect.FromBoolean(false);
+                    foreach (var decoration in m_Decorations.Values)
+                    {
+                        var aspect = hide;
+                        if (visibleTags.Contains(decoration.Tag))
+                        {
+                            aspect = show;
+                        }
+                        UndoSystem.SetAspect(decoration, DecorationDefine.ENABLE_DECORATION_NAME, aspect, "Enable/Disable Decoration Object", ID, UndoActionJoinMode.None);
+                    }
+                    m_TagState = tagState;
+                    return true;
+                });
+            }
+        }
+
         private string GetUniquePatternName(string name)
         {
             var idx = 0;
@@ -1372,6 +1410,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private ImageButton m_ButtonAddObjectsToActiveLOD;
         private ImageButton m_ButtonAdjustObjectHeight;
         private ImageButton m_ButtonCreatePattern;
+        private ImageButton m_ButtonFilterByTag;
         private List<UIControl> m_Controls;
         private SceneSelectionTool m_SceneSelectionTool = new();
         private string[] m_LODNames;
@@ -1388,6 +1427,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private float m_RotationDelta = 10f;
         private float m_ScaleDelta = 0.2f;
         private const float m_MinScale = 0.1f;
+        private Dictionary<string, bool> m_TagState = new();
         private string[] m_ShapeNames = new string[]
         {
             "多边形",

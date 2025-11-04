@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -48,6 +48,7 @@ namespace XDay.WorldAPI.City.Editor
                 return m_Grids[0];
             }
         }
+        public override int FileIDOffset => WorldDefine.CITY_SYSTEM_FILE_ID_OFFSET;
 
         public CityEditor()
         {

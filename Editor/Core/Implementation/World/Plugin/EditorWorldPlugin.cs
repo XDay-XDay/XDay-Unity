@@ -34,6 +34,7 @@ namespace XDay.WorldAPI.Editor
         public override bool IsActive => Root == null ? false : Root.activeSelf;
         public virtual WorldPluginUsage Usage { get; } = WorldPluginUsage.BothInEditorAndGame;
         public abstract GameObject Root { get; }
+        public abstract int FileIDOffset { get; }
 
         public EditorWorldPlugin()
         {

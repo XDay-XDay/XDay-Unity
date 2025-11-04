@@ -21,14 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using XDay.SerializationAPI;
 using XDay.UtilityAPI;
 using System.Collections.Generic;
 using System.IO;
 
 namespace XDay.WorldAPI.Editor
 {
-    internal class EditorWorldPluginLoader
+    public class EditorWorldPluginLoader
     {
         public EditorWorldPluginLoader(ISerializableFactory serializableCreator)
         {

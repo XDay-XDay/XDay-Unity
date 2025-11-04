@@ -54,11 +54,20 @@ namespace XDay.UtilityAPI.Editor
 
         public List<Vector3> Build(List<Vector3> points, int iterateCount = 25)
         {
-            CreateInputFile(points, m_ExeFilePath);
-            EditorHelper.RunProcess($"{m_ExeFilePath}/concave.exe", $"input.txt -out output.txt -k {iterateCount}", m_ExeFilePath, out _, out _);
+            m_OutputFilePath = Helper.FindFile("concave.exe", "Packages");
+            if (string.IsNullOrEmpty(m_OutputFilePath))
+            {
+                m_OutputFilePath = Helper.FindFile("concave.exe", "Assets");
+            }
+
+            m_OutputFilePath = m_OutputFilePath.Replace('\\', '/');
+            m_OutputFilePath = Helper.GetFolderPath(m_OutputFilePath);
+
+            CreateInputFile(points, m_OutputFilePath);
+            EditorHelper.RunProcess($"{m_OutputFilePath}/concave.exe", $"input.txt -out output.txt -k {iterateCount}", m_OutputFilePath, out _, out _);
             var polygon = ParseOutput();
-            FileUtil.DeleteFileOrDirectory($"{m_ExeFilePath}/input.txt");
-            FileUtil.DeleteFileOrDirectory($"{m_ExeFilePath}/output.txt");
+            FileUtil.DeleteFileOrDirectory($"{m_OutputFilePath}/input.txt");
+            FileUtil.DeleteFileOrDirectory($"{m_OutputFilePath}/output.txt");
             return polygon;
         }
 
@@ -78,7 +87,7 @@ namespace XDay.UtilityAPI.Editor
         private List<Vector3> ParseOutput()
         {
             List<Vector3> ret = new();
-            var outputFilePath = $"{m_ExeFilePath}/output.txt";
+            var outputFilePath = $"{m_OutputFilePath}/output.txt";
             var text = File.ReadAllText(outputFilePath);
             var lines = text.Split("\n");
             foreach (var line in lines)
@@ -118,6 +127,6 @@ namespace XDay.UtilityAPI.Editor
             return points;
         }
 
-        private string m_ExeFilePath = "../Misc/XDay/third";
+        private string m_OutputFilePath;
     }
 }

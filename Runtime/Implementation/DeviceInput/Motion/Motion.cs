@@ -47,6 +47,8 @@ namespace XDay.InputAPI
                 if (Match())
                 {
                     OnMatch();
+
+                    OnAfterMatch();
                 }
             }
         }
@@ -83,6 +85,8 @@ namespace XDay.InputAPI
                 m_State = MotionState.Running;
             }
         }
+
+        protected virtual void OnAfterMatch() { }
 
         public void AddMatchCallback(Func<IMotion, MotionState, bool> callback, int priority)
         {

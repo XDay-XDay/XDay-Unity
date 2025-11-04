@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -46,6 +46,7 @@ namespace XDay.WorldAPI.LogicObject.Editor
         }
         public override Bounds Bounds => m_Bounds;
         public override string TypeName => "EditorLogicObjectSystem";
+        public override int FileIDOffset => WorldDefine.LOGIC_OBJECT_SYSTEM_FILE_ID_OFFSET;
 
         public LogicObjectSystem()
         {

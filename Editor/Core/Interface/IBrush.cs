@@ -59,6 +59,7 @@ namespace XDay.UtilityAPI.Editor
         }
 
         IBrushStyle SelectedStyle { get; }
+        bool Valid { get; }
 
         void OnDestroy();
         void InspectorGUI();

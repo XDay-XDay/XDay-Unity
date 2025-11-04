@@ -31,9 +31,11 @@ namespace XDay.WorldAPI.Tile.Editor
 {
     internal partial class TileSystem
     {
+        bool IWorldBakeable.EnableBake => true;
+
         List<GameObject> IWorldBakeable.GetObjectsInRangeAtHeight(Vector3 minPos, Vector3 maxPos, float cameraHeight)
         {
-            List<GameObject> gameObjects = new List<GameObject>();
+            List<GameObject> gameObjects = new();
             int lod = m_PluginLODSystem.QueryLOD(cameraHeight);
 
             var minCoord = UnrotatedPositionToCoordinate(minPos.x, minPos.z);

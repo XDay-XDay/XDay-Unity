@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using UnityEngine;
 
 namespace XDay.InputAPI
@@ -33,10 +31,11 @@ namespace XDay.InputAPI
         public Vector2 Start => m_Start;
         public override MotionType Type => MotionType.LongPress;
 
-        public LongPressMotion(int id, float duration, IDeviceInput device, DeviceTouchType touchType)
+        public LongPressMotion(int id, float duration, float moveThreshold, IDeviceInput device, DeviceTouchType touchType)
             : base(id, device, touchType)
         {
             m_Duration = duration;
+            m_MoveThreshold = moveThreshold;
         }
 
         protected override void OnReset()
@@ -82,9 +81,9 @@ namespace XDay.InputAPI
         }
 
         private Vector2 m_Start;
-        private float m_Duration = 2.0f;
+        private float m_Duration = 0;
         private float m_Timer = 0;
-        private float m_MoveThreshold = 3.0f;
+        private float m_MoveThreshold;
         private bool m_TouchStartCaptured = false;
     }
 }

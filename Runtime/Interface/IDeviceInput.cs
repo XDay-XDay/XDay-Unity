@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace XDay.InputAPI
@@ -71,6 +72,7 @@ namespace XDay.InputAPI
         DoubleClick,
         MouseScroll,
         Pinch,
+        MultiClick,
     }
 
     public interface IDeviceInput
@@ -168,7 +170,7 @@ namespace XDay.InputAPI
         /// </summary>
         /// <param name="pressDuration">press time when long press action should be triggered</param>
         /// <returns></returns>
-        ILongPressMotion CreateLongPressMotion(float pressDuration, DeviceTouchType touchType = DeviceTouchType.Configurable);
+        ILongPressMotion CreateLongPressMotion(float pressDuration, float moveThreshold, DeviceTouchType touchType = DeviceTouchType.Configurable);
 
         /// <summary>
         /// create inertial drag gesture motion
@@ -197,6 +199,8 @@ namespace XDay.InputAPI
         /// </summary>
         /// <returns></returns>
         IClickMotion CreateClickMotion(float moveThreshold, DeviceTouchType touchType = DeviceTouchType.Configurable);
+
+        IMultiClickMotion CreateMultiClickMotion(float moveThreshold, DeviceTouchType touchType = DeviceTouchType.Configurable);
 
         /// <summary>
         /// create a drag gesture motion
@@ -383,6 +387,18 @@ namespace XDay.InputAPI
         /// touch start position
         /// </summary>
         Vector2 Start { get; }
+    }
+
+    public class MultiClickData
+    {
+        public int TouchID;
+        //touch position
+        public Vector2 Start;
+    }
+
+    public interface IMultiClickMotion : IMotion
+    {
+        List<MultiClickData> Clicks { get; }
     }
 
     /// <summary>

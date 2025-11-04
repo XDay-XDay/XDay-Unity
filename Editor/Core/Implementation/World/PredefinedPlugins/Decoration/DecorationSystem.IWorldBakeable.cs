@@ -30,6 +30,8 @@ namespace XDay.WorldAPI.Decoration.Editor
 {
     internal partial class DecorationSystem
     {
+        bool IWorldBakeable.EnableBake => false;
+
         List<GameObject> IWorldBakeable.GetObjectsInRangeAtHeight(Vector3 minPos, Vector3 maxPos, float cameraHeight)
         {
             List<GameObject> gameObjects = new();

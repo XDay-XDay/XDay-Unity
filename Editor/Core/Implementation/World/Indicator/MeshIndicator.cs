@@ -45,6 +45,7 @@ namespace XDay.WorldAPI.Editor
 
                     m_Mesh = m_World.GameObjectPool.Get(m_Path);
                     m_Mesh.name = $"Mesh Indicator[{m_Path}]";
+                    m_Mesh.tag = "EditorOnly";
                     Helper.HideGameObject(m_Mesh, true);
                 }
             }

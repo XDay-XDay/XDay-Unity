@@ -56,7 +56,51 @@ namespace XDay.WorldAPI.Decoration
             return activeObject;
         }
 
-        public void QueryDecorationIDsInCircle(Vector3 center, float radius, List<int> decorationIDs)
+        public void QueryDecorationIDsInRectangle(float minX, 
+            float minZ, 
+            float maxX, 
+            float maxZ, 
+            List<int> decorationIDs, 
+            DecorationTagType type)
+        {
+            GetOverlappedGrids(minX, minZ, maxX, maxZ, m_TempGrids);
+
+            var lodCount = m_LODSystem.LODCount;
+            foreach (var grid in m_TempGrids)
+            {
+                for (var lod = 0; lod < lodCount; lod++)
+                {
+                    var objectCount = grid.GetObjectCount(lod);
+                    for (var i = 0; i < objectCount; i++)
+                    {
+                        var objectIndex = grid.GetObjectIndex(i, lod);
+                        var metaDataIndex = m_DecorationMetaData.ResourceMetadataIndex[objectIndex];
+                        var metaData = m_ResourceMetadata[metaDataIndex];
+                        if (!type.HasFlag(metaData.Type))
+                        {
+                            continue;
+                        }
+
+                        var position = m_DecorationMetaData.Position[objectIndex];
+                        if (position.x >= minX && position.x <= maxX &&
+                            position.z >= minZ && position.z <= maxZ)
+                        {
+                            var objectID = CalculateObjectID(lod, objectIndex);
+                            if (!decorationIDs.Contains(objectID))
+                            {
+                                decorationIDs.Add(objectID);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public void QueryDecorationIDsInCircle(
+            Vector3 center, 
+            float radius, 
+            List<int> decorationIDs, 
+            DecorationTagType type)
         {
             GetOverlappedGrids(center.x - radius, center.z - radius, center.x + radius, center.z + radius, m_TempGrids);
 
@@ -70,6 +114,13 @@ namespace XDay.WorldAPI.Decoration
                     for (var i = 0; i < objectCount; i++)
                     {
                         var objectIndex = grid.GetObjectIndex(i, lod);
+                        var metaDataIndex = m_DecorationMetaData.ResourceMetadataIndex[objectIndex];
+                        var metaData = m_ResourceMetadata[metaDataIndex];
+                        if (!type.HasFlag(metaData.Type))
+                        {
+                            continue;
+                        }
+
                         var position = m_DecorationMetaData.Position[objectIndex];
                         var deltaX = center.x - position.x;
                         var deltaZ = center.z - position.z;
@@ -94,28 +145,43 @@ namespace XDay.WorldAPI.Decoration
             }
         }
 
-        public void ShowDecoration(int decorationID, bool show)
+        public void ShowDecoration(int decorationID, DecorationState state)
         {
-            m_CustomSetEnabled[decorationID] = show;
+            var curState = GetDecorationState(decorationID);
+            if (curState == DecorationState.NeverVisible)
+            {
+                return;
+            }
+
+            m_DecorationState[decorationID] = state;
             var decoration = World.QueryObject<DecorationObject>(decorationID);
             if (decoration != null)
             {
-                //if (decoration.SetEnabled(show) ||
-                //    VisibleTest(decoration))
-                if (decoration.SetEnabled(show))
+                if (decoration.SetEnabled(state == DecorationState.Visible))
                 {
                     m_ToggleActiveState?.Invoke(decoration);
                 }
             }
         }
 
-        public void ShowDecoration(Vector3 circleCenter, float circleRadius, bool show)
+        public void ShowDecoration(Vector3 circleCenter, float circleRadius, DecorationState state, DecorationTagType type)
         {
             m_TempIDs.Clear();
-            QueryDecorationIDsInCircle(circleCenter, circleRadius, m_TempIDs);
+            QueryDecorationIDsInCircle(circleCenter, circleRadius, m_TempIDs, type);
             foreach (var objID in m_TempIDs)
             {
-                ShowDecoration(objID, show);
+                ShowDecoration(objID, state);
+            }
+            m_TempIDs.Clear();
+        }
+
+        public void ShowDecoration(float minX, float minZ, float maxX, float maxZ, DecorationState state, DecorationTagType type)
+        {
+            m_TempIDs.Clear();
+            QueryDecorationIDsInRectangle(minX, minZ, maxX, maxZ, m_TempIDs, type);
+            foreach (var objID in m_TempIDs)
+            {
+                ShowDecoration(objID, state);
             }
             m_TempIDs.Clear();
         }
@@ -156,7 +222,8 @@ namespace XDay.WorldAPI.Decoration
                 decoration.Uninit();
                 decoration.SetEnabled(false);
                 m_ToggleActiveState?.Invoke(decoration);
-                m_VisibleObjects.Remove(decoration.ID);
+                var ok = m_VisibleObjects.Remove(decoration.ID);
+                Debug.Assert(ok);
                 m_DecorationPool.Release(decoration);
             }
         }
@@ -195,7 +262,7 @@ namespace XDay.WorldAPI.Decoration
                     invisible = true;
                 }
 
-                decoration = m_DecorationPool.Get(objectID, IsSetEnabled(objectID), objectIndex, World, grid.X, grid.Y, curLOD, m_LODSystem.GetRenderLOD(curLOD), indexInGrid, position.x, position.y, position.z, resourceMetadata, invisible);
+                decoration = m_DecorationPool.Get(objectID, GetDecorationState(objectID) == DecorationState.Visible, objectIndex, World, grid.X, grid.Y, curLOD, m_LODSystem.GetRenderLOD(curLOD), indexInGrid, position.x, position.y, position.z, resourceMetadata, invisible);
                 m_VisibleObjects.Add(objectID, decoration);
                 m_ToggleActiveState?.Invoke(decoration);
             }
@@ -220,6 +287,8 @@ namespace XDay.WorldAPI.Decoration
             {
                 metadata.Init(m_ResourceDescriptorSystem);
             }
+
+            InitInitialVisibleState();
 
             m_VisibleAreaUpdater = new CameraVisibleAreaUpdater(World.CameraVisibleAreaCalculator);
 
@@ -572,13 +641,13 @@ namespace XDay.WorldAPI.Decoration
             }
         }
 
-        private bool IsSetEnabled(int objectID)
+        private DecorationState GetDecorationState(int objectID)
         {
-            if (!m_CustomSetEnabled.TryGetValue(objectID, out bool enabled))
+            if (!m_DecorationState.TryGetValue(objectID, out var state))
             {
-                return true;
+                return DecorationState.Visible;
             }
-            return enabled;
+            return state;
         }
 
         internal DecorationObject GetObject(int id)
@@ -591,7 +660,7 @@ namespace XDay.WorldAPI.Decoration
         {
             var deserializer = world.QueryGameDataDeserializer(world.ID, $"decoration@{pluginName}");
 
-            deserializer.ReadInt32("GridData.Version");
+            var version = deserializer.ReadInt32("GridData.Version");
 
             m_GridWidth = deserializer.ReadSingle("Grid Width");
             m_GridHeight = deserializer.ReadSingle("Grid Height");
@@ -633,10 +702,40 @@ namespace XDay.WorldAPI.Decoration
                 var scale = deserializer.ReadVector3("Scale");
                 var bounds = deserializer.ReadRect("Bounds");
                 var assetPath = deserializer.ReadString("Resource Path");
-                m_ResourceMetadata.Add(new ResourceMetadata(batchIndex, rotation, scale, bounds, assetPath));
+                var type = (DecorationTagType)deserializer.ReadInt32("Type");
+                m_ResourceMetadata.Add(new ResourceMetadata(batchIndex, rotation, scale, bounds, assetPath, type));
             }
 
+            //设置初始可见性
+            if (version >= 3)
+            {
+                m_TempInitialVisibleState = deserializer.ReadBooleanArray("InitialVisible");
+            }
+            
             deserializer.Uninit();
+        }
+
+        private void InitInitialVisibleState()
+        {
+            if (m_TempInitialVisibleState == null)
+            {
+                return;
+            }
+
+            var n = m_TempInitialVisibleState.Length;
+            var lodCount = m_LODSystem.LODCount;
+            for (var i = 0; i < n; ++i)
+            {
+                for (var lod = 0; lod < lodCount; ++lod)
+                {
+                    var objectID = CalculateObjectID(lod, i);
+                    if (!m_TempInitialVisibleState[i])
+                    {
+                        m_DecorationState.Add(objectID, DecorationState.Invisible);
+                    }
+                }
+            }
+            m_TempInitialVisibleState = null;
         }
 
         private DecorationSystemRenderer m_Renderer;
@@ -659,11 +758,11 @@ namespace XDay.WorldAPI.Decoration
         private readonly List<FrameTask> m_Tasks = new();
         private ResourceDescriptorSystem m_ResourceDescriptorSystem;
         private string m_Name;
-        private readonly Dictionary<int, bool> m_CustomSetEnabled = new();
+        private readonly Dictionary<int, DecorationState> m_DecorationState = new();
         private readonly List<GridData> m_TempGrids = new();
         private readonly List<int> m_TempIDs = new();
+        //load后清理
+        private bool[] m_TempInitialVisibleState;
     }
 }
 
-
-//XDay

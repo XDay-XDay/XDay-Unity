@@ -67,7 +67,7 @@ namespace XDay.WorldAPI.Editor
                 return null;
             }
         }
-        
+
         public string RandomPath
         {
             get
@@ -178,6 +178,24 @@ namespace XDay.WorldAPI.Editor
             return -1;
         }
 
+        public int QueryResourceIndexInAllGroups(string prefabPath, out int groupIndex)
+        {
+            groupIndex = -1;
+            var n = m_GroupSystem.GroupCount;
+            for (var i = 0; i < n; ++i)
+            {
+                var group = m_GroupSystem.GetGroup(i);
+                var idx = group.QueryResourceIndex(prefabPath);
+                if (idx >= 0)
+                {
+                    groupIndex = i;
+                    return idx;
+                }
+            }
+
+            return -1;
+        }
+
         public Resource GetResource(int index)
         {
             if (index >= 0 && index < m_Resources.Count)
@@ -200,7 +218,7 @@ namespace XDay.WorldAPI.Editor
 
         public bool Add(string prefabPath, bool checkTransform, bool showError)
         {
-            if (QueryResourceIndex(prefabPath) < 0)
+            if (QueryResourceIndexInAllGroups(prefabPath, out var groupIndex) < 0)
             {
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 if (prefab == null)
@@ -230,7 +248,7 @@ namespace XDay.WorldAPI.Editor
 
             if (showError)
             {
-                EditorUtility.DisplayDialog("Error", "prefab already added!", "OK");
+                EditorUtility.DisplayDialog("Error", $"Prefab已经被添加到了Group: {m_GroupSystem.GetGroup(groupIndex).Name}里", "OK");
             }
             return false;
         }
@@ -289,7 +307,7 @@ namespace XDay.WorldAPI.Editor
         {
             m_SelectedIndex = index;
             GameObject prefab = null;
-            if (index >= 0 && 
+            if (index >= 0 &&
                 m_Resources[index] != null)
             {
                 prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_Resources[index].Path);
@@ -331,7 +349,8 @@ namespace XDay.WorldAPI.Editor
         {
             serializer.WriteInt32(m_Version, "ResourceGroup.Version");
             serializer.WriteString(m_Name, "Name");
-            serializer.WriteList(m_Resources, "Resources", (model, index) => {
+            serializer.WriteList(m_Resources, "Resources", (model, index) =>
+            {
                 serializer.WriteSerializable(model, $"Resource {index}", converter, false);
             });
             EditorPrefs.SetInt(WorldDefine.RESOURCE_GROUP_SELECTED_ITEM_INDEX, m_SelectedIndex);
@@ -345,7 +364,8 @@ namespace XDay.WorldAPI.Editor
             {
                 m_SelectedIndex = deserializer.ReadInt32("Selected Index");
             }
-            m_Resources = deserializer.ReadList("Resources", (index) => {
+            m_Resources = deserializer.ReadList("Resources", (index) =>
+            {
                 return deserializer.ReadSerializable<Resource>($"Resource {index}", false);
             });
         }

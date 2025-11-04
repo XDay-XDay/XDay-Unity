@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -33,12 +33,37 @@ using XDay.AssetAPI;
 
 namespace XDay.WorldAPI.Editor
 {
-    internal partial class EditorWorld : World, IWorldObjectContainer
+    public partial class EditorWorld : World, IWorldObjectContainer
     {
         public int SelectedPluginIndex { set => m_SelectedPluginIndex = value; get => m_SelectedPluginIndex; }
         public override string TypeName => "EditorWorld";
         public override int CurrentLOD => throw new NotImplementedException();
         public bool AllowUndo => true;
+        public GridMesh Grid
+        {
+            get => m_Grid;
+            set
+            {
+                m_Grid?.OnDestroy();
+                m_Grid = value;
+            }
+        }
+        public bool EnableGrid
+        {
+            get
+            {
+                if (m_Grid == null)
+                {
+                    return false;
+                }
+                return m_Grid.GetActive();
+            }
+            set
+            {
+                m_Grid?.SetActive(value);
+            }
+        }
+        public Dictionary<int, IWorldObject> AllObjects => m_Objects;
 
         public EditorWorld()
         {
@@ -69,11 +94,18 @@ namespace XDay.WorldAPI.Editor
             {
                 Selection.activeGameObject = selectedPlugin.Root;
             }
+
+            var material = new Material(Shader.Find("XDay/Grid"));
+            m_Grid = new GridMesh("Custom Grid", m_HorizontalGridCount, m_VerticalGridCount, m_GridWidth, m_GridHeight, material, Color.white, Root.transform, true);
+            m_Grid.SetActive(m_ShowGrid);
         }
 
         public override void OnDestroy()
         {
             base.OnDestroy();
+
+            m_Grid?.OnDestroy();
+            m_Grid = null;
         }
 
         public WorldPlugin QueryPlugin(GameObject gameObject)
@@ -147,7 +179,7 @@ namespace XDay.WorldAPI.Editor
 
         public void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
-            serializer.WriteInt32(m_Version, "EditorWorld.Version");
+            serializer.WriteInt32(m_EditorVersion, "EditorWorld.Version");
 
             EditorPrefs.SetInt(WorldDefine.SELECTED_PLUGIN_INDEX, m_SelectedPluginIndex);
             serializer.WriteSerializable(m_LODSystem, "LOD System", converter, false);
@@ -155,12 +187,21 @@ namespace XDay.WorldAPI.Editor
             serializer.WriteSingle(m_Width, "Width");
             serializer.WriteSingle(m_Height, "Height");
 
+            //save grid
+            serializer.WriteBoolean(EnableGrid, "Enable Grid");
+            serializer.WriteSingle(m_Grid.GridWidth, "Grid Width");
+            serializer.WriteSingle(m_Grid.GridHeight, "Grid Height");
+            serializer.WriteInt32(m_Grid.HorizontalGridCount, "Horizontal Grid Count");
+            serializer.WriteInt32(m_Grid.VerticalGridCount, "Vertical Grid Count");
+
             foreach (var plugin in m_Plugins)
             {
-                var dataSerializer = (plugin as EditorWorldPlugin).CreateEditorDataSerializer();
+                var editorPlugin = plugin as EditorWorldPlugin;
+                var dataSerializer = editorPlugin.CreateEditorDataSerializer();
                 if (dataSerializer != null)
                 {
-                    dataSerializer.WriteSerializable(plugin, plugin.TypeName, converter, false);
+                    var pluginConverter = new ToPersistentID(editorPlugin.FileIDOffset);
+                    dataSerializer.WriteSerializable(editorPlugin, editorPlugin.TypeName, pluginConverter, false);
                     dataSerializer.Uninit();
                 }
             }
@@ -178,6 +219,17 @@ namespace XDay.WorldAPI.Editor
 
             m_Width = deserializer.ReadSingle("Width");
             m_Height = deserializer.ReadSingle("Height");
+            if (version >= 3)
+            {
+                m_ShowGrid = deserializer.ReadBoolean("Enable Grid");
+            }
+            if (version >= 4)
+            {
+                m_GridWidth = deserializer.ReadSingle("Grid Width", 100);
+                m_GridHeight = deserializer.ReadSingle("Grid Height", 100);
+                m_HorizontalGridCount = deserializer.ReadInt32("Horizontal Grid Count", 27);
+                m_VerticalGridCount = deserializer.ReadInt32("Vertical Grid Count", 27);
+            }
 
             m_Plugins = m_PluginLoader.LoadPlugins(Setup.EditorFolder);
 
@@ -311,7 +363,16 @@ namespace XDay.WorldAPI.Editor
         private EditorWorldPluginLoader m_PluginLoader;
         [XDaySerializableField(1, "Selected Plugin")]
         private int m_SelectedPluginIndex = -1;
-        private const int m_Version = 2;
+        private GridMesh m_Grid;
+
+        //grid data
+        private bool m_ShowGrid = true;
+        private float m_GridWidth;
+        private float m_GridHeight;
+        private int m_HorizontalGridCount;
+        private int m_VerticalGridCount;
+
+        private const int m_EditorVersion = 4;
         private const int m_RuntimeVersion = 1;
     }
 }

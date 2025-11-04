@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -46,7 +47,12 @@ namespace XDay.WorldAPI.Decoration.Editor
             var xGridCount = Mathf.CeilToInt(Bounds.size.x / m_GameGridSize.x);
             var yGridCount = Mathf.CeilToInt(Bounds.size.z / m_GameGridSize.y);
 
-            CalculateGameData(xGridCount, yGridCount, out var maxLOD0ObjectCount, out var decorationMetadata, out var gridData, out var resourceMetadata);
+            CalculateGameData(xGridCount, yGridCount, 
+                out var maxLOD0ObjectCount, 
+                out var decorationMetadata, 
+                out var gridData, 
+                out var initialVisible,
+                out var resourceMetadata);
 
             ISerializer serializer = ISerializer.CreateBinary();
 
@@ -86,18 +92,22 @@ namespace XDay.WorldAPI.Decoration.Editor
                 serializer.WriteVector3(resourceMetadata[i].Scale, "Scale");
                 serializer.WriteRect(resourceMetadata[i].Bounds, "Bounds");
                 serializer.WriteString(resourceMetadata[i].Path, "Resource Path");
+                serializer.WriteInt32((int)resourceMetadata[i].Type, "Type");
             }
+
+            serializer.WriteBooleanArray(initialVisible, "InitialVisible");
 
             serializer.Uninit();
             EditorHelper.WriteFile(serializer.Data, GetGameFilePath("decoration"));
 
-            EndGenerate();
+            AfterGenerate();
         }
 
         private void CalculateGameData(int xGridCount, int yGridCount,
             out int maxLOD0ObjectCount,
             out GameDecorationMetaData decorationMetadata,
             out GameGridData[] gridData,
+            out bool[] initialVisible,
             out List<GameResourceMetadata> resourceMetadatas)
         {
             resourceMetadatas = new List<GameResourceMetadata>();
@@ -105,8 +115,14 @@ namespace XDay.WorldAPI.Decoration.Editor
             var decorations = new List<DecorationObject>();
             foreach (var kv in m_Decorations)
             {
-                GenerateDecorations(kv.Value, kv.Value.ResourceDescriptor.Prefab, m_Renderer.QueryGameObject(kv.Key), decorations);
+                var descriptor = kv.Value.ResourceDescriptor;
+                if (descriptor != null) 
+                {
+                    GenerateDecorations(kv.Value, descriptor.Prefab, m_Renderer.QueryGameObject(kv.Key), decorations);
+                }
             }
+
+            initialVisible = new bool[decorations.Count];
 
             decorationMetadata = new GameDecorationMetaData
             {
@@ -120,6 +136,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 decorationMetadata.LODResourceChangeMasks[i] = CalculateLODChangeMasks(decorations[i]);
                 decorationMetadata.Position[i] = decorations[i].Position;
                 decorationMetadata.ResourceMetadataIndex[i] = QueryResourceMetadataIndex(decorations[i], resourceMetadatas);
+                initialVisible[i] = IsInitialVisible(decorations[i]);
             }
 
             var grid = new Grid(LODCount, m_GameGridSize.x, m_GameGridSize.y, xGridCount, yGridCount, Bounds.ToRect());
@@ -130,6 +147,13 @@ namespace XDay.WorldAPI.Decoration.Editor
             gridData = grid.Data;
 
             CalculateMaxObjectCount(gridData, out maxLOD0ObjectCount);
+        }
+
+        private bool IsInitialVisible(DecorationObject decorationObject)
+        {
+            var type = TagToType(decorationObject.Tag, out _);
+            return type != DecorationTagType.HideableAfter && 
+                type != DecorationTagType.ObstacleAfter;
         }
 
         private void CalculateMaxObjectCount(GameGridData[] gridData, out int maxLODObjectCount)
@@ -155,12 +179,19 @@ namespace XDay.WorldAPI.Decoration.Editor
             var path = decoration.ResourceDescriptor.GetPath(0);
             var batchID = CalculateBatchID(decoration);
 
+            var type = GetDecorationObjectType(path);
             var resourceMetadataIndex = -1;
+
+            var realScale = GetRealScale(batchID, decoration);
+            var realRotation = GetRealRotation(batchID, decoration);
+
             for (var i = 0; i < resourceMetadata.Count; ++i)
             {
+                //如果使用instance rendering,要比较mesh的transform
                 if (path == resourceMetadata[i].Path &&
-                    decoration.Scale == resourceMetadata[i].Scale &&
-                    decoration.Rotation == resourceMetadata[i].Rotation)
+                    realScale == resourceMetadata[i].Scale &&
+                    realRotation == resourceMetadata[i].Rotation &&
+                    type == resourceMetadata[i].Type)
                 {
                     resourceMetadataIndex = i;
                     break;
@@ -170,14 +201,87 @@ namespace XDay.WorldAPI.Decoration.Editor
             if (resourceMetadataIndex == -1)
             {
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                var bounds = prefab.QueryRectWithLocalScaleAndRotation(decoration.Rotation, decoration.Scale);
+                var bounds = prefab.QueryRectWithLocalScaleAndRotation(realRotation, realScale);
                 resourceMetadataIndex = resourceMetadata.Count;
-                resourceMetadata.Add(new GameResourceMetadata(batchID, decoration.Rotation, decoration.Scale, bounds, path));
+                resourceMetadata.Add(new GameResourceMetadata(batchID, realRotation, realScale, bounds, path, type));
             }
 
             resourceMetadata[resourceMetadataIndex].GPUBatchID = batchID;
 
             return resourceMetadataIndex;
+        }
+
+        private Vector3 GetRealScale(int batchID, DecorationObject decoration)
+        {
+            if (batchID < 0)
+            {
+                return decoration.Scale;
+            }
+
+            var gameObject = m_Renderer.GetGameObject(decoration.ID);
+            if (gameObject != null)
+            {
+                var filter = gameObject.GetComponentInChildren<MeshFilter>();
+                if (filter != null)
+                {
+                    return filter.gameObject.transform.lossyScale;
+                }
+            }
+
+            Debug.LogError("No mesh found!, will return default scale");
+            return Vector3.one;
+        }
+
+        private Quaternion GetRealRotation(int batchID, DecorationObject decoration)
+        {
+            if (batchID < 0)
+            {
+                return decoration.Rotation;
+            }
+
+            var gameObject = m_Renderer.GetGameObject(decoration.ID);
+            if (gameObject != null)
+            {
+                var filter = gameObject.GetComponentInChildren<MeshFilter>();
+                if (filter != null)
+                {
+                    return filter.gameObject.transform.rotation;
+                }
+            }
+
+            Debug.LogError("No mesh found!, will return default rotation");
+            return Quaternion.identity;
+        }
+
+        private DecorationTagType GetDecorationObjectType(string assetPath)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null)
+            {
+                return 0;
+            }
+
+            var type = TagToType(prefab.tag, out var ok);
+            if (!ok)
+            {
+                Debug.LogError($"{assetPath}未知的Tag {prefab.tag}.导出为Obstacle物体");
+            }
+            return type;
+        }
+
+        private DecorationTagType TagToType(string tag, out bool ok)
+        {
+            ok = true;
+            foreach (var kv in m_TagToType)
+            {
+                if (tag == kv.Key)
+                {
+                    return kv.Value;
+                }
+            }
+
+            ok = false;
+            return DecorationTagType.Obstacle;
         }
 
         private int CalculateBatchID(DecorationObject decoration)
@@ -275,7 +379,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
-        private void EndGenerate()
+        private void AfterGenerate()
         {
             if (m_EnableInstanceRendering)
             {
@@ -287,8 +391,16 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_InstanceAnimatorBatchInfoManager = null;
         }
 
-        private void GenerateDecorations(DecorationObject decoration, GameObject decorationPrefab, GameObject decorationGameObject, List<DecorationObject> decorations)
+        private void GenerateDecorations(DecorationObject decoration, 
+            GameObject decorationPrefab, 
+            GameObject decorationGameObject, 
+            List<DecorationObject> decorations)
         {
+            if(decorationGameObject == null)
+            {
+                return;
+            }
+
             if (decorationPrefab.GetComponent<DecorationObjectGroup>() == null)
             {
                 decorations.Add(decoration);
@@ -340,13 +452,19 @@ namespace XDay.WorldAPI.Decoration.Editor
         private InstanceAnimatorBatchInfoRegistry m_InstanceAnimatorBatchInfoManager;
         private GPUBatchInfoRegistry m_BatchInfoRegistry;
         private Dictionary<string, int> m_ResourceGPUBatchID;
-        private const int m_RuntimeVersion = 1;
         private bool m_EnableInstanceRendering = true;
         private string m_AnimatorBatchDataPath;
         private string m_BatchDataPath;
+        private Dictionary<string, DecorationTagType> m_TagToType = new()
+        {
+            {"Hideable", DecorationTagType.Hideable },
+            {"Obstacle", DecorationTagType.Obstacle },
+            {"HideableBefore", DecorationTagType.HideableBefore },
+            {"HideableAfter", DecorationTagType.HideableAfter },
+            {"ObstacleBefore", DecorationTagType.ObstacleBefore },
+            {"ObstacleAfter", DecorationTagType.ObstacleAfter },
+        };
+        private const int m_RuntimeVersion = 3;
     }
 }
 
-
-
-//XDay

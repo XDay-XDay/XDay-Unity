@@ -33,7 +33,11 @@ namespace XDay.WorldAPI.Tile
         public BakedTileLayerRenderer(BakedTileLayer layer)
         {
             var tileSystem = layer.TileSystem;
-            m_GameObjects = new GameObject[layer.YTileCount * layer.XTileCount];
+            m_Entries = new Entry[layer.YTileCount * layer.XTileCount];
+            for (var i = 0; i < m_Entries.Length; i++)
+            {
+                m_Entries[i] = new Entry();
+            }
             m_Root = new GameObject(layer.Name);
             m_Root.transform.SetParent(tileSystem.Root.transform, false);
             m_Root.transform.SetPositionAndRotation(layer.Center, tileSystem.Rotation);
@@ -42,9 +46,9 @@ namespace XDay.WorldAPI.Tile
 
         public void OnDestroy()
         {
-            foreach (var obj in m_GameObjects)
+            foreach (var entry in m_Entries)
             {
-                Helper.DestroyUnityObject(obj);
+                Helper.DestroyUnityObject(entry.GameObject);
             }
             Helper.DestroyUnityObject(m_Root);
         }
@@ -64,33 +68,75 @@ namespace XDay.WorldAPI.Tile
         private void HideTile(int x, int y, BakedTileData tile)
         {
             var idx = y * m_Layer.XTileCount + x;
-            var gameObject = m_GameObjects[idx];
+            var gameObject = m_Entries[idx].GameObject;
             if (gameObject == null)
             {
                 return;
             }
-
-            m_Layer.TileSystem.World.GameObjectPool.Release(tile.Path, gameObject);
-            m_GameObjects[idx] = null;
+            m_Entries[idx].GameObject.SetActive(false);
         }
 
         private void ShowTile(int x, int y, BakedTileData tile)
         {
             var idx = y * m_Layer.XTileCount + x;
-            if (m_GameObjects[idx] != null)
+            if (m_Entries[idx].GameObject == null)
             {
-                return;
+                var gameObject = m_Layer.TileSystem.World.GameObjectPool.Get(tile.Path);
+                gameObject.transform.position = m_Layer.CoordinateToLocalPosition(x, y);
+                gameObject.transform.SetParent(m_Root.transform, false);
+                m_Entries[idx].GameObject = gameObject;
             }
 
-            var gameObject = m_Layer.TileSystem.World.GameObjectPool.Get(tile.Path);
-            gameObject.transform.position = m_Layer.CoordinateToLocalPosition(x, y);
-            gameObject.transform.SetParent(m_Root.transform, false);
-            m_GameObjects[idx] = gameObject;
+            if (!tile.MaskSet)
+            {
+                tile.MaskSet = true;
+                m_Entries[idx].Material = m_Entries[idx].GameObject.GetComponentInChildren<MeshRenderer>(true).sharedMaterial;
+                m_Layer.TileMaterialUpdater?.OnBakeLayerShowTile(m_Entries[idx].Material);
+            }
+
+            m_Entries[idx].GameObject.SetActive(true);
+        }
+
+        internal void UpdateMaterialInRange(int minX, int minY, int maxX, int maxY, TileMaterialUpdaterTiming timing)
+        {
+            for (var y = minY; y <= maxY; ++y)
+            {
+                for (var x = minX; x <= maxX; ++x)
+                {
+                    if (x > 0 && x < m_Layer.XTileCount &&
+                        y > 0 && y < m_Layer.YTileCount)
+                    {
+                        var idx = y * m_Layer.XTileCount + x;
+                        if (m_Entries[idx].GameObject != null)
+                        {
+                            m_Layer.TileMaterialUpdater.OnUpdateBakedLayerMaterial(m_Entries[idx].Material, timing);
+                        }
+                    }
+                }
+            }
+        }
+
+        internal void OnSetTileMaterialUpdater()
+        {
+            foreach (var entry in m_Entries)
+            {
+                if (entry.GameObject != null)
+                {
+                    entry.Material = entry.GameObject.GetComponentInChildren<MeshRenderer>(true).sharedMaterial;
+                    m_Layer.TileMaterialUpdater?.OnBakeLayerShowTile(entry.Material);
+                }
+            }
         }
 
         private readonly GameObject m_Root;
-        private readonly GameObject[] m_GameObjects;
+        private readonly Entry[] m_Entries;
         private readonly BakedTileLayer m_Layer;
+
+        private class Entry
+        {
+            public GameObject GameObject;
+            public Material Material;
+        }
     };
 }
 

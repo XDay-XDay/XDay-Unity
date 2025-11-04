@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -40,6 +40,19 @@ namespace XDay.WorldAPI
         public const string SELECTED_PLUGIN_INDEX = "Selected Plugin Index";
         public const string SELECTED_RESOURCE_GROUP_INDEX = "Selected Resource Group Index";
         public const string RESOURCE_GROUP_SELECTED_ITEM_INDEX = "Resource Group Selected Item Index";
+
+        /// <summary>
+        /// id可使用的个数是上减去下,例如DecorationSystem ID个数是HOUSE_EDITOR_FILE_ID_OFFSET - DECORATION_SYSTEM_FILE_ID_OFFSET
+        /// </summary>
+        public const int ATTRIBUTE_SYSTEM_FILE_ID_OFFSET =      100000;
+        public const int TILE_SYSTEM_FILE_ID_OFFSET =           1000000;
+        public const int DECORATION_SYSTEM_FILE_ID_OFFSET =     2000000;
+        public const int HOUSE_EDITOR_FILE_ID_OFFSET =          50000000;
+        public const int REGION_SYSTEM_FILE_ID_OFFSET =         51000000;
+        public const int SHAPE_SYSTEM_FILE_ID_OFFSET =          61000000;
+        public const int CITY_SYSTEM_FILE_ID_OFFSET =           62000000;
+        public const int NAVIGATION_SYSTEM_FILE_ID_OFFSET =     63000000;
+        public const int LOGIC_OBJECT_SYSTEM_FILE_ID_OFFSET =   64000000;
     }
 }
 

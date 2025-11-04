@@ -237,6 +237,23 @@ namespace XDay.WorldAPI.Tile.Editor
             private readonly Color32[] m_NewPixels;
             private readonly TexturePainter m_TexturePainter;
         }
+
+        internal class MaskCombineInfo
+        {
+            public int MinX;
+            public int MaxX;
+            public int MinY;
+            public int MaxY;
+            public Texture2D CombinedTexture;
+
+            public void Set(int minX, int minY, int maxX, int maxY)
+            {
+                MinX = minX;
+                MaxX = maxX;
+                MinY = minY;
+                MaxY = maxY;
+            }
+        }
     }
 }
 

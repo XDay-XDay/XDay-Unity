@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using XDay.InputAPI;
 
 namespace XDay.CameraAPI
@@ -34,7 +32,7 @@ namespace XDay.CameraAPI
             public Sender(CameraManipulator manipulator, IDeviceInput deviceInput, float minHeight, float maxHeight, float range, bool enableRotation)
                 : base(manipulator, deviceInput)
             {
-                m_Motion = m_DeviceInput.CreatePinchMotion(minHeight, maxHeight, range, manipulator.Camera, enableRotation);
+                m_Motion = m_DeviceInput.CreatePinchMotion(minHeight, maxHeight, range, manipulator.Camera, enableRotation, DeviceTouchType.TouchNotStartFromUI);
                 SetActive(true);
             }
 

@@ -1,4 +1,27 @@
-﻿using System.Collections.Generic;
+/*
+ * Copyright (c) 2024-2025 XDay
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -6,8 +29,10 @@ using UnityEngine;
 
 namespace XDay.PlayerBuildPipeline.Editor
 {
-    partial class AssetBundleRuleTreeView : TreeView
+    internal partial class AssetBundleRuleTreeView : TreeView
     {
+        public AssetBundleRuleConfig Config => m_Config;
+
         private class Item : TreeViewItem
         {
             public Color Color => m_Color;
@@ -39,6 +64,7 @@ namespace XDay.PlayerBuildPipeline.Editor
         public void Build(AssetBundleRuleConfig config)
         {
             m_Config = config;
+            Expand(0, true, true);
             Reload();
         }
 
@@ -76,19 +102,19 @@ namespace XDay.PlayerBuildPipeline.Editor
 
         private void CreateNode(AssetBundleRule rule, int depth)
         {
-            //var item = new Item(rule, depth, rule.Name, rule, Color.white);
-            //AddItem(id, item);
-            //if (IsExpanded(id))
-            //{
-            //    for (int i = 0; i < rule.SubRules.Count; ++i)
-            //    {
-            //        CreateNode(rule.SubRules[i], depth + 1);
-            //    }
-            //}
-            //else
-            //{
-            //    item.children = CreateChildListForCollapsedParent();
-            //}
+            var item = new Item(rule.ID, depth, rule.Name, rule, Color.white);
+            AddItem(rule.ID, item);
+            if (IsExpanded(rule.ID))
+            {
+                for (int i = 0; i < rule.SubRules.Count; ++i)
+                {
+                    CreateNode(rule.SubRules[i], depth + 1);
+                }
+            }
+            else
+            {
+                item.children = CreateChildListForCollapsedParent();
+            }
         }
 
         protected override void RowGUI(RowGUIArgs args)
@@ -151,8 +177,11 @@ namespace XDay.PlayerBuildPipeline.Editor
                             var newRule = new AssetBundleRule()
                             {
                                 ParentRule = item.Rule,
+                                ID = ++m_Config.NextID,
                             };
                             item.Rule.SubRules.Add(newRule);
+                            EditorUtility.SetDirty(m_Config);
+                            AssetDatabase.SaveAssets();
                         }
                         break;
                     }
@@ -173,6 +202,17 @@ namespace XDay.PlayerBuildPipeline.Editor
                 {
                     EditorGUIUtility.systemCopyBuffer = item.displayName;
                 });
+
+                menu.AddItem(new GUIContent("Delete"), false, () =>
+                {
+                    if (EditorUtility.DisplayDialog("警告", "确定删除?", "确定", "取消"))
+                    {
+                        item.Rule.ParentRule.SubRules.Remove(item.Rule);
+                        EditorUtility.SetDirty(m_Config);
+                        AssetDatabase.SaveAssets();
+                        Reload();
+                    }
+                });
             }
 
             menu.ShowAsContext();
@@ -183,24 +223,13 @@ namespace XDay.PlayerBuildPipeline.Editor
             var item = GetTreeViewItem(id);
         }
 
-        TreeViewItem GetTreeViewItem(int id)
+        private TreeViewItem GetTreeViewItem(int id)
         {
             m_IDToItems.TryGetValue(id, out var item);
             return item;
         }
 
-        int AllocateID(string name)
-        {
-            bool found = m_NameToIDs.TryGetValue(name, out var id);
-            if (found == false)
-            {
-                id = ++m_NextID;
-                m_NameToIDs[name] = id;
-            }
-            return id;
-        }
-
-        void Expand(int id, bool expand, bool recursively)
+        private void Expand(int id, bool expand, bool recursively)
         {
             SetExpanded(id, expand);
             if (recursively)
@@ -219,7 +248,7 @@ namespace XDay.PlayerBuildPipeline.Editor
             }
         }
 
-        void AddItem(int id, TreeViewItem item)
+        private void AddItem(int id, TreeViewItem item)
         {
             m_IDToItems.Add(id, item);
             m_Rows.Add(item);
@@ -227,7 +256,6 @@ namespace XDay.PlayerBuildPipeline.Editor
 
         private readonly Dictionary<int, TreeViewItem> m_IDToItems = new();
         private readonly List<TreeViewItem> m_Rows = new();
-        private Dictionary<string, int> m_NameToIDs = new();
         private GUIStyle m_Style;
         private int m_NextID = 100;
         private AssetBundleRuleConfig m_Config;

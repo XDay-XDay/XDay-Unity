@@ -30,6 +30,8 @@ namespace XDay.UtilityAPI
     public class RectTransformDebugger : MonoBehaviour
     {
         public Rect Rect;
+        public Rect ScreenRect;
+        public float CanvasScaleFactor;
         public Vector2 SizeDelta;
         public Vector2 AnchoredPosition;
         public Vector3 AnchoredPosition3D;
@@ -71,6 +73,41 @@ namespace XDay.UtilityAPI
             {
                 NormalizedScrollPosition = scrollRect.normalizedPosition;
             }
+
+            var canvas = GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                CanvasScaleFactor = canvas.scaleFactor;
+            }
+            else
+            {
+                CanvasScaleFactor = 0;
+            }
+
+            ScreenRect = GetWorldRectInCanvas(rectTransform);
+        }
+
+        private Rect GetWorldRectInCanvas(RectTransform rectTransform)
+        {
+            Canvas canvas = rectTransform.GetComponentInParent<Canvas>();
+            if (!canvas) return Rect.zero;
+
+            Vector3[] corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+
+            Camera renderCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+            Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
+            Vector2 max = new Vector2(float.MinValue, float.MinValue);
+
+            foreach (Vector3 corner in corners)
+            {
+                Vector3 screenPoint = RectTransformUtility.WorldToScreenPoint(renderCamera, corner);
+                min = Vector2.Min(min, screenPoint);
+                max = Vector2.Max(max, screenPoint);
+            }
+
+            return new Rect(min.x, min.y, max.x - min.x, max.y - min.y);
         }
     }
 }

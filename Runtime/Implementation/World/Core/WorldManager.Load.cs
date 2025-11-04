@@ -33,6 +33,11 @@ namespace XDay.WorldAPI
     {
         public async UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc, bool createManipulator)
         {
+            if (m_SetupManager == null)
+            {
+                return null;
+            }
+
             name = ConvertName(name);
             var setup = m_SetupManager.QuerySetup(name);
             if (setup != null)

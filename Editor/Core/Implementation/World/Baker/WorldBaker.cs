@@ -30,40 +30,9 @@ using XDay.UtilityAPI.Editor;
 
 namespace XDay.WorldAPI.Editor
 {
-    //每一级烘培lod的设置
-    internal class WorldBakerLODSetting
-    {
-        public WorldBakerLODSetting(float bakeHeight, float lodHeight, int resolution, Material material)
-        {
-            BakingHeight = bakeHeight;
-            LODHeight = lodHeight;
-            Resolution = resolution;
-            Material = material;
-        }
-
-        //相机烘焙高度
-        public float BakingHeight { get; set; }
-        //LOD切换高度
-        public float LODHeight { get; set; }
-        //相对于上一级的块大小
-        public int Resolution { get; set; }
-        //使用哪个材质
-        public Material Material { get; set; }
-    }
-
-    internal class WorldBakerSetting
-    {
-        public Camera Camera;
-        public Rect BakingBounds;
-        public WorldBakerLODSetting[] LODs;
-        public string OutputFolder;
-        public int BakingTextureSize = 1024;
-        public Shader DefaultBakingShader;
-        public string TexturePropertyName = "_MainTex";
-        public bool EnableDepthTexture = false;
-    }
-
-    //将地图烘培成多个分块
+    /// <summary>
+    /// 将地图烘培成多个分块
+    /// </summary>
     internal class WorldBaker
     {
         public void Bake(List<IWorldBakeable> bakeables, WorldBakerSetting setting)
@@ -85,7 +54,6 @@ namespace XDay.WorldAPI.Editor
         {
             for (int i = 0; i < m_BakerSetting.LODs.Length; ++i)
             {
-                //生成额外的lod数据
                 var lod = m_BakerSetting.LODs[i];
                 BakeLOD(bakeables, i, lod);
             }
@@ -99,9 +67,6 @@ namespace XDay.WorldAPI.Editor
             }
         }
 
-        /*生成lod数据
-         * lod: lod设置的索引
-         */
         private void BakeLOD(List<IWorldBakeable> bakeables, int lod, WorldBakerLODSetting lodSetting)
         {
             float maxRange = Mathf.Max(m_BakerSetting.BakingBounds.width, m_BakerSetting.BakingBounds.height);
@@ -119,22 +84,22 @@ namespace XDay.WorldAPI.Editor
             {
                 for (int j = 0; j < horizontalTileCountInThisLOD; ++j)
                 {
-                    EditorUtility.DisplayProgressBar($"Baking LOD {lod}...", $"Processing tile {j}_{i}", 1f * (idx + 1) / (horizontalTileCountInThisLOD * verticalTileCountInThisLOD));
+                    EditorUtility.DisplayProgressBar($"烘培LOD{lod}中", $"处理地块{j}_{i}", 1f * (idx + 1) / (horizontalTileCountInThisLOD * verticalTileCountInThisLOD));
 
                     var prefabIndex = CreatePrefab(bakeables, lod - 1, j, i, tileSize, lodSetting, out blockPos);
                     if (prefabIndex >= 0)
                     {
-                        BakedTileData tileData;
+                        BakedTileData bakedTileData;
                         if (lod == 0)
                         {
                             var pos = CalculateLODTilePosition(Helper.ToVector3XZ(m_BakerSetting.BakingBounds.min), j, i, tileSize);
-                            tileData = new BakedTileData(pos, prefabIndex);
+                            bakedTileData = new BakedTileData(pos, prefabIndex);
                         }
                         else
                         {
-                            tileData = new BakedTileData(blockPos, prefabIndex);
+                            bakedTileData = new BakedTileData(blockPos, prefabIndex);
                         }
-                        lodTiles[i, j] = tileData;
+                        lodTiles[i, j] = bakedTileData;
                     }
 
                     ++idx;
@@ -144,16 +109,19 @@ namespace XDay.WorldAPI.Editor
             EditorUtility.ClearProgressBar();
         }
 
-        //创建在lod下x,y lod tile使用的model template
-        //blockPos: tile的坐标
-        private int CreatePrefab(List<IWorldBakeable> bakeables, int lastLOD, int x, int y, float tileSize, WorldBakerLODSetting lodSetting, out Vector3 blockPos)
+        private int CreatePrefab(List<IWorldBakeable> bakeables, 
+            int lastLOD, 
+            int x,
+            int y,
+            float tileSize, 
+            WorldBakerLODSetting lodSetting, 
+            out Vector3 blockPos)
         {
             Debug.Assert(m_BakerSetting.DefaultBakingShader != null);
             blockPos = Vector3.zero;
             string tilePrefix = string.Format("Baking_Tile_{0}_{1}_LOD_{2}", x, y, lastLOD + 1);
             BakeToRenderTexture rt = new("Bake To RenderTexture", m_BakerSetting.Camera, m_BakerSetting.EnableDepthTexture);
 
-            //create combined tiles
             var root = new GameObject(string.Format("LOD {0} Tile ({1},{2})", lastLOD + 1, x, y));
 
             Vector3 minPos = new(x * tileSize + m_BakerSetting.BakingBounds.x, 0, y * tileSize + m_BakerSetting.BakingBounds.y);
@@ -214,15 +182,12 @@ namespace XDay.WorldAPI.Editor
 
             int n = root.transform.childCount;
 
-            //render block tiles into texture
             rt.TextureSize = m_BakerSetting.BakingTextureSize;
             rt.Render(root, false, lodSetting.BakingHeight, customRenderTexture:null, false, bounds);
             string texturePath = string.Format("{0}/{1}.tga", m_BakerSetting.OutputFolder, tilePrefix);
-            //save texture
             rt.SaveTexture(rt.TargetTexture, texturePath, true);
             AssetDatabase.Refresh();
 
-            //destroy game objects
             foreach (var kv in m_GameObjects)
             {
                 var bakeable = kv.Key;
@@ -231,25 +196,13 @@ namespace XDay.WorldAPI.Editor
             m_GameObjects.Clear();
 
             var planePrefab = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            //create quad mesh asset
             string meshPath = string.Format("{0}/{1}.asset", m_BakerSetting.OutputFolder, tilePrefix);
             var mesh = CreateQuadMesh(meshPath, tileSize);
 
-            //if (generateMeshOBJ)
-            //{
-            //    string objPath = string.Format("{0}/{1}.obj", assetFolder, tilePrefix);
-            //    //flip uv
-            //    var uv = mesh.uv;
-            //    for (int i = 0; i < uv.Length; ++i)
-            //    {
-            //        uv[i].x = 1 - uv[i].x;
-            //    }
-            //    OBJExporter.Export(objPath, mesh.vertices, uv, null, mesh.triangles);
-            //}
             var parent = new GameObject("lod tile root");
             planePrefab.transform.parent = parent.transform;
             var collider = planePrefab.GetComponent<UnityEngine.Collider>();
-            GameObject.DestroyImmediate(collider);
+            Object.DestroyImmediate(collider);
             var filter = planePrefab.GetComponent<MeshFilter>();
             filter.sharedMesh = mesh;
             var meshRenderer = planePrefab.GetComponent<MeshRenderer>();
@@ -260,7 +213,6 @@ namespace XDay.WorldAPI.Editor
                 createMtl = true;
                 mtl = new Material(m_BakerSetting.DefaultBakingShader);
             }
-            //create Material assete
             if (createMtl)
             {
                 string mtlPath = string.Format("{0}/{1}.mat", m_BakerSetting.OutputFolder, tilePrefix);
@@ -273,15 +225,13 @@ namespace XDay.WorldAPI.Editor
             meshRenderer.sharedMaterial = mtl;
 
             var prefabPath = string.Format("{0}/{1}.prefab", m_BakerSetting.OutputFolder, tilePrefix);
-            //create prefab asset
+
             PrefabUtility.SaveAsPrefabAsset(parent, prefabPath, out var success);
             Debug.Assert(success, "Create prefab failed!");
 
             Object.DestroyImmediate(parent);
 
             m_UsedPrefabs.Add(prefabPath);
-
-            Debug.Log("Create Prefab " + prefabPath);
 
             Object.DestroyImmediate(root);
             rt.OnDestroy(true);
@@ -390,7 +340,6 @@ namespace XDay.WorldAPI.Editor
         private readonly Dictionary<IWorldBakeable, List<GameObject>> m_GameObjects = new();
         private const int m_Version = 1;
 
-        //lod中每个tile的数据
         private class BakedTileData
         {
             public BakedTileData(Vector3 pos, int index)
@@ -399,10 +348,41 @@ namespace XDay.WorldAPI.Editor
                 PrefabIndex = index;
             }
 
-            //这个tile使用的prefab的index
             public int PrefabIndex;
-            //中心点坐标
             public Vector3 Position;
         }
+    }
+
+    internal class WorldBakerSetting
+    {
+        public Camera Camera;
+        public Rect BakingBounds;
+        public WorldBakerLODSetting[] LODs;
+        public string OutputFolder;
+        public int BakingTextureSize = 1024;
+        public Shader DefaultBakingShader;
+        public string TexturePropertyName = "_MainTex";
+        public bool EnableDepthTexture = false;
+    }
+
+    //每一级烘培lod的设置
+    internal class WorldBakerLODSetting
+    {
+        public WorldBakerLODSetting(float bakeHeight, float lodHeight, int resolution, Material material)
+        {
+            BakingHeight = bakeHeight;
+            LODHeight = lodHeight;
+            Resolution = resolution;
+            Material = material;
+        }
+
+        //相机烘焙高度
+        public float BakingHeight { get; set; }
+        //LOD切换高度
+        public float LODHeight { get; set; }
+        //相对于上一级的块大小
+        public int Resolution { get; set; }
+        //使用哪个材质
+        public Material Material { get; set; }
     }
 }

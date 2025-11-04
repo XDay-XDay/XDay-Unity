@@ -129,6 +129,11 @@ namespace XDay.WorldAPI.Tile.Editor
                             material.SetVector(shaderPropName, aspect.GetVector4());
                             break;
                         }
+                    case TileDefine.SHADER_COLOR_PROPERTY_NAME:
+                        {
+                            material.SetColor(shaderPropName, aspect.GetColor());
+                            break;
+                        }
                     case TileDefine.SHADER_TEXTURE_PROPERTY_NAME:
                         {
                             material.SetTexture(shaderPropName, AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(aspect.GetString())));
@@ -167,6 +172,10 @@ namespace XDay.WorldAPI.Tile.Editor
                 case TileDefine.SHADER_VECTOR4_PROPERTY_NAME:
                     {
                         return IAspect.FromVector4(material.GetVector(shaderPropName));
+                    }
+                case TileDefine.SHADER_COLOR_PROPERTY_NAME:
+                    {
+                        return IAspect.FromColor(material.GetColor(shaderPropName));
                     }
                 case TileDefine.SHADER_TEXTURE_PROPERTY_NAME:
                     {

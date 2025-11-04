@@ -37,10 +37,10 @@ namespace XDay.CameraAPI
     {
         public OrbitSetup Orbit { get => m_Orbit; set => m_Orbit = value; }
         public RestoreSetup Restore => m_Restore;
-        public Vector2 ReferenceResolution => m_ReferenceResolution;
         public string Name => m_Name;
         public bool ChangeFOV { get => m_ChangeFOV; set => m_ChangeFOV = value; }
         public float FixedFOV { get => m_FixedFOV; set => m_FixedFOV = value; }
+        public float DefaultAltitude { get => m_DefaultAltitude; set => m_DefaultAltitude = value; }
         public CameraDirection Direction { get => m_Direction; set => m_Direction = value; }
         public float MouseZoomSpeed { get => m_MouseZoomSpeed; set => m_MouseZoomSpeed = value; }
         public Rect FocusPointBounds => m_FocusPointBounds;
@@ -59,6 +59,17 @@ namespace XDay.CameraAPI
         public void AddAltitudeSetup(AltitudeSetup setup)
         {
             m_AltitudeManager.AddSetup(setup);
+        }
+
+        public float QueryAltitude(string name)
+        {
+            var setup = m_AltitudeManager.QuerySetup(name);
+            if (setup != null)
+            {
+                return setup.Altitude;
+            }
+            Debug.LogError($"Invalid camera height setup {name}");
+            return 0;
         }
 
         public AltitudeSetup QueryAltitudeSetup(float height)
@@ -110,14 +121,14 @@ namespace XDay.CameraAPI
         private string m_Name;
         private bool m_ChangeFOV = true;
         private float m_FixedFOV = 0;
+        //相机默认高度
+        private float m_DefaultAltitude = 0;
         private CameraDirection m_Direction = CameraDirection.XZ;
         private OrbitSetup m_Orbit = new();
         private AltitudeSetupManager m_AltitudeManager = new();
         private RestoreSetup m_Restore = new();
         private float m_MouseZoomSpeed = 30.0f;
         private Rect m_FocusPointBounds;
-        //参考分辨率,相机移动边界会受到分辨率影响
-        private Vector2 m_ReferenceResolution = new(1080f, 1920f);
     }
 }
 

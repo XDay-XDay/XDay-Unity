@@ -107,12 +107,11 @@ namespace XDay.WorldAPI.Tile
         {
             var reader = world.QueryGameDataDeserializer(world.ID, $"tile@{pluginName}");
 
-            reader.ReadInt32("FlatTile.Version");
+            var version = reader.ReadInt32("FlatTile.Version");
 
             m_DescriptorSystem = reader.ReadSerializable<IResourceDescriptorSystem>("Resource Descriptor System", true);
             m_LODSystem = reader.ReadSerializable<IPluginLODSystem>("Plugin LOD System", true);
             m_Rotation = reader.ReadQuaternion("Rotation");
-            m_Name = reader.ReadString("Name");
 
             LoadNormalLayer(reader);
             LoadBakedLayers(world);
@@ -123,6 +122,11 @@ namespace XDay.WorldAPI.Tile
         private void LoadBakedLayers(IWorld world)
         {
             var reader = world.QueryGameDataDeserializer(world.ID, WorldDefine.BAKED_TILES_FILE_NAME);
+            if (reader == null)
+            {
+                return;
+            }
+
             reader.ReadInt32("Version");
 
             List<string> usedPrefabs = reader.ReadStringList("Use Prefabs");
@@ -166,6 +170,7 @@ namespace XDay.WorldAPI.Tile
             var origin = reader.ReadVector2("Origin");
             var tileWidth = reader.ReadSingle("Tile Width");
             var tileHeight = reader.ReadSingle("Tile Height");
+            m_Name = reader.ReadString("Name");
 
             var tiles = new NormalTileData[yTileCount * xTileCount];
             for (var y = 0; y < yTileCount; ++y)
@@ -213,6 +218,22 @@ namespace XDay.WorldAPI.Tile
         private TileLayerBase GetLayer(int lod)
         {
             return m_Layers[lod];
+        }
+
+        public void SetTileMaterialUpdater(ITileMaterialUpdater updater)
+        {
+            foreach (var layer in m_Layers)
+            {
+                layer.SetTileMaterialUpdater(updater);
+            }
+        }
+
+        public void UpdateMaterialInRange(float minX, float minZ, float maxX, float maxZ, TileMaterialUpdaterTiming timing)
+        {
+            foreach (var layer in m_Layers)
+            {
+                layer.UpdateMaterialInRange(minX, minZ, maxX, maxZ, timing);
+            }
         }
 
         private IResourceDescriptorSystem m_DescriptorSystem;

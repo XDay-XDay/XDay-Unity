@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -113,6 +113,7 @@ namespace XDay.WorldAPI.Tile.Editor
         }
         public TileSystemRenderer Renderer => m_Renderer;
         public override string TypeName => "EditorTileSystem";
+        public override int FileIDOffset => WorldDefine.TILE_SYSTEM_FILE_ID_OFFSET;
 
         public TileSystem()
         {
@@ -146,6 +147,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_ShowMaterial = EditorPrefs.GetBool(TileDefine.SHOW_MATERIAL, true);
             m_ShowTileSetting = EditorPrefs.GetBool(TileDefine.SHOW_TILE_SETTING, false);
             m_ShowMaterialConfig = EditorPrefs.GetBool(TileDefine.SHOW_MATERIAL_CONFIG, true);
+            m_ShowTileCoord = EditorPrefs.GetBool(TileDefine.SHOW_TILE_COORD, false);
 
             (World as World).AddPostInitializer(typeof(TileObject), OnInitTileObject);
 
@@ -187,7 +189,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_TileMeshCreator = new TileLODMeshCreator(this);
 
             var material = new Material(Shader.Find("XDay/Grid"));
-            m_Grid = new GridMesh("Tile Grid", m_XTileCount, m_YTileCount, m_TileHeight, material, new Color32(255, 243, 60, 150), Root.transform, true);
+            m_Grid = new GridMesh("Tile Grid", m_XTileCount, m_YTileCount, m_TileWidth, m_TileHeight, material, new Color32(255, 243, 60, 150), Root.transform, true);
             m_Grid.SetActive(m_ShowGrid);
             Object.DestroyImmediate(material);
 
@@ -218,6 +220,8 @@ namespace XDay.WorldAPI.Tile.Editor
             m_MaterialConfigs.Clear();
 
             (World as World).RemovePostInitializer(typeof(TileObject));
+
+            m_Grid.OnDestroy();
         }
 
         public override IAspect GetAspect(int objectID, string name)
@@ -366,7 +370,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_ResourceGroupSystem = deserializer.ReadSerializable<IResourceGroupSystem>("Resource Group System", false);
             m_PluginLODSystem = deserializer.ReadSerializable<IPluginLODSystem>("Plugin LOD System", false);
 
-            m_ShowTileSetting = deserializer.ReadBoolean("Show Tile Setting");
+            deserializer.ReadBoolean("Show Tile Setting");
             m_Rotation = deserializer.ReadQuaternion("Rotation");
             m_TerrainLODMorphRatio = deserializer.ReadSingle("LOD Morph Ratio");
             m_GameTileType = (GameTileType)deserializer.ReadByte("Game Tile Type");
@@ -394,7 +398,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 return deserializer.ReadSerializable<TileObject>($"Tile {index}", false);
             });
 
-            m_ShowMaterialConfig = deserializer.ReadBoolean("Show Material Setting");
+            deserializer.ReadBoolean("Show Material Setting");
 
             m_GetGroundHeightInGame = deserializer.ReadBoolean("Get Ground Height In Game");
             m_GenerateMeshCollider = deserializer.ReadBoolean("Generate Mesh Collider");
@@ -403,8 +407,8 @@ namespace XDay.WorldAPI.Tile.Editor
             m_GenerateOBJMeshFile = deserializer.ReadBoolean("Generate OBJ Mesh File");
             m_ClipMinHeight = deserializer.ReadSingle("Clip Minimum Height");
             m_CreateMaterialForGroundPrefab = deserializer.ReadBoolean("Create Material For Ground Prefab");
-            m_ShowGrid = deserializer.ReadBoolean("Show Grid");
-            m_ShowMaterial = deserializer.ReadBoolean("Show Material");
+            deserializer.ReadBoolean("Show Grid");
+            deserializer.ReadBoolean("Show Material");
 			m_BrushFolder = deserializer.ReadString("Brush Folder");
         }
 
@@ -421,7 +425,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
             serializer.WriteSerializable(m_PluginLODSystem, "Plugin LOD System", converter, false);
 
-            serializer.WriteBoolean(m_ShowTileSetting, "Show Tile Setting");
+            serializer.WriteBoolean(false, "Show Tile Setting");
 
             serializer.WriteQuaternion(m_Rotation, "Rotation");
             serializer.WriteSingle(m_TerrainLODMorphRatio, "LOD Morph Ratio");
@@ -448,7 +452,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 serializer.WriteSerializable(tile, $"Tile {index}", converter, false);
             });
 
-            serializer.WriteBoolean(m_ShowMaterialConfig, "Show Material Config");
+            serializer.WriteBoolean(false, "Show Material Config");
 
             serializer.WriteBoolean(m_GetGroundHeightInGame, "Get Ground Height In Game");
             serializer.WriteBoolean(m_GenerateMeshCollider, "Generate Mesh Collider");
@@ -458,8 +462,8 @@ namespace XDay.WorldAPI.Tile.Editor
             serializer.WriteSingle(m_ClipMinHeight, "Clip Minimum Height");
             serializer.WriteBoolean(m_CreateMaterialForGroundPrefab, "Create Material For Ground Prefab");
 
-            serializer.WriteBoolean(m_ShowGrid, "Show Grid");
-            serializer.WriteBoolean(m_ShowMaterial, "Show Material");
+            serializer.WriteBoolean(false, "Show Grid");
+            serializer.WriteBoolean(false, "Show Material");
 			
 			serializer.WriteString(m_BrushFolder, "Brush Folder");
 
@@ -469,6 +473,7 @@ namespace XDay.WorldAPI.Tile.Editor
             EditorPrefs.SetBool(TileDefine.SHOW_MATERIAL, m_ShowMaterial);
             EditorPrefs.SetBool(TileDefine.SHOW_TILE_SETTING, m_ShowTileSetting);
             EditorPrefs.SetBool(TileDefine.SHOW_MATERIAL_CONFIG, m_ShowMaterialConfig);
+            EditorPrefs.SetBool(TileDefine.SHOW_TILE_COORD, m_ShowTileCoord);
         }
 
         private Vector3 CoordinateToRotatedPosition(int x, int y)

@@ -84,12 +84,12 @@ namespace XDay.WorldAPI.Attribute
         {
             if (GetLayer(LayerType.Obstacle) is Layer layer)
             {
-                return layer.Get(x, y) == 0;
+                return layer.GetValue(x, y) == 0;
             }
             return false;
         }
 
-        LayerBase GetLayer(int layerIndex)
+        public IAttributeSystemLayer GetLayer(int layerIndex)
         {
             if (layerIndex >= 0 && layerIndex < m_Layers.Count)
             {
@@ -98,7 +98,19 @@ namespace XDay.WorldAPI.Attribute
             return null;
         }
 
-        LayerBase GetLayer(LayerType type)
+        public IAttributeSystemLayer GetLayer(string name)
+        {
+            foreach (var layer in m_Layers)
+            {
+                if (layer.Name == name)
+                {
+                    return layer;
+                }
+            }
+            return null;
+        }
+
+        IAttributeSystemLayer GetLayer(LayerType type)
         {
             foreach (var layer in m_Layers)
             {
@@ -108,6 +120,17 @@ namespace XDay.WorldAPI.Attribute
                 }
             }
             return null;
+        }
+
+        public uint GetLayerData(int layerIndex, int x, int y)
+        {
+            var layer = GetLayer(layerIndex);
+            if (layer != null)
+            {
+                return layer.GetValue(x, y);
+            }
+            Debug.LogError($"Layer {layerIndex} not found!");
+            return 0;
         }
 
         private string m_Name;

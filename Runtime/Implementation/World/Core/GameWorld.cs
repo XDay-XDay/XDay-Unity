@@ -64,8 +64,10 @@ namespace XDay.WorldAPI
 
         protected override void InitRendererInternal()
         {
+#if UNITY_EDITOR
             var debugger = m_WorldRenderer.Root.AddComponent<WorldDebugger>();
             debugger.Init(this);
+#endif
         }
 
         public override IDeserializer QueryGameDataDeserializer(int worldID, string dataFileName)

@@ -32,6 +32,10 @@ namespace XDay.UtilityAPI.Math
         public Vector2Int Max => m_Max;
         public Vector2Int Size => new(m_Max.x - m_Min.x + 1, m_Max.y - m_Min.y + 1);
         public Vector2Int Center => (m_Min + m_Max) / 2;
+        public int MinX => m_Min.x;
+        public int MinY => m_Min.y;
+        public int MaxX => m_Max.x;
+        public int MaxY => m_Max.y;
 
         public IntBounds2D(Vector2Int min, Vector2Int max)
         {

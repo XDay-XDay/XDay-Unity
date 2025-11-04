@@ -82,7 +82,8 @@ namespace XDay.CameraAPI
         public Vector3 FocusPoint;
         public float TargetAltitude;
         public Action ReachTargetCallback = null;
-        public FocusMovementType MovementType = FocusMovementType.HorizontalAndVertical;
+        public Action<BehaviourType> InterruptCallback = null;
+        public FocusMovementType MovementType = FocusMovementType.Line;
         public float MoveDuration = 0.5f;
         public float m_ZoomTime = 0.5f;
         public BehaviourMask InterruptMask = BehaviourMask.All;
@@ -190,8 +191,6 @@ namespace XDay.CameraAPI
         /// </summary>
         float MaxAltitude { get; set; }
 
-        Vector2 ReferenceResolution { get; }
-
         Vector3 Forward { get; }
 
         CameraDirection Direction { get; }
@@ -265,5 +264,12 @@ namespace XDay.CameraAPI
         /// <param name="type"></param>
         /// <returns></returns>
         bool IsBehaviourRunning(BehaviourType type);
+
+        /// <summary>
+        /// 获取高度配置名字对应的相机高度
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        float QueryAltitude(string name);
     }
 }

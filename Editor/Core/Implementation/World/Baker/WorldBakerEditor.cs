@@ -62,7 +62,7 @@ namespace XDay.WorldAPI.Editor
             GetAllBakeablesInfo(world);
 
             m_LODSettings = new List<WorldBakerLODSetting>();
-            var lodSetting = new WorldBakerLODSetting(500, 500, 2, null);
+            var lodSetting = new WorldBakerLODSetting(1000, 1000, 2, null);
             m_LODSettings.Add(lodSetting);
         }
 
@@ -192,7 +192,6 @@ namespace XDay.WorldAPI.Editor
 
                 if (i != m_LODSettings.Count - 1)
                 {
-                    //高一级lod的tile数必须比低级lod的tile数少或相等
                     if (m_LODSettings[i].Resolution < m_LODSettings[i + 1].Resolution)
                     {
                         EditorUtility.DisplayDialog("Error", $"Invalid resolution in lod {i}", "OK");
@@ -213,7 +212,7 @@ namespace XDay.WorldAPI.Editor
             bool isValid = Validate();
             if (isValid)
             {
-                SimpleStopwatch watch = new SimpleStopwatch();
+                SimpleStopwatch watch = new();
                 watch.Begin();
 
                 var worldBaker = new WorldBaker();
@@ -245,7 +244,7 @@ namespace XDay.WorldAPI.Editor
                 var plugin = world.GetPlugin(i);
                 if (plugin is IWorldBakeable bakeable)
                 {
-                    var info = new BakeableInfo(plugin.Name, true, bakeable);
+                    var info = new BakeableInfo(plugin.Name, bakeable.EnableBake, bakeable);
                     m_Bakeables.Add(info);
                 }
             }

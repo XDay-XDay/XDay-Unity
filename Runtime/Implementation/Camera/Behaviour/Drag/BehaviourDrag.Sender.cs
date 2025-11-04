@@ -35,7 +35,7 @@ namespace XDay.CameraAPI
             {
                 m_Motion = deviceInput.CreateInertialDragMotion(touchID,
                     manipulator.Setup.Direction == CameraDirection.XZ ? new Plane(Vector3.up, 0) : new Plane(Vector3.back, 0),
-                    moveThreshold, manipulator.Camera, DeviceTouchType.SceneTouchNotStartFromUI);
+                    moveThreshold, manipulator.Camera, DeviceTouchType.TouchNotStartFromUI);
                 SetActive(true);
             }
 

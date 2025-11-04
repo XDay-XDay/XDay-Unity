@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -34,14 +35,23 @@ namespace XDay.WorldAPI.Region.Editor
 
         public RegionSystemLayerRenderer(Transform parent, RegionSystemLayer layer)
         {
-            m_Root = new GameObject(layer.Name);
-            m_Root.transform.SetParent(parent, true);
-            Selection.activeGameObject = m_Root;
             m_Layer = layer;
+
+            CreateRoot(parent);
+
+            CreateGrid();
+
+            UpdateColors(0, 0, m_Layer.HorizontalGridCount - 1, m_Layer.VerticalGridCount - 1);
         }
 
         public void OnDestroy()
         {
+            m_GridMesh.OnDestroy();
+
+            Helper.DestroyUnityObject(m_Mesh);
+            Helper.DestroyUnityObject(m_Texture);
+            Helper.DestroyUnityObject(m_GridMaterial);
+
             foreach (var renderer in m_Renderers.Values)
             {
                 renderer.OnDestroy();
@@ -75,6 +85,12 @@ namespace XDay.WorldAPI.Region.Editor
                 return;
             }
 
+            if (name == "Grid Visible")
+            {
+                ShowGrid(m_Layer.GridVisible);
+                return;
+            }
+
             if (name == RegionDefine.ENABLE_REGION_NAME)
             {
                 ToggleVisibility(region);
@@ -96,6 +112,11 @@ namespace XDay.WorldAPI.Region.Editor
             }
 
             Debug.Assert(false, $"OnSetAspect todo: {name}");
+        }
+
+        public void ShowGrid(bool show)
+        {
+            m_GridMesh.SetActive(show);
         }
 
         public bool Destroy(RegionObject data)
@@ -169,9 +190,130 @@ namespace XDay.WorldAPI.Region.Editor
             }
         }
 
+        private void CreateRoot(Transform parent)
+        {
+            m_Root = new GameObject(m_Layer.Name);
+            m_Root.transform.SetParent(parent, true);
+            Selection.activeGameObject = m_Root;
+            var filter = m_Root.AddComponent<MeshFilter>();
+            filter.sharedMesh = CreateMesh();
+
+            var renderer = m_Root.AddComponent<MeshRenderer>();
+            m_GridMaterial = new Material(Shader.Find("XDay/TextureTransparent"));
+            m_GridMaterial.renderQueue = 3200 + m_Layer.ObjectIndex * 5;
+            renderer.sharedMaterial = m_GridMaterial;
+
+            m_Texture = new Texture2D(m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount, TextureFormat.RGBA32, false);
+            m_Texture.wrapMode = TextureWrapMode.Clamp;
+            m_Texture.filterMode = FilterMode.Point;
+            m_GridMaterial.SetTexture("_MainTex", m_Texture);
+        }
+
+        private Mesh CreateMesh()
+        {
+            m_Mesh = new Mesh();
+
+            var bounds = m_Layer.Bounds;
+            m_Mesh.vertices = new Vector3[4]
+            {
+                bounds.min,
+                new(bounds.min.x, 0, bounds.max.z),
+                new(bounds.max.x, 0, bounds.max.z),
+                new(bounds.max.x, 0, bounds.min.z),
+            };
+            m_Mesh.uv = new Vector2[4]
+            {
+                Vector2.zero,
+                new(0, 1),
+                Vector2.one,
+                new(1, 0),
+            };
+            m_Mesh.triangles = new int[6]
+            {
+                0, 1, 2, 0, 2, 3
+            };
+            m_Mesh.RecalculateBounds();
+
+            return m_Mesh;
+        }
+
+        private void CreateGrid()
+        {
+            var shader = Shader.Find("XDay/Grid");
+            var material = new Material(shader);
+            m_GridMesh = new GridMesh(m_Layer.Name, m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount,
+                m_Layer.GridWidth, m_Layer.GridHeight, material, new Color32(255, 190, 65, 150), m_Root.transform, true, 
+                3000 + m_Layer.ObjectIndex * 5 + 1);
+            ShowGrid(m_Layer.GridVisible);
+            UnityEngine.Object.DestroyImmediate(material);
+        }
+
+        public void UpdateColors(int minX, int minY, int maxX, int maxY)
+        {
+            var validRange = CheckRange(minX, minY, maxX, maxY);
+            if (!validRange)
+            {
+                return;
+            }
+
+            var h = m_Layer.HorizontalGridCount;
+            var v = m_Layer.VerticalGridCount;
+            var bw = maxX - minX + 1;
+            var bh = maxY - minY + 1;
+            var colors = m_Layer.System.Renderer.Pool.Rent(bw * bh);
+            var idx = 0;
+            for (var y = minY; y <= maxY; ++y)
+            {
+                for (var x = minX; x <= maxX; ++x)
+                {
+                    colors[idx] = m_Layer.GetColor(x, y);
+                    ++idx;
+                }
+            }
+
+            SetGridColors(minX, minY, maxX, maxY, colors);
+
+            m_Layer.System.Renderer.Pool.Return(colors);
+        }
+
+        private bool CheckRange(int minX, int minY, int maxX, int maxY)
+        {
+            if (minX >= m_Layer.HorizontalGridCount ||
+                minY >= m_Layer.VerticalGridCount ||
+                maxX < 0 ||
+                maxY < 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public void SetGridColors(int minX, int minY, int maxX, int maxY, Color32[] colors)
+        {
+            m_Texture.SetPixels32(minX, minY, maxX - minX + 1, maxY - minY + 1, colors);
+            m_Texture.Apply();
+        }
+
+        internal Vector3 GetRegionBuildingPosition(int id)
+        {
+            m_Renderers.TryGetValue(id, out var renderer);
+            return renderer.BuildingPosition;
+        }
+
+        internal GameObject GetRegionGameObject(int id)
+        {
+            m_Renderers.TryGetValue(id, out var renderer);
+            return renderer.BuildingGameObject;
+        }
+
         private readonly RegionSystemLayer m_Layer;
-        private readonly GameObject m_Root;
+        private GameObject m_Root;
         private readonly Dictionary<int, RegionRenderer> m_Renderers = new();
+        private GridMesh m_GridMesh;
+        private Mesh m_Mesh;
+        private Material m_GridMaterial;
+        private Texture2D m_Texture;
     }
 }
 

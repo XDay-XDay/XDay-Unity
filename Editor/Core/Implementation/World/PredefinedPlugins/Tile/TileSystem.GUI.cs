@@ -26,6 +26,8 @@ using UnityEngine;
 using UnityEditor;
 using XDay.WorldAPI.Editor;
 using XDay.UtilityAPI;
+using XDay.UtilityAPI.Editor;
+using System.IO;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -96,6 +98,11 @@ namespace XDay.WorldAPI.Tile.Editor
 
                     BrushFolder = EditorHelper.ObjectField<DefaultAsset>("笔刷目录", BrushFolder);
 
+                    if (GUILayout.Button("修改Mask分辨率"))
+                    {
+                        ChangeResolution();
+                    }
+
                     switch (m_Action)
                     {
                         case Action.SetMaterial:
@@ -138,6 +145,65 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 EditorGUILayout.EndScrollView();
             }
+        }
+
+        private void ChangeResolution()
+        {
+            if (m_TexturePainter.IsPainting)
+            {
+                EditorUtility.DisplayDialog("出错了", "绘制过程中不能修改分辨率,先结束绘制!", "确定");
+                return;
+            }
+
+            ParameterWindow.Open("修改Mask信息",
+            new List<ParameterWindow.Parameter>
+            {
+                new ParameterWindow.IntParameter("Resolution", "", m_TexturePainter.Resolution),
+                new ParameterWindow.StringParameter("Mask Name", "", m_TexturePainter.MaskName),
+            },
+            (p) =>
+            {
+                var ok = ParameterWindow.GetInt(p[0], out var resolution);
+                ok &= ParameterWindow.GetString(p[1], out var maskName);
+                if (ok && Helper.IsPOT(resolution))
+                {
+                    for (var i = 0; i < m_YTileCount; ++i)
+                    {
+                        for (var j = 0; j < m_XTileCount; ++j)
+                        {
+                            var tile = GetTile(j, i);
+                            if (tile != null)
+                            {
+                                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(tile.AssetPath);
+                                var texture = prefab.GetComponentInChildren<MeshRenderer>(true).sharedMaterial.GetTexture(m_TexturePainter.MaskName) as Texture2D;
+                                if (texture != null)
+                                {
+                                    var texPath = AssetDatabase.GetAssetPath(texture);
+                                    if (!string.IsNullOrEmpty(texPath))
+                                    {
+                                        var scale = new TextureScale();
+                                        var scaledTexture = scale.CreateAndScale(texture, new Vector2Int(resolution, resolution));
+                                        var bytes = scaledTexture.EncodeToTGA();
+                                        File.WriteAllBytes(texPath, bytes);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    m_TexturePainter.MaskName = maskName;
+                    m_TexturePainter.Resolution = resolution;
+
+                    AssetDatabase.Refresh();
+
+                    return true;
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Error", "Invalid parameters", "OK");
+                }
+                return false;
+            });
         }
 
         protected override void SceneGUISelectedInternal()
@@ -196,6 +262,11 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 DrawTileMaterialIDs();
             }
+
+            if (m_ShowTileCoord)
+            {
+                DrawTileCoords();
+            }
         }
 
         protected override void SceneViewControlInternal(Rect sceneViewRect)
@@ -209,6 +280,8 @@ namespace XDay.WorldAPI.Tile.Editor
                 DrawShowGridButton();
 
                 DrawShowMaterialButton();
+
+                DrawShowCoordButton();
 
                 //DrawTilingButton();
 
@@ -250,6 +323,9 @@ namespace XDay.WorldAPI.Tile.Editor
 
                 m_ButtonShowGrid = EditorWorldHelper.CreateToggleImageButton(m_ShowGrid, "show.png", "是否显示格子");
                 m_Controls.Add(m_ButtonShowGrid);
+
+                m_ButtonShowCoord = EditorWorldHelper.CreateToggleImageButton(m_ShowGrid, "show_coord.png", "是否显示格子坐标");
+                m_Controls.Add(m_ButtonShowCoord);
 
                 m_ButtonShowMaterial = EditorWorldHelper.CreateToggleImageButton(m_ShowMaterial, "show_material.png", "是否显示tile材质ID");
                 m_Controls.Add(m_ButtonShowMaterial);
@@ -322,6 +398,16 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 m_ShowGrid = m_ButtonShowGrid.Active;
                 m_Grid.SetActive(m_ShowGrid);
+            }
+        }
+
+        private void DrawShowCoordButton()
+        {
+            m_ButtonShowCoord.Active = m_ShowTileCoord;
+            if (m_ButtonShowCoord.Render(Inited))
+            {
+                m_ShowTileCoord = m_ButtonShowCoord.Active;
+                SceneView.RepaintAll();
             }
         }
 
@@ -429,6 +515,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private int m_Range = 1;
         private bool m_Show = true;
         private bool m_ShowMaterial = true;
+        private bool m_ShowTileCoord = false;
         private readonly PluginLODSystemEditor m_PluginSystemEditor = new();
         private TexturePainter m_TexturePainter = new();
         private VertexHeightPainter m_VertexHeightPainter = new();
@@ -438,6 +525,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private List<UIControl> m_Controls;
         private ImageButton m_ButtonTiling;
         private ToggleImageButton m_ButtonShowGrid;
+        private ToggleImageButton m_ButtonShowCoord;
         private ToggleImageButton m_ButtonShowMaterial;
         private Action m_Action = Action.Select;
 

@@ -29,6 +29,8 @@ namespace XDay.WorldAPI.Region.Editor
     internal class RegionRenderer
     {
         public GameObject Root => m_Root;
+        public Vector3 BuildingPosition => m_Building.transform.position;
+        public GameObject BuildingGameObject => m_Building;
 
         public RegionRenderer(RegionObject region, Transform parent)
         {
@@ -36,6 +38,13 @@ namespace XDay.WorldAPI.Region.Editor
             m_Root = new GameObject(region.Name);
             m_Root.AddOrGetComponent<NoKeyDeletion>();
             m_Root.transform.SetParent(parent, false);
+
+            m_Building = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            m_Building.AddComponent<NoKeyDeletion>();
+            m_Building.transform.SetParent(m_Root.transform);
+            m_Building.transform.position = region.BuildingPosition;
+            m_Building.transform.localScale = region.Layer.GridWidth * Vector3.one;
+            m_Building.name = region.Name;
         }
 
         public void OnDestroy()
@@ -57,6 +66,7 @@ namespace XDay.WorldAPI.Region.Editor
         }
 
         private GameObject m_Root;
+        private GameObject m_Building;
         private readonly RegionObject m_RegionObject;
     }
 }

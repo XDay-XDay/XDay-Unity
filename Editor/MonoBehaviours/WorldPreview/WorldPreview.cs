@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -91,6 +91,17 @@ internal partial class WorldPreview : MonoBehaviour
             var world = m_XDay.WorldManager.FirstWorld;
             if (world != null)
             {
+                GUILayout.Label($"地图大小: {world.Bounds.size}", m_Style);
+                Camera camera = null;
+                if (world.CameraManipulator != null)
+                {
+                    camera = world.CameraManipulator.Camera;
+                }
+                else
+                {
+                    camera = Camera.main;
+                }
+                GUILayout.Label($"相机高度: {camera.transform.position.y}", m_Style);
                 foreach (var plugin in world.QueryPlugins<WorldPlugin>())
                 {
                     if (plugin.LODSystem != null)
@@ -212,7 +223,7 @@ internal partial class WorldPreview : MonoBehaviour
                 if (decorationSystem != null)
                 {
                     List<int> decorationIDs = new();
-                    decorationSystem.QueryDecorationIDsInCircle(pos, Radius, decorationIDs);
+                    decorationSystem.QueryDecorationIDsInCircle(pos, Radius, decorationIDs, DecorationTagType.All);
                     var circle = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     circle.transform.localScale = Vector3.one * Radius * 2;
                     circle.transform.position = pos;

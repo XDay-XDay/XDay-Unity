@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -21,17 +21,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 using UnityEngine;
 
 namespace XDay.UtilityAPI
 {
     public class GridMesh
     {
+        public int HorizontalGridCount => m_HorizontalGridCount;
+        public int VerticalGridCount => m_VerticalGridCount;
+        public float GridWidth => m_GridWidth;
+        public float GridHeight => m_GridHeight;
+
         public GridMesh(string name, 
             int horizontalGridCount, 
             int verticalGridCount, 
-            float gridSize, 
+            float gridWidth, 
+            float gridHeight, 
             Material material,
             Color32 color,
             Transform parent = null, 
@@ -40,20 +45,21 @@ namespace XDay.UtilityAPI
             float height = 0.05f,
             string colorPropertyName = "_Color")
         {
-            CreateLine(name, horizontalGridCount, verticalGridCount, gridSize, parent, material, hideGameObject, renderQueue, height, color, colorPropertyName);
+            CreateLine(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, parent, material, hideGameObject, renderQueue, height, color, colorPropertyName);
         }
 
         public GridMesh(string name,
             int horizontalGridCount,
             int verticalGridCount,
-            float gridSize,
+            float gridWidth,
+            float gridHeight,
             Material material,
             Transform parent = null,
             bool hideGameObject = false,
             int renderQueue = 0,
             float height = 0.05f,
             string colorPropertyName = "_Color")
-            : this(name, horizontalGridCount, verticalGridCount, gridSize, material, Color.white, parent, hideGameObject, renderQueue, height, colorPropertyName)
+            : this(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, material, Color.white, parent, hideGameObject, renderQueue, height, colorPropertyName)
         {
         }
 
@@ -72,10 +78,16 @@ namespace XDay.UtilityAPI
             m_GameObject.SetActive(show);
         }
 
+        public bool GetActive()
+        {
+            return m_GameObject.activeSelf;
+        }
+
         private void CreateLine(string name, 
             int horizontalGridCount, 
             int verticalGridCount, 
-            float gridSize, 
+            float gridWidth, 
+            float gridHeight, 
             Transform parent, 
             Material material, 
             bool hideGameObject,
@@ -84,6 +96,11 @@ namespace XDay.UtilityAPI
             Color color, 
             string colorPropertyName)
         {
+            m_HorizontalGridCount = horizontalGridCount;
+            m_VerticalGridCount = verticalGridCount;
+            m_GridWidth = gridWidth;
+            m_GridHeight = gridHeight;
+
             m_GameObject = new GameObject(name);
             m_GameObject.transform.SetParent(parent, false);
             m_GameObject.transform.localPosition = new Vector3(0, height, 0);
@@ -101,32 +118,32 @@ namespace XDay.UtilityAPI
             }
             renderer.sharedMaterial = m_Material;
             var filter = m_GameObject.AddComponent<MeshFilter>();
-            filter.sharedMesh = CreateLineMesh(horizontalGridCount, verticalGridCount, gridSize);
+            filter.sharedMesh = CreateLineMesh(horizontalGridCount, verticalGridCount, gridWidth, gridHeight);
         }
 
-        private Mesh CreateLineMesh(int horizontalGridCount, int verticalGridCount, float gridSize)
+        private Mesh CreateLineMesh(int horizontalGridCount, int verticalGridCount, float gridWidth, float gridHeight)
         {
             var hResolution = horizontalGridCount + 1;
             var vResolution = verticalGridCount + 1;
             var vertices = new Vector3[hResolution * 2 + vResolution * 2];
             var indices = new int[vertices.Length];
 
-            var width = horizontalGridCount * gridSize;
-            var height = verticalGridCount * gridSize;
+            var width = horizontalGridCount * gridWidth;
+            var height = verticalGridCount * gridHeight;
 
             //horizontal line
             for (var i = 0; i < vResolution; ++i)
             {
-                vertices[i * 2] = new Vector3(0, 0, i * gridSize);
-                vertices[i * 2 + 1] = new Vector3(width, 0, i * gridSize);
+                vertices[i * 2] = new Vector3(0, 0, i * gridHeight);
+                vertices[i * 2 + 1] = new Vector3(width, 0, i * gridHeight);
             }
 
             //vertical line
             var offset = vResolution * 2;
             for (var i = 0; i < hResolution; ++i)
             {
-                vertices[offset + i * 2] = new Vector3(i * gridSize, 0, 0);
-                vertices[offset + i * 2 + 1] = new Vector3(i * gridSize, 0, height);
+                vertices[offset + i * 2] = new Vector3(i * gridWidth, 0, 0);
+                vertices[offset + i * 2 + 1] = new Vector3(i * gridWidth, 0, height);
             }
 
             for (var i = 0; i < indices.Length; ++i)
@@ -148,5 +165,9 @@ namespace XDay.UtilityAPI
         private GameObject m_GameObject;
         private Mesh m_Mesh;
         private Material m_Material;
+        private int m_HorizontalGridCount;
+        private int m_VerticalGridCount;
+        private float m_GridWidth;
+        private float m_GridHeight;
     }
 }

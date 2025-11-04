@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Buffers;
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -30,6 +31,7 @@ namespace XDay.WorldAPI.Region.Editor
     internal partial class RegionSystemRenderer
     {
         public GameObject Root => m_Root;
+        public ArrayPool<Color32> Pool => m_Pool;
 
         public RegionSystemRenderer(Transform parent, RegionSystem system)
         {
@@ -44,6 +46,7 @@ namespace XDay.WorldAPI.Region.Editor
         }
 
         private readonly GameObject m_Root;
+        private readonly ArrayPool<Color32> m_Pool = ArrayPool<Color32>.Create();
     }
 }
 

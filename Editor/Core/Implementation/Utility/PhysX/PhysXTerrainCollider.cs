@@ -34,19 +34,19 @@ namespace XDay.UtilityAPI.Editor
     {
         public void OnDestroy()
         {
-            mHeightField?.release();
-            mHeightField = null;
-            mTerrainActor?.release();
-            mTerrainActor = null;
+            m_HeightField?.release();
+            m_HeightField = null;
+            m_TerrainActor?.release();
+            m_TerrainActor = null;
         }
 
         public void Init(Vector3 pos, int resolution, float tileWidth, float tileHeight, float[] heights, float heightRange)
         {
             var physics = PhysxSetup.Setup.Physics;
             // Create PxRigidStatic for ground
-            mTerrainActor = physics.createRigidStatic(new PxTransform(PxIDENTITY.PxIdentity));
+            m_TerrainActor = physics.createRigidStatic(new PxTransform(PxIDENTITY.PxIdentity));
 
-            mHeightRange = heightRange;
+            m_HeightRange = heightRange;
 
             int n = heights.Length;
             var samples = new PxHeightFieldSample[n];
@@ -76,27 +76,27 @@ namespace XDay.UtilityAPI.Editor
             desc.samples.data = Marshal.UnsafeAddrOfPinnedArrayElement(samples, 0);
 
             // Create PxHeightField
-            mHeightField = PhysxSetup.Setup.Cooking.createHeightField(desc, physics.getPhysicsInsertionCallback());
+            m_HeightField = PhysxSetup.Setup.Cooking.createHeightField(desc, physics.getPhysicsInsertionCallback());
             // Unpin managed memory
             pinSamples.Free();
 
             // Add height field shape
-            float scale = mHeightRange / 0x7fff;
+            float scale = m_HeightRange / 0x7fff;
             if (scale == 0)
             {
                 scale = 1.0f;
             }
-            mTerrainActor.createExclusiveShape(new PxHeightFieldGeometry(mHeightField, scale, tileHeight / resolution, tileWidth / resolution), PhysxSetup.Setup.Material);
-            mTerrainActor.getShape(0).setLocalPose(new PxTransform(pos.x, 0, pos.z));
+            m_TerrainActor.createExclusiveShape(new PxHeightFieldGeometry(m_HeightField, scale, tileHeight / resolution, tileWidth / resolution), PhysxSetup.Setup.Material);
+            m_TerrainActor.getShape(0).setLocalPose(new PxTransform(pos.x, 0, pos.z));
 
             // Add ground actor to Scene
-            PhysxSetup.Setup.Scene.addActor(mTerrainActor);
+            PhysxSetup.Setup.Scene.addActor(m_TerrainActor);
         }
 
         public void UpdateHeights(float[] heights, int resolution, float tileWidth, float tileHeight, float heightRange)
         {
             var physics = PhysxSetup.Setup.Physics;
-            mHeightRange = heightRange;
+            m_HeightRange = heightRange;
 
             int n = heights.Length;
             var samples = new PxHeightFieldSample[n];
@@ -129,15 +129,15 @@ namespace XDay.UtilityAPI.Editor
             // Unpin managed memory
             pinSamples.Free();
 
-            mHeightField.modifySamples(0, 0, desc);
+            m_HeightField.modifySamples(0, 0, desc);
 
-            float scale = mHeightRange / 0x7fff;
+            float scale = m_HeightRange / 0x7fff;
             if (scale == 0)
             {
                 scale = 1.0f;
             }
 
-            mTerrainActor.getShape(0).setGeometry(new PxHeightFieldGeometry(mHeightField, scale, tileHeight / resolution, tileWidth / resolution));
+            m_TerrainActor.getShape(0).setGeometry(new PxHeightFieldGeometry(m_HeightField, scale, tileHeight / resolution, tileWidth / resolution));
         }
 
         public void CreateDebugObject(int x, int y, int resolution, float tileWidth, float tileHeight)
@@ -156,7 +156,7 @@ namespace XDay.UtilityAPI.Editor
             List<int> indices = new List<int>();
             float gridWidth = tileWidth / resolution;
             float gridHeight = tileHeight / resolution;
-            float scale = mHeightRange / 0x7fff;
+            float scale = m_HeightRange / 0x7fff;
             if (scale == 0)
             {
                 scale = 1.0f;
@@ -165,7 +165,7 @@ namespace XDay.UtilityAPI.Editor
             {
                 for (int j = 0; j < r; ++j)
                 {
-                    float height = mHeightField.getHeight(j, i);
+                    float height = m_HeightField.getHeight(j, i);
                     vertices[i * r + j] = new Vector3(j * gridWidth, height * scale, i * gridHeight);
 
                     if (i != r - 1 && j != r - 1)
@@ -188,9 +188,9 @@ namespace XDay.UtilityAPI.Editor
             mesh.SetIndices(indices, MeshTopology.Triangles, 0);
         }
 
-        PxRigidStatic mTerrainActor;
-        PxHeightField mHeightField;
-        float mHeightRange;
+        private PxRigidStatic m_TerrainActor;
+        private PxHeightField m_HeightField;
+        private float m_HeightRange;
     }
 }
 

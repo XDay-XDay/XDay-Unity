@@ -30,6 +30,11 @@ namespace XDay.WorldAPI.Region.Editor
         public const string REMOVE_REGION_NAME = "Remove Region";
         public const string ENABLE_REGION_NAME = "Enable Region";
         public const string COLOR_NAME = "Region Color";
+        public const string SHOW_NAME = "RegionSystem.ShowName";
+        public const string BRUSH_SIZE = "RegionSystem.BrushSize";
+        public const string SELECTED_REGION_INDEX = "RegionSystem.SelectedRegionIndex";
+        public const string SHOW_REGION = "RegionSystem.ShowRegions";
+        public static string REGION_SYSTEM_RUNTIME_ASSETS_FOLDER_NAME = "_RegionAssets";
     }
 }
 

@@ -37,7 +37,36 @@ namespace XDay.WorldAPI
             m_World?.CameraVisibleAreaCalculator.DebugDraw();
         }
 
+        private void OnGUI()
+        {
+            if (m_World == null || !m_World.ShowDebugInfo) 
+            {
+                return;
+            }
+
+            if (m_Style == null)
+            {
+                m_Style = new GUIStyle(GUI.skin.label);
+                m_Style.fontSize = 50;
+            }
+            
+            GUILayout.Label($"地图大小: {m_World.Bounds.size}", m_Style);
+            if (m_World.CameraManipulator != null)
+            {
+                GUILayout.Label($"相机高度: {m_World.CameraManipulator.RenderPosition.y}", m_Style);
+            }
+            GUILayout.Label($"地图LOD: {m_World.CurrentLOD}", m_Style);
+            foreach (var plugin in m_World.QueryPlugins<WorldPlugin>())
+            {
+                if (plugin.LODSystem != null)
+                {
+                    GUILayout.Label($"{plugin.Name} LOD: {plugin.LODSystem.CurrentLOD}", m_Style);
+                }
+            }
+        }
+
         private World m_World;
+        private GUIStyle m_Style;
     }
 }
 

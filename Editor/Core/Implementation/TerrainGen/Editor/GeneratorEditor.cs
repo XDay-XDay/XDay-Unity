@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -377,7 +377,7 @@ namespace XDay.Terrain.Editor
                 return;
             }
 
-            IObjectIDConverter translator = new ToPersistentID();
+            IObjectIDConverter translator = new ToPersistentID(0);
 
             var writer = ISerializer.CreateBinary();
 

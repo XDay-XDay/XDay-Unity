@@ -57,6 +57,7 @@ namespace XDay.CameraAPI
                     }
 
                     m_CameraReachTargetCallback = req.FocusParam.ReachTargetCallback;
+                    m_CameraInterruptCallback = req.FocusParam.InterruptCallback;
                     m_AlwaysInvokeCallback = req.FocusParam.AlwaysInvokeCallback;
                     m_InterruptMask = req.Interrupters;
                     if (m_MovementType == FocusMovementType.HorizontalAndVertical)
@@ -87,6 +88,7 @@ namespace XDay.CameraAPI
             {
                 if (request is not Request)
                 {
+                    m_CameraInterruptCallback?.Invoke(request.Type);
                     OverInternal(false);
                 }
             }
@@ -139,6 +141,7 @@ namespace XDay.CameraAPI
 
             private bool m_AlwaysInvokeCallback;
             private Action m_CameraReachTargetCallback;
+            private Action<BehaviourType> m_CameraInterruptCallback;
             private LineMovement m_LineMovement;
             private HorizontalAndVertical m_HorizontalAndVerticalMovement;
             private FocusMovementType m_MovementType = FocusMovementType.Line;

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -133,7 +133,12 @@ namespace XDay.WorldAPI.Editor
             {
                 return world;
             }
-            return container as IWorldObjectContainer;
+            var objectContainer = container as IWorldObjectContainer;
+            if (objectContainer == null)
+            {
+                Debug.LogError($"Invalid relay id: {containerID}");
+            }
+            return objectContainer;
         }
 
         private IWorldObject QueryObjectUndo(int worldID, int objectID)

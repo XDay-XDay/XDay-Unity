@@ -33,14 +33,14 @@ namespace XDay.WorldAPI.Decoration
     [Preserve]
     internal class InstanceRenderManager
     {
-        public InstanceRenderManager(Transform parent, GPUBatchInfoRegistry batchInfoRegistry, InstanceAnimatorBatchInfoRegistry prefabManager)
+        public InstanceRenderManager(Transform parent, GPUBatchInfoRegistry batchInfoRegistry, InstanceAnimatorBatchInfoRegistry registry)
         {
             if (batchInfoRegistry == null)
             {
                 Debug.LogError($"batch info not found!, can't use instance rendering!");
             }
             m_GPUBatchInfoRegistry = batchInfoRegistry;
-            m_AnimationPrefabManager = prefabManager;
+            m_AnimationRegistry = registry;
             m_AnimatorManager = IInstanceAnimatorManager.Create();
 
             CreateBatchManager(parent);
@@ -98,7 +98,7 @@ namespace XDay.WorldAPI.Decoration
             }
             else
             {
-                var data = m_AnimationPrefabManager.GetBatchData(decoration.GPUBatchID, decoration.RenderLOD);
+                var data = m_AnimationRegistry.GetBatchData(decoration.GPUBatchID, decoration.RenderLOD);
                 var animator = m_AnimatorManager.CreateInstance(data, decoration.Position, decoration.Scale, decoration.Rotation);
                 animator.Play(m_DefaultAnimName);
                 m_Animators.Add(decoration.ID, animator);
@@ -147,9 +147,9 @@ namespace XDay.WorldAPI.Decoration
         }
 
         private GameObject m_Root;
-        private InstanceAnimatorBatchInfoRegistry m_AnimationPrefabManager;
+        private InstanceAnimatorBatchInfoRegistry m_AnimationRegistry;
         private readonly GPUBatchInfoRegistry m_GPUBatchInfoRegistry;
-        private readonly ObjectPool<InstanceRenderer> m_RendererPool = new ObjectPool<InstanceRenderer>(() =>
+        private readonly ObjectPool<InstanceRenderer> m_RendererPool = new(() =>
         {
             return new InstanceRenderer();
         }, defaultCapacity: 2000);
@@ -157,7 +157,7 @@ namespace XDay.WorldAPI.Decoration
         private readonly Dictionary<int, InstanceRenderer> m_Renderers = new();
         private readonly Dictionary<int, IInstanceAnimator> m_Animators = new();
         private readonly IInstanceAnimatorManager m_AnimatorManager;
-        private string m_DefaultAnimName = "Idle";
+        private const string m_DefaultAnimName = "Idle";
     }
 }
 

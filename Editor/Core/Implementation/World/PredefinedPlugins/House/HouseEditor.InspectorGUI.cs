@@ -200,12 +200,26 @@ namespace XDay.WorldAPI.House.Editor
                 {
                     var houseInstance = m_HouseInstances[i];
                     EditorGUI.indentLevel++;
-                    bool deleted = DrawHouseInstanceSetting(houseInstance, i);
+                    bool deleted = DrawHouseInstanceSetting(houseInstance, i, out var moveDirection);
                     if (deleted)
                     {
                         UndoSystem.DestroyObject(houseInstance, "Destroy House Instance", ID);
                         break;
                     }
+
+                    if (moveDirection != MoveDirection.None)
+                    {
+                        if (moveDirection == MoveDirection.Up)
+                        {
+                            (m_HouseInstances[i], m_HouseInstances[i - 1]) = (m_HouseInstances[i - 1], m_HouseInstances[i]);
+                        }
+                        else
+                        {
+                            (m_HouseInstances[i], m_HouseInstances[i + 1]) = (m_HouseInstances[i + 1], m_HouseInstances[i]);
+                        }
+                        break;
+                    }
+
                     EditorGUI.indentLevel--;
                 }
             }
@@ -213,9 +227,10 @@ namespace XDay.WorldAPI.House.Editor
             EditorHelper.HorizontalLine();
         }
 
-        private bool DrawHouseInstanceSetting(HouseInstance houseInstance, int index)
+        private bool DrawHouseInstanceSetting(HouseInstance houseInstance, int index, out MoveDirection moveDirection)
         {
             bool deleted = false;
+            moveDirection = MoveDirection.None;
             EditorGUILayout.BeginHorizontal();
             EditorGUIUtility.labelWidth = 10;
 
@@ -230,6 +245,20 @@ namespace XDay.WorldAPI.House.Editor
             EditorGUIUtility.labelWidth = 0;
             houseInstance.ShowInInspector = EditorGUILayout.Foldout(houseInstance.ShowInInspector, $"{index}.{houseInstance.Name}");
             EditorGUILayout.Space();
+
+            GUI.enabled = index > 0;
+            if (GUILayout.Button(new GUIContent("上移", "房间顺序向上移"), GUILayout.MaxWidth(40)))
+            {
+                moveDirection = MoveDirection.Up;
+            }
+            GUI.enabled = true;
+
+            GUI.enabled = index < m_HouseInstances.Count - 1;
+            if (GUILayout.Button(new GUIContent("下移", "房间顺序向下移"), GUILayout.MaxWidth(40)))
+            {
+                moveDirection = MoveDirection.Down;
+            }
+            GUI.enabled = true;
 
             if (GUILayout.Button("定位", GUILayout.MaxWidth(40)))
             {
@@ -474,5 +503,12 @@ namespace XDay.WorldAPI.House.Editor
             new GUIContent("房间模板", "房间模板设置"),
             new GUIContent("房间", "房间设置"),
         };
+
+        private enum MoveDirection
+        {
+            None,
+            Up,
+            Down,
+        }
     }
 }

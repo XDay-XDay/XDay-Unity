@@ -28,18 +28,20 @@ namespace XDay.WorldAPI.Decoration
 {
     internal class ResourceMetadata
     {
-        public ResourceMetadata(int gpuBatchID, Quaternion rotation, Vector3 scale, Rect bounds, string path)
+        public ResourceMetadata(int gpuBatchID, Quaternion rotation, Vector3 scale, Rect bounds, string path, DecorationTagType type)
         {
             GPUBatchID = gpuBatchID;
             Rotation = rotation;
             Scale = scale;
             Bounds = bounds;
             Path = path;
+            Type = type;
         }
 
         public void Init(ResourceDescriptorSystem descriptorSystem)
         {
             ResourceDescriptor = descriptorSystem.QueryDescriptor(Path);
+            Debug.Assert(ResourceDescriptor != null);
         }
 
         public int QueryLODGroup(int lod)
@@ -53,6 +55,7 @@ namespace XDay.WorldAPI.Decoration
         public Vector3 Scale { get; }
         public Rect Bounds { get; }
         public string Path { get; }
+        public DecorationTagType Type { get; }
     }
 
     internal class DecorationMetaData

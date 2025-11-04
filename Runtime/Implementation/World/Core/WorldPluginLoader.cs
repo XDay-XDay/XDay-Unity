@@ -45,12 +45,12 @@ namespace XDay.WorldAPI
             {
                 foreach (var fileName in info.FileNames)
                 {
-                    AddDeserializer(worldID, fileName, CreateDeserializer($"{folder}/{fileName}.bytes"));
+                    AddDeserializer(worldID, fileName, CreateDeserializer($"{folder}/{fileName}.bytes", logError:true));
                 }
             }
 
-            AddDeserializer(worldID, WorldDefine.GAME_FILE_NAME, CreateDeserializer($"{folder}/{WorldDefine.GAME_FILE_NAME}.bytes"));
-            AddDeserializer(worldID, WorldDefine.BAKED_TILES_FILE_NAME, CreateDeserializer($"{folder}/{WorldDefine.CONSTANT_FOLDER_NAME}/Baked/{WorldDefine.BAKED_TILES_FILE_NAME}.bytes"));
+            AddDeserializer(worldID, WorldDefine.GAME_FILE_NAME, CreateDeserializer($"{folder}/{WorldDefine.GAME_FILE_NAME}.bytes", logError: true));
+            AddDeserializer(worldID, WorldDefine.BAKED_TILES_FILE_NAME, CreateDeserializer($"{folder}/{WorldDefine.CONSTANT_FOLDER_NAME}/Baked/{WorldDefine.BAKED_TILES_FILE_NAME}.bytes", logError: false));
         }
 
         public IDeserializer GetPluginDeserializer(int worldID, string fileName)
@@ -106,7 +106,7 @@ namespace XDay.WorldAPI
             return plugins;
         }
 
-        private IDeserializer CreateDeserializer(string filePath)
+        private IDeserializer CreateDeserializer(string filePath, bool logError)
         {
             if (string.IsNullOrEmpty(filePath))
             {
@@ -115,7 +115,10 @@ namespace XDay.WorldAPI
 
             if (!m_AssetLoader.Exists(filePath))
             {
-                Debug.LogError($"file {filePath} not found!");
+                if (logError)
+                {
+                    Debug.LogError($"file {filePath} not found!");
+                }
                 return null;
             }
 

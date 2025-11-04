@@ -154,6 +154,8 @@ namespace XDay.WorldAPI.Attribute.Editor
             m_ViewScrollPosition = EditorGUILayout.BeginScrollView(m_ViewScrollPosition);
             EditorHelper.IndentLayout(() =>
             {
+                m_EnableAutoObstacleGeneration = EditorGUILayout.ToggleLeft("开启自动障碍物计算", m_EnableAutoObstacleGeneration);
+
                 if (GUILayout.Button("计算障碍物"))
                 {
                     CalculateIfGridHasObstacles(true);
@@ -540,7 +542,7 @@ namespace XDay.WorldAPI.Attribute.Editor
                 ok &= ParameterWindow.GetStringArraySelection(items[5], out var layerType);
                 if (ok)
                 {
-                    if (GetLayer(name) == null)
+                    if (QueryLayer(name) == null)
                     {
                         var layer = new Layer(World.AllocateObjectID(), objectIndex: m_Layers.Count, name, horizontalGridCount, verticalGridCount, width / horizontalGridCount, height / verticalGridCount, origin, horizontalBlockCount, verticalBlockCount, (LayerType)layerType, Color.white);
 
@@ -593,7 +595,7 @@ namespace XDay.WorldAPI.Attribute.Editor
                 var ok = ParameterWindow.GetString(items[0], out var name);
                 if (ok)
                 {
-                    if (GetLayer(name) == null)
+                    if (QueryLayer(name) == null)
                     {
                         UndoSystem.SetAspect(layer, "Layer Name", IAspect.FromString(name), "Set Layer Name", ID, UndoActionJoinMode.NextJoin);
 

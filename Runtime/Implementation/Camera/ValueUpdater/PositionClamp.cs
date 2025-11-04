@@ -48,7 +48,12 @@ namespace XDay.CameraAPI
             m_CameraManipulator = camera;
         }
 
-        public Vector3 Clamp(Vector3 cameraPos, Vector3 cameraForward, float cameraRotX, float minHeight, float maxHeight, Camera camera)
+        public Vector3 Clamp(Vector3 cameraPos, 
+            Vector3 cameraForward, 
+            float cameraRotX, 
+            float minHeight, 
+            float maxHeight, 
+            Camera camera)
         {
             Vector3 pos;
             if (m_Direction == CameraDirection.XZ)
@@ -132,7 +137,8 @@ namespace XDay.CameraAPI
 
         private Vector3 ClampY(Vector3 pos, Vector3 forward, float minHeight, float maxHeight, Camera camera)
         {
-            if (pos.y < minHeight || pos.y > maxHeight)
+            if (Helper.LT(pos.y, minHeight, 0.01f) || 
+                Helper.GT(pos.y, maxHeight, 0.01f))
             {
                 var y = Mathf.Clamp(pos.y, minHeight, maxHeight);
                 var focusPoint = Helper.RayCastXZPlane(pos, forward);

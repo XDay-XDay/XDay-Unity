@@ -27,15 +27,7 @@ namespace XDay.WorldAPI.Attribute
 {
     internal partial class AttributeSystem
     {
-        internal enum LayerType
-        {
-            //障碍物层,由AutoObstacle和用户手绘的格子障碍合并得来
-            Obstacle,
-            //用户定义，对编辑器无特殊意义
-            UserDefined,
-        }
-
-        internal abstract class LayerBase
+        internal abstract class LayerBase : IAttributeSystemLayer
         {
             public string Name { get => m_Name; set => m_Name = value; }
             public int HorizontalGridCount => m_HorizontalGridCount;
@@ -60,14 +52,14 @@ namespace XDay.WorldAPI.Attribute
                 m_Type = type;
             }
 
-            internal Vector2Int PositionToCoordinate(float x, float z)
+            public Vector2Int PositionToCoordinate(float x, float z)
             {
                 var coordX = Mathf.FloorToInt((x - m_Origin.x) / m_GridWidth);
                 var coordY = Mathf.FloorToInt((z - m_Origin.y) / m_GridHeight);
                 return new Vector2Int(coordX, coordY);
             }
 
-            internal Vector3 CoordinateToPosition(int x, int y)
+            public Vector3 CoordinateToPosition(int x, int y)
             {
                 return new Vector3(
                     x * m_GridWidth + m_Origin.x,
@@ -75,7 +67,7 @@ namespace XDay.WorldAPI.Attribute
                     y * m_GridHeight + m_Origin.y);
             }
 
-            internal Vector3 CoordinateToCenterPosition(int x, int y)
+            public Vector3 CoordinateToCenterPosition(int x, int y)
             {
                 return new Vector3(
                     (x + 0.5f) * m_GridWidth + m_Origin.x,
@@ -91,6 +83,10 @@ namespace XDay.WorldAPI.Attribute
                     Mathf.Approximately(m_HorizontalGridCount, otherLayer.HorizontalGridCount) &&
                     Mathf.Approximately(m_VerticalGridCount, otherLayer.VerticalGridCount);
             }
+
+
+            public abstract uint GetValue(int x, int y);
+            public abstract void SetValue(int x, int y, uint type);
 
             [SerializeField]
             private string m_Name;
@@ -121,7 +117,7 @@ namespace XDay.WorldAPI.Attribute
                 m_Data = data;
             }
 
-            public void Set(int x, int y, uint type)
+            public override void SetValue(int x, int y, uint type)
             {
                 if (x >= 0 && x < HorizontalGridCount && y >= 0 && y < VerticalGridCount)
                 {
@@ -130,7 +126,7 @@ namespace XDay.WorldAPI.Attribute
                 }
             }
 
-            public uint Get(int x, int y)
+            public override uint GetValue(int x, int y)
             {
                 if (x >= 0 && x < HorizontalGridCount && y >= 0 && y < VerticalGridCount)
                 {

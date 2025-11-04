@@ -81,6 +81,7 @@ namespace XDay.WorldAPI.House.Editor
                 }
             }
         }
+        public override int FileIDOffset => WorldDefine.HOUSE_EDITOR_FILE_ID_OFFSET;
 
         public HouseEditor()
         {
@@ -282,10 +283,10 @@ namespace XDay.WorldAPI.House.Editor
             if (obj is HouseInstance houseInstance)
             {
                 m_HouseInstances.Add(houseInstance);
-                m_HouseInstances.Sort((a, b) =>
-                {
-                    return a.ObjectIndex.CompareTo(b.ObjectIndex);
-                });
+                //m_HouseInstances.Sort((a, b) =>
+                //{
+                //    return a.ObjectIndex.CompareTo(b.ObjectIndex);
+                //});
             }
             else if (obj is House house)
             {

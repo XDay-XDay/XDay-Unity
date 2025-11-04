@@ -26,6 +26,7 @@ namespace XDay.WorldAPI.Tile
     internal class BakedTileData
     {
         public bool Visible { get => m_Visible; set => m_Visible = value; }
+        public bool MaskSet { get => m_MaskSet; set => m_MaskSet = value; }
         public string Path => m_Path;
 
         public BakedTileData(string path)
@@ -35,5 +36,6 @@ namespace XDay.WorldAPI.Tile
 
         private readonly string m_Path;
         private bool m_Visible = false;
+        private bool m_MaskSet = false;
     }
 }

@@ -46,20 +46,24 @@ namespace XDay.WorldAPI.Attribute.Editor
             public int Layer0ID;
         }
 
-        public override string Name { 
-            set {
+        public override string Name
+        {
+            set
+            {
                 Root.name = value;
-                m_Name = value; 
-            } 
-            get => m_Name; }
+                m_Name = value;
+            }
+            get => m_Name;
+        }
         public override List<string> GameFileNames => new() { "attribute" };
         public override string TypeName => "EditorAttributeSystem";
         public int LODCount => 1;
         public override GameObject Root => m_Renderer?.Root;
         public AttributeSystemRenderer Renderer => m_Renderer;
         public SortedSet<LayerBase> Layers => m_Layers;
-        public int ActiveLayerID { 
-            get => m_ActiveLayerID; 
+        public int ActiveLayerID
+        {
+            get => m_ActiveLayerID;
             set
             {
                 if (m_ActiveLayerID != value)
@@ -69,6 +73,7 @@ namespace XDay.WorldAPI.Attribute.Editor
                 }
             }
         }
+        public override int FileIDOffset => WorldDefine.ATTRIBUTE_SYSTEM_FILE_ID_OFFSET;
 
         public AttributeSystem()
         {
@@ -135,7 +140,7 @@ namespace XDay.WorldAPI.Attribute.Editor
             layer.Uninit();
             m_Layers.Remove(layer);
             if (m_Layers.Count > 0)
-            { 
+            {
                 m_ActiveLayerID = m_Layers.Min.ID;
             }
             else
@@ -154,6 +159,11 @@ namespace XDay.WorldAPI.Attribute.Editor
         /// </summary>
         public void CalculateIfGridHasObstacles(bool prompt)
         {
+            if (!m_EnableAutoObstacleGeneration)
+            {
+                return;
+            }
+
             if (!prompt || EditorUtility.DisplayDialog("注意", "确定计算?", "确定", "取消"))
             {
                 var layer = GetLayer(LayerType.AutoObstacle);
@@ -206,9 +216,9 @@ namespace XDay.WorldAPI.Attribute.Editor
                     }
                 }
 
-                UndoSystem.SetAspect(this, 
-                    $"{GridAttributeName}[{layer.ID},{0},{0},{layer.HorizontalGridCount},{layer.VerticalGridCount}]", 
-                    IAspect.FromArray(data, makeCopy: true), 
+                UndoSystem.SetAspect(this,
+                    $"{GridAttributeName}[{layer.ID},{0},{0},{layer.HorizontalGridCount},{layer.VerticalGridCount}]",
+                    IAspect.FromArray(data, makeCopy: true),
                     "Set Grid Attribute",
                     0, UndoActionJoinMode.Both);
             }
@@ -222,6 +232,7 @@ namespace XDay.WorldAPI.Attribute.Editor
 
             writer.WriteString(m_Name, "Name");
             writer.WriteObjectID(m_ActiveLayerID, "Active Layer ID", converter);
+            writer.WriteBoolean(m_EnableAutoObstacleGeneration, "EnableAutoObstacleGeneration");
 
             List<LayerBase> layers = new(m_Layers);
             writer.WriteList(layers, "Layers", (LayerBase layer, int index) =>
@@ -234,10 +245,14 @@ namespace XDay.WorldAPI.Attribute.Editor
         {
             base.EditorDeserialize(reader, label);
 
-            reader.ReadInt32("EditorAttributeSystem.Version");
+            var version = reader.ReadInt32("EditorAttributeSystem.Version");
 
             m_Name = reader.ReadString("Name");
             m_ActiveLayerID = reader.ReadInt32("Active Layer ID");
+            if (version >= 2)
+            {
+                m_EnableAutoObstacleGeneration = reader.ReadBoolean("EnableAutoObstacleGeneration");
+            }
 
             var layers = reader.ReadList("Layers", (int index) =>
             {
@@ -249,7 +264,7 @@ namespace XDay.WorldAPI.Attribute.Editor
             }
         }
 
-        private LayerBase GetLayer(string name)
+        public LayerBase QueryLayer(string name)
         {
             foreach (var layer in m_Layers)
             {
@@ -294,8 +309,10 @@ namespace XDay.WorldAPI.Attribute.Editor
         private int m_ActiveLayerID = 0;
         [SerializeField]
         private SortedSet<LayerBase> m_Layers = new(Comparer<LayerBase>.Create((x, y) => x.ObjectIndex.CompareTo(y.ObjectIndex)));
+        [SerializeField]
+        private bool m_EnableAutoObstacleGeneration = false;
         private AttributeSystemRenderer m_Renderer;
-        private const int m_EditorVersion = 1;
+        private const int m_EditorVersion = 2;
     }
 }
 

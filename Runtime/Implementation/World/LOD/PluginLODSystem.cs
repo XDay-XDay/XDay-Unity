@@ -168,10 +168,10 @@ namespace XDay.WorldAPI
                 {
                     changed = true;
 
-                    EventLODChanged?.Invoke(m_CurrentLOD, newLOD);
-
                     m_PreviousLOD = m_CurrentLOD;
                     m_CurrentLOD = newLOD;
+
+                    EventLODChanged?.Invoke(m_PreviousLOD, m_CurrentLOD);
                 }
             }
             return changed;

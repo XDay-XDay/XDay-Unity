@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -63,7 +63,10 @@ namespace XDay.WorldAPI.Attribute.Editor
             {
             }
 
-            public LayerBase(int id, int objectIndex, string name, int horizontalGridCount, int verticalGridCount, float gridWidth, float gridHeight, Vector2 origin, int horizontalBlockCount, int verticalBlockCount, LayerType type, Color color)
+            public LayerBase(int id, int objectIndex, 
+                string name, 
+                int horizontalGridCount, int verticalGridCount, float gridWidth, float gridHeight, Vector2 origin, 
+                int horizontalBlockCount, int verticalBlockCount, LayerType type, Color color)
                 : base(id, objectIndex)
             {
                 m_Name = name;

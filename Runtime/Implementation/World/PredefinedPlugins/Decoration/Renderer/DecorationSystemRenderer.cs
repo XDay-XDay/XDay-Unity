@@ -48,7 +48,7 @@ namespace XDay.WorldAPI.Decoration
             m_GameObjectRendererManager = new GameObjectRendererManager(m_Root, system.World.GameObjectPool);
 
 #if DECORATION_DEBUG
-            var drawBounds = m_RootGameObject.AddComponent<DrawBounds>();
+            var drawBounds = m_Root.AddComponent<DrawBounds>();
             drawBounds.Init(system);
 #endif
         }

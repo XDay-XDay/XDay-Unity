@@ -264,6 +264,6 @@ namespace XDay.UtilityAPI.Editor
         private int m_TextureSize = 1024;
         private RenderTexture m_TargetTexture;
         private bool m_DestroyCamera = false;
-        private readonly int m_Layer = LayerMask.NameToLayer("Bake To RenderTexture");
+        private readonly int m_Layer = LayerMask.NameToLayer("RenderToTexture");
     }
 }

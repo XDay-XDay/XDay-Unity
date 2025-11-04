@@ -40,6 +40,7 @@ namespace XDay.PlayerBuildPipeline.Editor
         /// asset bundle输出目录
         /// </summary>
         public string OutputDir = "./AssetBundle";
+        public AssetBundleRuleConfig RuleConfig;
 
         public StageBuildAssetBundle(int id) : base(id)
         {
@@ -54,8 +55,12 @@ namespace XDay.PlayerBuildPipeline.Editor
                 errorMsg = "输出目录未设置\n";
             }
 
-            var ruleConfig = EditorHelper.QueryAsset<AssetBundleRuleConfig>();
-            if (ruleConfig == null)
+            m_RuleConfig = RuleConfig;
+            if (m_RuleConfig == null)
+            {
+                m_RuleConfig = EditorHelper.QueryAsset<AssetBundleRuleConfig>();
+            }
+            if (m_RuleConfig == null)
             {
                 errorMsg += "没有AssetBundle分包规则\n";
             }
@@ -67,9 +72,11 @@ namespace XDay.PlayerBuildPipeline.Editor
         {
             Helper.CreateDirectory(m_OutputDir);
 
+            EditorHelper.DeleteFolderContent(m_OutputDir);
+
             var option = GetOption(pipeline);
 
-            var bundleBuilds = GetAssetBundleBuilds();
+            var bundleBuilds = m_RuleConfig.GenerateAssetBundleBuilds();
 
             Stopwatch watch = new();
             watch.Start();
@@ -93,7 +100,7 @@ namespace XDay.PlayerBuildPipeline.Editor
             if (success)
             {
                 Helper.CreateDirectory(Application.streamingAssetsPath);
-                EditorHelper.DeleteFolderContent(Application.streamingAssetsPath);
+                FileUtil.DeleteFileOrDirectory(Application.streamingAssetsPath);
                 FileUtil.CopyFileOrDirectory(m_OutputDir, Application.streamingAssetsPath);
                 AssetDatabase.Refresh();
             }
@@ -102,12 +109,6 @@ namespace XDay.PlayerBuildPipeline.Editor
                 Success = success, 
                 ErrorMessage = errorMsg, 
                 TimeCostSec = watch.ElapsedMilliseconds / 1000f });
-        }
-
-        private AssetBundleBuild[] GetAssetBundleBuilds()
-        {
-            var ruleConfig = EditorHelper.QueryAsset<AssetBundleRuleConfig>();
-            return ruleConfig.GenerateAssetBundleBuilds();
         }
 
         private BuildAssetBundleOptions GetOption(PlayerBuildPipeline pipeline)
@@ -129,5 +130,6 @@ namespace XDay.PlayerBuildPipeline.Editor
         }
 
         private string m_OutputDir;
+        private AssetBundleRuleConfig m_RuleConfig;
     }
 }

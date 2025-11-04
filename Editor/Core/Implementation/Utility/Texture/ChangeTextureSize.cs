@@ -23,6 +23,7 @@
 
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using XDay.UtilityAPI;
 using XDay.UtilityAPI.Editor;
@@ -31,6 +32,16 @@ namespace XDay.WorldAPI.City.Editor
 {
     internal class ChangeTextureSize
     {
+        [MenuItem("XDay/Other/显示隐藏的GameObject")]
+        static void ShowHiddenGameObjects()
+        {
+            var rootObjects = EditorSceneManager.GetActiveScene().GetRootGameObjects();
+            foreach (var obj in rootObjects)
+            {
+                Helper.HideGameObject(obj, false);
+            }
+        }
+
         [MenuItem("XDay/Other/修改贴图高度")]
         static void Process()
         {

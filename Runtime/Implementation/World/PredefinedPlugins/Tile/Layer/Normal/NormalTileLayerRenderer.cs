@@ -33,7 +33,12 @@ namespace XDay.WorldAPI.Tile
         public NormalTileLayerRenderer(NormalTileLayer layer, string[] usedTilePrefabPaths)
         {
             var tileSystem = layer.TileSystem;
-            m_GameObjects = new GameObject[layer.YTileCount * layer.XTileCount];
+            m_Entries = new Entry[layer.YTileCount * layer.XTileCount];
+            for (var i = 0; i < m_Entries.Length; i++)
+            {
+                m_Entries[i] = new Entry();
+            }
+
             m_Root = new GameObject(layer.Name);
             m_Root.transform.SetParent(tileSystem.Root.transform, false);
             m_Root.transform.SetPositionAndRotation(layer.Center, tileSystem.Rotation);
@@ -46,9 +51,9 @@ namespace XDay.WorldAPI.Tile
 
         public void OnDestroy()
         {
-            foreach (var obj in m_GameObjects)
+            foreach (var entry in m_Entries)
             {
-                Helper.DestroyUnityObject(obj);
+                Helper.DestroyUnityObject(entry.GameObject);
             }
             Helper.DestroyUnityObject(m_Root);
         }
@@ -65,38 +70,24 @@ namespace XDay.WorldAPI.Tile
             }
         }
 
-        private void HideTile(int x, int y, NormalTileData tile, int lod)
-        {
-            var idx = y * m_Layer.XTileCount + x;
-            var gameObject = m_GameObjects[idx];
-            if (gameObject == null)
-            {
-                return;
-            }
-
-            var prefabPath = tile.GetPath(lod);
-            if (tile.HasHeightData)
-            {
-                var filter = gameObject.GetComponentInChildren<MeshFilter>();
-                filter.sharedMesh = m_MeshManager.GetOriginalMesh(prefabPath);
-            }
-
-            m_Layer.TileSystem.World.GameObjectPool.Release(prefabPath, gameObject);
-            m_GameObjects[idx] = null;
-        }
-
         private void ShowTile(int x, int y, NormalTileData tile, int lod)
         {
             var idx = y * m_Layer.XTileCount + x;
-            if (m_GameObjects[idx] != null)
+
+            if (m_Entries[idx].GameObject == null)
             {
-                return;
+                var gameObject = m_Layer.TileSystem.World.GameObjectPool.Get(tile.GetPath(lod));
+                gameObject.transform.position = m_Layer.CoordinateToLocalPosition(x, y);
+                gameObject.transform.SetParent(m_Root.transform, false);
+                m_Entries[idx].GameObject = gameObject;
             }
 
-            var gameObject = m_Layer.TileSystem.World.GameObjectPool.Get(tile.GetPath(lod));
-            gameObject.transform.position = m_Layer.CoordinateToLocalPosition(x, y);
-            gameObject.transform.SetParent(m_Root.transform, false);
-            m_GameObjects[idx] = gameObject;
+            if (!tile.MaskSet)
+            {
+                tile.MaskSet = true;
+                m_Entries[idx].Material = m_Entries[idx].GameObject.GetComponentInChildren<MeshRenderer>(true).sharedMaterial;
+                m_Layer.TileMaterialUpdater?.OnNormalLayerShowTile(m_Entries[idx].Material);
+            }
 
             if (tile.HasHeightData
                 /* || tile.clipped*/)
@@ -104,10 +95,30 @@ namespace XDay.WorldAPI.Tile
                 var lodMesh = m_MeshManager.GetHeightMesh(x, y, lod);
                 if (lodMesh != null)
                 {
-                    var filter = gameObject.GetComponentInChildren<MeshFilter>();
+                    var filter = m_Entries[idx].GameObject.GetComponentInChildren<MeshFilter>();
                     filter.sharedMesh = lodMesh;
                 }
             }
+
+            m_Entries[idx].GameObject.SetActive(true);
+        }
+
+        private void HideTile(int x, int y, NormalTileData tile, int lod)
+        {
+            var idx = y * m_Layer.XTileCount + x;
+            if (m_Entries[idx].GameObject == null)
+            {
+                return;
+            }
+
+            if (tile.HasHeightData)
+            {
+                var prefabPath = tile.GetPath(lod);
+                var filter = m_Entries[idx].GameObject.GetComponentInChildren<MeshFilter>();
+                filter.sharedMesh = m_MeshManager.GetOriginalMesh(prefabPath);
+            }
+
+            m_Entries[idx].GameObject.SetActive(false);
         }
 
         private void PreprocessHeightMeshes(string[] usedPrefabPaths)
@@ -132,10 +143,47 @@ namespace XDay.WorldAPI.Tile
             }
         }
 
+        internal void UpdateMaterialInRange(int minX, int minY, int maxX, int maxY, TileMaterialUpdaterTiming timing)
+        {
+            for (var y = minY; y <= maxY; ++y)
+            {
+                for (var x = minX; x <= maxX; ++x)
+                {
+                    if (x > 0 && x < m_Layer.XTileCount &&
+                        y > 0 && y < m_Layer.YTileCount)
+                    {
+                        var idx = y * m_Layer.XTileCount + x;
+                        if (m_Entries[idx].GameObject != null)
+                        {
+                            m_Layer.TileMaterialUpdater.OnUpdateNormalLayerMaterial(m_Entries[idx].Material, timing);
+                        }
+                    }
+                }
+            }
+        }
+
+        internal void OnSetTileMaterialUpdater()
+        {
+            foreach (var entry in m_Entries)
+            {
+                if (entry.GameObject != null)
+                {
+                    entry.Material = entry.GameObject.GetComponentInChildren<MeshRenderer>(true).sharedMaterial;
+                    m_Layer.TileMaterialUpdater?.OnNormalLayerShowTile(entry.Material);
+                }
+            }
+        }
+
         private readonly GameObject m_Root;
-        private readonly GameObject[] m_GameObjects;
+        private readonly Entry[] m_Entries;
         private readonly NormalTileLayer m_Layer;
         private TerrainHeightMeshManager m_MeshManager;
+
+        private class Entry
+        {
+            public GameObject GameObject;
+            public Material Material;
+        }
     };
 }
 

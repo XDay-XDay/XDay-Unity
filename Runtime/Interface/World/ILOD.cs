@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -88,6 +88,9 @@ namespace XDay.WorldAPI
         {
             return new PluginLODSystem(lodCount);
         }
+
+        public event LODChangeCallback EventLODChanged;
+        public event LODCountChangeCallback EventLODCountChanged;
 
         int LODCount { get; set; }
         int PreviousLOD { get; }

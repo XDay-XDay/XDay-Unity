@@ -142,6 +142,12 @@ namespace XDay.UtilityAPI
             return "";
         }
 
+        public static T GetObjectFromGuid<T>(string guid) where T : UnityEngine.Object
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            return AssetDatabase.LoadAssetAtPath<T>(path);
+        }
+
         public static string QueryScriptFilePath(string prefix, string className)
         {
             var assetGuids = AssetDatabase.FindAssets($"t:script {className}");
@@ -883,6 +889,12 @@ namespace XDay.UtilityAPI
             var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(jsonFilePath));
             dict.TryGetValue(key, out var value);
             return value;
+        }
+
+        public static void PingObject(UnityEngine.Object obj)
+        {
+            Selection.activeObject = obj;
+            EditorGUIUtility.PingObject(obj);
         }
     }
 }

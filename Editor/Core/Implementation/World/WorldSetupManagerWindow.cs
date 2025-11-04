@@ -65,8 +65,11 @@ namespace XDay.WorldAPI.Editor
 
             EditorGUIUtility.labelWidth = 150;
 
+            GUI.enabled = false;
             DrawEditorFolder();
             DrawGameFolder();
+            GUI.enabled = true;
+
             DrawWorldList();
 
             EditorGUIUtility.labelWidth = 0;

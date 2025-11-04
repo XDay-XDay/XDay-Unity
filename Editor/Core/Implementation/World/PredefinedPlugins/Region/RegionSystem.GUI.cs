@@ -22,7 +22,6 @@
  */
 
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -41,6 +40,29 @@ namespace XDay.WorldAPI.Region.Editor
                 m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
                 EditorHelper.IndentLayout(() =>
                 {
+                    m_PluginLODSystemEditor.InspectorGUI(LODSystem, null, "LOD", (lodCount) =>
+                    {
+                        if (lodCount > 8)
+                        {
+                            EditorUtility.DisplayDialog("出错了", "LOD数不能超过8个", "确定");
+                        }
+                        return lodCount <= 8;
+                    });
+
+                    var layer = GetCurrentLayer();
+                    GUI.enabled = layer != null;
+                    if (GUILayout.Button("生成Mesh"))
+                    {
+                        GenerateAssets(WorldEditor.ActiveWorld.GameFolder);
+                    }
+
+                    if (GUILayout.Button("生成预览"))
+                    {
+                        PreviewGeneratedData(WorldEditor.ActiveWorld.GameFolder, GetLayerIndex(layer.ID), m_PluginLODSystem.CurrentLOD);
+                    }
+                    GUI.enabled = true;
+
+                    DrawRegionSettings();
                 });
                 EditorGUILayout.EndScrollView();
             }
@@ -58,12 +80,7 @@ namespace XDay.WorldAPI.Region.Editor
                 }
                 else if (evt.keyCode == KeyCode.Alpha2 && evt.control)
                 {
-                    ChangeOperation(Operation.Edit);
-                    evt.Use();
-                }
-                else if (evt.keyCode == KeyCode.Alpha3 && evt.control)
-                {
-                    ChangeOperation(Operation.Create);
+                    ChangeOperation(Operation.EditRegion);
                     evt.Use();
                 }
             }
@@ -79,14 +96,46 @@ namespace XDay.WorldAPI.Region.Editor
                 DrawLayerSelection();
                 DrawLayerVisibilityButton();
                 DrawLayerButtons();
+
+                GUILayout.Space(20);
+
+                SetBrushSize(m_BrushSizeField.Render(m_BrushSize, 50));
+
+                DrawAlpha();
             }
             EditorGUILayout.EndHorizontal();
 
             DrawDescription();
         }
 
+        private void DrawAlpha()
+        {
+            var layer = GetCurrentLayer();
+            GUI.enabled = layer != null;
+            if (layer != null)
+            {
+                var newAlpha = m_AlphaField.Render(layer.Alpha, 50);
+                if (!Mathf.Approximately(newAlpha, layer.Alpha))
+                {
+                    layer.Alpha = newAlpha;
+                    layer.Renderer.UpdateColors(0, 0, layer.HorizontalGridCount - 1, layer.VerticalGridCount - 1);
+                }
+            }
+            GUI.enabled = true;
+        }
+
         private void DrawLayerButtons()
         {
+            var layer = GetCurrentLayer();
+            if (layer != null)
+            {
+                m_ShowGrid.Active = layer.GridVisible;
+            }
+            if (m_ShowGrid.Render(true, GUI.enabled && layer != null))
+            {
+                SetGridVisibility(m_ShowGrid.Active);
+            }
+
             if (m_AddLayerButton.Render(Inited))
             {
                 CommandAddLayer();
@@ -100,6 +149,20 @@ namespace XDay.WorldAPI.Region.Editor
             if (m_EditLayerNameButton.Render(Inited))
             {
                 CommandEditLayerName();
+            }
+
+            DrawShowNameButton();
+        }
+
+        private void SetGridVisibility(bool show)
+        {
+            UndoSystem.NextGroupAndJoin();
+            foreach (var layer in m_Layers)
+            {
+                if (layer != null)
+                {
+                    UndoSystem.SetAspect(layer, "Grid Visible", IAspect.FromBoolean(show), $"Set Grid {layer.ID} Visibility", ID, UndoActionJoinMode.None);
+                }
             }
         }
 
@@ -152,6 +215,18 @@ namespace XDay.WorldAPI.Region.Editor
 
                 m_ButtonRenameObjects = EditorWorldHelper.CreateImageButton("rename.png", "修改物体名称");
                 m_Controls.Add(m_ButtonRenameObjects);
+
+                m_ShowGrid = EditorWorldHelper.CreateToggleImageButton(false, "grid.png", "显隐格子");
+                m_Controls.Add(m_ShowGrid);
+
+                m_BrushSizeField = new IntField("笔刷大小", "", 80);
+                m_Controls.Add(m_BrushSizeField);
+
+                m_AlphaField = new FloatField("透明度", "", 80);
+                m_Controls.Add(m_AlphaField);
+
+                m_ButtonShowName = EditorWorldHelper.CreateToggleImageButton(m_ShowName, "show_material.png", "是否显示区域名称");
+                m_Controls.Add(m_ButtonShowName);
             }
         }
 
@@ -179,51 +254,14 @@ namespace XDay.WorldAPI.Region.Editor
                 m_LabelStyle = new GUIStyle(GUI.skin.label);
             }
 
-            var regionCount = 0;
-            foreach (var kv in m_Layers)
+            var layer = GetCurrentLayer();
+            if (layer != null)
             {
-                regionCount += kv.Regions.Count;
+                EditorGUILayout.LabelField($"当前层物体总数: {layer.RegionCount}, 范围: {m_Bounds.min:F0}到{m_Bounds.max:F0}米,格子个数:{layer.HorizontalGridCount}X{layer.VerticalGridCount},格子大小:{layer.GridWidth}X{layer.GridHeight}米");
             }
-            EditorGUILayout.LabelField($"物体总数: {regionCount}, 范围: {m_Bounds.min:F0}到{m_Bounds.max:F0}米");
-            EditorGUILayout.LabelField("Ctrl+1/Ctrl+2/Ctrl+3切换操作");
-        }
-
-        //private void DrawRenameObjects()
-        //{
-        //    var region = GetFirstActiveRegion();
-        //    if (region != null)
-        //    {
-        //        if (m_ButtonRenameObjects.Render(Inited))
-        //        {
-        //            var parameters = new List<ParameterWindow.Parameter>()
-        //            {
-        //                new ParameterWindow.StringParameter("名称", "", region.Name),
-        //            };
-
-        //            ParameterWindow.Open("修改名称", parameters, (p) =>
-        //            {
-        //                ParameterWindow.GetString(p[0], out var name);
-        //                if (!string.IsNullOrEmpty(name))
-        //                {
-        //                    UndoSystem.SetAspect(region, RegionDefine.REGION_NAME, IAspect.FromString(name), "Rename Region", ID, UndoActionJoinMode.Both);
-        //                    return true;
-        //                }
-        //                return false;
-        //            });
-        //        }
-        //    }
-        //}
-
-        protected override void SceneGUISelectedInternal()
-        {
-            DrawBounds();
-
-            SceneView.RepaintAll();
-
-            foreach (var layer in m_Layers)
-            {
-                layer.Update();
-            }
+            EditorGUILayout.LabelField($"Q: 增大笔刷", m_LabelStyle);
+            EditorGUILayout.LabelField($"W: 缩小笔刷", m_LabelStyle);
+            EditorGUILayout.LabelField("Ctrl+1/Ctrl+2/Ctrl+3切换操作", m_LabelStyle);
         }
 
         private void DrawBounds()
@@ -256,40 +294,6 @@ namespace XDay.WorldAPI.Region.Editor
             {
                 Tools.hidden = false;
             }
-        }
-
-        private RegionObject GetRegionObjectFromGameObject(GameObject gameObject)
-        {
-            foreach (var layer in m_Layers)
-            {
-                var id = layer.Renderer.QueryObjectID(gameObject);
-                if (id != 0)
-                {
-                    return QueryObjectUndo(id) as RegionObject;
-                }
-            }
-            return null;
-        }
-
-        private void OnSelectionChanged()
-        {
-            EditorApplication.delayCall += () =>
-            {
-                var gameObject = Selection.activeGameObject;
-                if (gameObject == null)
-                {
-                    return;
-                }
-
-                //if (m_PickedRegions.Count <= 1)
-                //{
-                //    var regionObject = GetRegionObjectFromGameObject(gameObject);
-                //    if (regionObject != null)
-                //    {
-                //        SetActiveRegions(new List<RegionPickInfo>() { new RegionPickInfo(regionObject.ID, -1) });
-                //    }
-                //}
-            };
         }
 
         private ImageButton CreateIconButton(string textureName, string tooltip)
@@ -325,18 +329,40 @@ namespace XDay.WorldAPI.Region.Editor
 
         private void CommandAddLayer()
         {
+            var width = World.Width;
+            var height = World.Height;
+            var horizontalGridCount = 100;
+            var verticalGridCount = 100;
+            var origin = Vector2.zero;
+            if (m_Layers.Count > 0)
+            {
+                width = m_Layers[^1].Width;
+                height = m_Layers[^1].Height;
+                horizontalGridCount = m_Layers[^1].HorizontalGridCount;
+                verticalGridCount = m_Layers[^1].VerticalGridCount;
+                origin = m_Layers[^1].Origin;
+            }
+
             var input = new List<ParameterWindow.Parameter>()
             {
                 new ParameterWindow.StringParameter("名称", "", "Layer"),
+                new ParameterWindow.FloatParameter("层宽(米)", "", width),
+                new ParameterWindow.FloatParameter("层高(米)", "", height),
+                new ParameterWindow.IntParameter("横向格子数", "", horizontalGridCount),
+                new ParameterWindow.IntParameter("纵向格子数", "", verticalGridCount),
             };
             ParameterWindow.Open("新建子层", input, (items) =>
             {
                 var ok = ParameterWindow.GetString(items[0], out var name);
+                ok &= ParameterWindow.GetFloat(items[1], out var width);
+                ok &= ParameterWindow.GetFloat(items[2], out var height);
+                ok &= ParameterWindow.GetInt(items[3], out var horizontalGridCount);
+                ok &= ParameterWindow.GetInt(items[4], out var verticalGridCount);
                 if (ok)
                 {
                     if (GetLayer(name) == null)
                     {
-                        var layer = new RegionSystemLayer(World.AllocateObjectID(), m_Layers.Count, name, ID);
+                        var layer = new RegionSystemLayer(World.AllocateObjectID(), m_Layers.Count, name, ID, horizontalGridCount, verticalGridCount, width / horizontalGridCount, height / verticalGridCount, origin);
 
                         UndoSystem.CreateObject(layer, World.ID, "Add Region System Layer", ID, lod: 0);
 
@@ -357,6 +383,11 @@ namespace XDay.WorldAPI.Region.Editor
         {
             if (m_CurrentLayerID != 0)
             {
+                if (!EditorUtility.DisplayDialog("注意", "确定删除层?", "确定", "取消"))
+                {
+                    return;
+                }
+
                 var layer = GetCurrentLayer();
                 UndoSystem.DestroyObject(layer, "Delete Region System Layer", ID, lod: 0);
                 if (m_Layers.Count > 0)
@@ -367,6 +398,16 @@ namespace XDay.WorldAPI.Region.Editor
                 {
                     m_CurrentLayerID = 0;
                 }
+            }
+        }
+
+        private void DrawShowNameButton()
+        {
+            m_ButtonShowName.Active = m_ShowName;
+            if (m_ButtonShowName.Render(Inited))
+            {
+                m_ShowName = m_ButtonShowName.Active;
+                SceneView.RepaintAll();
             }
         }
 
@@ -410,8 +451,7 @@ namespace XDay.WorldAPI.Region.Editor
         private enum Operation
         {
             Select,
-            Edit,
-            Create,
+            EditRegion,
         }
 
         private ImageButton m_ButtonDeleteObjects;
@@ -423,6 +463,10 @@ namespace XDay.WorldAPI.Region.Editor
         private ImageButton m_RemoveLayerButton;
         private ImageButton m_EditLayerNameButton;
         private ToggleImageButton m_LayerVisibilityButton;
+        private ToggleImageButton m_ShowGrid;
+        private ToggleImageButton m_ButtonShowName;
+        private IntField m_BrushSizeField;
+        private FloatField m_AlphaField;
         private GUIStyle m_LabelStyle;
         private List<UIControl> m_Controls;
         private Vector2 m_ScrollPos;
@@ -430,12 +474,12 @@ namespace XDay.WorldAPI.Region.Editor
         private Popup m_PopupOperation;
         private Operation m_Action = Operation.Select;
         private AspectContainerEditor m_AspectContainerEditor = new();
+        private PluginLODSystemEditor m_PluginLODSystemEditor = new();
         private string[] m_LayerNames;
         private string[] m_ActionNames = new string[]
         {
             "选择",
-            "编辑",
-            "创建",
+            "绘制区域",
         };
     }
 }

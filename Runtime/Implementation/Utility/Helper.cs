@@ -251,7 +251,7 @@ namespace XDay.UtilityAPI
 
         public static float FocalLengthFromAltitudeXZ(float rotationX, float y)
         {
-            Debug.Assert(y > 0);
+            Debug.Assert(y > 0, "y must be > 0");
             return (float)((double)y / System.Math.Sin(rotationX * m_DegToRad));
         }
 
@@ -571,6 +571,16 @@ namespace XDay.UtilityAPI
             var minY = rect.yMin - size.y * 0.5f;
             var maxX = rect.xMax + size.x * 0.5f;
             var maxY = rect.yMax + size.y * 0.5f;
+
+            return new Rect(minX, minY, maxX - minX, maxY - minY);
+        }
+
+        public static Rect ExpandRect(Rect rect, Rect expand)
+        {
+            var minX = rect.xMin + expand.xMin;
+            var minY = rect.yMin + expand.yMin;
+            var maxX = rect.xMax + expand.xMax;
+            var maxY = rect.yMax + expand.yMax;
 
             return new Rect(minX, minY, maxX - minX, maxY - minY);
         }
@@ -2270,6 +2280,20 @@ namespace XDay.UtilityAPI
             return 0;
         }
 
+        public static string FindFile(string fileName, string searchDirectory)
+        {
+            try
+            {
+                var files = Directory.GetFiles(searchDirectory, fileName, SearchOption.AllDirectories);
+                return files.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"搜索出错: {ex.Message}");
+                return null;
+            }
+        }
+
         public static Vector2Int NextPOTSize(int pixelCount)
         {
             var size = Mathf.CeilToInt(Mathf.Sqrt(pixelCount));
@@ -2292,6 +2316,16 @@ namespace XDay.UtilityAPI
 
             Debug.Assert(false);
             return Vector2Int.zero;
+        }
+
+        public static int Mod(int x, int y)
+        {
+            if (x < 0)
+            {
+                return x + y;
+            }
+
+            return x % y;
         }
 
         private const double m_DegToRad = 0.0174532924;

@@ -72,6 +72,7 @@ namespace XDay.WorldAPI
         public string EditorFolder => Setup.EditorFolder;
         public IAssetLoader AssetLoader => m_AssetLoader;
         public abstract string TypeName { get; }
+        public bool ShowDebugInfo { get; set; } = false;
 
         public World()
         {
@@ -355,7 +356,7 @@ namespace XDay.WorldAPI
         private bool m_Inited = false;
         private int m_NextObjectID = 0;
         private WorldSetup m_Setup;
-        private Dictionary<int, IWorldObject> m_Objects;
+        protected Dictionary<int, IWorldObject> m_Objects;
         private ICameraVisibleAreaCalculator m_CameraVisibleAreaCalculator;
         private IWorldManager m_WorldManager;
         protected IAssetLoader m_AssetLoader;

@@ -46,6 +46,7 @@ namespace XDay.WorldAPI.Editor
         public QuadMeshIndicator()
         {
             m_Mesh = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            m_Mesh.tag = "EditorOnly";
             Helper.HideGameObject(m_Mesh, true);
             m_Mesh.name = "Quad Mesh Indicator";
             m_Mesh.DestroyComponent<UnityEngine.Collider>();

@@ -76,7 +76,10 @@ namespace XDay.UtilityAPI
 
         public void SetActive(bool show)
         {
-            m_GameObject.SetActive(show);
+            if (m_GameObject != null)
+            {
+                m_GameObject.SetActive(show);
+            }
         }
 
         private void Create(string name,

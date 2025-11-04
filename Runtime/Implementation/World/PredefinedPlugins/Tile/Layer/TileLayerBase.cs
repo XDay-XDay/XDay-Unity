@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using UnityEngine;
 
 namespace XDay.WorldAPI.Tile
@@ -34,6 +35,7 @@ namespace XDay.WorldAPI.Tile
         public float TileWidth => m_TileWidth;
         public float TileHeight => m_TileHeight;
         public TileSystem TileSystem => m_TileSystem;
+        public ITileMaterialUpdater TileMaterialUpdater => m_TileMaterialUpdater;
 
         public TileLayerBase(string name, int xTileCount, int yTileCount, float tileWidth, float tileHeight, Vector2 origin)
         {
@@ -106,6 +108,16 @@ namespace XDay.WorldAPI.Tile
             return new Vector2Int(Mathf.FloorToInt((unrotatedPos.x - m_Origin.x) / m_TileWidth), Mathf.FloorToInt((unrotatedPos.z - m_Origin.y) / m_TileHeight));
         }
 
+        internal void SetTileMaterialUpdater(ITileMaterialUpdater updater)
+        {
+            m_TileMaterialUpdater = updater;
+
+            OnSetTileMaterialUpdater();
+        }
+
+        protected abstract void OnSetTileMaterialUpdater();
+        internal abstract void UpdateMaterialInRange(float minX, float minZ, float maxX, float maxZ, TileMaterialUpdaterTiming timing);
+
         private string m_Name;
         private Vector2 m_Size;
         private Vector3 m_Center;
@@ -116,6 +128,7 @@ namespace XDay.WorldAPI.Tile
         protected Quaternion m_Rotation;
         protected Vector2 m_Origin;
         protected TileSystem m_TileSystem;
+        protected ITileMaterialUpdater m_TileMaterialUpdater;
     }
 }
 

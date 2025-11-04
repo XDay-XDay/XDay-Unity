@@ -21,12 +21,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using System.Collections.Generic;
-using XDay.WorldAPI.Editor;
 using XDay.UtilityAPI;
 using XDay.UtilityAPI.Editor;
+using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Tile.Editor
 {
@@ -150,6 +150,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 {
                     UndoSystem.SetAspect(tile, TileDefine.TILE_MATERIAL_ID_NAME, IAspect.FromInt32(config.ID), "Set Tile Material ID", ID, UndoActionJoinMode.None);
                     ApplyVectorParameters(config, renderer, tile);
+                    ApplyColorParameters(config, renderer, tile);
                     ApplyTextureParameters(config, renderer, tile);
                     ApplyFloatParameters(config, renderer, tile);
                     EditorUtility.SetDirty(renderer.sharedMaterial);
@@ -205,6 +206,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 {
                     DrawMaterialFloatParameters(config);
                     DrawMaterialVectorParameters(config);
+                    DrawMaterialColorParameters(config);
                     DrawMaterialTextureParameters(config);
                 });
             }
@@ -396,6 +398,20 @@ namespace XDay.WorldAPI.Tile.Editor
                 }
             }
         }
+		
+	    private void ApplyColorParameters(MaterialConfig config, MeshRenderer renderer, TileObject tile)
+        {
+            foreach (var param in config.Colors)
+            {
+                if (renderer.sharedMaterial != null)
+                {
+                    if (param.Value.HasValue)
+                    {
+                        UndoSystem.SetAspect(tile, $"{TileDefine.SHADER_PROPERTY_ASPECT_NAME}@{TileDefine.SHADER_COLOR_PROPERTY_NAME}@{param.Name}", IAspect.FromColor(param.Value.GetValueOrDefault()), "Set Shader Color Property", ID, UndoActionJoinMode.None);
+                    }
+                }
+            }
+        }	
 
         private void DrawMaterialVectorParameters(MaterialConfig config)
         {
@@ -414,6 +430,24 @@ namespace XDay.WorldAPI.Tile.Editor
                 }
             }
         }
+		
+        private void DrawMaterialColorParameters(MaterialConfig config)
+        {
+            for (var i = 0; i < config.Colors.Count; ++i)
+            {
+                var parameter = config.Colors[i];
+                EditorGUI.BeginChangeCheck();
+                var newValue = EditorGUILayout.ColorField(parameter.Name, parameter.Value.GetValueOrDefault());
+                if (EditorGUI.EndChangeCheck())
+                {
+                    parameter.Value = newValue;
+                }
+                if (i == config.Colors.Count - 1)
+                {
+                    EditorHelper.HorizontalLine();
+                }
+            }
+        }		
 
         private void ApplyFloatParameters(MaterialConfig config, MeshRenderer renderer, TileObject tile)
         {
@@ -538,6 +572,27 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
+        private void DrawTileCoords()
+        {
+            if (m_TextStyle == null)
+            {
+                m_TextStyle = new GUIStyle(GUI.skin.label);
+                m_TextStyle.normal.textColor = Color.black;
+            }
+            for (var i = 0; i < m_YTileCount; ++i)
+            {
+                for (var j = 0; j < m_XTileCount; ++j)
+                {
+                    var tile = GetTile(j, i);
+                    if (tile != null)
+                    {
+                        var position = CoordinateToRotatedCenterPosition(j, i);
+                        Handles.Label(position, $"{j}-{i}", m_TextStyle);
+                    }
+                }
+            }
+        }
+
         private MaterialConfig GetMaterialConfig(int id)
         {
             foreach (var config in m_MaterialConfigs)
@@ -575,7 +630,14 @@ namespace XDay.WorldAPI.Tile.Editor
                 var isValidName = IsUserDefinedVectorParameterName(name, texturePropertyNames);
                 if (isValidName)
                 {
-                    config.AddVector(name, material.GetVector(name));
+                    if (IsColorProperty(tempMaterial, name))
+                    {
+                        config.AddColor(name, material.GetVector(name));
+                    }
+                    else
+                    {
+                        config.AddVector(name, material.GetVector(name));
+                    }
                 }
             }
 
@@ -592,6 +654,27 @@ namespace XDay.WorldAPI.Tile.Editor
             Object.DestroyImmediate(tempMaterial);
 
             return config;
+        }
+
+        private bool IsColorProperty(Material material, string propertyName)
+        {
+            if (material == null || string.IsNullOrEmpty(propertyName))
+                return false;
+
+            int propertyIndex = material.shader.FindPropertyIndex(propertyName);
+            if (propertyIndex == -1)
+                return false;
+
+            Shader shader = material.shader;
+            ShaderUtil.ShaderPropertyType type = ShaderUtil.GetPropertyType(shader, propertyIndex);
+
+            if (type == ShaderUtil.ShaderPropertyType.Color)
+                return true;
+
+            if (type == ShaderUtil.ShaderPropertyType.Vector)
+                return false;
+
+            return false;
         }
 
         private void DrawConfigInfo(MaterialConfig config)
@@ -671,6 +754,25 @@ namespace XDay.WorldAPI.Tile.Editor
         private void DrawSearch()
         {
             m_SearchText = EditorGUILayout.TextField("搜索", m_SearchText, EditorStyles.toolbarSearchField);
+        }
+
+        internal void SetSplatMaskAfter()
+        {
+            for (var i = 0; i < m_YTileCount; ++i)
+            {
+                for (var j = 0; j < m_XTileCount; ++j)
+                {
+                    var gameObject = m_Renderer.GetTileGameObject(j, i);
+                    var renderer = gameObject.GetComponentInChildren<MeshRenderer>();
+                    if (renderer != null && renderer.sharedMaterial != null)
+                    {
+                        renderer.sharedMaterial.SetTexture("_SplatMask_After", renderer.sharedMaterial.GetTexture("_SplatMask"));
+                        EditorUtility.SetDirty(renderer.sharedMaterial);
+                    }
+                }
+            }
+
+            AssetDatabase.SaveAssets();
         }
 
         private GUIStyle m_Style;

@@ -37,6 +37,7 @@ namespace XDay.WorldAPI.Tile.Editor
         public List<FloatParam> Floats => m_Floats;
         public List<TextureParam> Textures => m_Textures;
         public List<Vector4Param> Vector4s => m_Vector4s;
+        public List<ColorParam> Colors => m_Colors;
         public override string TypeName => "MaterialConfig";
 
         public MaterialConfig()
@@ -63,6 +64,7 @@ namespace XDay.WorldAPI.Tile.Editor
             CombineFloats(other);
             CombineTextures(other);
             CombineVectors(other);
+            CombineColors(other);
         }
 
         public void ReplaceName(string oldName, string newName)
@@ -103,6 +105,15 @@ namespace XDay.WorldAPI.Tile.Editor
             });
         }
 
+        public void AddColor(string name, Color value)
+        {
+            m_Colors.Add(new ColorParam
+            {
+                Name = name,
+                Value = value,
+            });
+        }
+
         public void AddFloat(string name, float value)
         {
             m_Floats.Add(new FloatParam
@@ -114,7 +125,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public override void EditorDeserialize(IDeserializer deserializer, string label)
         {
-            deserializer.ReadInt32("MaterialConfig.Version");
+            var version = deserializer.ReadInt32("MaterialConfig.Version");
 
             base.EditorDeserialize(deserializer, label);
 
@@ -149,6 +160,23 @@ namespace XDay.WorldAPI.Tile.Editor
                 });
                 return param;
             });
+            if (version >= 2)
+            {
+                m_Colors = deserializer.ReadList($"Color Parameters", (index) => {
+                    var param = new ColorParam();
+                    deserializer.ReadStructure($"Color {index}", () =>
+                    {
+                        var hasValue = deserializer.ReadBoolean("Has Value");
+                        var value = deserializer.ReadColor("Value");
+                        if (hasValue)
+                        {
+                            param.Value = value;
+                        }
+                        param.Name = deserializer.ReadString("Name");
+                    });
+                    return param;
+                });
+            }
             m_Textures = deserializer.ReadList($"Textures", (index) => {
                 var param = new TextureParam();
                 deserializer.ReadStructure($"Texture {index}", () =>
@@ -188,6 +216,14 @@ namespace XDay.WorldAPI.Tile.Editor
                 {
                     writer.WriteBoolean(param.Value.HasValue, "Has Value");
                     writer.WriteVector4(param.Value.GetValueOrDefault(), "Value");
+                    writer.WriteString(param.Name, "Name");
+                });
+            });
+            writer.WriteList(m_Colors, $"Colors", (param, index) => {
+                writer.WriteStructure($"Color {index}", () =>
+                {
+                    writer.WriteBoolean(param.Value.HasValue, "Has Value");
+                    writer.WriteColor(param.Value.GetValueOrDefault(), "Value");
                     writer.WriteString(param.Name, "Name");
                 });
             });
@@ -242,6 +278,26 @@ namespace XDay.WorldAPI.Tile.Editor
             }
         }
 
+        private void CombineColors(MaterialConfig other)
+        {
+            var deletedVectors = m_Colors.Where(a => !other.Colors.Any(b => b.Name == a.Name)).ToArray();
+            var addedVectors = other.Colors.Where(b => !m_Colors.Any(a => a.Name == b.Name)).ToArray();
+            foreach (var setting in deletedVectors)
+            {
+                for (var i = m_Colors.Count - 1; i >= 0; --i)
+                {
+                    if (m_Colors[i].Name == setting.Name)
+                    {
+                        m_Colors.RemoveAt(i);
+                    }
+                }
+            }
+            foreach (var setting in addedVectors)
+            {
+                AddColor(setting.Name, setting.Value.Value);
+            }
+        }
+
         private void CombineTextures(MaterialConfig other)
         {
             var deletedTextures = m_Textures.Where(a => !other.Textures.Any(b => b.Name == a.Name)).ToArray();
@@ -287,6 +343,11 @@ namespace XDay.WorldAPI.Tile.Editor
             public Vector4? Value { get; set; }
         }
 
+        public class ColorParam : ParamBase
+        {
+            public Color? Value { get; set; }
+        }
+
         public class FloatParam : ParamBase
         {
             public float? Value { get; set; }
@@ -301,10 +362,11 @@ namespace XDay.WorldAPI.Tile.Editor
         private bool m_Show = true;
         private List<FloatParam> m_Floats = new();
         private List<Vector4Param> m_Vector4s = new();
+        private List<ColorParam> m_Colors = new();
         private List<TextureParam> m_Textures = new();
         private string m_Name;
         private string m_ShaderGUID;
-        private const int m_Version = 1;
+        private const int m_Version = 2;
     }
 }
 

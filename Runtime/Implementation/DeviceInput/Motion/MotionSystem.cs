@@ -61,14 +61,19 @@ namespace XDay.InputAPI
             return AddMotion(new DoubleClickMotion(AllocateID, clickInterval, device, touchType));
         }
 
-        public LongPressMotion CreateLongPressMotion(float duration, IDeviceInput device, DeviceTouchType touchType)
+        public LongPressMotion CreateLongPressMotion(float duration, float threshold, IDeviceInput device, DeviceTouchType touchType)
         {
-            return AddMotion(new LongPressMotion(AllocateID, duration, device, touchType));
+            return AddMotion(new LongPressMotion(AllocateID, duration, threshold, device, touchType));
         }
 
         public ClickMotion CreateClickMotion(IDeviceInput device, DeviceTouchType touchType, float moveThreshold)
         {
             return AddMotion(new ClickMotion(AllocateID, device, touchType, moveThreshold));
+        }
+
+        public MultiClickMotion CreateMultiClickMotion(IDeviceInput device, DeviceTouchType touchType, float moveThreshold)
+        {
+            return AddMotion(new MultiClickMotion(AllocateID, device, touchType, moveThreshold));
         }
 
         public DragMotion CreateDragMotion(TouchID name, float moveThreshold, IDeviceInput device, DeviceTouchType touchType)

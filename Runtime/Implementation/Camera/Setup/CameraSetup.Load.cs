@@ -43,10 +43,9 @@ namespace XDay.CameraAPI
                 Debug.Assert(ok, $"Invalid direction: {dir}");
             }
 
-            //load reference resolution
-            if (root.ContainsKey("Reference Resolution"))
+            if (root.ContainsKey("Default Altitude"))
             {
-                m_ReferenceResolution = ToVector2(root["Reference Resolution"] as string);
+                m_DefaultAltitude = System.Convert.ToSingle(root["Default Altitude"]);
             }
 
             if (root.ContainsKey("Fixed FOV"))

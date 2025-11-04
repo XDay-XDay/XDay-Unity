@@ -21,14 +21,69 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+using UnityEngine;
 using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI.Tile
 {
+    public enum TileMaterialUpdaterTiming 
+    {
+        Start,
+        End,
+        Running,
+    }
+
+    /// <summary>
+    /// 更新tile的材质参数
+    /// </summary>
+    public interface ITileMaterialUpdater
+    {
+        /// <summary>
+        /// 烘培tile出现时
+        /// </summary>
+        /// <param name="material"></param>
+        void OnBakeLayerShowTile(Material material);
+
+        /// <summary>
+        /// lod0 tile出现时
+        /// </summary>
+        /// <param name="material"></param>
+        void OnNormalLayerShowTile(Material material);
+
+        /// <summary>
+        /// 更新Normal Layer的材质参数
+        /// </summary>
+        /// <param name="material"></param>
+        /// <param name="timing">更新时机</param>
+        void OnUpdateNormalLayerMaterial(Material material, TileMaterialUpdaterTiming timing);
+
+        /// <summary>
+        /// 更新Bake Layer的材质参数
+        /// </summary>
+        /// <param name="material"></param>
+        /// <param name="timing">更新时机</param>
+        void OnUpdateBakedLayerMaterial(Material material, TileMaterialUpdaterTiming timing);
+    }
+
     [Preserve]
     public interface ITileSystem : IWorldPlugin
     {
         float GetHeightAtPos(float x, float z);
+
+        /// <summary>
+        /// 设置地表材质更新器
+        /// </summary>
+        /// <param name="updater"></param>
+        void SetTileMaterialUpdater(ITileMaterialUpdater updater);
+
+        /// <summary>
+        /// 触发格子范围内的地表材质更新器
+        /// </summary>
+        /// <param name="minX">世界坐标</param>
+        /// <param name="minZ"></param>
+        /// <param name="maxX"></param>
+        /// <param name="maxZ"></param>
+        /// <param name="timing">更新时机</param>
+        void UpdateMaterialInRange(float minX, float minZ, float maxX, float maxZ, TileMaterialUpdaterTiming timing);
     }
 }

@@ -54,13 +54,14 @@ namespace XDay.WorldAPI.Decoration.Editor
 
     internal class GameResourceMetadata
     {
-        public GameResourceMetadata(int gpuBatchID, Quaternion rotation, Vector3 scale, Rect bounds, string path)
+        public GameResourceMetadata(int gpuBatchID, Quaternion rotation, Vector3 scale, Rect bounds, string path, DecorationTagType type)
         {
             GPUBatchID = gpuBatchID;
             Rotation = rotation;
             Scale = scale;
             Bounds = bounds;
             Path = path;
+            Type = type;
         }
 
         public int GPUBatchID { get; set; }
@@ -68,6 +69,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         public Vector3 Scale { get; internal set; }
         public Rect Bounds { get; internal set; }
         public string Path { get; internal set; }
+        public DecorationTagType Type { get; internal set; }
     }
 
     internal class GameDecorationMetaData

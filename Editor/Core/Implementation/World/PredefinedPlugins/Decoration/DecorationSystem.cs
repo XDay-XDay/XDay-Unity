@@ -54,6 +54,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         }
         public override Bounds Bounds => m_Bounds;
         public override string TypeName => "EditorDecorationSystem";
+        public override int FileIDOffset => WorldDefine.DECORATION_SYSTEM_FILE_ID_OFFSET;
 
         public DecorationSystem()
         {
@@ -274,6 +275,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             serializer.WriteString(m_Name, "Name");
             serializer.WriteBounds(m_Bounds, "Bounds");
+            serializer.WriteBoolean(m_EnableInstanceRendering, "Enable Instance Rendering");
 
             var allObjects = new List<DecorationObject>();
             foreach (var p in m_Decorations)
@@ -316,6 +318,10 @@ namespace XDay.WorldAPI.Decoration.Editor
 
             m_Name = deserializer.ReadString("Name");
             m_Bounds = deserializer.ReadBounds("Bounds");
+            if (version >= 4)
+            {
+                m_EnableInstanceRendering = deserializer.ReadBoolean("Enable Instance Rendering");
+            }
 
             var allObjects = deserializer.ReadList("Objects", (index) =>
             {
@@ -481,6 +487,6 @@ namespace XDay.WorldAPI.Decoration.Editor
         /// 导出数据范围
         /// </summary>
         private Rect m_ExportRange;
-        private const int m_Version = 3;
+        private const int m_Version = 4;
     }
 }

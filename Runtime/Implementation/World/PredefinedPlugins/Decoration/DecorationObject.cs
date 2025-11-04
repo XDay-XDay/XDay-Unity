@@ -41,6 +41,7 @@ namespace XDay.WorldAPI.Decoration
         public int GPUBatchID => m_ResourceMetadata.GPUBatchID;
         public bool IsStaticObject => GPUBatchID < GameDefine.ANIMATOR_BATCH_START_ID;
         public ResourceMetadata ResourceMetadata => m_ResourceMetadata;
+        public DecorationTagType Type => m_ResourceMetadata.Type;
         public override string TypeName => "DecorationObject";
 
         public DecorationObject()

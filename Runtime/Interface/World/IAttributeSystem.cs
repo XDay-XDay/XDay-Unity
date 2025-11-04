@@ -26,6 +26,35 @@ using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI.Attribute
 {
+    public enum LayerType
+    {
+        //障碍物层,由AutoObstacle和用户手绘的格子障碍合并得来
+        Obstacle,
+        //用户定义，对编辑器无特殊意义
+        UserDefined,
+    }
+
+    public interface IAttributeSystemLayer
+    {
+        string Name { get; }
+        int HorizontalGridCount { get; }
+        int VerticalGridCount { get; }
+        float GridWidth { get; }
+        float GridHeight { get; }
+        Vector2 Origin { get; }
+        LayerType Type { get; }
+
+        Vector2Int PositionToCoordinate(float x, float z);
+
+        Vector3 CoordinateToPosition(int x, int y);
+
+        Vector3 CoordinateToCenterPosition(int x, int y);
+
+        uint GetValue(int x, int y);
+
+        void SetValue(int x, int y, uint type);
+    }
+
     [Preserve]
     public interface IAttributeSystem : IWorldPlugin
     {
@@ -39,7 +68,7 @@ namespace XDay.WorldAPI.Attribute
         Vector2Int WorldPositionToCoordinate(int layerIndex, float x, float z);
 
         /// <summary>
-        /// 格子是否是空地
+        /// 格子是否是空地,没有障碍物
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
@@ -59,5 +88,28 @@ namespace XDay.WorldAPI.Attribute
         /// <param name="layerIndex"></param>
         /// <returns></returns>
         string GetLayerName(int layerIndex);
+
+        /// <summary>
+        /// 获取layer的某个格子的值
+        /// </summary>
+        /// <param name="layerIndex"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        uint GetLayerData(int layerIndex, int x, int y);
+
+        /// <summary>
+        /// 获取Layer
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        IAttributeSystemLayer GetLayer(string name);
+
+        /// <summary>
+        /// 获取Layer
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        IAttributeSystemLayer GetLayer(int index);
     }
 }

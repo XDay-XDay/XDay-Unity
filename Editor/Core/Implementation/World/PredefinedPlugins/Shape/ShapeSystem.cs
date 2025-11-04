@@ -49,6 +49,7 @@ namespace XDay.WorldAPI.Shape.Editor
         public bool ShowVertexIndex => m_ShowVertexIndex;
         public float VertexDisplaySize => m_VertexDisplaySize;
         public ShapeSystemRenderer Renderer => m_Renderer;
+        public override int FileIDOffset => WorldDefine.SHAPE_SYSTEM_FILE_ID_OFFSET;
 
         public ShapeSystem()
         {

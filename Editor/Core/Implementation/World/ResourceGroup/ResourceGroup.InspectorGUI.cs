@@ -136,7 +136,7 @@ namespace XDay.WorldAPI.Editor
 
                 GUILayout.Space(20);
 
-                GUILayout.Label(m_Resources[index].Name, GUILayout.MaxWidth(180));
+                GUILayout.Label(m_Resources[index].Name, GUILayout.MaxWidth(300));
 
                 DrawIcon(index);
 
@@ -212,8 +212,8 @@ namespace XDay.WorldAPI.Editor
         private void DrawSelection(int index)
         {
             var selected = m_SelectedIndex == index;
-            EditorGUIUtility.labelWidth = 20;
-            var newSelected = EditorGUILayout.ToggleLeft(index.ToString(), selected, GUILayout.MaxWidth(40));
+            EditorGUIUtility.labelWidth = 40;
+            var newSelected = EditorGUILayout.ToggleLeft(index.ToString(), selected, GUILayout.MaxWidth(60));
             EditorGUIUtility.labelWidth = 0;
             if (newSelected != selected && newSelected)
             {

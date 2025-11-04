@@ -263,6 +263,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
             var importer = AssetImporter.GetAtPath(texturePath) as TextureImporter;
             importer.wrapMode = TextureWrapMode.Clamp;
+            importer.sRGBTexture = false;
             importer.SaveAndReimport();
 
             return texture;

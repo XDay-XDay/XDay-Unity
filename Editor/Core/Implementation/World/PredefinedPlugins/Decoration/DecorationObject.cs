@@ -41,6 +41,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         public override string TypeName => "EditorDecorationObject";
         public bool EnableInstanceRendering { get => m_EnableInstanceRendering; set => m_EnableInstanceRendering = value; }
         public bool EnableHeightAdjust { get => m_EnableHeightAdjust; set => m_EnableHeightAdjust = value; }
+        public string Tag => m_Tag;
         protected override WorldObjectVisibility VisibilityInternal
         {
             set => m_Visibility = value;
@@ -56,7 +57,14 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
         }
 
-        public DecorationObject(int objectID, int objectIndex, bool overridePrefabTransform, LODLayerMask lodLayerMask, Vector3 editPosition, Quaternion editRotation, Vector3 editScale, IResourceDescriptor descriptor)
+        public DecorationObject(int objectID, 
+            int objectIndex, 
+            bool overridePrefabTransform, 
+            LODLayerMask lodLayerMask, 
+            Vector3 editPosition, 
+            Quaternion editRotation, 
+            Vector3 editScale, 
+            IResourceDescriptor descriptor)
             : base(objectID, objectIndex)
         {
             m_OverridePrefabTransform = overridePrefabTransform;
@@ -70,6 +78,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         protected override void OnInit()
         {
             m_ResourceDescriptor.Init(World);
+            m_Tag = ResourceDescriptor == null ? "" : ResourceDescriptor.Prefab.tag;
         }
 
         protected override void OnUninit()
@@ -240,6 +249,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private Vector3 m_EditScale;
         private bool m_EnableInstanceRendering = true;
         private bool m_EnableHeightAdjust = true;
+        private string m_Tag;
         private const int m_Version = 3;
     }
 }

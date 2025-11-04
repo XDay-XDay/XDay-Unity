@@ -30,7 +30,6 @@ using XDay.UtilityAPI.Editor;
 using XDay.UtilityAPI;
 using XDay.UtilityAPI.Math;
 
-
 namespace XDay.WorldAPI.Tile.Editor
 {
     internal partial class TexturePainter
@@ -44,6 +43,9 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 EditorUtility.DisplayDialog("Error", errorMsg, "OK");
             }
+
+            //设置_SplatMask_After
+            m_TileSystem.SetSplatMaskAfter();
         }
 
         public void End()
@@ -76,6 +78,7 @@ namespace XDay.WorldAPI.Tile.Editor
 
             m_TextureToPaintInfo = new Dictionary<Texture2D, PaintInfo>();
             m_Tiles = null;
+            m_Indicator.Enabled = false;
         }
 
         public void EndPainting(IntBounds2D area)
@@ -154,6 +157,8 @@ namespace XDay.WorldAPI.Tile.Editor
                     ok &= ParameterWindow.GetString(p[1], out var maskName);
                     if (ok)
                     {
+                        End();
+
                         var errorMsg = GeneratePaintInfo(resolution, maskName);
                         if (string.IsNullOrEmpty(errorMsg))
                         {
@@ -222,10 +227,6 @@ namespace XDay.WorldAPI.Tile.Editor
             var rotateBrush = EnableRotation;
             var brush = m_BrushStyleManager.SelectedStyle;
             var paintChannel = Channel;
-            if (subtract)
-            {
-                paintChannel = 0;
-            }
 
             var mipLevel = brush.CalculateMipMapLevel(rotateBrush, m_Range);
             var centerPixelX = Mathf.FloorToInt((center.x - m_TileSystem.Origin.x) / m_TileSystem.Width * (m_Resolution * m_TileSystem.XTileCount - 1));
@@ -257,7 +258,7 @@ namespace XDay.WorldAPI.Tile.Editor
                         var overlapMaxY = Mathf.Min(brushPixelMaxY, tilePixelMinY + m_Resolution - 1);
                         if (overlapMinX <= overlapMaxX && overlapMinY <= overlapMaxY)
                         {
-                            PaintTileTexture(brush, tile, overlapMinX, overlapMinY, overlapMaxX, overlapMaxY, tilePixelMinX, tilePixelMinY, brushPixelMinX, brushPixelMinY, mipLevel, rotateBrush, paintChannel, ignoreAlpha);
+                            PaintTileTexture(brush, tile, overlapMinX, overlapMinY, overlapMaxX, overlapMaxY, tilePixelMinX, tilePixelMinY, brushPixelMinX, brushPixelMinY, mipLevel, rotateBrush, paintChannel, ignoreAlpha, subtract);
                         }
                     }
                 }
@@ -438,7 +439,8 @@ namespace XDay.WorldAPI.Tile.Editor
             int mipLevel, 
             bool rotateBrush,
             int channel, 
-            bool ignoreAlpha)
+            bool ignoreAlpha,
+            bool subtract)
         {
 
             var overlapWidth = overlapMaxX - overlapMinX + 1;
@@ -447,6 +449,7 @@ namespace XDay.WorldAPI.Tile.Editor
             var minY = overlapMinY - tilePixelMinY;
             var data = m_Pool.Rent(overlapWidth * overlapHeight);
             var newPixels = tile.PaintInfo.NewPixels;
+            var intensity = subtract ? -m_Intensity : m_Intensity;
             for (var y = 0; y < overlapHeight; ++y)
             {
                 for (var x = 0; x < overlapWidth; ++x)
@@ -461,22 +464,29 @@ namespace XDay.WorldAPI.Tile.Editor
                         continue;
                     }
 
-                    var changeDelta = brushPixel * m_Intensity;
+                    var changeDelta = brushPixel * intensity;
                     if (m_NormalizeColor)
                     {
                         value[channel] = Mathf.Max(0, value[channel] + changeDelta.a);
-                        var total = value.r * value.r + value.g * value.g + value.b * value.b;
+                        var total = value.r + value.g + value.b;
                         if (!ignoreAlpha)
                         {
-                            total += value.a * value.a;
+                            total += value.a;
                         }
-                        var magnitude = Mathf.Sqrt(total);
-                        if (magnitude >= 1)
+
+                        if (total > 0)
                         {
-                            value.r /= magnitude;
-                            value.g /= magnitude;
-                            value.b /= magnitude;
-                            value.a /= magnitude;
+                            value.r /= total;
+                            value.g /= total;
+                            value.b /= total;
+                            value.a /= total;
+                        }
+                        else
+                        {
+                            value.r = 1;
+                            value.g = 0;
+                            value.b = 0;
+                            value.a = 0;
                         }
                         data[y * overlapWidth + x] = value;
                     }
@@ -495,7 +505,7 @@ namespace XDay.WorldAPI.Tile.Editor
         {
             importer.filterMode = FilterMode.Bilinear;
             importer.mipmapEnabled = true;
-            importer.sRGBTexture = true;
+            importer.sRGBTexture = false;
             importer.isReadable = true;
             importer.wrapMode = TextureWrapMode.Clamp;
             var textureCompressionSettings = importer.GetPlatformTextureSettings(EditorHelper.QueryPlatformName());

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -63,7 +63,7 @@ namespace XDay.WorldAPI.Attribute.Editor
 
                 var shader = Shader.Find("XDay/Grid");
                 var material = new Material(shader);
-                m_GridMesh = new GridMesh(layer.Name, layer.HorizontalGridCount, layer.VerticalGridCount, layer.GridWidth, material, new Color32(255, 190, 65, 150), m_Root.transform, true, 3000 + m_Layer.ObjectIndex * 5 + 1);
+                m_GridMesh = new GridMesh(layer.Name, layer.HorizontalGridCount, layer.VerticalGridCount, layer.GridWidth, layer.GridHeight, material, new Color32(255, 190, 65, 150), m_Root.transform, true, 3000 + m_Layer.ObjectIndex * 5 + 1);
                 ShowGrid(layer.GridVisible);
                 Object.DestroyImmediate(material);
             }

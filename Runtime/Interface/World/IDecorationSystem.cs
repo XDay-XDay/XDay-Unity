@@ -21,11 +21,92 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace XDay.WorldAPI.Decoration
 {
+    /// <summary>
+    /// 装饰物类型
+    /// </summary>
+    [System.Flags]
+    public enum DecorationTagType
+    {
+        None = 0,
+        /// <summary>
+        /// 可被建筑物覆盖隐藏的物体
+        /// </summary>
+        Hideable = 1,
+
+        /// <summary>
+        /// 不可被建筑物覆盖隐藏的物体
+        /// </summary>
+        Obstacle = 2,
+
+        /// <summary>
+        /// 可被建筑物覆盖隐藏并且改造前的物体
+        /// </summary>
+        HideableBefore = 4,
+
+        /// <summary>
+        /// 可被建筑物覆盖隐藏并且改造后的物体
+        /// </summary>
+        HideableAfter = 8,
+
+        /// <summary>
+        /// 不可被建筑物覆盖隐藏并且改造前的物体
+        /// </summary>
+        ObstacleBefore = 16,
+
+        /// <summary>
+        /// 不可被建筑物覆盖隐藏并且改造后的物体
+        /// </summary>
+        ObstacleAfter = 32,
+
+        /// <summary>
+        /// 所有可隐藏物体
+        /// </summary>
+        AllHideable = Hideable | HideableBefore | HideableAfter,
+
+        /// <summary>
+        /// 改造前物体
+        /// </summary>
+        Before = HideableBefore | ObstacleBefore,
+
+        /// <summary>
+        /// 改造后物体
+        /// </summary>
+        After = HideableAfter | ObstacleAfter,
+
+        /// <summary>
+        /// 所有物体
+        /// </summary>
+        All = -1,
+    }
+
+    /// <summary>
+    /// 装饰物状态
+    /// </summary>
+    [Flags]
+    public enum DecorationState : byte
+    {
+        /// <summary>
+        /// 暂时不可见,还可以改为可见
+        /// </summary>
+        Invisible = 1,
+
+        /// <summary>
+        /// 暂时可见,可以改为NotVisible或NeverVisible
+        /// </summary>
+        Visible = 2,
+
+        /// <summary>
+        /// 永远不可见,也不能改为可见了
+        /// </summary>
+        NeverVisible = 4,
+    }
+
     /// <summary>
     /// decoration system interface
     /// </summary>
@@ -45,14 +126,14 @@ namespace XDay.WorldAPI.Decoration
         /// <param name="center"></param>
         /// <param name="radius"></param>
         /// <param name="decorationIDs"></param>
-        void QueryDecorationIDsInCircle(Vector3 center, float radius, List<int> decorationIDs);
+        void QueryDecorationIDsInCircle(Vector3 center, float radius, List<int> decorationIDs, DecorationTagType type);
 
         /// <summary>
         /// show/hide decoration
         /// </summary>
         /// <param name="decorationID"></param>
-        /// <param name="show"></param>
-        void ShowDecoration(int decorationID, bool show);
+        /// <param name="state"></param>
+        void ShowDecoration(int decorationID, DecorationState state);
 
         /// <summary>
         /// show/hide decoration in circle
@@ -60,6 +141,17 @@ namespace XDay.WorldAPI.Decoration
         /// <param name="circleCenter"></param>
         /// <param name="circleRadius"></param>
         /// <param name="show"></param>
-        void ShowDecoration(Vector3 circleCenter, float circleRadius, bool show);
+        void ShowDecoration(Vector3 circleCenter, float circleRadius, DecorationState state, DecorationTagType type);
+
+        /// <summary>
+        /// show decorations in specified range and filtered by type
+        /// </summary>
+        /// <param name="minX"></param>
+        /// <param name="minZ"></param>
+        /// <param name="maxX"></param>
+        /// <param name="maxZ"></param>
+        /// <param name="show"></param>
+        /// <param name="type">只影响指定类型的物体type</param>
+        void ShowDecoration(float minX, float minZ, float maxX, float maxZ, DecorationState state, DecorationTagType type);
     }
 }

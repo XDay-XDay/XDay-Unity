@@ -101,6 +101,7 @@ namespace XDay.UtilityAPI.Editor
             {
                 m_GameObject = new GameObject("Brush Indicator");
                 m_GameObject.SetActive(false);
+                m_GameObject.tag = "EditorOnly";
                 Helper.HideGameObject(m_GameObject, true);
 
                 if (m_Mesh == null)

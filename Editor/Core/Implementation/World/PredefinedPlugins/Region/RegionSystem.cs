@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -33,8 +34,10 @@ namespace XDay.WorldAPI.Region.Editor
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "region" };
-        public override IPluginLODSystem LODSystem => null;
+        public override IPluginLODSystem LODSystem => m_PluginLODSystem;
+        public int LODCount => m_PluginLODSystem.LODCount;
         public override WorldPluginUsage Usage => WorldPluginUsage.BothInEditorAndGame;
+        public override bool AllowUndo => false;
         public override string Name
         {
             get => m_Name;
@@ -47,6 +50,8 @@ namespace XDay.WorldAPI.Region.Editor
         public override Bounds Bounds => m_Bounds;
         public override string TypeName => "EditorRegionSystem";
         public RegionSystemRenderer Renderer => m_Renderer;
+        public bool GenerateUnityAssets { get => m_GenerateUnityAssets; set { m_GenerateUnityAssets = value; } }
+        public override int FileIDOffset => WorldDefine.REGION_SYSTEM_FILE_ID_OFFSET;
 
         public RegionSystem()
         {
@@ -57,18 +62,26 @@ namespace XDay.WorldAPI.Region.Editor
         {
             m_Bounds = bounds;
             m_Name = name;
+            m_PluginLODSystem = IPluginLODSystem.Create(1);
+
+            m_PluginLODSystem.EventLODCountChanged += OnLODCountChanged;
         }
 
         protected override void InitInternal()
         {
-            Selection.selectionChanged += OnSelectionChanged;
-
             m_Renderer = new RegionSystemRenderer(World.Root.transform, this);
 
             foreach (var layer in m_Layers)
             {
                 layer.Init(World);
             }
+
+            m_TileIndicator = IGizmoCubeIndicator.Create();
+
+            m_ShowName = EditorPrefs.GetBool(RegionDefine.SHOW_NAME, true);
+            m_BrushSize = EditorPrefs.GetInt(RegionDefine.BRUSH_SIZE, 1);
+
+            m_PluginLODSystem.Init(World.WorldLODSystem);
         }
 
         protected override void UninitInternal()
@@ -79,8 +92,6 @@ namespace XDay.WorldAPI.Region.Editor
             {
                 layer.Uninit();
             }
-
-            Selection.selectionChanged -= OnSelectionChanged;
         }
 
         public override IWorldObject QueryObjectUndo(int objectID)
@@ -165,6 +176,12 @@ namespace XDay.WorldAPI.Region.Editor
                     layer.SetEnabled(aspect.GetBoolean());
                     layer.Renderer.SetAspect(objectID, name);
                 }
+                else if (name == "Grid Visible")
+                {
+                    var layer = QueryObjectUndo(objectID) as RegionSystemLayer;
+                    layer.GridVisible = aspect.GetBoolean();
+                    layer.Renderer.SetAspect(objectID, name);
+                }
                 else
                 {
                     var obj = World.QueryObject<RegionObject>(objectID);
@@ -208,6 +225,12 @@ namespace XDay.WorldAPI.Region.Editor
                 return IAspect.FromBoolean(layer.IsEnabled());
             }
 
+            if (name == "Grid Visible")
+            {
+                var layer = QueryObjectUndo(objectID) as RegionSystemLayer;
+                return IAspect.FromBoolean(layer.GridVisible);
+            }
+
             var obj = World.QueryObject<RegionObject>(objectID);
             if (obj != null)
             {
@@ -219,7 +242,7 @@ namespace XDay.WorldAPI.Region.Editor
 
         private void AddRegion(RegionObject region)
         {
-            region.Layer.AddObject(region);
+            region.Layer.AddRegion(region);
 
             if (region.GetVisibility() == WorldObjectVisibility.Undefined)
             {
@@ -236,17 +259,23 @@ namespace XDay.WorldAPI.Region.Editor
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
+            SyncWithRenderer();
+
             base.EditorSerialize(serializer, label, converter);
 
             serializer.WriteInt32(m_Version, "RegionSystem.Version");
             serializer.WriteString(m_Name, "Name");
             serializer.WriteBounds(m_Bounds, "Bounds");
             serializer.WriteObjectID(m_CurrentLayerID, "Current Layer ID", converter);
+            serializer.WriteSerializable(m_PluginLODSystem, "LOD System", converter, false);
 
             serializer.WriteList(m_Layers, "Layers", (layer, index) =>
             {
                 serializer.WriteSerializable(layer, $"Layer {index}", converter, false);
             });
+
+            EditorPrefs.SetBool(RegionDefine.SHOW_NAME, m_ShowName);
+            EditorPrefs.SetInt(RegionDefine.BRUSH_SIZE, m_BrushSize);
         }
 
         public override void EditorDeserialize(IDeserializer deserializer, string label)
@@ -258,6 +287,7 @@ namespace XDay.WorldAPI.Region.Editor
             m_Name = deserializer.ReadString("Name");
             m_Bounds = deserializer.ReadBounds("Bounds");
             m_CurrentLayerID = deserializer.ReadInt32("Current Layer ID");
+            m_PluginLODSystem = deserializer.ReadSerializable<IPluginLODSystem>("LOD System", false);
 
             m_Layers = deserializer.ReadList("Layer", (index) =>
             {
@@ -322,6 +352,15 @@ namespace XDay.WorldAPI.Region.Editor
             return null;
         }
 
+        internal RegionSystemLayer GetLayerAt(int index)
+        {
+            if (index >= 0 && index < m_Layers.Count)
+            {
+                return m_Layers[index];
+            }
+            return null;
+        }
+
         public int GetLayerIndex(int layerID)
         {
             var idx = 0;
@@ -378,11 +417,22 @@ namespace XDay.WorldAPI.Region.Editor
             }
         }
 
+        private void SyncWithRenderer()
+        {
+            foreach (var layer in m_Layers)
+            {
+                layer.SyncWithRenderer();
+            }
+        }
+
         private string m_Name;
         private RegionSystemRenderer m_Renderer;
         private Bounds m_Bounds;
+        private int m_BrushSize = 1;
         private List<RegionSystemLayer> m_Layers = new();
         private int m_CurrentLayerID = 0;
+        private IPluginLODSystem m_PluginLODSystem;
+        private bool m_GenerateUnityAssets;
         private const int m_Version = 1;
     }
 }

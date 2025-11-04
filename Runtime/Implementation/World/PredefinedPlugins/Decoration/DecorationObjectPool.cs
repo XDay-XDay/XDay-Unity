@@ -21,6 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
+using UnityEngine;
+using XDay.UtilityAPI;
+
 namespace XDay.WorldAPI.Decoration
 {
     internal class DecorationObjectPool
