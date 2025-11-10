@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using UnityEngine;
 using UnityEngine.Scripting;
 
@@ -31,6 +32,12 @@ namespace XDay.WorldAPI.Tile
         Start,
         End,
         Running,
+    }
+
+    public interface ITextureLoader
+    {
+        void Load(string path, Action<Texture2D> onTextureLoaded);
+        void Unload(Texture texture);
     }
 
     /// <summary>
@@ -85,5 +92,11 @@ namespace XDay.WorldAPI.Tile
         /// <param name="maxZ"></param>
         /// <param name="timing">更新时机</param>
         void UpdateMaterialInRange(float minX, float minZ, float maxX, float maxZ, TileMaterialUpdaterTiming timing);
+
+        /// <summary>
+        /// 使用动态Mask贴图加载
+        /// </summary>
+        /// <param name="loader"></param>
+        void EnableDynamicMaskLoading(ITextureLoader loader);
     }
 }

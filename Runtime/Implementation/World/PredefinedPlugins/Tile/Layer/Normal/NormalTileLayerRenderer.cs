@@ -89,6 +89,8 @@ namespace XDay.WorldAPI.Tile
                 m_Layer.TileMaterialUpdater?.OnNormalLayerShowTile(m_Entries[idx].Material);
             }
 
+            m_Layer.TileSystem.MaskTextureManager?.LoadMask(m_Entries[idx].Material, m_Entries[idx].GameObject, tile.MaskTexturePath);
+
             if (tile.HasHeightData
                 /* || tile.clipped*/)
             {
@@ -118,6 +120,8 @@ namespace XDay.WorldAPI.Tile
                 filter.sharedMesh = m_MeshManager.GetOriginalMesh(prefabPath);
             }
 
+            m_Layer.TileSystem.MaskTextureManager?.UnloadMask(m_Entries[idx].Material);
+
             m_Entries[idx].GameObject.SetActive(false);
         }
 
@@ -129,16 +133,23 @@ namespace XDay.WorldAPI.Tile
                 for (int i = 0; i < usedPrefabPaths.Length; ++i)
                 {
                     var obj = assetLoader.LoadGameObject(usedPrefabPaths[i]);
-                    var filter = obj.GetComponentInChildren<MeshFilter>();
-                    if (filter != null)
+                    if (obj != null)
                     {
-                        var mesh = filter.sharedMesh;
-                        if (mesh != null)
+                        var filter = obj.GetComponentInChildren<MeshFilter>();
+                        if (filter != null)
                         {
-                            m_MeshManager.SetOriginalMesh(usedPrefabPaths[i], mesh);
+                            var mesh = filter.sharedMesh;
+                            if (mesh != null)
+                            {
+                                m_MeshManager.SetOriginalMesh(usedPrefabPaths[i], mesh);
+                            }
                         }
+                        Object.Destroy(obj);
                     }
-                    Object.Destroy(obj);
+                    else
+                    {
+                        Debug.LogError($"PreprocessHeightMeshes: load {usedPrefabPaths[i]} failed!");
+                    }
                 }
             }
         }
@@ -177,7 +188,7 @@ namespace XDay.WorldAPI.Tile
         private readonly GameObject m_Root;
         private readonly Entry[] m_Entries;
         private readonly NormalTileLayer m_Layer;
-        private TerrainHeightMeshManager m_MeshManager;
+        private readonly TerrainHeightMeshManager m_MeshManager;
 
         private class Entry
         {

@@ -39,6 +39,7 @@ namespace XDay.WorldAPI.Tile
         public IResourceDescriptorSystem ResourceDescriptorSystem => m_DescriptorSystem;
         public ICameraVisibleAreaUpdater CameraVisibleAreaUpdater => m_CameraVisibleAreaUpdater;
         public GameObject Root => m_Root;
+        public MaskTextureManager MaskTextureManager => m_MaskTextureManager;
 
         public TileSystem()
         {
@@ -73,6 +74,8 @@ namespace XDay.WorldAPI.Tile
 
             Helper.DestroyUnityObject(m_Root);
             m_Root = null;
+
+            m_MaskTextureManager?.OnDestroy();
         }
 
         protected override void InitRendererInternal()
@@ -101,6 +104,8 @@ namespace XDay.WorldAPI.Tile
             }
 
             m_CameraVisibleAreaUpdater.EndUpdate();
+
+            m_MaskTextureManager?.Update();
         }
 
         protected override void LoadGameDataInternal(string pluginName, IWorld world)
@@ -178,6 +183,8 @@ namespace XDay.WorldAPI.Tile
                 for (var x = 0; x < xTileCount; ++x)
                 {
                     var path = reader.ReadString("");
+                    //var maskTexturePath = reader.ReadString("Mask Texture Path");
+                    var maskTexturePath = "";
                     bool hasHeight = reader.ReadBoolean("Has Height");
                     bool exportHeight = reader.ReadBoolean("Export Height");
                     float[] vertexHeights = null;
@@ -188,7 +195,7 @@ namespace XDay.WorldAPI.Tile
                     if (!string.IsNullOrEmpty(path))
                     {
                         var index = y * xTileCount + x;
-                        tiles[index] = new NormalTileData(path, vertexHeights, hasHeight);
+                        tiles[index] = new NormalTileData(path, vertexHeights, hasHeight, maskTexturePath);
                     }
                 }
             }
@@ -236,6 +243,13 @@ namespace XDay.WorldAPI.Tile
             }
         }
 
+        public void EnableDynamicMaskLoading(ITextureLoader loader)
+        {
+            m_MaskTextureManager?.OnDestroy();
+
+            m_MaskTextureManager = new(loader);
+        }
+
         private IResourceDescriptorSystem m_DescriptorSystem;
         private IPluginLODSystem m_LODSystem;
         private Quaternion m_Rotation;
@@ -244,5 +258,6 @@ namespace XDay.WorldAPI.Tile
         private readonly List<TileLayerBase> m_Layers = new();
         private TileLayerBase m_CurrentLayer;
         private GameObject m_Root;
+        private MaskTextureManager m_MaskTextureManager;
     }
 }

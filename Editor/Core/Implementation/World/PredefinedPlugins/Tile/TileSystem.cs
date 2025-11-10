@@ -39,6 +39,7 @@ namespace XDay.WorldAPI.Tile.Editor
         public Vector2 Origin;
         public float Rotation;
         public string Name;
+        public string TilePrefabFolder;
         public int ObjectIndex;
         public int ID;
         public bool GenerateMeshCollider;
@@ -139,6 +140,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_GetGroundHeightInGame = createInfo.GetGroundHeightInGame;
 			m_ResourceGroupSystem = IResourceGroupSystem.Create(true);
             m_BrushFolder = EditorPrefs.GetString("XDay.BrushFolder");
+            m_TilePrefabFolder = createInfo.TilePrefabFolder;
         }
 
         protected override void InitInternal()
@@ -196,10 +198,14 @@ namespace XDay.WorldAPI.Tile.Editor
             FixNormal();
 
             ApplyBrushFolder();
+
+            InitMasks();
         }
 
         protected override void UninitInternal()
         {
+            SetMasksToPlaceholder();
+
             m_TexturePainter.OnDestroy();
             m_VertexHeightPainter.OnDestroy();
 
@@ -551,6 +557,48 @@ namespace XDay.WorldAPI.Tile.Editor
             m_TexturePainter.ChangeBrushFolder(m_BrushFolder);
         }
 
+        //将每个tile的mask设置成独立的
+        private void InitMasks()
+        {
+            if (m_TilePrefabFolder == null)
+            {
+                Debug.LogError("无法初始化Mask");
+                return;
+            }
+
+            var materials = EditorHelper.QueryAssets<Material>(new string[] { m_TilePrefabFolder });
+            foreach (var material in materials)
+            {
+                var path = AssetDatabase.GetAssetPath(material);
+                var maskTexturePath = $"{Helper.RemoveExtension(path)}.tga";
+                var maskTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(maskTexturePath);
+                material.SetTexture(m_TexturePainter.MaskName, maskTexture);
+                EditorUtility.SetDirty(material);
+            }
+            AssetDatabase.SaveAssets();
+        }
+
+        //将每个tile的mask设置成一张占位贴图,运行时动态加载mask
+        private void SetMasksToPlaceholder()
+        {
+            if (m_TilePrefabFolder == null)
+            {
+                Debug.LogError("无法设置Mask");
+                return;
+            }
+
+            var maskTexture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{m_TilePrefabFolder}/placeholder.tga");
+            Debug.Assert(maskTexture != null, $"placeholder mask not found in folder {m_TilePrefabFolder}");
+            var materials = EditorHelper.QueryAssets<Material>(new string[] { m_TilePrefabFolder });
+            foreach (var material in materials)
+            {
+                var path = AssetDatabase.GetAssetPath(material);
+                material.SetTexture(m_TexturePainter.MaskName, maskTexture);
+                EditorUtility.SetDirty(material);
+            }
+            AssetDatabase.SaveAssets();
+        }
+
         private enum GameTileType
         {
             FlatTile,
@@ -578,6 +626,7 @@ namespace XDay.WorldAPI.Tile.Editor
         private float m_TileWidth;
         private float m_TileHeight;
         private bool m_ShowMaterialConfig = true;
+        private string m_TilePrefabFolder;
         private GridMesh m_Grid;
         private string m_BrushFolder;
         private const int m_Version = 1;

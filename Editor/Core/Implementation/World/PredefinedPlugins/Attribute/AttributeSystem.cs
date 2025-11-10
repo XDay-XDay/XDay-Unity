@@ -23,12 +23,22 @@
 
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using XDay.UtilityAPI;
+using XDay.UtilityAPI.Shape;
 using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Attribute.Editor
 {
+    internal enum ObstacleCalculationMode : byte
+    {
+        Disable,
+        ByObstacleTag,
+        ByShapeColliders,
+        All,
+    }
+
     [WorldPluginMetadata("属性层", "attribute_editor_data", typeof(AttributeSystemCreateWindow), true)]
     public partial class AttributeSystem : EditorWorldPlugin
     {
@@ -159,7 +169,7 @@ namespace XDay.WorldAPI.Attribute.Editor
         /// </summary>
         public void CalculateIfGridHasObstacles(bool prompt)
         {
-            if (!m_EnableAutoObstacleGeneration)
+            if (m_ObstacleMode == ObstacleCalculationMode.Disable)
             {
                 return;
             }
@@ -176,32 +186,46 @@ namespace XDay.WorldAPI.Attribute.Editor
 
                 var hasObstacle = new bool[layer.VerticalGridCount, layer.HorizontalGridCount];
 
-                for (var i = 0; i < World.PluginCount; ++i)
+                List<IObstacle> allObstacles = new();
+                if (m_ObstacleMode == ObstacleCalculationMode.All ||
+                    m_ObstacleMode == ObstacleCalculationMode.ByObstacleTag)
                 {
-                    var plugin = World.GetPlugin(i);
-                    if (plugin is IObstacleSource obstacleSource)
+                    for (var i = 0; i < World.PluginCount; ++i)
                     {
-                        var obstacles = obstacleSource.GetObstacles();
-                        if (obstacles != null)
+                        var plugin = World.GetPlugin(i);
+                        if (plugin is IObstacleSource obstacleSource)
                         {
-                            foreach (var obstacle in obstacles)
+                            var obstacles = obstacleSource.GetObstacles();
+                            if (obstacles != null)
                             {
-                                var bounds = obstacle.WorldBounds;
-                                var minCoord = layer.PositionToCoordinate(bounds.min.x, bounds.min.y);
-                                var maxCoord = layer.PositionToCoordinate(bounds.max.x, bounds.max.y);
-                                var polygon = obstacle.WorldPolygon;
-                                for (var y = minCoord.y; y <= maxCoord.y; ++y)
-                                {
-                                    for (var x = minCoord.x; x <= maxCoord.x; ++x)
-                                    {
-                                        if (x >= 0 && x < layer.HorizontalGridCount && y >= 0 && y < layer.VerticalGridCount)
-                                        {
-                                            var min = layer.CoordinateToPosition(x, y);
-                                            var max = layer.CoordinateToPosition(x + 1, y + 1);
-                                            hasObstacle[y, x] |= Helper.RectInPolygon(min, max, polygon);
-                                        }
-                                    }
-                                }
+                                allObstacles.AddRange(obstacles);
+                            }
+                        }
+                    }
+                }
+
+                if (m_ObstacleMode == ObstacleCalculationMode.All ||
+                    m_ObstacleMode == ObstacleCalculationMode.ByShapeColliders)
+                {
+                    var shapeColliders = GetShapeColliders();
+                    allObstacles.AddRange(shapeColliders);
+                }
+
+                foreach (var obstacle in allObstacles)
+                {
+                    var bounds = obstacle.WorldBounds;
+                    var minCoord = layer.PositionToCoordinate(bounds.min.x, bounds.min.y);
+                    var maxCoord = layer.PositionToCoordinate(bounds.max.x, bounds.max.y);
+                    var polygon = obstacle.WorldPolygon;
+                    for (var y = minCoord.y; y <= maxCoord.y; ++y)
+                    {
+                        for (var x = minCoord.x; x <= maxCoord.x; ++x)
+                        {
+                            if (x >= 0 && x < layer.HorizontalGridCount && y >= 0 && y < layer.VerticalGridCount)
+                            {
+                                var min = layer.CoordinateToPosition(x, y);
+                                var max = layer.CoordinateToPosition(x + 1, y + 1);
+                                hasObstacle[y, x] |= Helper.RectInPolygon(min, max, polygon);
                             }
                         }
                     }
@@ -224,6 +248,17 @@ namespace XDay.WorldAPI.Attribute.Editor
             }
         }
 
+        private List<IObstacle> GetShapeColliders()
+        {
+            List<IObstacle> shapeColliders = new();
+            foreach (var obj in EditorSceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                var colliders = obj.GetComponentsInChildren<Shape2DCollider>(true);
+                shapeColliders.AddRange(colliders);
+            }
+            return shapeColliders;
+        }
+
         public override void EditorSerialize(ISerializer writer, string label, IObjectIDConverter converter)
         {
             base.EditorSerialize(writer, label, converter);
@@ -232,7 +267,7 @@ namespace XDay.WorldAPI.Attribute.Editor
 
             writer.WriteString(m_Name, "Name");
             writer.WriteObjectID(m_ActiveLayerID, "Active Layer ID", converter);
-            writer.WriteBoolean(m_EnableAutoObstacleGeneration, "EnableAutoObstacleGeneration");
+            writer.WriteByte((byte)m_ObstacleMode, "ObstacleCalculationMoide");
 
             List<LayerBase> layers = new(m_Layers);
             writer.WriteList(layers, "Layers", (LayerBase layer, int index) =>
@@ -251,7 +286,7 @@ namespace XDay.WorldAPI.Attribute.Editor
             m_ActiveLayerID = reader.ReadInt32("Active Layer ID");
             if (version >= 2)
             {
-                m_EnableAutoObstacleGeneration = reader.ReadBoolean("EnableAutoObstacleGeneration");
+                m_ObstacleMode = (ObstacleCalculationMode)reader.ReadByte("ObstacleCalculationMoide");
             }
 
             var layers = reader.ReadList("Layers", (int index) =>
@@ -310,7 +345,7 @@ namespace XDay.WorldAPI.Attribute.Editor
         [SerializeField]
         private SortedSet<LayerBase> m_Layers = new(Comparer<LayerBase>.Create((x, y) => x.ObjectIndex.CompareTo(y.ObjectIndex)));
         [SerializeField]
-        private bool m_EnableAutoObstacleGeneration = false;
+        private ObstacleCalculationMode m_ObstacleMode = ObstacleCalculationMode.Disable;
         private AttributeSystemRenderer m_Renderer;
         private const int m_EditorVersion = 2;
     }

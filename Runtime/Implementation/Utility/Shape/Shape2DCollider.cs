@@ -23,12 +23,13 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using XDay.WorldAPI;
 
 namespace XDay.UtilityAPI.Shape
 {
     [SelectionBase]
     [ExecuteInEditMode]
-    public class Shape2DCollider : MonoBehaviour
+    public class Shape2DCollider : MonoBehaviour, IObstacle
     {
 #if UNITY_EDITOR
         public static List<Shape2DCollider> AllColliders => m_AllColliders;
@@ -37,7 +38,7 @@ namespace XDay.UtilityAPI.Shape
         public float VertexDisplaySize => m_Data.VertexDisplaySize;
         public bool ShowVertexIndex => m_Data.ShowVertexIndex;
         public List<Vector3> VerticesCopy => m_Data.VerticesCopy;
-        public List<Vector3> WorldVertices
+        public List<Vector3> WorldPolygon
         {
             get
             {

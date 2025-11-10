@@ -57,6 +57,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 VerticalTileCount = verticalGridCount,
                 Origin = CalculateOrigin(m_Width, m_Height),
                 Rotation = m_Rotation,
+                TilePrefabFolder = GetAssetPath(),
                 Name = DisplayName,
                 ObjectIndex = World.PluginCount,
                 ID = World.AllocateObjectID(),

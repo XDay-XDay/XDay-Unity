@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -24,29 +24,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace XDay.WorldAPI.Editor
+namespace XDay.WorldAPI
 {
-    public interface IObstacleSource
+    [System.Flags]
+    public enum ObstacleAttribute
     {
-        List<IObstacle> GetObstacles();
+        None = 0,
+        Walkable = 1,
     }
 
-    public interface IWalkableObjectSource
+    public interface IObstacle
     {
-        List<MeshSource> GetAllWalkableMeshes();
-        List<ColliderSource> GetAllWalkableColliders();
-    }
-
-    public class MeshSource
-    {
-        public int AreaID = 0;
-        public Mesh Mesh;
-        public GameObject GameObject;
-    }
-
-    public class ColliderSource
-    {
-        public int AreaID = 0;
-        public UnityEngine.Collider Collider;
+        int AreaID => 0;
+        //for 3d navmesh
+        float Height => 0;
+        bool Walkable => false;
+        ObstacleAttribute Attribute => ObstacleAttribute.None;
+        List<Vector3> WorldPolygon { get; }
+        Rect WorldBounds { get; }
     }
 }

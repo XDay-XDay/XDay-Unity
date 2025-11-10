@@ -1161,11 +1161,44 @@ namespace XDay.UtilityAPI
         public static bool RectInPolygon(Vector3 min, Vector3 max, List<Vector3> polygon)
         {
             var lbIn = PointInPolygon(min, polygon);
+            if (lbIn)
+            {
+                return true;
+            }
             var rtIn = PointInPolygon(max, polygon);
+            if (rtIn)
+            {
+                return true;
+            }
+
             var ltIn = PointInPolygon(new Vector3(min.x, 0, max.z), polygon);
+            if (ltIn)
+            {
+                return true;
+            }
+
             var rbIn = PointInPolygon(new Vector3(max.x, 0, min.z), polygon);
+            if (rbIn)
+            {
+                return true;
+            }
+
             var centerIn = PointInPolygon((min + max) / 2, polygon);
-            return lbIn || rtIn || centerIn || ltIn || rbIn;
+            if (centerIn)
+            {
+                return true;
+            }
+
+            foreach (var pt in polygon)
+            {
+                if (pt.x >= min.x && pt.y >= min.y && pt.z >= min.z &&
+                    pt.x <= max.x && pt.y <= max.y && pt.z <= max.z)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static bool PointInPolygon2D(Vector3 p, Vector3[] polygon)

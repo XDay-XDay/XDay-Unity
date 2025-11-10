@@ -154,12 +154,14 @@ namespace XDay.WorldAPI.Attribute.Editor
             m_ViewScrollPosition = EditorGUILayout.BeginScrollView(m_ViewScrollPosition);
             EditorHelper.IndentLayout(() =>
             {
-                m_EnableAutoObstacleGeneration = EditorGUILayout.ToggleLeft("开启自动障碍物计算", m_EnableAutoObstacleGeneration);
+                EditorGUILayout.BeginHorizontal();
+                m_ObstacleMode = (ObstacleCalculationMode)EditorGUILayout.EnumPopup("障碍物计算方式", m_ObstacleMode);
 
-                if (GUILayout.Button("计算障碍物"))
+                if (GUILayout.Button("计算障碍物", GUILayout.MaxWidth(80)))
                 {
                     CalculateIfGridHasObstacles(true);
                 }
+                EditorGUILayout.EndHorizontal();
             });
 
             EditorGUILayout.EndScrollView();

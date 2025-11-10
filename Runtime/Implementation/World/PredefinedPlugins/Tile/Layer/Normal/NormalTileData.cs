@@ -33,12 +33,14 @@ namespace XDay.WorldAPI.Tile
         public float[] VertexHeights => m_VertexHeights;
         public int MeshResolution => m_MeshResolution;
         public bool MaskSet { get => m_MaskSet; set => m_MaskSet = value; }
+        public string MaskTexturePath { get => m_MaskTexturePath; set => m_MaskTexturePath = value; }
 
-        public NormalTileData(string path, float[] vertexHeights, bool hasHeightData)
+        public NormalTileData(string path, float[] vertexHeights, bool hasHeightData, string maskTexturePath)
         {
             m_Path = path;
             m_VertexHeights = vertexHeights;
             m_HasHeightData = hasHeightData;
+            m_MaskTexturePath = maskTexturePath;
             if (vertexHeights != null)
             {
                 m_MeshResolution = (int)Mathf.Sqrt(vertexHeights.Length) - 1;
@@ -94,6 +96,7 @@ namespace XDay.WorldAPI.Tile
         private readonly float[] m_VertexHeights;
         private int m_MeshResolution;
         private bool m_MaskSet = false;
+        private string m_MaskTexturePath;
     }
 }
 
