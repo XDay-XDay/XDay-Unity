@@ -22,7 +22,6 @@
  */
 
 using System;
-using UnityEngine;
 
 namespace XDay.WorldAPI
 {

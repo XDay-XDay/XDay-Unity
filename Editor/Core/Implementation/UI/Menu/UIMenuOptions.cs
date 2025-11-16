@@ -476,7 +476,7 @@ namespace XDay.GUIAPI.Editor
         private static void CreateEventSystem(bool select, GameObject parent)
         {
             StageHandle stage = parent == null ? StageUtility.GetCurrentStageHandle() : StageUtility.GetStageHandle(parent);
-            var esys = stage.FindComponentOfType<EventSystem>();
+            var esys = stage.FindComponentOfType<UnityEngine.EventSystems.EventSystem>();
             if (esys == null)
             {
                 var eventSystem = ObjectFactory.CreateGameObject("EventSystem");
@@ -484,7 +484,7 @@ namespace XDay.GUIAPI.Editor
                     StageUtility.PlaceGameObjectInCurrentStage(eventSystem);
                 else
                     SetParentAndAlign(eventSystem, parent);
-                esys = ObjectFactory.AddComponent<EventSystem>(eventSystem);
+                esys = ObjectFactory.AddComponent<UnityEngine.EventSystems.EventSystem>(eventSystem);
                 InputModuleComponentFactory.AddInputModule(eventSystem);
 
                 Undo.RegisterCreatedObjectUndo(eventSystem, "Create " + eventSystem.name);

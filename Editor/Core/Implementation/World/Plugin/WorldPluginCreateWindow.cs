@@ -124,10 +124,10 @@ namespace XDay.WorldAPI.Editor
     {
         protected Vector2 CalculateOrigin(float width, float height)
         {
-            if (SetGridCount)
-            {
-                return Vector2.zero;
-            }
+            //if (SetGridCount)
+            //{
+            //    return Vector2.zero;
+            //}
             var center = World.Bounds.center;
             return new Vector2(center.x - width * 0.5f, center.z - height * 0.5f);
         }

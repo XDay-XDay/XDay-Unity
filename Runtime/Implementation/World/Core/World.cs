@@ -318,12 +318,18 @@ namespace XDay.WorldAPI
         public virtual void RegisterLODChangeEvent(LODChangeCallback callback) { }
         public virtual void UnregisterLODChangeEvent(LODChangeCallback callback) { }
 
-        public abstract void Update(float dt);
-
-        public virtual void LateUpdate() 
+        internal void Update(float dt)
         {
-            m_Manipulator?.LateUpdate();
+            m_Manipulator?.Update();
+
+            OnUpdate(dt);
         }
+
+        internal void LateUpdate()
+        {
+        }
+
+        protected abstract void OnUpdate(float dt);
 
         public virtual IDeserializer QueryGameDataDeserializer(int worldID, string gameDataFileName)
         {

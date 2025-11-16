@@ -356,10 +356,10 @@ namespace XDay.WorldAPI.Attribute.Editor
                         for (var x = range.Min.x; x <= range.Max.x; ++x)
                         {
                             layer.Set(x, y, set[(y - range.Min.y) * range.Size.x + x - range.Min.x]);
-                            m_Renderer.UpdateGrid(layerIndex, x, y);
                         }
                     }
-                    
+
+                    m_Renderer.UpdateGrid(layerIndex, range.Min.x, range.Min.y, range.Max.x, range.Max.y);
                 }
             }
             return true;
@@ -546,7 +546,7 @@ namespace XDay.WorldAPI.Attribute.Editor
                 {
                     if (QueryLayer(name) == null)
                     {
-                        var layer = new Layer(World.AllocateObjectID(), objectIndex: m_Layers.Count, name, horizontalGridCount, verticalGridCount, width / horizontalGridCount, height / verticalGridCount, origin, horizontalBlockCount, verticalBlockCount, (LayerType)layerType, Color.white);
+                        var layer = new Layer(World.AllocateObjectID(), objectIndex: m_Layers.Count, ID, name, horizontalGridCount, verticalGridCount, width / horizontalGridCount, height / verticalGridCount, origin, horizontalBlockCount, verticalBlockCount, (LayerType)layerType, Color.white);
 
                         UndoSystem.CreateObject(layer, World.ID, "Add Attribute Layer", ID, lod: 0);
 

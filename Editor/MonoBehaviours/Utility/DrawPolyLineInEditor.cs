@@ -33,10 +33,17 @@ namespace XDay.UtilityAPI
     {
         public float Radius = 1.0f;
         public bool DrawVertex = true;
+        public bool DrawIndex = true;
         public Color Color = Color.white;
 
         private void OnDrawGizmos()
         {
+            if (m_TextStyle == null)
+            {
+                m_TextStyle = new GUIStyle(GUI.skin.label);
+                m_TextStyle.normal.textColor = Color.blue;
+            }
+
             if (m_Lines != null && m_Lines.Length > 1)
             {
                 Color oldColor = Handles.color;
@@ -49,12 +56,20 @@ namespace XDay.UtilityAPI
                     Handles.SphereHandleCap(0, m_Lines[0], Quaternion.identity, Radius, EventType.Repaint);
 
                     Handles.color = Color.green;
-                    Handles.SphereHandleCap(0, m_Lines[m_Lines.Length - 1], Quaternion.identity, Radius, EventType.Repaint);
+                    Handles.SphereHandleCap(0, m_Lines[^1], Quaternion.identity, Radius, EventType.Repaint);
 
                     for (int i = 1; i < m_Lines.Length - 1; ++i)
                     {
                         Handles.color = Color.white;
                         Handles.SphereHandleCap(0, m_Lines[i], Quaternion.identity, Radius, EventType.Repaint);
+                    }
+                }
+
+                if (DrawIndex && m_Vertices != null)
+                {
+                    for (var i = 0; i < m_Vertices.Length; ++i)
+                    {
+                        Handles.Label(m_Vertices[i], $"{i}", m_TextStyle);
                     }
                 }
 
@@ -64,6 +79,12 @@ namespace XDay.UtilityAPI
 
         public void SetVertices(List<Vector2> vertices)
         {
+            m_Vertices = new Vector3[vertices.Count];
+            for (var i = 0; i < m_Vertices.Length; ++i)
+            {
+                m_Vertices[i] = Helper.ToVector3XZ(vertices[i]);
+            }
+
             int segment = vertices.Count - 1;
             int vertexCount = segment * 2;
             m_Lines = new Vector3[vertexCount];
@@ -78,6 +99,12 @@ namespace XDay.UtilityAPI
         {
             if (vertices.Count > 1)
             {
+                m_Vertices = new Vector3[vertices.Count];
+                for (var i = 0; i < m_Vertices.Length; ++i)
+                {
+                    m_Vertices[i] = vertices[i];
+                }
+
                 int segment = vertices.Count - 1;
                 int vertexCount = segment * 2;
                 m_Lines = new Vector3[vertexCount];
@@ -90,6 +117,8 @@ namespace XDay.UtilityAPI
         }
 
         private Vector3[] m_Lines;
+        private Vector3[] m_Vertices;
+        private GUIStyle m_TextStyle;
     }
 }
 

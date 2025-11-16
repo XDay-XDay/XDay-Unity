@@ -27,6 +27,16 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
+    [System.Flags]
+    public enum DecorationObjectFlags
+    {
+        None = 0,
+        EnableInstanceRendering = 1,
+        EnableHeightAdjust = 2,
+        //从配置表中导入
+        IsImportedFromConfig = 4,
+    }
+
     internal class DecorationObject : WorldObject
     {
         public LODLayerMask LODLayerMask => m_LODLayerMask;
@@ -39,8 +49,55 @@ namespace XDay.WorldAPI.Decoration.Editor
         public Quaternion PrefabRotation => ResourceDescriptor.Prefab != null ? ResourceDescriptor.Prefab.transform.rotation : Quaternion.identity;
         public Vector3 PrefabPosition => ResourceDescriptor.Prefab != null ? ResourceDescriptor.Prefab.transform.position : Vector3.zero;
         public override string TypeName => "EditorDecorationObject";
-        public bool EnableInstanceRendering { get => m_EnableInstanceRendering; set => m_EnableInstanceRendering = value; }
-        public bool EnableHeightAdjust { get => m_EnableHeightAdjust; set => m_EnableHeightAdjust = value; }
+        public DecorationObjectFlags Flags => m_Flags;
+        public bool EnableInstanceRendering
+        {
+            get => m_Flags.HasFlag(DecorationObjectFlags.EnableInstanceRendering);
+            set
+            {
+                if (value)
+                {
+                    m_Flags |= DecorationObjectFlags.EnableInstanceRendering;
+                }
+                else
+                {
+                    m_Flags &= ~DecorationObjectFlags.EnableInstanceRendering;
+                }
+            }
+        }
+
+        public bool IsImportedFromConfig
+        {
+            get => m_Flags.HasFlag(DecorationObjectFlags.IsImportedFromConfig);
+            set
+            {
+                if (value)
+                {
+                    m_Flags |= DecorationObjectFlags.IsImportedFromConfig;
+                }
+                else
+                {
+                    m_Flags &= ~DecorationObjectFlags.IsImportedFromConfig;
+                }
+            }
+        }
+
+        public bool EnableHeightAdjust
+        {
+            get => m_Flags.HasFlag(DecorationObjectFlags.EnableHeightAdjust);
+            set
+            {
+                if (value)
+                {
+                    m_Flags |= DecorationObjectFlags.EnableHeightAdjust;
+                }
+                else
+                {
+                    m_Flags &= ~DecorationObjectFlags.EnableHeightAdjust;
+                }
+            }
+        }
+
         public string Tag => m_Tag;
         protected override WorldObjectVisibility VisibilityInternal
         {
@@ -57,14 +114,15 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
         }
 
-        public DecorationObject(int objectID, 
-            int objectIndex, 
-            bool overridePrefabTransform, 
-            LODLayerMask lodLayerMask, 
-            Vector3 editPosition, 
-            Quaternion editRotation, 
-            Vector3 editScale, 
-            IResourceDescriptor descriptor)
+        public DecorationObject(int objectID,
+            int objectIndex,
+            bool overridePrefabTransform,
+            LODLayerMask lodLayerMask,
+            Vector3 editPosition,
+            Quaternion editRotation,
+            Vector3 editScale,
+            IResourceDescriptor descriptor,
+            DecorationObjectFlags flags)
             : base(objectID, objectIndex)
         {
             m_OverridePrefabTransform = overridePrefabTransform;
@@ -73,6 +131,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_EditRotation = editRotation;
             m_EditScale = editScale;
             m_ResourceDescriptor = new WorldObjectWeakRef(descriptor);
+            m_Flags = flags;
         }
 
         protected override void OnInit()
@@ -94,7 +153,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_WorldBounds = ResourceDescriptor.Prefab.QueryRectWithLocalTransform(Position, Rotation, Scale);
                 m_BoundsDirty = false;
             }
-            return m_WorldBounds;   
+            return m_WorldBounds;
         }
 
         public Rect QueryLocalBounds()
@@ -112,14 +171,18 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_EditRotation = deserializer.ReadQuaternion("Edit Rotation");
             m_EditScale = deserializer.ReadVector3("Edit Scale");
             m_ResourceDescriptor = new WorldObjectWeakRef(deserializer.ReadInt32("Resource Descriptor"));
-            if (version >= 2) 
+            if (version >= 2)
             {
                 m_OverridePrefabTransform = deserializer.ReadBoolean("Override Prefab Transform");
             }
-            if (version >= 3)
+            if (version == 3)
             {
-                m_EnableHeightAdjust = deserializer.ReadBoolean("Enable Height Adjust");
-                m_EnableInstanceRendering = deserializer.ReadBoolean("Enable Instance Rendering");
+                EnableHeightAdjust = deserializer.ReadBoolean("Enable Height Adjust");
+                EnableInstanceRendering = deserializer.ReadBoolean("Enable Instance Rendering");
+            }
+            else if (version >= 4)
+            {
+                m_Flags = (DecorationObjectFlags)deserializer.ReadInt32("DecorationObjectFlags");
             }
         }
 
@@ -134,8 +197,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             serializer.WriteVector3(m_EditScale, "Edit Scale");
             serializer.WriteObjectID(m_ResourceDescriptor.ObjectID, "Resource Descriptor", converter);
             serializer.WriteBoolean(m_OverridePrefabTransform, "Override Prefab Transform");
-            serializer.WriteBoolean(m_EnableHeightAdjust, "Enable Height Adjust");
-            serializer.WriteBoolean(m_EnableInstanceRendering, "Enable Instance Rendering");
+            serializer.WriteInt32((int)m_Flags, "DecorationObjectFlags");
         }
 
         public override bool SetAspect(int objectID, string name, IAspect aspect)
@@ -247,10 +309,9 @@ namespace XDay.WorldAPI.Decoration.Editor
         private Vector3 m_EditPosition;
         private Quaternion m_EditRotation;
         private Vector3 m_EditScale;
-        private bool m_EnableInstanceRendering = true;
-        private bool m_EnableHeightAdjust = true;
+        private DecorationObjectFlags m_Flags;
         private string m_Tag;
-        private const int m_Version = 3;
+        private const int m_Version = 4;
     }
 }
 

@@ -25,6 +25,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using XDay.UtilityAPI;
+using System.Buffers;
 
 namespace XDay.WorldAPI.Attribute.Editor
 {
@@ -32,6 +33,7 @@ namespace XDay.WorldAPI.Attribute.Editor
     {
         public AttributeSystem AttributeSystem => m_AttributeSystem;
         public GameObject Root => m_Root;
+        public ArrayPool<Color32> Pool => m_Pool;
 
         public AttributeSystemRenderer(AttributeSystem system)
         {
@@ -46,7 +48,7 @@ namespace XDay.WorldAPI.Attribute.Editor
 
             foreach (var layer in system.Layers)
             {
-                var renderer = new LayerRenderer(layer, m_Root.transform);
+                var renderer = new LayerRenderer(layer, m_Root.transform, m_Pool);
                 m_LayerRenderers.Add(renderer);
                 ToggleVisibility(layer);
             }
@@ -63,16 +65,16 @@ namespace XDay.WorldAPI.Attribute.Editor
             m_Root = null;
         }
 
-        public void UpdateGrid(int layerIndex, int gridX, int gridY)
+        public void UpdateGrid(int layerIndex, int minX, int minY, int maxX, int maxY)
         {
-            m_LayerRenderers[layerIndex].UpdateGrid(gridX, gridY);
+            m_LayerRenderers[layerIndex].UpdateGrid(minX, minY, maxX, maxY);
         }
 
         public void Update()
         {
             foreach (var layer in m_LayerRenderers)
             {
-                layer.Update(false);
+                layer.Update(false, false);
             }
         }
 
@@ -82,7 +84,7 @@ namespace XDay.WorldAPI.Attribute.Editor
 
         public void OnAddLayer(AttributeSystem.LayerBase layer)
         {
-            var layerRenderer = new LayerRenderer(layer, m_Root.transform);
+            var layerRenderer = new LayerRenderer(layer, m_Root.transform, m_Pool);
             m_LayerRenderers.Add(layerRenderer);
 
             foreach (var renderer in m_LayerRenderers)
@@ -117,7 +119,7 @@ namespace XDay.WorldAPI.Attribute.Editor
                 var layerRenderer = GetLayerRenderer(objectID);
                 if (layerRenderer != null)
                 {
-                    layerRenderer.Update(true);
+                    layerRenderer.Update(true, true);
                 }
             }
             else if (name == "Layer Name")
@@ -169,5 +171,6 @@ namespace XDay.WorldAPI.Attribute.Editor
         private GameObject m_Root;
         private readonly List<LayerRenderer> m_LayerRenderers = new();
         private readonly AttributeSystem m_AttributeSystem;
+        private readonly ArrayPool<Color32> m_Pool = ArrayPool<Color32>.Create();
     }
 }

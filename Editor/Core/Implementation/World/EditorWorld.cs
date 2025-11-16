@@ -96,7 +96,7 @@ namespace XDay.WorldAPI.Editor
             }
 
             var material = new Material(Shader.Find("XDay/Grid"));
-            m_Grid = new GridMesh("Custom Grid", m_HorizontalGridCount, m_VerticalGridCount, m_GridWidth, m_GridHeight, material, Color.white, Root.transform, true);
+            m_Grid = new GridMesh("Custom Grid", Vector2.zero, m_HorizontalGridCount, m_VerticalGridCount, m_GridWidth, m_GridHeight, material, Color.white, Root.transform, true);
             m_Grid.SetActive(m_ShowGrid);
         }
 
@@ -155,7 +155,7 @@ namespace XDay.WorldAPI.Editor
             AssetDatabase.SaveAssets();
         }
 
-        public override void Update(float dt)
+        protected override void OnUpdate(float dt)
         {
             if (Inited)
             {
@@ -348,6 +348,11 @@ namespace XDay.WorldAPI.Editor
 
             public void DebugDraw()
             {
+            }
+
+            public Vector3 GetFocusPoint(Camera camera)
+            {
+                return Vector3.zero;
             }
 
             public Rect GetVisibleAreas(Camera camera)

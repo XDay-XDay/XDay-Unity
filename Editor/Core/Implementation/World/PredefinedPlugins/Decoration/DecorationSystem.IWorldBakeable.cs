@@ -28,7 +28,7 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    internal partial class DecorationSystem
+    public partial class DecorationSystem
     {
         bool IWorldBakeable.EnableBake => false;
 

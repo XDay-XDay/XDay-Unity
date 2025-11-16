@@ -201,7 +201,7 @@ namespace XDay.UtilityAPI.Shape.Editor
             var localPosition = m_WorldToLocal(worldPosition);
             if (m_InsertVertex != null)
             {
-                var index = Helper.FindClosestEdgeOnProjection(localPosition, m_TempContainer);
+                var index = Helper.FindClosestEdgeOnProjection(localPosition, m_TempContainer, out _);
                 if (m_InsertVertex(index, localPosition))
                 {
                     m_PickedVertexIndices.Clear();

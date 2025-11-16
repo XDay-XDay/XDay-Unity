@@ -80,7 +80,7 @@ public class RVOTest : MonoBehaviour
 
     private void LateUpdate()
     {
-        m_CameraManipulator.LateUpdate();
+        m_CameraManipulator.Update();
     }
 
     private void SetupScenario()

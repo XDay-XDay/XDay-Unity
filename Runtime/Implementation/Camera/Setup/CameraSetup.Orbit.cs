@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+using UnityEngine;
 
 namespace XDay.CameraAPI
 {
@@ -29,14 +29,14 @@ namespace XDay.CameraAPI
     {
         public class OrbitSetup
         {
-            public float Range => m_Range;
-            public float ResetSpeed => m_ResetSpeed;
-            public bool EnableTouchOrbit => m_EnableTouchOrbit;
-            public float Yaw => m_Yaw;
-            public float Pitch => m_Pitch;
-            public bool EnableUnrestrictedOrbit => m_EnableUnrestrictedOrbit;
-            public float MinAltitude => m_MinAltitude;
-            public float MaxAltitude => m_MaxAltitude;
+            public float Range { get => m_Range; internal set => m_Range = value;  }
+            public float RestoreSpeed { get => m_ResetSpeed; internal set => m_ResetSpeed = value; }
+            public bool EnableTouchOrbit { get => m_EnableTouchOrbit; internal set => m_EnableTouchOrbit = value; }
+            public float Yaw { get => m_Yaw; internal set => m_Yaw = value; }
+            public float Pitch { get => m_Pitch; internal set => m_Pitch = Mathf.Clamp(value, 0, 90); }
+            public bool EnableUnrestrictedOrbit { get => m_EnableUnrestrictedOrbit; internal set => m_EnableUnrestrictedOrbit = value; }
+            public float MinAltitude { get => m_MinAltitude; internal set => m_MinAltitude = value; }
+            public float MaxAltitude { get => m_MaxAltitude; internal set => m_MaxAltitude = value; }
 
             public OrbitSetup()
             {

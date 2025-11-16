@@ -21,16 +21,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 namespace XDay.CameraAPI
 {
     public partial class CameraSetup
     {
         public class RestoreSetup
         {
-            public float Duration => m_Duration;
-            public float Distance => m_Distance;
+            public float Duration { get => m_Duration; set => m_Duration = value; }
+            public float Distance { get => m_Distance; set => m_Distance = value;  }
 
             public RestoreSetup()
             {

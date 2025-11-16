@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Buffers;
 using UnityEngine;
 using XDay.UtilityAPI;
 
@@ -30,20 +31,27 @@ namespace XDay.WorldAPI.Attribute.Editor
     {
         private class BlockRenderer
         {
-            public BlockRenderer(int startGridX, int startGridY, int endGridX, int endGridY, AttributeSystem.LayerBase layer, Transform parent)
+            public int StartGridX => m_StartGridX;
+            public int StartGridY => m_StartGridY;
+            public int EndGridX => m_EndGridX;
+            public int EndGridY => m_EndGridY;
+
+            public BlockRenderer(int startGridX, int startGridY, int endGridX, int endGridY, AttributeSystem.LayerBase layer, Transform parent, ArrayPool<Color32> pool)
             {
                 m_StartGridX = startGridX;
                 m_StartGridY = startGridY;
                 m_EndGridX = endGridX;
                 m_EndGridY = endGridY;
                 m_Layer = layer;
-                var width = m_EndGridX - m_StartGridX + 1;
-                var height = m_EndGridY - m_StartGridY + 1;
-                m_Buffer = new Color32[width * height];
+                m_DirtyMinX = m_StartGridX;
+                m_DirtyMinY = m_StartGridY;
+                m_DirtyMaxX = m_EndGridX;
+                m_DirtyMaxY = m_EndGridY;
+                m_Pool = pool;
 
                 CreateRoot(parent);
 
-                UpdateColors(true);
+                UpdateColors(true, false);
             }
 
             public void Uninitialize()
@@ -53,37 +61,88 @@ namespace XDay.WorldAPI.Attribute.Editor
                 Helper.DestroyUnityObject(m_Root);
             }
 
-            public bool UpdateGrid(int x, int y)
+            public bool UpdateGrid(int minX, int minY, int maxX, int maxY)
             {
-                if (x >= m_StartGridX && x <= m_EndGridX &&
-                    y >= m_StartGridY && y <= m_EndGridY)
+                var validRange = CheckRange(minX, minY, maxX, maxY,
+                    out var validMinX, out var validMinY, out var validMaxX, out var validMaxY);
+
+                if (validRange)
                 {
                     m_Dirty = true;
+                    m_DirtyMinX = validMinX;
+                    m_DirtyMinY = validMinY;
+                    m_DirtyMaxX = validMaxX;
+                    m_DirtyMaxY = validMaxY;
                     return true;
                 }
 
                 return false;
             }
 
-            public void UpdateColors(bool forceUpdate)
+            public void UpdateColors(bool forceUpdate, bool updateAll)
             {
+                if (updateAll)
+                {
+                    m_DirtyMinX = m_StartGridX;
+                    m_DirtyMinY = m_StartGridY;
+                    m_DirtyMaxX = m_EndGridX;
+                    m_DirtyMaxY = m_EndGridY;
+                }
+
+                var validRange = CheckRange(m_DirtyMinX, m_DirtyMinY, m_DirtyMaxX, m_DirtyMaxY, 
+                    out var validMinX, out var validMinY, out var validMaxX, out var validMaxY);
+                if (!validRange)
+                {
+                    return;
+                }
+
                 if (m_Dirty || forceUpdate)
                 {
                     m_Dirty = false;
-                    var width = m_EndGridX - m_StartGridX + 1;
-                    var height = m_EndGridY - m_StartGridY + 1;
-                    for (var y = m_StartGridY; y <= m_EndGridY; ++y)
+
+                    var bw = validMaxX - validMinX + 1;
+                    var bh = validMaxY - validMinY + 1;
+                    var colors = m_Pool.Rent(bw * bh);
+
+                    var idx = 0;
+                    for (var y = validMinY; y <= validMaxY; ++y)
                     {
-                        for (var x = m_StartGridX; x <= m_EndGridX; ++x)
+                        for (var x = validMinX; x <= validMaxX; ++x)
                         {
-                            var idx = (y - m_StartGridY) * height + x - m_StartGridX;
-                            m_Buffer[idx] = m_Layer.GetColor(x, y);
+                            colors[idx] = m_Layer.GetColor(x, y);
+                            ++idx;
                         }
                     }
 
-                    m_Texture.SetPixels32(0, 0, width, height, m_Buffer);
+                    m_Texture.SetPixels32(validMinX - m_StartGridX, validMinY - m_StartGridY, validMaxX - validMinX + 1, validMaxY - validMinY + 1, colors);
                     m_Texture.Apply();
+
+                    m_Pool.Return(colors);
                 }
+            }
+
+            private bool CheckRange(int minX, int minY, int maxX, int maxY,
+                        out int validMinX, out int validMinY, out int validMaxX, out int validMaxY)
+            {
+                validMinX = 0;
+                validMinY = 0;
+                validMaxX = 0;
+                validMaxY = 0;
+
+                if (minX > m_EndGridX ||
+                    minY > m_EndGridY ||
+                    maxX < m_StartGridX ||
+                    maxY < m_StartGridY)
+                {
+                    return false;
+                }
+
+                validMinX = Mathf.Max(minX, m_StartGridX);
+                validMinY = Mathf.Max(minY, m_StartGridY);
+                validMaxX = Mathf.Min(maxX, m_EndGridX);
+                validMaxY = Mathf.Min(maxY, m_EndGridY);
+
+                return true;
             }
 
             private void CreateRoot(Transform parent)
@@ -151,8 +210,12 @@ namespace XDay.WorldAPI.Attribute.Editor
             private Texture2D m_Texture;
             private Material m_Material;
             private readonly AttributeSystem.LayerBase m_Layer;
-            private readonly Color32[] m_Buffer;
+            private int m_DirtyMinX = -1;
+            private int m_DirtyMinY = -1;
+            private int m_DirtyMaxX = -1;
+            private int m_DirtyMaxY = -1;
             private bool m_Dirty = true;
+            private ArrayPool<Color32> m_Pool;
         }
     }
 }

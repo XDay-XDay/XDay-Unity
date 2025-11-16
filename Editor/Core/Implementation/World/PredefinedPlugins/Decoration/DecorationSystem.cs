@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -31,7 +29,7 @@ using XDay.WorldAPI.Editor;
 namespace XDay.WorldAPI.Decoration.Editor
 {
     [WorldPluginMetadata("装饰层", "decoration_editor_data", typeof(DecorationSystemCreateWindow), true)]
-    internal partial class DecorationSystem : EditorWorldPlugin,
+    public partial class DecorationSystem : EditorWorldPlugin,
         IObstacleSource, 
         IWalkableObjectSource,
         IWorldBakeable
@@ -109,6 +107,8 @@ namespace XDay.WorldAPI.Decoration.Editor
             ShowObjects();
 
             Selection.selectionChanged += OnSelectionChanged;
+
+            SearchHooks();
         }
 
         protected override void UninitInternal()
@@ -347,6 +347,31 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_ResourceGroupSystem = deserializer.ReadSerializable<IResourceGroupSystem>("Resource Group System", false);
         }
 
+        public void CreateDecoration(string prefabPath, Vector3 worldPosition, Quaternion worldRotation, Vector3 worldScale, DecorationObjectFlags flags = DecorationObjectFlags.None)
+        {
+            var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(prefabPath, World);
+            var obj = new DecorationObject(World.AllocateObjectID(), m_Decorations.Count, false, LODLayerMask.AllLOD, worldPosition, worldRotation, worldScale, descriptor, flags);
+
+            UndoSystem.CreateObject(obj, World.ID, DecorationDefine.ADD_DECORATION_NAME, ID, CurrentLOD);
+        }
+
+        public void DestroyImportedObjects()
+        {
+            List<DecorationObject> decorations = new();
+            foreach (var kv in m_Decorations)
+            {
+                if (kv.Value.IsImportedFromConfig)
+                {
+                    decorations.Add(kv.Value);
+                }
+            }
+
+            foreach (var obj in decorations)
+            {
+                UndoSystem.DestroyObject(obj, DecorationDefine.REMOVE_DECORATION_NAME, ID);
+            }
+        }
+
         protected override void UpdateInternal(float dt)
         {
             if ((m_ActivePatternIndex < 0 || m_ActivePatternIndex >= m_Patterns.Count) &&
@@ -437,13 +462,6 @@ namespace XDay.WorldAPI.Decoration.Editor
             return false;
         }
 
-        private DecorationObject CreateObject(int id, string assetPath, Vector3 userPosition, Quaternion userRotation, Vector3 userScale)
-        {
-            var descriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(assetPath, World);
-            var obj = new DecorationObject(id, m_Decorations.Count, false, LODLayerMask.AllLOD, userPosition, userRotation, userScale, descriptor);
-            return obj;
-        }
-
         private DecorationObject CloneObject(int id, int objectIndex, DecorationObject obj)
         {
             if (obj == null)
@@ -451,8 +469,12 @@ namespace XDay.WorldAPI.Decoration.Editor
                 Debug.Assert(false, $"Clone object failed: {id}");
                 return null;
             }
+            //复制的物体要去掉导入属性
+            var old = obj.IsImportedFromConfig;
+            obj.IsImportedFromConfig = false;
             var bytes = UndoSystem.Serialize(obj);
             var newObj = UndoSystem.Deserialize(id, objectIndex, bytes, World.ID, typeof(DecorationObject).FullName, false) as DecorationObject;
+            obj.IsImportedFromConfig = old;
             return newObj;
         }
 

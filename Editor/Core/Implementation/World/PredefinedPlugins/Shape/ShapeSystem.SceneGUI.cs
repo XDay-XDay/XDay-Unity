@@ -140,7 +140,7 @@ namespace XDay.WorldAPI.Shape.Editor
                         m_TempContainer.Add(localPos);
                     }
                     var localPosition = shape.TransformToLocalPosition(worldPosition);
-                    var index = Helper.FindClosestEdgeOnProjection(localPosition, m_TempContainer);
+                    var index = Helper.FindClosestEdgeOnProjection(localPosition, m_TempContainer, out _);
                     var action = new UndoActionInsertShapeVertex("Insert Shape Vertex", UndoSystem.Group, ID, shape.ID, index, localPosition);
                     UndoSystem.PerformCustomAction(action, true);
                     info.VertexIndex = index;

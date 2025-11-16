@@ -98,6 +98,8 @@ namespace XDay.WorldAPI.Tile.Editor
 
                     BrushFolder = EditorHelper.ObjectField<DefaultAsset>("笔刷目录", BrushFolder);
 
+                    m_EnableDynamicMaskTextureLoading = EditorGUILayout.Toggle("开启动态Mask贴图加载", m_EnableDynamicMaskTextureLoading);
+
                     if (GUILayout.Button("修改Mask分辨率"))
                     {
                         ChangeResolution();

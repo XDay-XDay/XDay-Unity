@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -34,7 +34,7 @@ namespace XDay.WorldAPI.Region.Editor
         public const string BRUSH_SIZE = "RegionSystem.BrushSize";
         public const string SELECTED_REGION_INDEX = "RegionSystem.SelectedRegionIndex";
         public const string SHOW_REGION = "RegionSystem.ShowRegions";
-        public static string REGION_SYSTEM_RUNTIME_ASSETS_FOLDER_NAME = "_RegionAssets";
+        public const string REGION_SYSTEM_RUNTIME_ASSETS_FOLDER_NAME = "_RegionAssets";
     }
 }
 

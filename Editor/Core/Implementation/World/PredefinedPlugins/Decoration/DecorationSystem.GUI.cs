@@ -30,7 +30,7 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    internal partial class DecorationSystem
+    public partial class DecorationSystem
     {
         private void ActionCreateObject()
         {
@@ -124,14 +124,13 @@ namespace XDay.WorldAPI.Decoration.Editor
                     var ok = pattern.GetItemInfo(i, out var prefabPath, out var worldPosition, out var worldScale, out var worldRotation);
                     if (ok)
                     {
-                        var decoration = CreateObject(World.AllocateObjectID(), prefabPath, worldPosition, worldRotation, worldScale);
-                        UndoSystem.CreateObject(decoration, World.ID, DecorationDefine.ADD_DECORATION_NAME, ID, CurrentLOD);
+                        CreateDecoration(prefabPath, worldPosition, worldRotation, worldScale);
                     }
                 }
             }
         }
 
-        private void ActionCloneObject(Vector3 offset)
+        private void ActionCloneObjects(Vector3 offset)
         {
             UndoSystem.NextGroupAndJoin();
 
@@ -149,7 +148,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 {
                     m_PluginLODSystemEditor.InspectorGUI(LODSystem, null, "LOD", (lodCount) =>
                     {
-                        if(lodCount > 8)
+                        if (lodCount > 8)
                         {
                             EditorUtility.DisplayDialog("出错了", "LOD数不能超过8个", "确定");
                         }
@@ -348,6 +347,8 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
             EditorGUILayout.EndHorizontal();
 
+            DrawHooks();
+
             DrawDescription();
         }
 
@@ -427,7 +428,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_DeletePatternButton = EditorWorldHelper.CreateImageButton("remove.png", "删除集合");
                 m_Controls.Add(m_DeletePatternButton);
 
-                m_ButtonCloneObjects = EditorWorldHelper.CreateImageButton("clone.png", "复制物体");
+                m_ButtonCloneObjects = EditorWorldHelper.CreateImageButton("clone.png", "复制物体(快捷键Shift+X)");
                 m_Controls.Add(m_ButtonCloneObjects);
 
                 m_ButtonHideObjectsNotInActiveLOD = EditorWorldHelper.CreateImageButton("hide.png", "隐藏不在当前LOD的物体");
@@ -573,7 +574,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                 m_PatternNames[i] = m_Patterns[i].Name;
             }
 
-            if(m_Patterns.Count > 0 && m_ActivePatternIndex < 0)
+            if (m_Patterns.Count > 0 && m_ActivePatternIndex < 0)
             {
                 SetActivePattern(0);
             }
@@ -811,7 +812,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                     bool ok = ParameterWindow.GetVector3(p[0], out var offset);
                     if (ok)
                     {
-                        ActionCloneObject(offset);
+                        ActionCloneObjects(offset);
                         return true;
                     }
                     return false;
@@ -1113,9 +1114,6 @@ namespace XDay.WorldAPI.Decoration.Editor
             {
                 ActionDeleteObject();
             }
-            else if (m_Action == Action.CloneObject)
-            {
-            }
             else if (m_Action == Action.CreateObject)
             {
                 ActionCreateObject();
@@ -1135,6 +1133,12 @@ namespace XDay.WorldAPI.Decoration.Editor
                 {
                     Debug.Assert(false, $"todo {m_Action}");
                 }
+            }
+
+            var evt = Event.current;
+            if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.X && evt.shift == true)
+            {
+                ActionCloneObjects(new Vector3(10, 0, 10));
             }
 
             if (m_Action != Action.Select)
@@ -1233,8 +1237,7 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                     if (!string.IsNullOrEmpty(prefabPath))
                     {
-                        var decoration = CreateObject(World.AllocateObjectID(), prefabPath, position, Quaternion.Euler(0, rotation, 0), Vector3.one * scale);
-                        UndoSystem.CreateObject(decoration, World.ID, DecorationDefine.ADD_DECORATION_NAME, ID, CurrentLOD);
+                        CreateDecoration(prefabPath, position, Quaternion.Euler(0, rotation, 0), Vector3.one * scale);
                     }
                 }
             }
@@ -1360,6 +1363,22 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
+        private void SearchHooks()
+        {
+            m_Hooks = EditorHelper.QueryAssets<DecorationSystemHook>();
+        }
+
+        private void DrawHooks()
+        {
+            foreach (var hook in m_Hooks)
+            {
+                if (GUILayout.Button(new GUIContent(hook.DisplayName, hook.Tooltip), GUILayout.MaxWidth(hook.ButtonWidth)))
+                {
+                    hook.Run();
+                }
+            }
+        }
+
         private enum LayerMaskChangeMode
         {
             AddToActiveLODOnly,
@@ -1375,7 +1394,6 @@ namespace XDay.WorldAPI.Decoration.Editor
             CreateObject,
             UsePattern,
             DeleteObject,
-            CloneObject,
         }
 
         private CoordinateGenerateOperation m_LastOperation;
@@ -1428,6 +1446,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private float m_ScaleDelta = 0.2f;
         private const float m_MinScale = 0.1f;
         private Dictionary<string, bool> m_TagState = new();
+        private List<DecorationSystemHook> m_Hooks;
         private string[] m_ShapeNames = new string[]
         {
             "多边形",

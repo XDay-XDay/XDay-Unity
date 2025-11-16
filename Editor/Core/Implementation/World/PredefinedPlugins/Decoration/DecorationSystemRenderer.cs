@@ -182,6 +182,11 @@ namespace XDay.WorldAPI.Decoration.Editor
                     var dec = m_System.QueryObjectUndo(objectID) as DecorationObject;
                     dec.EnableInstanceRendering = enable;
                 },
+                isImportedFromConfig: (objectID) =>
+                {
+                    var dec = m_System.QueryObjectUndo(objectID) as DecorationObject;
+                    return dec.IsImportedFromConfig;
+                },
                 transformChangeCallback: (objectID) => {
                 m_System.NotifyObjectDirty(decoration.ID);
             });

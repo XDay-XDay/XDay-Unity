@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Buffers;
 using UnityEngine;
 using XDay.UtilityAPI;
 
@@ -33,7 +34,7 @@ namespace XDay.WorldAPI.Attribute.Editor
             public GameObject Root => m_Root;
             public int LayerID => m_Layer.ID;
 
-            public LayerRenderer(AttributeSystem.LayerBase layer, Transform parent)
+            public LayerRenderer(AttributeSystem.LayerBase layer, Transform parent, ArrayPool<Color32> pool)
             {
                 m_Layer = layer;
 
@@ -57,13 +58,13 @@ namespace XDay.WorldAPI.Attribute.Editor
                         var endGridX = Mathf.Min(startGridX + blockWidth, horizontalGridCount) - 1;
                         var endGridY = Mathf.Min(startGridY + blockHeight, verticalGridCount) - 1;
 
-                        m_BlockRenderers[y * layer.HorizontalBlockCount + x] = new BlockRenderer(startGridX, startGridY, endGridX, endGridY, m_Layer, m_Root.transform);
+                        m_BlockRenderers[y * layer.HorizontalBlockCount + x] = new BlockRenderer(startGridX, startGridY, endGridX, endGridY, m_Layer, m_Root.transform, pool);
                     }
                 }
 
                 var shader = Shader.Find("XDay/Grid");
                 var material = new Material(shader);
-                m_GridMesh = new GridMesh(layer.Name, layer.HorizontalGridCount, layer.VerticalGridCount, layer.GridWidth, layer.GridHeight, material, new Color32(255, 190, 65, 150), m_Root.transform, true, 3000 + m_Layer.ObjectIndex * 5 + 1);
+                m_GridMesh = new GridMesh(layer.Name, layer.Origin, layer.HorizontalGridCount, layer.VerticalGridCount, layer.GridWidth, layer.GridHeight, material, new Color32(255, 190, 65, 150), m_Root.transform, true, 3000 + m_Layer.ObjectIndex * 5 + 1);
                 ShowGrid(layer.GridVisible);
                 Object.DestroyImmediate(material);
             }
@@ -82,22 +83,19 @@ namespace XDay.WorldAPI.Attribute.Editor
                 m_Root = null;
             }
 
-            public void UpdateGrid(int gridX, int gridY)
+            public void UpdateGrid(int minX, int minY, int maxX, int maxY)
             {
                 foreach (var block in m_BlockRenderers)
                 {
-                    if (block.UpdateGrid(gridX, gridY))
-                    {
-                        break;
-                    }
+                    block.UpdateGrid(minX, minY, maxX, maxY);
                 }
             }
 
-            public void Update(bool forceUpdate)
+            public void Update(bool forceUpdate, bool updateAll)
             {
                 foreach (var block in m_BlockRenderers)
                 {
-                    block.UpdateColors(forceUpdate);
+                    block.UpdateColors(forceUpdate, updateAll);
                 }
             }
 

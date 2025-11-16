@@ -21,55 +21,60 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-//#define ENABLE_TEXTURE_LOAD
-
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Tile
 {
     internal class MaskTextureManager
     {
-        public MaskTextureManager(ITextureLoader loader)
+        public MaskTextureManager(ITextureLoader loader, string placeholderTexturePath)
         {
             m_Loader = loader;
+            loader.Load(placeholderTexturePath, (texture) =>
+            {
+                m_PlaceholderMask = texture;
+            });
         }
 
         public void OnDestroy()
         {
-            Helper.DestroyUnityObject(m_PlaceholderMask);
             m_PlaceholderMask = null;
         }
 
         public void LoadMask(Material material, GameObject tileGameObject, string texturePath)
         {
-#if ENABLE_TEXTURE_LOAD
             m_LoadingItems.Add(new LoadItem() { MaskTexturePath = texturePath, Material = material, TileGameObject = tileGameObject });
-#endif
         }
 
         public void UnloadMask(Material material)
         {
-#if ENABLE_TEXTURE_LOAD
+            Debug.Assert(m_PlaceholderMask != null);
+
             var texture = material.GetTexture(m_MaskTexturePropertyName);
             if (texture != m_PlaceholderMask)
             {
                 m_Loader.Unload(texture);
                 material.SetTexture(m_MaskTexturePropertyName, m_PlaceholderMask);
+                material.SetTexture(m_MaskTextureAfterPropertyName, m_PlaceholderMask);
             }
-#endif
         }
 
         public void Update()
         {
-#if ENABLE_TEXTURE_LOAD
-            foreach (var item in m_LoadingItems)
+            m_Timer.Begin();
+            for (var i = m_LoadingItems.Count - 1; i >= 0; --i)
             {
+                var item = m_LoadingItems[i];
                 m_Loader.Load(item.MaskTexturePath, item.OnTextureLoaded);
+                m_LoadingItems.RemoveAt(i);
+                var elapsedSeconds = m_Timer.ElapsedSeconds;
+                if (elapsedSeconds >= m_MaxLoadTime)
+                {
+                    break;
+                }
             }
-            m_LoadingItems.Clear();
-#endif
+            m_Timer.Stop();
         }
 
         private class LoadItem
@@ -81,12 +86,16 @@ namespace XDay.WorldAPI.Tile
             public void OnTextureLoaded(Texture2D texture)
             {
                 Material.SetTexture(m_MaskTexturePropertyName, texture);
+                Material.SetTexture(m_MaskTextureAfterPropertyName, texture);
             }
         }
 
-        private List<LoadItem> m_LoadingItems = new();
+        private readonly List<LoadItem> m_LoadingItems = new();
         private Texture2D m_PlaceholderMask;
         private const string m_MaskTexturePropertyName = "_SplatMask";
-        private ITextureLoader m_Loader;
+        private const string m_MaskTextureAfterPropertyName = "_SplatMask_After";
+        private readonly ITextureLoader m_Loader;
+        private readonly SimpleStopwatch m_Timer = new();
+        private readonly float m_MaxLoadTime = 5/1000f;
     }
 }

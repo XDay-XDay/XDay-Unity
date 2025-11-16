@@ -61,6 +61,8 @@ namespace XDay.WorldAPI.Editor
             {
                 Debug.LogError($"加载Prefab失败{m_LOD0}");
                 m_Prefab = new GameObject("Placeholder: " + m_LOD0);
+                var worldRoot = UnityEngine.Object.FindObjectsByType<XDayWorldEditor>(FindObjectsSortMode.None)[0];
+                m_Prefab.transform.SetParent(worldRoot.transform);
             }
             m_Bounds = m_Prefab.QueryRect();
 

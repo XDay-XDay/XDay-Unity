@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -51,20 +51,44 @@ namespace XDay.WorldAPI.Region.Editor
 
                     var layer = GetCurrentLayer();
                     GUI.enabled = layer != null;
+
+                    EditorGUILayout.BeginHorizontal();
                     if (GUILayout.Button("生成Mesh"))
                     {
-                        GenerateAssets(WorldEditor.ActiveWorld.GameFolder);
+                        layer.GenerateMeshes(true);
                     }
-
                     if (GUILayout.Button("生成预览"))
                     {
-                        PreviewGeneratedData(WorldEditor.ActiveWorld.GameFolder, GetLayerIndex(layer.ID), m_PluginLODSystem.CurrentLOD);
+                        layer.GenerateMeshes(false);
                     }
+                    EditorGUILayout.EndHorizontal();
+                    //if (GUILayout.Button("导出"))
+                    //{
+                    //    layer.Export();
+                    //}
+                    //if (GUILayout.Button("导入"))
+                    //{
+                    //    layer.Import();
+                    //}
                     GUI.enabled = true;
+
+                    DrawMeshGenerators();
 
                     DrawRegionSettings();
                 });
                 EditorGUILayout.EndScrollView();
+            }
+        }
+
+        private void DrawMeshGenerators()
+        {
+            var layer = GetCurrentLayer();
+            if (layer != null)
+            {
+                foreach (var gen in layer.MeshGenerators)
+                {
+                    gen.InspectorGUI();
+                }
             }
         }
 

@@ -315,9 +315,25 @@ namespace XDay.WorldAPI.Tile.Editor
 
                     var textures = GetTileMaskTextures(minX, minY, maxX, maxY);
 
+                    Dictionary<Texture2D, ImportSetting> textureToImportSetting = new();
+                    foreach (var texture in textures)
+                    {
+                        //让texture不压缩并且可写
+                        var setting = CreateImportSetting(texture, out var importer);
+                        textureToImportSetting[texture] = setting;
+                        ReimportTextureBeginPaint(texture, importer);
+                    }
+
                     var combiner = new TextureCombiner();
                     m_MaskCombineInfo.CombinedTexture = combiner.Combine(textures, minX, minY, m_MaskCombineInfo.MaxX, m_MaskCombineInfo.MaxY, "Assets");
                     combined = true;
+
+                    //还原texture的设置
+                    foreach (var kv in textureToImportSetting)
+                    {
+                        ReimportTextureEndPaint(kv.Value, kv.Key);
+                    }
+
                     return true;
                 }
                 return false;
@@ -388,6 +404,7 @@ namespace XDay.WorldAPI.Tile.Editor
                     textures.Add(texture);
                 }
             }
+
             return textures;
         }
 

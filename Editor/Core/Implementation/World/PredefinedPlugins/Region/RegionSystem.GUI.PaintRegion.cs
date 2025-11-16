@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -73,7 +73,7 @@ namespace XDay.WorldAPI.Region.Editor
 
         private void CommandAddRegion(RegionSystemLayer layer)
         {
-            var region = new RegionObject(World.AllocateObjectID(), layer.RegionCount, layer.ID, Random.ColorHSV(0, 1, 0, 1, 1, 1), 0, "Region");
+            var region = new RegionObject(World.AllocateObjectID(), layer.RegionCount, layer.ID, Random.ColorHSV(0, 1, 0, 1, 1, 1), 0, "Region", Vector3.zero);
             UndoSystem.CreateObject(region, World.ID, "Add Region System Layer", layer.System.ID, lod: 0);
             layer.SelectedRegionIndex = layer.RegionCount - 1;
         }

@@ -26,8 +26,8 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace XDay.WorldAPI.Editor {
-
+namespace XDay.WorldAPI.Editor
+{
     internal class WorldObjectIDViewer : EditorWindow
     {
         [MenuItem("XDay/地图/World Object ID Viewer")]

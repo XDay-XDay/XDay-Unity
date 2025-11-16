@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -62,7 +62,7 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 foreach (var kv in m_TextureToPaintInfo)
                 {
-                    ReimportTexture(kv.Value.OriginalSetting, kv.Key);
+                    ReimportTextureEndPaint(kv.Value.OriginalSetting, kv.Key);
                 }
             }
             finally
@@ -177,7 +177,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 });
         }
 
-        private void ReimportTexture(ImportSetting setting, Texture2D texture)
+        private void ReimportTextureEndPaint(ImportSetting setting, Texture2D texture)
         {
             var platform = EditorHelper.QueryPlatformName();
             var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(texture)) as TextureImporter;
@@ -389,7 +389,7 @@ namespace XDay.WorldAPI.Tile.Editor
                     var texture = kv.Key;
                     var setting = CreateImportSetting(texture, out var importer);
                     m_TextureToImportSetting[texture] = setting;
-                    ReimportTexture(texture, importer);
+                    ReimportTextureBeginPaint(texture, importer);
                 }
             }
             finally
@@ -414,7 +414,7 @@ namespace XDay.WorldAPI.Tile.Editor
                 Type = importer.textureType,
                 SRGBTexture = importer.sRGBTexture,
                 Filter = importer.filterMode,
-                Material = m_TextureToMaterial[texture],
+                Material = m_TextureToMaterial != null ? m_TextureToMaterial[texture] : null,
                 AlphaSource = importer.alphaSource,
                 MipMapEnabled = importer.mipmapEnabled,
                 Format = textureCompressionSettings.format,
@@ -501,7 +501,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_Pool.Return(data);
         }
 
-        private void ReimportTexture(Texture2D texture, TextureImporter importer)
+        private void ReimportTextureBeginPaint(Texture2D texture, TextureImporter importer)
         {
             importer.filterMode = FilterMode.Bilinear;
             importer.mipmapEnabled = true;

@@ -59,6 +59,9 @@ namespace XDay.WorldAPI.Tile.Editor
             serializer.WriteSerializable(m_PluginLODSystem, "Plugin LOD System", converter, true);
 
             serializer.WriteQuaternion(m_Rotation, "Rotation");
+            serializer.WriteString(m_TilePrefabFolder, "TilePrefabFolder");
+            serializer.WriteBoolean(m_EnableDynamicMaskTextureLoading, "EnableDynamicMaskTextureLoading");
+
             serializer.WriteInt32(m_XTileCount, "X Tile Count");
             serializer.WriteInt32(m_YTileCount, "Y Tile Count");
             serializer.WriteVector2(m_Origin, "Origin");

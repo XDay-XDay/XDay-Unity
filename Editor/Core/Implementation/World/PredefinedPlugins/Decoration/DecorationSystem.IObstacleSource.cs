@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -31,7 +29,7 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    internal partial class DecorationSystem
+    public partial class DecorationSystem
     {
         public List<IObstacle> GetObstacles()
         {

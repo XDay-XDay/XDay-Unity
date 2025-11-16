@@ -40,16 +40,18 @@ namespace XDay.CameraAPI
         public string Name => m_Name;
         public bool ChangeFOV { get => m_ChangeFOV; set => m_ChangeFOV = value; }
         public float FixedFOV { get => m_FixedFOV; set => m_FixedFOV = value; }
-        public float DefaultAltitude { get => m_DefaultAltitude; set => m_DefaultAltitude = value; }
-        public CameraDirection Direction { get => m_Direction; set => m_Direction = value; }
+        public float DefaultAltitude { get => m_DefaultAltitude; set => m_DefaultAltitude = Mathf.Max(0, value); }
+        public CameraDirection Direction { get => m_Direction; internal set => m_Direction = value; }
         public float MouseZoomSpeed { get => m_MouseZoomSpeed; set => m_MouseZoomSpeed = value; }
-        public Rect FocusPointBounds => m_FocusPointBounds;
+        public Rect FocusPointBounds { get => m_FocusPointBounds; internal set => m_FocusPointBounds = value; }
         public float MaxAltitude
         {
             get => m_AltitudeManager.Max == null ? 1000 : m_AltitudeManager.Max.Altitude;
             set => m_AltitudeManager.Max.Altitude = value;
         }
         public float MinAltitude => m_AltitudeManager.Min == null ? 0 : m_AltitudeManager.Min.Altitude;
+        public float MaxAltitudeFOV => m_AltitudeManager.Max.FOV;
+        internal AltitudeSetupManager AltitudeManager => m_AltitudeManager;
 
         public CameraSetup(string name)
         {

@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -31,7 +30,7 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    partial class DecorationSystem
+    public partial class DecorationSystem
     {
         protected override void GenerateGameDataInternal(IObjectIDConverter converter)
         {
@@ -398,6 +397,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
             if(decorationGameObject == null)
             {
+                Debug.LogError($"Invalid decoration game object");
                 return;
             }
 
@@ -423,7 +423,7 @@ namespace XDay.WorldAPI.Decoration.Editor
                         var childPrefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(childPrefab);
                         var childDescriptor = m_ResourceDescriptorSystem.CreateDescriptorIfNotExists(childPrefabPath, World);
                         //child object id is 0
-                        var childDecoration = new DecorationObject(0, -1, true, decoration.LODLayerMask, childGameObject.transform.position, childGameObject.transform.rotation, childGameObject.transform.lossyScale, childDescriptor);
+                        var childDecoration = new DecorationObject(0, -1, true, decoration.LODLayerMask, childGameObject.transform.position, childGameObject.transform.rotation, childGameObject.transform.lossyScale, childDescriptor, decoration.Flags);
                         childDecoration.Init(World);
 
                         GenerateDecorations(childDecoration, childPrefabInstance, childGameObject, decorations);

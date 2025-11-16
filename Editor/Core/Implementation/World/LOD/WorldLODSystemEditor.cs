@@ -26,6 +26,7 @@ using XDay.UtilityAPI.Editor;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using System;
 
 namespace XDay.WorldAPI.Editor
 {
@@ -40,6 +41,7 @@ namespace XDay.WorldAPI.Editor
             m_ShowLOD = EditorGUILayout.Foldout(m_ShowLOD, new GUIContent("LOD设置", ""));
             if (m_ShowLOD)
             {
+                EditorGUI.indentLevel++;
                 UpdateNames(lodSystem.LODCount);
 
                 EditorGUILayout.BeginVertical();
@@ -59,6 +61,7 @@ namespace XDay.WorldAPI.Editor
                     DrawLODList(onLODNameChanged);
                 }
                 EditorGUILayout.EndVertical();
+                EditorGUI.indentLevel--;
             }
         }
 

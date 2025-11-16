@@ -302,7 +302,22 @@ namespace XDay.UtilityAPI
             AssetDatabase.Refresh();
         }
 
-        public static string ObjectField<T>(string title, string assetPath, float maxWidth = 0, System.Action onValueChange = null, string tooltip = null, bool allowSceneObjects = false) where T : UnityEngine.Object
+        public static string ObjectFieldGUID<T>(string title, string assetGUID,
+                    float maxWidth = 0, System.Action onValueChange = null, string tooltip = null,
+                    bool allowSceneObjects = false) where T : UnityEngine.Object
+        {
+            var path = AssetDatabase.GUIDToAssetPath(assetGUID);
+            var newPath = ObjectField<T>(title, path, maxWidth, onValueChange, tooltip, allowSceneObjects);
+            if (newPath != path)
+            {
+                return AssetDatabase.AssetPathToGUID(newPath);
+            }
+            return assetGUID;
+        }
+
+        public static string ObjectField<T>(string title, string assetPath, 
+            float maxWidth = 0, System.Action onValueChange = null, string tooltip = null, 
+            bool allowSceneObjects = false) where T : UnityEngine.Object
         {
             T asset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
             if (string.IsNullOrEmpty(tooltip))

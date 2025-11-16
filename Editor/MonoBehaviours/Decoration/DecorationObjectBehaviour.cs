@@ -45,12 +45,14 @@ namespace XDay.WorldAPI.Decoration.Editor
             Action<int, bool> setEnableHeightAdjust,
             Func<int, bool> getEnableInstanceRendering,
             Action<int, bool> setEnableInstanceRendering,
+            Func<int, bool> isImportedFromConfig,
             Action<int> transformChangeCallback)
         {
             m_ObjectID = objectID;
             m_TransformChangedCallback = transformChangeCallback;
             m_GetEnableHeightAdjust = getEnableHeightAdjust;
             m_GetEnableInstanceRendering = getEnableInstanceRendering;
+            m_IsImportedFromConfig = isImportedFromConfig;
             m_SetEnableHeightAdjust = setEnableHeightAdjust;
             m_SetEnableInstanceRendering = setEnableInstanceRendering;
         }
@@ -71,6 +73,15 @@ namespace XDay.WorldAPI.Decoration.Editor
                 return false;
             }
             return m_GetEnableInstanceRendering(m_ObjectID);
+        }
+
+        public bool IsImportedFromConfig()
+        {
+            if (m_IsImportedFromConfig == null)
+            {
+                return false;
+            }
+            return m_IsImportedFromConfig(m_ObjectID);
         }
 
         public void SetEnableHeightAdjust(bool enable)
@@ -116,6 +127,7 @@ namespace XDay.WorldAPI.Decoration.Editor
         private Func<int, bool> m_GetEnableHeightAdjust;
         private Action<int, bool> m_SetEnableHeightAdjust;
         private Func<int, bool> m_GetEnableInstanceRendering;
+        private Func<int, bool> m_IsImportedFromConfig;
         private Action<int, bool> m_SetEnableInstanceRendering;
     }
 
@@ -144,8 +156,9 @@ namespace XDay.WorldAPI.Decoration.Editor
         {
             var behaviour = target as DecorationObjectBehaviour;
             EditorGUILayout.LabelField($"Object ID: {behaviour.ObjectID}");
-            behaviour.SetEnableHeightAdjust(EditorGUILayout.Toggle("¿ªÆô×ÔÊÊÓ¦¸ß¶ÈĞŞ¸Ä", behaviour.GetEnableHeightAdjust()));
-            behaviour.SetEnableInstanceRendering(EditorGUILayout.Toggle("¿ªÆôInstance Rendering", behaviour.GetEnableInstanceRendering()));
+            behaviour.SetEnableHeightAdjust(EditorGUILayout.Toggle("å¼€å¯è‡ªé€‚åº”é«˜åº¦ä¿®æ”¹", behaviour.GetEnableHeightAdjust()));
+            behaviour.SetEnableInstanceRendering(EditorGUILayout.Toggle("å¼€å¯Instance Rendering", behaviour.GetEnableInstanceRendering()));
+            EditorGUILayout.Toggle("æ˜¯å¦ä»é…ç½®å¯¼å…¥", behaviour.IsImportedFromConfig());
         }
     }
 }

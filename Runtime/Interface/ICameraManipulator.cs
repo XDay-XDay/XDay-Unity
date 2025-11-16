@@ -190,6 +190,15 @@ namespace XDay.CameraAPI
         /// set/get camera max height
         /// </summary>
         float MaxAltitude { get; set; }
+        /// <summary>
+        /// get camera min height
+        /// </summary>
+        float MinAltitude { get; }
+
+        /// <summary>
+        /// current camera height
+        /// </summary>
+        float CurrentAltitude { get; }
 
         Vector3 Forward { get; }
 
@@ -250,7 +259,7 @@ namespace XDay.CameraAPI
         /// </summary>
         void StopFollow();
 
-        void LateUpdate();
+        void Update();
 
         /// <summary>
         /// enable/disable camera manipulator

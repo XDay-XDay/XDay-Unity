@@ -172,6 +172,11 @@ namespace XDay.WorldAPI.Tile.Editor
                 tile?.Init(World);
             }
 
+            if (string.IsNullOrEmpty(m_TilePrefabFolder))
+            {
+                InitTilePrefabFolder();
+            }
+
             for (var i = 0; i < m_YTileCount; ++i)
             {
                 for (var j = 0; j < m_XTileCount; ++j)
@@ -191,7 +196,7 @@ namespace XDay.WorldAPI.Tile.Editor
             m_TileMeshCreator = new TileLODMeshCreator(this);
 
             var material = new Material(Shader.Find("XDay/Grid"));
-            m_Grid = new GridMesh("Tile Grid", m_XTileCount, m_YTileCount, m_TileWidth, m_TileHeight, material, new Color32(255, 243, 60, 150), Root.transform, true);
+            m_Grid = new GridMesh("Tile Grid", m_Origin, m_XTileCount, m_YTileCount, m_TileWidth, m_TileHeight, material, new Color32(255, 243, 60, 150), Root.transform, true);
             m_Grid.SetActive(m_ShowGrid);
             Object.DestroyImmediate(material);
 
@@ -200,6 +205,20 @@ namespace XDay.WorldAPI.Tile.Editor
             ApplyBrushFolder();
 
             InitMasks();
+        }
+
+        private void InitTilePrefabFolder()
+        {
+            foreach (var tile in m_Tiles)
+            {
+                if (tile != null)
+                {
+                    m_TilePrefabFolder = Helper.GetFolderPath(tile.AssetPath);
+                    return;
+                }
+            }
+
+            Debug.LogError("Can't be here!");
         }
 
         protected override void UninitInternal()
@@ -322,12 +341,12 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public Vector2Int UnrotatedPositionToCoordinate(float x, float z)
         {
-            return new Vector2Int(Mathf.FloorToInt(x / m_TileWidth), Mathf.FloorToInt(z / m_TileHeight));
+            return new Vector2Int(Mathf.FloorToInt((x - m_Origin.x) / m_TileWidth), Mathf.FloorToInt((z - m_Origin.y) / m_TileHeight));
         }
 
         public Vector3 CoordinateToUnrotatedPosition(int x, int y)
         {
-            return new Vector3(x * m_TileWidth, 0, y * m_TileHeight);
+            return new Vector3(x * m_TileWidth + m_Origin.x, 0, y * m_TileHeight + m_Origin.y);
         }
 
         public Vector2Int RotatedPositionToCoordinate(float x, float z)
@@ -365,7 +384,7 @@ namespace XDay.WorldAPI.Tile.Editor
         {
             base.EditorDeserialize(deserializer, label);
 
-            deserializer.ReadInt32("TileSystem.Version");
+            var version = deserializer.ReadInt32("TileSystem.Version");
 
             m_TexturePainter = deserializer.ReadSerializable<TexturePainter>("Texture Painter", false);
             m_TexturePainter ??= new TexturePainter();
@@ -386,6 +405,14 @@ namespace XDay.WorldAPI.Tile.Editor
             m_Origin = deserializer.ReadVector2("Origin");
             m_TileWidth = deserializer.ReadSingle("Tile Width");
             m_TileHeight = deserializer.ReadSingle("Tile Height");
+            if (version >= 2)
+            {
+                m_TilePrefabFolder = deserializer.ReadString("Tile Prefab Folder");
+            }
+            if (version >= 3)
+            {
+                m_EnableDynamicMaskTextureLoading = deserializer.ReadBoolean("EnableDynamicMaskTextureLoading");
+            }
 
             m_ResourceDescriptorSystem = deserializer.ReadSerializable<EditorResourceDescriptorSystem>("Resource Descriptor System", false);
             m_MaterialConfigs = deserializer.ReadList("Material Settings", (int index) =>
@@ -443,6 +470,8 @@ namespace XDay.WorldAPI.Tile.Editor
             serializer.WriteVector2(m_Origin, "Origin");
             serializer.WriteSingle(m_TileWidth, "Tile Width");
             serializer.WriteSingle(m_TileHeight, "Tile Height");
+            serializer.WriteString(m_TilePrefabFolder, "Tile Prefab Folder");
+            serializer.WriteBoolean(m_EnableDynamicMaskTextureLoading, "EnableDynamicMaskTextureLoading");
 
             serializer.WriteSerializable(m_ResourceDescriptorSystem, "Resource Descriptor System", converter, false);
 
@@ -484,12 +513,12 @@ namespace XDay.WorldAPI.Tile.Editor
 
         private Vector3 CoordinateToRotatedPosition(int x, int y)
         {
-            return m_Rotation * (new Vector3(x * m_TileWidth, 0, y * m_TileHeight) - Center) + Center;
+            return m_Rotation * (new Vector3(x * m_TileWidth + m_Origin.x, 0, y * m_TileHeight+ m_Origin.y) - Center) + Center;
         }
 
         private Vector3 CoordinateToRotatedCenterPosition(int x, int y)
         {
-            return m_Rotation * (new Vector3((x + 0.5f) * m_TileWidth, 0, (y + 0.5f) * m_TileHeight) - Center) + Center;
+            return m_Rotation * (new Vector3((x + 0.5f) * m_TileWidth + m_Origin.x, 0, (y + 0.5f) * m_TileHeight + m_Origin.y) - Center) + Center;
         }
 
         private void GetTileCoordinatesInRange(Vector3 pos, out int minX, out int minY, out int maxX, out int maxY)
@@ -537,7 +566,7 @@ namespace XDay.WorldAPI.Tile.Editor
 #if ENABLE_CLIP_MASK
             if (clipMask != null)
             {
-                tile.InitClipMask($"Tile {x}_{y}", tileWidth, tileHeight, mLayerData.color32ArrayPool, clipMask);
+                tile.InitClipMask($"Tile {x}_{y}", tileWidth, tileHeight, color32ArrayPool, clipMask);
             }
 #endif
         }
@@ -560,9 +589,14 @@ namespace XDay.WorldAPI.Tile.Editor
         //将每个tile的mask设置成独立的
         private void InitMasks()
         {
+            if (!m_EnableDynamicMaskTextureLoading)
+            {
+                return;
+            }
+
             if (m_TilePrefabFolder == null)
             {
-                Debug.LogError("无法初始化Mask");
+                Debug.LogError("地图编辑器无法初始化Mask,忽略动态Mask加载");
                 return;
             }
 
@@ -581,18 +615,27 @@ namespace XDay.WorldAPI.Tile.Editor
         //将每个tile的mask设置成一张占位贴图,运行时动态加载mask
         private void SetMasksToPlaceholder()
         {
+            if (!m_EnableDynamicMaskTextureLoading)
+            {
+                return;
+            }
+
             if (m_TilePrefabFolder == null)
             {
                 Debug.LogError("无法设置Mask");
                 return;
             }
 
-            var maskTexture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{m_TilePrefabFolder}/placeholder.tga");
-            Debug.Assert(maskTexture != null, $"placeholder mask not found in folder {m_TilePrefabFolder}");
+            var maskTexture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{m_TilePrefabFolder}/MaskPlaceholder.tga");
+            Debug.Assert(maskTexture != null, $"MaskPlaceholder.tga not found in folder {m_TilePrefabFolder}");
+            if (maskTexture == null)
+            {
+                return;
+            }
+
             var materials = EditorHelper.QueryAssets<Material>(new string[] { m_TilePrefabFolder });
             foreach (var material in materials)
             {
-                var path = AssetDatabase.GetAssetPath(material);
                 material.SetTexture(m_TexturePainter.MaskName, maskTexture);
                 EditorUtility.SetDirty(material);
             }
@@ -629,7 +672,8 @@ namespace XDay.WorldAPI.Tile.Editor
         private string m_TilePrefabFolder;
         private GridMesh m_Grid;
         private string m_BrushFolder;
-        private const int m_Version = 1;
+        private bool m_EnableDynamicMaskTextureLoading = false;
+        private const int m_Version = 3;
     }
 }
 

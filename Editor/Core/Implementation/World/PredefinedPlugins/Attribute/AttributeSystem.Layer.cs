@@ -52,18 +52,20 @@ namespace XDay.WorldAPI.Attribute.Editor
             public Color Color { get => m_Color; set => m_Color = value; }
             public LayerType Type { get => m_Type; set => m_Type = value; }
             public bool GridVisible { get => m_GridVisible; set => m_GridVisible = value; }
+            internal int AttributeSystemID { set => m_AttributeSystemID = value; }
             protected override bool EnabledInternal { get => m_Visible; set => m_Visible = value; }
             protected override WorldObjectVisibility VisibilityInternal
             {
                 set { }
                 get => WorldObjectVisibility.Visible;
             }
+            public AttributeSystem System => World.QueryObject<AttributeSystem>(m_AttributeSystemID);
 
             public LayerBase()
             {
             }
 
-            public LayerBase(int id, int objectIndex, 
+            public LayerBase(int id, int objectIndex, int attributeSystemID,
                 string name, 
                 int horizontalGridCount, int verticalGridCount, float gridWidth, float gridHeight, Vector2 origin, 
                 int horizontalBlockCount, int verticalBlockCount, LayerType type, Color color)
@@ -79,6 +81,7 @@ namespace XDay.WorldAPI.Attribute.Editor
                 m_VerticalBlockCount = verticalBlockCount;
                 m_Type = type;
                 m_Color = color;
+                m_AttributeSystemID = attributeSystemID;
             }
 
             protected override void OnInit()
@@ -142,6 +145,7 @@ namespace XDay.WorldAPI.Attribute.Editor
                 writer.WriteColor(m_Color, "Color");
                 writer.WriteBoolean(m_Visible, "Visible");
                 writer.WriteBoolean(m_GridVisible, "Grid Visible");
+                writer.WriteObjectID(m_AttributeSystemID, "Attribute System ID", converter);
             }
 
             public override void EditorDeserialize(IDeserializer reader, string mark)
@@ -181,6 +185,10 @@ namespace XDay.WorldAPI.Attribute.Editor
                 else
                 {
                     m_GridVisible = true;
+                }
+                if (version >= 5)
+                {
+                    m_AttributeSystemID = reader.ReadInt32("Attribute System ID");
                 }
             }
 
@@ -241,9 +249,11 @@ namespace XDay.WorldAPI.Attribute.Editor
             private bool m_Visible = true;
             [SerializeField]
             private bool m_GridVisible = true;
+            [SerializeField]
+            private int m_AttributeSystemID;
             private float m_Width;
             private float m_Height;
-            private const int m_EditorVersion = 4;
+            private const int m_EditorVersion = 5;
             private const int m_RuntimeVersion = 1;
         }
 
@@ -256,8 +266,8 @@ namespace XDay.WorldAPI.Attribute.Editor
             {
             }
 
-            public Layer(int id, int objectIndex, string name, int horizontalGridCount, int verticalGridCount, float gridWidth, float gridHeight, Vector2 origin, int horizontalBlockCount, int verticalBlockCount, LayerType type, Color color)
-                : base(id, objectIndex, name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, horizontalBlockCount, verticalBlockCount, type, color)
+            public Layer(int id, int objectIndex, int attributeSystemID, string name, int horizontalGridCount, int verticalGridCount, float gridWidth, float gridHeight, Vector2 origin, int horizontalBlockCount, int verticalBlockCount, LayerType type, Color color)
+                : base(id, objectIndex, attributeSystemID, name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, horizontalBlockCount, verticalBlockCount, type, color)
             {
                 m_Data = new uint[verticalGridCount * horizontalGridCount];
             }
@@ -324,7 +334,6 @@ namespace XDay.WorldAPI.Attribute.Editor
 
             [SerializeField]
             private uint[] m_Data;
-
             private const int m_EditorVersion = 1;
             private const int m_RuntimeVersion = 1;
         }

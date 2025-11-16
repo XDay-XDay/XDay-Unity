@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -28,7 +28,7 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    internal partial class DecorationSystem
+    public partial class DecorationSystem
     {
         List<MeshSource> IWalkableObjectSource.GetAllWalkableMeshes()
         {

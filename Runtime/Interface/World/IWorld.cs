@@ -124,6 +124,7 @@ namespace XDay.WorldAPI
 
         void Update(Camera camera);
         Rect GetVisibleAreas(Camera camera);
+        Vector3 GetFocusPoint(Camera camera);
         void DebugDraw();
     }
 

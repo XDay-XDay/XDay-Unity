@@ -93,6 +93,11 @@ namespace XDay.WorldAPI
             return Vector3.zero;
         }
 
+        public Vector3 GetFocusPoint(Camera camera)
+        {
+            return Raycast(camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 1)));
+        }
+
         public Rect GetVisibleAreas(Camera camera)
         {
             var p0 = Raycast(camera.ViewportPointToRay(new Vector3(0, 1, 1)));

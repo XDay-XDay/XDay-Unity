@@ -31,6 +31,7 @@ namespace XDay.WorldAPI.Decoration
     {
         public float HitRadius = 5f;
         public bool Show = true;
+        public float MoveDistance = 100;
 
         public void Init(IWorld world)
         {
@@ -67,12 +68,12 @@ namespace XDay.WorldAPI.Decoration
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                m_World.CameraManipulator.SetPosition(m_World.CameraManipulator.RenderPosition + 500 * m_World.CameraManipulator.Forward);
+                m_World.CameraManipulator.SetPosition(m_World.CameraManipulator.RenderPosition + MoveDistance * m_World.CameraManipulator.Forward);
             }
 
             if (Input.GetKeyDown(KeyCode.Return))
             {
-                m_World.CameraManipulator.SetPosition(m_World.CameraManipulator.RenderPosition - 500 * m_World.CameraManipulator.Forward);
+                m_World.CameraManipulator.SetPosition(m_World.CameraManipulator.RenderPosition - MoveDistance * m_World.CameraManipulator.Forward);
             }
         }
 

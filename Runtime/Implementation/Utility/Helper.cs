@@ -70,10 +70,68 @@ namespace XDay.UtilityAPI
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
-            }
 #if UNITY_EDITOR
-            AssetDatabase.Refresh();
+                AssetDatabase.Refresh();
 #endif
+            }
+        }
+
+        /// <summary>
+        /// 移除重复的点,考虑浮点误差
+        /// </summary>
+        public static void RemoveDuplicatedFast(List<Vector3> list, float precision = 0.001f)
+        {
+            if (list == null || list.Count <= 1)
+            {
+                return;
+            }
+
+            var seen = new HashSet<ulong>();
+            int writeIndex = 0;
+            float invPrecision = 1f / precision;
+            for (int i = 0; i < list.Count; i++)
+            {
+                Vector3 p = list[i];
+                // 量化到整数格子（避免浮点哈希问题）
+                long x = (long)Mathf.Round(p.x * invPrecision);
+                long y = (long)Mathf.Round(p.y * invPrecision);
+                long z = (long)Mathf.Round(p.z * invPrecision);
+
+                // 合并为唯一 ulong（假设每个维度不超过 2^21）
+                ulong hash = ((ulong)(x + 2097152) << 42) |
+                             ((ulong)(y + 2097152) << 21) |
+                             (ulong)(z + 2097152);
+
+                if (seen.Add(hash))
+                {
+                    if (writeIndex != i)
+                    {
+                        list[writeIndex] = p;
+                    }
+                    writeIndex++;
+                }
+            }
+
+            list.RemoveRange(writeIndex, list.Count - writeIndex);
+        }
+
+        public static List<Vector3> RemoveDuplicated(List<Vector3> points, float epsilon = 0.001f)
+        {
+            List<Vector3> result = new();
+            foreach (var p in points)
+            {
+                if (IndexOf(result, p, epsilon) < 0)
+                {
+                    result.Add(p);
+                }
+            }
+
+            if (result.Count != points.Count)
+            {
+                UnityEngine.Debug.Log($"removed {points.Count - result.Count} duplicated points");
+            }
+
+            return result;
         }
 
         public static string RemoveExtension(string path)
@@ -154,6 +212,22 @@ namespace XDay.UtilityAPI
         public static Vector2Int GetCenter(this HashSet<Vector2Int> coordinates)
         {
             var center = new Vector2Int(0, 0);
+            foreach (var coord in coordinates)
+            {
+                center += coord;
+            }
+
+            if (coordinates.Count > 0)
+            {
+                center /= coordinates.Count;
+            }
+
+            return center;
+        }
+
+        public static Vector3 GetCenter(this List<Vector3> coordinates)
+        {
+            var center = Vector3.zero;
             foreach (var coord in coordinates)
             {
                 center += coord;
@@ -261,7 +335,7 @@ namespace XDay.UtilityAPI
             {
                 Debug.Assert(false, $"无效的高度{z}");
             }
-            
+
             if (rotationX == 0)
             {
                 return z;
@@ -1329,24 +1403,30 @@ namespace XDay.UtilityAPI
             return interior;
         }
 
-        public static Vector3 FindClosestPointToSegement(Vector3 p, Vector3 segmentStart, Vector3 segmentEnd)
+        public static Vector3 FindClosestPointToSegement(Vector3 p, Vector3 segmentStart, Vector3 segmentEnd, out float distance)
         {
             var dir = segmentEnd - segmentStart;
             var ps = p - segmentStart;
             var proj = Vector3.Dot(dir, ps);
             proj /= dir.sqrMagnitude;
+            Vector3 pos;
             if (proj >= 1)
             {
-                return segmentEnd;
+                pos = segmentEnd;
             }
-            if (proj <= 0)
+            else if (proj <= 0)
             {
-                return segmentStart;
+                pos = segmentStart;
             }
-            return Vector3.Lerp(segmentStart, segmentEnd, proj);
+            else
+            {
+                pos = Vector3.Lerp(segmentStart, segmentEnd, proj);
+            }
+            distance = Vector3.Distance(p, pos);
+            return pos;
         }
 
-        public static void PointToLineSegmentDistance(Vector3 point, Vector3 lineStart, Vector3 lineEnd, out float distance, out bool interior)
+        public static void PointToLineSegmentDistance(Vector3 point, Vector3 lineStart, Vector3 lineEnd, out float distance, out bool interior, out Vector3 pointProjectionOnLine)
         {
             var pointToStart = point - lineStart;
             var pointToEnd = point - lineEnd;
@@ -1356,7 +1436,7 @@ namespace XDay.UtilityAPI
             var dStart = Vector3.Dot(pointToStart, lineDirection);
             var dEnd = Vector3.Dot(pointToEnd, -lineDirection);
 
-            var pointProjectionOnLine = Vector3.Dot(pointToStart, lineDirection) * lineDirection;
+            pointProjectionOnLine = Vector3.Dot(pointToStart, lineDirection) * lineDirection;
             var perpendicularDirection = pointToStart - pointProjectionOnLine;
 
             pointToStart.Normalize();
@@ -1365,24 +1445,30 @@ namespace XDay.UtilityAPI
             distance = perpendicularDirection.magnitude;
         }
 
-        public static int FindClosestEdgeOnProjection(Vector3 point, List<Vector3> polygon)
+        public static int FindClosestEdgeOnProjection(Vector3 point, List<Vector3> polygon, out Vector3 closestPointOutPolygon)
         {
+            closestPointOutPolygon = Vector3.zero;
             var closestEdgeIndex = -1;
             var minimumDistance = float.MaxValue;
             for (var edgeIndex = 0; edgeIndex < polygon.Count; ++edgeIndex)
             {
-                PointToLineSegmentDistance(point, polygon[edgeIndex], polygon[(edgeIndex + 1) % polygon.Count], out var distance, out var interior);
-                if (interior && distance < minimumDistance)
+                //PointToLineSegmentDistance(point, polygon[edgeIndex], polygon[(edgeIndex + 1) % polygon.Count], out var distance, out var interior, out var pointProjectionOnLine);
+
+                var pointProjectionOnLine = FindClosestPointToSegement(point, polygon[edgeIndex], polygon[(edgeIndex + 1) % polygon.Count], out var distance);
+
+                if (distance < minimumDistance)
                 {
+                    closestPointOutPolygon = pointProjectionOnLine;
                     closestEdgeIndex = edgeIndex;
                     minimumDistance = distance;
                 }
             }
 
+            Debug.Assert(closestEdgeIndex >= 0);
             return (closestEdgeIndex + 1) % polygon.Count;
         }
-
-        public static Vector3 ToVector3(this FixedVector3 v)
+		
+		public static Vector3 ToVector3(this FixedVector3 v)
         {
             return new Vector3(v.X.FloatValue, v.Y.FloatValue, v.Z.FloatValue);
         }
@@ -1400,7 +1486,7 @@ namespace XDay.UtilityAPI
         public static FixedVector2 FromVector2(Vector3 v)
         {
             return new FixedVector2(v.x, v.y);
-        }
+        }	
 
         public static long GetTimeNow()
         {
@@ -1423,7 +1509,7 @@ namespace XDay.UtilityAPI
                     if (pos >= 0)
                     {
                         var end = pos + name.Length;
-                        if (end >= type.FullName.Length || 
+                        if (end >= type.FullName.Length ||
                             type.FullName[end] == '.')
                         {
                             return type;
@@ -1600,9 +1686,9 @@ namespace XDay.UtilityAPI
         public static Color32 LerpColor(ref Color32 a, ref Color32 b, float t)
         {
             return new Color32(
-                (byte)(a.r + (b.r - a.r) * t), 
-                (byte)(a.g + (b.g - a.g) * t), 
-                (byte)(a.b + (b.b - a.b) * t), 
+                (byte)(a.r + (b.r - a.r) * t),
+                (byte)(a.g + (b.g - a.g) * t),
+                (byte)(a.b + (b.b - a.b) * t),
                 (byte)(a.a + (b.a - a.a) * t));
         }
 
@@ -2234,7 +2320,7 @@ namespace XDay.UtilityAPI
             }
             return null;
         }
-		
+
         public static string ToHexColor(Color32 color)
         {
             StringBuilder builder = new();
@@ -2351,6 +2437,13 @@ namespace XDay.UtilityAPI
             return Vector2Int.zero;
         }
 
+        //左手坐标系的left turn，用左手坐标系是因为unity是左手坐标系
+        public static bool IsLeftTurnLH(Vector3 a, Vector3 b)
+        {
+            float d = Vector3.Cross(a, b).y;
+            return d <= 0;
+        }
+
         public static int Mod(int x, int y)
         {
             if (x < 0)
@@ -2361,7 +2454,137 @@ namespace XDay.UtilityAPI
             return x % y;
         }
 
+        public static int UpScale(float v)
+        {
+            return (int)(v * m_ScaleFactor);
+        }
+
+        public static double DownScale(long v)
+        {
+            return v / m_ScaleFactor;
+        }
+
+        public static bool ListEqual(List<Vector3> a, List<Vector3> b, float esp)
+        {
+            if (a.Count != b.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < a.Count; ++i)
+            {
+                if (!Approximately(a[i], b[i], esp))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool ListEqual(List<Vector2> a, List<Vector2> b, float esp)
+        {
+            if (a.Count != b.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < a.Count; ++i)
+            {
+                if (!Approximately(a[i], b[i], esp))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool ListEqual(List<int> a, List<int> b)
+        {
+            if (a.Count != b.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < a.Count; ++i)
+            {
+                if (a[i] != b[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool ListEqual(List<List<int>> a, List<List<int>> b)
+        {
+            if (a.Count != b.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < a.Count; ++i)
+            {
+                if (!ListEqual(a[i], b[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool SegmentSegmentIntersectionTest(Vector2 aStart, Vector2 aEnd, Vector2 bStart, Vector2 bEnd,
+            out Vector2 intersectionPoint)
+        {
+            intersectionPoint = Vector2.zero;
+            Vector2 da = aEnd - aStart;
+            Vector2 db = bEnd - bStart;
+            float delta = da.y * db.x - da.x * db.y;
+            if (Mathf.Approximately(delta, 0))
+            {
+                return false;
+            }
+
+            Vector2 k = bStart - aStart;
+            float ta = (k.y * db.x - k.x * db.y) / delta;
+            float tb = (k.y * da.x - k.x * da.y) / delta;
+            if (ta >= 0 && ta < 1.0f && tb >= 0 && tb < 1.0f)
+            {
+                intersectionPoint = aStart + ta * da;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static int IndexOf(List<Vector3> vertices, Vector3 value, float esp = 0.0001f)
+        {
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                if (Approximately(vertices[i], value, esp))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public static Vector3 ConvertToLocalVertices(List<Vector3> vertices, List<Vector3> localVertices)
+        {
+            localVertices.Clear();
+            var center = GetCenter(vertices);
+            foreach (var pos in vertices)
+            {
+                localVertices.Add(pos - center);
+            }
+            return center;
+        }
+
         private const double m_DegToRad = 0.0174532924;
+        private static float m_ScaleFactor = 10000;
     }
 }
 

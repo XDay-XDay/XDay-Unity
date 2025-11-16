@@ -67,6 +67,9 @@ namespace XDay.WorldAPI.Tile.Editor
                 }
             }
 
+            //create placeholder
+            CreateMaskTexture($"{createInfo.OutputPath}/MaskPlaceholder", 2, createInfo.MaskTextureChannelCount);
+
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh();
 

@@ -52,8 +52,9 @@ namespace XDay.CameraAPI
             set => m_Setup.MaxAltitude = value;
         }
         public float MinAltitude => m_Setup.MinAltitude;
-        public Vector2 CurrentAreaMin => m_FocusPointClamp.CurrentAreaMin;
-        public Vector2 CurrentAreaMax => m_FocusPointClamp.CurrentAreaMax;
+        public float CurrentAltitude => RenderPosition.y;
+        public Vector2 CurrentAreaMin => m_FocusPointClamp.FocusPointBoundsMin;
+        public Vector2 CurrentAreaMax => m_FocusPointClamp.FocusPointBoundsMax;
         public Vector3 RenderPosition => m_Transform.CurrentRenderPosition;
         public Vector3 LogicPosition => m_Transform.CurrentLogicPosition;
         public Vector3 FocusPoint => m_FocusPointClamp.Position;
@@ -82,7 +83,7 @@ namespace XDay.CameraAPI
             if (camera.gameObject.GetComponent<CameraDebugger>() == null)
             {
                 var debugger = camera.gameObject.AddComponent<CameraDebugger>();
-                debugger.Init(m_Camera);
+                debugger.Init(m_Camera, m_Setup.Direction == CameraDirection.XY);
             }
 #endif
 
@@ -160,7 +161,7 @@ namespace XDay.CameraAPI
 
         public void SetFocusPointBounds(Vector2 min, Vector2 max)
         {
-            m_FocusPointClamp.SetArea(min, max);
+            m_FocusPointClamp.SetVisibleBounds(min, max);
         }
 
         public void SetPenetrationDistance(float distance)
@@ -229,7 +230,7 @@ namespace XDay.CameraAPI
             return false;
         }
 
-        public void LateUpdate()
+        public void Update()
         {
             if (m_FreeCameraControl)
             {

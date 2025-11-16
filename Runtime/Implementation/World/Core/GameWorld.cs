@@ -85,7 +85,7 @@ namespace XDay.WorldAPI
             m_Plugins = m_PluginLoader.LoadPlugins(this);
         }
 
-        public override void Update(float dt)
+        protected override void OnUpdate(float dt)
         {
             if (Inited)
             {

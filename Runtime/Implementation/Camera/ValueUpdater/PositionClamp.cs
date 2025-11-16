@@ -29,8 +29,8 @@ namespace XDay.CameraAPI
 {
     internal class PositionClamp
     {
-        public Vector2 CurrentAreaMin => m_CurrentAreaMin;
-        public Vector2 CurrentAreaMax => m_CurrentAreaMax;
+        public Vector2 FocusPointBoundsMin => m_FocusPointBoundsMin;
+        public Vector2 FocusPointBoundsMax => m_FocusPointBoundsMax;
         public Vector3 Position => m_Position;
         public bool EnableRestore { get => m_EnableRestore; set => m_EnableRestore = value; }
         public bool EnableClampXZ { get => m_EnableHorizontalClamp; set => m_EnableHorizontalClamp = value; }
@@ -69,12 +69,10 @@ namespace XDay.CameraAPI
             return pos;
         }
 
-        public void SetArea(Vector2 min, Vector2 max)
+        public void SetVisibleBounds(Vector2 min, Vector2 max)
         {
-            m_AreaMin = min;
-            m_AreaMax = max;
-
-            CalculateVisibleBounds(m_CameraManipulator);
+            m_VisibleBoundsMin = min;
+            m_VisibleBoundsMax = max;
         }
 
         private Vector3 ClampXZ(Vector3 cameraPos, Vector3 cameraForward, float cameraRotX)
@@ -86,14 +84,14 @@ namespace XDay.CameraAPI
                 var offset = m_EnableRestore ? new Vector2(m_PenetrationDistance, m_PenetrationDistance) : Vector2.zero;
 
                 GetAreaRange(cameraPos.y, false);
-                var boundsMin = m_CurrentAreaMin - offset;
-                var boundsMax = m_CurrentAreaMax + offset;
-                if (Helper.GT(boundsMin.x, m_Position.x) ||
-                    Helper.GT(m_Position.x, boundsMax.x) ||
-                    Helper.GT(boundsMin.y, m_Position.z) ||
-                    Helper.GT(m_Position.z, boundsMax.y))
+                var focusPointMin = m_FocusPointBoundsMin - offset;
+                var focusPointMax = m_FocusPointBoundsMax + offset;
+                if (Helper.LT(m_Position.x, focusPointMin.x) ||
+                    Helper.GT(m_Position.x, focusPointMax.x) ||
+                    Helper.LT(m_Position.z, focusPointMin.y) ||
+                    Helper.GT(m_Position.z, focusPointMax.y))
                 {
-                    m_Position = Helper.ClampPointInXZPlane(m_Position, boundsMin, boundsMax);
+                    m_Position = Helper.ClampPointInXZPlane(m_Position, focusPointMin, focusPointMax);
                     pos = m_Position - cameraForward * Helper.FocalLengthFromAltitudeXZ(cameraRotX, cameraPos.y);
                 }
             }
@@ -115,8 +113,8 @@ namespace XDay.CameraAPI
                 var offset = m_EnableRestore ? new Vector2(m_PenetrationDistance, m_PenetrationDistance) : Vector2.zero;
 
                 GetAreaRange(-cameraPos.z, true);
-                var boundsMin = m_CurrentAreaMin - offset;
-                var boundsMax = m_CurrentAreaMax + offset;
+                var boundsMin = m_FocusPointBoundsMin - offset;
+                var boundsMax = m_FocusPointBoundsMax + offset;
                 if (Helper.GT(boundsMin.x, m_Position.x) ||
                     Helper.GT(m_Position.x, boundsMax.x) ||
                     Helper.GT(boundsMin.y, m_Position.y) ||
@@ -167,12 +165,16 @@ namespace XDay.CameraAPI
             }
             m_LastCameraHeight = y;
 
-            var size = GetVisibleAreaSize(y, xy, m_CameraManipulator.Camera.fieldOfView);
-            m_CurrentAreaMin = m_VisibleBoundsMin + size * 0.5f;
-            m_CurrentAreaMax = m_VisibleBoundsMax - size * 0.5f;
+            m_VisibleSize = GetVisibleAreaSize(y, xy, m_CameraManipulator.Camera.fieldOfView, out var centerRatio);
+
+            //由于相机视角的不同,相机中心点很可能不在视野范围中心
+            m_FocusPointBoundsMin.x = m_VisibleBoundsMin.x + m_VisibleSize.x * centerRatio.x;
+            m_FocusPointBoundsMin.y = m_VisibleBoundsMin.y + m_VisibleSize.y * centerRatio.y;
+            m_FocusPointBoundsMax.x = m_VisibleBoundsMax.x - m_VisibleSize.x * (1 - centerRatio.x);
+            m_FocusPointBoundsMax.y = m_VisibleBoundsMax.y - m_VisibleSize.y * (1 - centerRatio.y);
         }
 
-        private Vector2 GetVisibleAreaSize(float cameraHeight, bool xy, float fov)
+        private Vector2 GetVisibleAreaSize(float cameraHeight, bool xy, float fov, out Vector2 centerRatio)
         {
             var camera = m_CameraManipulator.Camera;
             var cameraTransform = camera.transform;
@@ -191,16 +193,15 @@ namespace XDay.CameraAPI
                 cameraTransform.position = new Vector3(0, cameraHeight, 0);
             }
             var area = m_Calculator.GetVisibleAreas(m_CameraManipulator.Camera);
+
+            //z值会被忽略
+            var focusPointWorldPosition = m_Calculator.GetFocusPoint(camera);
+            centerRatio.x = Mathf.Clamp01((focusPointWorldPosition.x - area.xMin) / area.width);
+            centerRatio.y = Mathf.Clamp01((focusPointWorldPosition.z - area.yMin) / area.height);
+
             cameraTransform.position = oldPos;
             camera.fieldOfView = oldFOV;
             return area.size;
-        }
-
-        private void CalculateVisibleBounds(ICameraManipulator camera)
-        {
-            var maxVisibleSize = GetVisibleAreaSize(camera.MaxAltitude, camera.Direction == CameraDirection.XY, camera.Setup.FixedFOV);
-            m_VisibleBoundsMin = m_AreaMin - maxVisibleSize * 0.5f;
-            m_VisibleBoundsMax = m_AreaMax + maxVisibleSize * 0.5f;
         }
 
         private Vector3 m_Position;
@@ -211,10 +212,10 @@ namespace XDay.CameraAPI
         //当相机拉到最远时可视范围
         private Vector2 m_VisibleBoundsMin;
         private Vector2 m_VisibleBoundsMax;
-        private Vector2 m_CurrentAreaMin;
-        private Vector2 m_CurrentAreaMax;
-        private Vector2 m_AreaMin;
-        private Vector2 m_AreaMax;
+        //相机当前中心点移动范围
+        private Vector2 m_FocusPointBoundsMin;
+        private Vector2 m_FocusPointBoundsMax;
+        private Vector2 m_VisibleSize;
         private float m_LastCameraHeight;
         private CameraDirection m_Direction;
         private ICameraVisibleAreaCalculator m_Calculator;

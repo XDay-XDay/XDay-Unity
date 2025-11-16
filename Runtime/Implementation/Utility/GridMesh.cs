@@ -33,6 +33,7 @@ namespace XDay.UtilityAPI
         public float GridHeight => m_GridHeight;
 
         public GridMesh(string name, 
+            Vector2 origin,
             int horizontalGridCount, 
             int verticalGridCount, 
             float gridWidth, 
@@ -45,10 +46,11 @@ namespace XDay.UtilityAPI
             float height = 0.05f,
             string colorPropertyName = "_Color")
         {
-            CreateLine(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, parent, material, hideGameObject, renderQueue, height, color, colorPropertyName);
+            CreateLine(name, origin, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, parent, material, hideGameObject, renderQueue, height, color, colorPropertyName);
         }
 
         public GridMesh(string name,
+            Vector2 origin,
             int horizontalGridCount,
             int verticalGridCount,
             float gridWidth,
@@ -59,7 +61,7 @@ namespace XDay.UtilityAPI
             int renderQueue = 0,
             float height = 0.05f,
             string colorPropertyName = "_Color")
-            : this(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, material, Color.white, parent, hideGameObject, renderQueue, height, colorPropertyName)
+            : this(name, origin, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, material, Color.white, parent, hideGameObject, renderQueue, height, colorPropertyName)
         {
         }
 
@@ -84,6 +86,7 @@ namespace XDay.UtilityAPI
         }
 
         private void CreateLine(string name, 
+            Vector2 origin,
             int horizontalGridCount, 
             int verticalGridCount, 
             float gridWidth, 
@@ -96,6 +99,7 @@ namespace XDay.UtilityAPI
             Color color, 
             string colorPropertyName)
         {
+            m_Origin = origin;
             m_HorizontalGridCount = horizontalGridCount;
             m_VerticalGridCount = verticalGridCount;
             m_GridWidth = gridWidth;
@@ -134,16 +138,16 @@ namespace XDay.UtilityAPI
             //horizontal line
             for (var i = 0; i < vResolution; ++i)
             {
-                vertices[i * 2] = new Vector3(0, 0, i * gridHeight);
-                vertices[i * 2 + 1] = new Vector3(width, 0, i * gridHeight);
+                vertices[i * 2] = new Vector3(m_Origin.x, 0, i * gridHeight + m_Origin.y);
+                vertices[i * 2 + 1] = new Vector3(width + m_Origin.x, 0, i * gridHeight + m_Origin.y);
             }
 
             //vertical line
             var offset = vResolution * 2;
             for (var i = 0; i < hResolution; ++i)
             {
-                vertices[offset + i * 2] = new Vector3(i * gridWidth, 0, 0);
-                vertices[offset + i * 2 + 1] = new Vector3(i * gridWidth, 0, height);
+                vertices[offset + i * 2] = new Vector3(i * gridWidth + m_Origin.x, 0, m_Origin.y);
+                vertices[offset + i * 2 + 1] = new Vector3(i * gridWidth + m_Origin.x, 0, height + m_Origin.y);
             }
 
             for (var i = 0; i < indices.Length; ++i)
@@ -169,5 +173,6 @@ namespace XDay.UtilityAPI
         private int m_VerticalGridCount;
         private float m_GridWidth;
         private float m_GridHeight;
+        private Vector2 m_Origin;
     }
 }

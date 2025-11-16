@@ -857,7 +857,7 @@ namespace XDay.PlayerBuildPipeline.Editor
         {
             var start = stageView.GetTopCenter();
             var end = prevStageView.GetBottomCenter();
-            Helper.PointToLineSegmentDistance(mouseWorldPos, start, end, out var distance, out bool interior);
+            Helper.PointToLineSegmentDistance(mouseWorldPos, start, end, out var distance, out bool interior, out _);
             if (interior && distance <= m_LineWidth * 2)
             {
                 return true;

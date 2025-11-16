@@ -48,6 +48,7 @@ namespace XDay.WorldAPI.Editor
             m_Root = new GameObject(WorldDefine.WORLD_EDITOR_NAME);
             m_Root.tag = "EditorOnly";
             m_Root.AddComponent<PhysxSetup>();
+            m_Root.AddComponent<XDayWorldEditor>();
 
             CreateWorldSystem();
 
@@ -80,6 +81,8 @@ namespace XDay.WorldAPI.Editor
             m_Root = null;
 
             m_EventSystem = null;
+
+            m_CameraEditor = null;
         }
 
         public static void Update(float dt)
@@ -98,6 +101,12 @@ namespace XDay.WorldAPI.Editor
             {
                 SelectedPluginIndex = -1;
                 m_ActiveWorld = world;
+
+                if (world != null)
+                {
+                    m_CameraEditor = new();
+                    m_CameraEditor.Load(world.Setup.CameraSetupFilePath);
+                }
             }
         }
 
@@ -166,6 +175,8 @@ namespace XDay.WorldAPI.Editor
         {
             SaveSceneObjects();
 
+            m_CameraEditor?.Save();
+
             m_ActiveWorld?.EditorSerialize();
 
             if (m_ActiveWorld != null)
@@ -180,7 +191,21 @@ namespace XDay.WorldAPI.Editor
         private static void SaveSceneObjects()
         {
             var scene = EditorSceneManager.GetActiveScene();
+            List<GameObject> unsavedGameObjects = new();
+            foreach (var obj in scene.GetRootGameObjects())
+            {
+                if (obj.name == WorldDefine.WORLD_EDITOR_NAME)
+                {
+                    obj.hideFlags = HideFlags.DontSaveInEditor | HideFlags.HideAndDontSave;
+                    unsavedGameObjects.Add(obj);
+                }
+            }
             EditorSceneManager.SaveScene(scene, $"{m_ActiveWorld.GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{WorldDefine.WORLD_EDITOR_NAME}.unity", true);
+
+            foreach (var obj in unsavedGameObjects)
+            {
+                obj.hideFlags = HideFlags.None;
+            }
         }
 
         private static void ResetScene(bool exitGUI = true)

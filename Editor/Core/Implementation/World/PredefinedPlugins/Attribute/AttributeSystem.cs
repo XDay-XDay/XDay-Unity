@@ -97,7 +97,7 @@ namespace XDay.WorldAPI.Attribute.Editor
             var horizontalBlockCount = Mathf.CeilToInt((float)createInfo.HorizontalGridCount / createInfo.MaxGridCountPerBlock);
             var verticalBlockCount = Mathf.CeilToInt((float)createInfo.VerticalGridCount / createInfo.MaxGridCountPerBlock);
 
-            var layer = new Layer(createInfo.Layer0ID, objectIndex: 0, "障碍", createInfo.HorizontalGridCount, createInfo.VerticalGridCount,
+            var layer = new Layer(createInfo.Layer0ID, objectIndex: 0, createInfo.ID, "障碍", createInfo.HorizontalGridCount, createInfo.VerticalGridCount,
                 createInfo.GridWidth, createInfo.GridHeight, createInfo.Origin, horizontalBlockCount, verticalBlockCount, LayerType.AutoObstacle, Color.white);
             m_Layers.Add(layer);
         }
@@ -107,6 +107,8 @@ namespace XDay.WorldAPI.Attribute.Editor
             foreach (var layer in m_Layers)
             {
                 layer.Init(World);
+                //修复旧的AttributeSystem
+                layer.AttributeSystemID = ID;
             }
 
             m_Renderer = new AttributeSystemRenderer(this);

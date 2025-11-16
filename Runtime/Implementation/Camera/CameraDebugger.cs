@@ -30,12 +30,14 @@ namespace XDay.CameraAPI
     {
         public Vector2 Min = new Vector2(-39.14f, -7.745f);
         public Vector2 Max = new Vector2(54.14f, 59.245f);
+        public Rect VisibleAreas => m_VisibleArea;
+        public Rect ExpandedVisibleAreas => m_ExpandedVisibleArea;
 
-        public void Init(Camera camera)
+        public void Init(Camera camera, bool xy)
         {
             m_Camera = camera;
+            m_XYPlane = xy;
 
-            m_XYPlane = true;
             if (m_XYPlane)
             {
                 m_GroundPlane = new Plane(Vector3.back, 0);
@@ -62,11 +64,11 @@ namespace XDay.CameraAPI
             Gizmos.color = Color.red;
             if (m_XYPlane)
             {
-                Gizmos.DrawWireCube(m_ExpandedArea.center.ToVector3XY(), m_ExpandedArea.size.ToVector3XY());
+                Gizmos.DrawWireCube(m_ExpandedVisibleArea.center.ToVector3XY(), m_ExpandedVisibleArea.size.ToVector3XY());
             }
             else
             {
-                Gizmos.DrawWireCube(m_ExpandedArea.center.ToVector3XZ(), m_ExpandedArea.size.ToVector3XZ());
+                Gizmos.DrawWireCube(m_ExpandedVisibleArea.center.ToVector3XZ(), m_ExpandedVisibleArea.size.ToVector3XZ());
             }
 
             Gizmos.color = Color.green;
@@ -90,7 +92,7 @@ namespace XDay.CameraAPI
                 {
                     m_LastCameraPos = cameraPos;
                     m_VisibleArea = GetVisibleAreas(m_Camera);
-                    m_ExpandedArea = Helper.ExpandRect(m_VisibleArea, m_ExpandSize);
+                    m_ExpandedVisibleArea = Helper.ExpandRect(m_VisibleArea, m_ExpandSize);
                 }
             }
         }
@@ -130,7 +132,7 @@ namespace XDay.CameraAPI
         }
 
         private Rect m_VisibleArea;
-        private Rect m_ExpandedArea;
+        private Rect m_ExpandedVisibleArea;
         private Vector3 m_LastCameraPos;
         private Plane m_GroundPlane;
         private Vector2 m_ExpandSize;

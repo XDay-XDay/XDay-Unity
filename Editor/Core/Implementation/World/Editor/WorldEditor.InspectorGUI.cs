@@ -26,6 +26,7 @@ using UnityEngine;
 using UnityEditor;
 using XDay.UtilityAPI.Editor;
 using XDay.UtilityAPI;
+using XDay.CameraAPI.Editor;
 
 namespace XDay.WorldAPI.Editor
 {
@@ -57,7 +58,9 @@ namespace XDay.WorldAPI.Editor
 
 			DrawControls();
 
-			GUI.skin.button.padding = oldPadding;
+            m_CameraEditor?.SceneGUI();
+
+            GUI.skin.button.padding = oldPadding;
 		}
 
         public static void InspectorGUI()
@@ -199,11 +202,19 @@ namespace XDay.WorldAPI.Editor
 
                 DrawGridSetting();
 
+                DrawCameraSetting();
+
                 DrawLODList();
             }
 
             EditorGUILayout.EndVertical();
 		}
+
+        private static void DrawCameraSetting()
+        {
+            EditorHelper.HorizontalLine();
+            m_CameraEditor?.InspectorGUI();
+        }
 
         private static void UpdatePluginNames()
         {
@@ -576,6 +587,8 @@ namespace XDay.WorldAPI.Editor
         {
             if (m_ActiveWorld != null)
             {
+                EditorHelper.HorizontalLine();
+
                 m_LODEditor.InspectorGUI(m_ActiveWorld.WorldLODSystem, (oldName, newName) => {
                     var pluginCount = m_ActiveWorld.PluginCount;
                     for (var k = 0; k < pluginCount; ++k)
@@ -699,6 +712,7 @@ namespace XDay.WorldAPI.Editor
         private static ToggleImageButton m_VisibilityToggle;
         private static WorldLODSystemEditor m_LODEditor = new();
         private static DrawGridSetting m_DrawGridSetting = new();
+        private static CameraSetupEditor m_CameraEditor;
     }
 }
 

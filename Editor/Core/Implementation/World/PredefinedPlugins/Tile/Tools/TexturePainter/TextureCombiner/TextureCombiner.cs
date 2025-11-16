@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -36,18 +37,20 @@ namespace XDay.WorldAPI.Tile.Editor
         /// </summary>
         public Texture2D Combine(List<Texture2D> maskTextures, int minX, int minY, int maxX, int maxY, string outputPath)
         {
+            var readableTextures = CreateReadableTextures(maskTextures);
+
             var width = maxX - minX + 1;
             var height = maxY - minY + 1;
-            Debug.Assert(maskTextures.Count == width * height);
+            Debug.Assert(readableTextures.Count == width * height);
 
-            var errorMsg = Validate(maskTextures, width, height);
+            var errorMsg = Validate(readableTextures, width, height);
             if (!string.IsNullOrEmpty(errorMsg))
             {
                 Debug.LogError(errorMsg);
                 return null;
             }
 
-            var resolution = maskTextures[0].width;
+            var resolution = readableTextures[0].width;
             var combinedResolutionX = resolution * width;
             var combinedResolutionY = resolution * height;
 
@@ -64,9 +67,15 @@ namespace XDay.WorldAPI.Tile.Editor
             {
                 for (var j = minX; j <= maxX; j++)
                 {
-                    SetBlock(combinedPixels, j - minX, i - minY, maskTextures[idx++], combinedResolutionX);
+                    SetBlock(combinedPixels, j - minX, i - minY, readableTextures[idx++], combinedResolutionX);
                 }
             }
+
+            foreach (var tex in readableTextures)
+            {
+                Helper.DestroyUnityObject(tex);
+            }
+            readableTextures = null;
 
             var texture = new Texture2D(combinedResolutionX, combinedResolutionY, TextureFormat.RGBA32, false);
             texture.SetPixels32(combinedPixels);
@@ -86,6 +95,17 @@ namespace XDay.WorldAPI.Tile.Editor
             importer.SaveAndReimport();
 
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        private List<Texture2D> CreateReadableTextures(List<Texture2D> maskTextures)
+        {
+            List<Texture2D> readableTextures = new();
+            foreach (var texture in maskTextures)
+            {
+                readableTextures.Add(EditorHelper.CreateReadableTexture(texture));
+            }
+
+            return readableTextures;
         }
 
         /// <summary>

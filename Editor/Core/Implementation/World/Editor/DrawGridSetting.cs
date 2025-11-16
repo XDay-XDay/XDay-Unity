@@ -46,7 +46,7 @@ namespace XDay.WorldAPI.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     var material = new Material(Shader.Find("XDay/Grid"));
-                    var newGrid = new GridMesh("Custom Grid", newHorizontalGridCount, newVerticalGridCount, newGridWidth, newGridHeight, material, Color.white, world.Root.transform, true);
+                    var newGrid = new GridMesh("Custom Grid", Vector2.zero, newHorizontalGridCount, newVerticalGridCount, newGridWidth, newGridHeight, material, Color.white, world.Root.transform, true);
                     newGrid.SetActive(grid.GetActive());
                     world.Grid = newGrid;
                 }

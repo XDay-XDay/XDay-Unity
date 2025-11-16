@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -53,13 +53,14 @@ namespace XDay.WorldAPI.Region.Editor
         {
         }
 
-        public RegionObject(int id, int index, int regionLayerID, Color color, int configID, string name)
+        public RegionObject(int id, int index, int regionLayerID, Color color, int configID, string name, Vector3 buildingPosition)
             : base(id, index)
         {
             m_RegionLayerID = regionLayerID;
             m_Color = color;
             m_ConfigID = configID;
             m_Name = name;
+            m_BuildingPosition = buildingPosition;
         }
 
         protected override void OnInit()

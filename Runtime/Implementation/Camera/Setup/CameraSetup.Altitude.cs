@@ -33,6 +33,7 @@ namespace XDay.CameraAPI
         {
             public AltitudeSetup Min => m_UserMin != null ? m_UserMin : m_Min;
             public AltitudeSetup Max => m_UserMax != null ? m_UserMax : m_Max;
+            public List<AltitudeSetup> AltitudeSetups => m_Setups;
 
             public AltitudeSetup QuerySetup(string name)
             {
@@ -257,6 +258,14 @@ namespace XDay.CameraAPI
                 return null;
             }
 
+            internal void Sort()
+            {
+                m_Setups.Sort((a, b) =>
+                {
+                    return a.Altitude.CompareTo(b.Altitude);
+                });
+            }
+
             private AltitudeSetup m_UserMin;
             private AltitudeSetup m_UserMax;
             private AltitudeSetup m_Min;
@@ -266,11 +275,11 @@ namespace XDay.CameraAPI
 
         public class AltitudeSetup
         {
-            public string Name => m_Name;
-            public float FOV => m_FOV;
+            public string Name { get => m_Name; internal set => m_Name = value; }
+            public float FOV { get => m_FOV; internal set => m_FOV = Mathf.Max(1, value); }
             public float FocalLength => m_FocalLength;
             public float ZoomFactor => m_ZoomFactor;
-            public float Altitude { get => m_Altitude; set => m_Altitude = value; }
+            public float Altitude { get => m_Altitude; internal set => m_Altitude = Mathf.Max(1, value); }
 
             public AltitudeSetup()
             {

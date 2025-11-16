@@ -29,6 +29,9 @@ using XDay.UtilityAPI;
 using XDay.WorldAPI;
 using XDay.AssetAPI;
 using System;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("XDayUnity.Editor")]
 
 namespace XDay.API
 {

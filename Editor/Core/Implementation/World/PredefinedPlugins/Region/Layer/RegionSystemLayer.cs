@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -21,13 +21,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
-using XDay.UtilityAPI.Editor;
+using XDay.UtilityAPI;
 using XDay.UtilityAPI.Math;
-using static XDay.WorldAPI.Region.Editor.RegionSystem;
+using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Region.Editor
 {
@@ -43,6 +43,7 @@ namespace XDay.WorldAPI.Region.Editor
         public float GridHeight => m_GridHeight;
         public float Width => m_Width;
         public float Height => m_Height;
+        public float YOffset => m_YOffset;
         public float Alpha
         {
             get => m_Alpha;
@@ -76,6 +77,7 @@ namespace XDay.WorldAPI.Region.Editor
             set { }
             get => WorldObjectVisibility.Visible;
         }
+        public List<IRegionSystemLODMeshGen> MeshGenerators => m_MeshGenerators;
 
         public RegionSystemLayer()
         {
@@ -95,7 +97,8 @@ namespace XDay.WorldAPI.Region.Editor
 
             m_GridData = new int[verticalGridCount * horizontalGridCount];
 
-            CreateDefaultParams();
+            m_MeshGenerators.Add(new RegionRectangleMeshGen());
+            m_MeshGenerators.Add(new RegionCurveMeshGen());
         }
 
         protected override void OnInit()
@@ -111,16 +114,12 @@ namespace XDay.WorldAPI.Region.Editor
                 region.Init(World);
             }
 
-            foreach (var param in m_MeshGenerationParamForLODs)
+            foreach (var gen in m_MeshGenerators)
             {
-                param.Init();
+                gen.Init(this);
             }
 
-            m_CurveRegionMeshGenerationParam.Init();
-
             m_Renderer = new RegionSystemLayerRenderer(System.Renderer.Root.transform, this);
-
-            InitEdges();
 
             ShowObjects();
         }
@@ -133,11 +132,9 @@ namespace XDay.WorldAPI.Region.Editor
                 region.Uninit();
             }
 
-            DestroyPreviewObjects();
-
-            for (int i = 0; i < m_CreatorsForLODs.Count; ++i)
+            foreach (var gen in m_MeshGenerators)
             {
-                m_CreatorsForLODs[i].OnDestroy();
+                gen.OnDestroy();
             }
         }
 
@@ -158,6 +155,16 @@ namespace XDay.WorldAPI.Region.Editor
             m_Renderer.UpdateColors(x, y, x + width - 1, y + height - 1);
         }
 
+        public Color GetRegionColor(int id)
+        {
+            var t = GetRegion(id);
+            if (t != null)
+            {
+                return t.Color;
+            }
+            return Color.white;
+        }
+
         public int GetRegionID(int x, int y)
         {
             if (IsValidCoordinate(x, y))
@@ -165,6 +172,16 @@ namespace XDay.WorldAPI.Region.Editor
                 return m_GridData[y * HorizontalGridCount + x];
             }
 
+            return 0;
+        }
+
+        public int GetRegionConfigID(int regionID)
+        {
+            var region = GetRegion(regionID);
+            if (region != null)
+            {
+                return region.ConfigID;
+            }
             return 0;
         }
 
@@ -182,11 +199,28 @@ namespace XDay.WorldAPI.Region.Editor
             return color;
         }
 
-        private RegionObject GetRegion(int regionID)
+        public RegionObject GetRegion(int regionID)
         {
+            if (regionID == 0)
+            {
+                return null;
+            }
+
             foreach (var r in m_Regions)
             {
                 if (r.ID == regionID)
+                {
+                    return r;
+                }
+            }
+            return null;
+        }
+
+        public RegionObject GetRegionByConfigID(int regionConfigID)
+        {
+            foreach (var r in m_Regions)
+            {
+                if (r.ConfigID == regionConfigID)
                 {
                     return r;
                 }
@@ -292,6 +326,11 @@ namespace XDay.WorldAPI.Region.Editor
 
         public override void EditorSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
         {
+            if (m_Renderer != null)
+            {
+                m_YOffset = m_Renderer.Root.transform.position.y;
+            }
+
             base.EditorSerialize(serializer, label, converter);
 
             serializer.WriteInt32(m_EditorVersion, "RegionSystemLayer.Version");
@@ -305,6 +344,7 @@ namespace XDay.WorldAPI.Region.Editor
             serializer.WriteSingle(m_GridWidth, "Grid Width");
             serializer.WriteSingle(m_GridHeight, "Grid Height");
             serializer.WriteSingle(m_Alpha, "Alpha");
+            serializer.WriteSingle(m_YOffset, "YOffset");
 
             var ids = ConvertToIDs(converter);
             serializer.WriteInt32Array(ids, "Grid Data");
@@ -314,12 +354,10 @@ namespace XDay.WorldAPI.Region.Editor
                 serializer.WriteSerializable(obj, $"Object {index}", converter, false);
             });
 
-            serializer.WriteList(m_MeshGenerationParamForLODs, "MeshGenerationParamForLODs", (param, index) =>
+            serializer.WriteList(m_MeshGenerators, "Mesh Generators", (param, index) =>
             {
-                serializer.WriteSerializable(param, $"MeshGenerationParamForLOD {index}", converter, false);
+                serializer.WriteSerializable(param, $"Mesh Generator {index}", converter, false);
             });
-
-            serializer.WriteSerializable(m_CurveRegionMeshGenerationParam, "CurveRegionMeshGenerationParam", converter, false);
 
             EditorPrefs.SetInt(RegionDefine.SELECTED_REGION_INDEX, m_SelectedRegionIndex);
             EditorPrefs.SetBool(RegionDefine.SHOW_REGION, m_ShowRegions);
@@ -329,7 +367,7 @@ namespace XDay.WorldAPI.Region.Editor
         {
             base.EditorDeserialize(deserializer, label);
 
-            deserializer.ReadInt32("RegionSystemLayer.Version");
+            var version = deserializer.ReadInt32("RegionSystemLayer.Version");
 
             m_Name = deserializer.ReadString("Name");
             m_Visible = deserializer.ReadBoolean("Visible");
@@ -340,19 +378,26 @@ namespace XDay.WorldAPI.Region.Editor
             m_GridWidth = deserializer.ReadSingle("Grid Width");
             m_GridHeight = deserializer.ReadSingle("Grid Height");
             m_Alpha = deserializer.ReadSingle("Alpha");
+            m_YOffset = deserializer.ReadSingle("YOffset");
             m_GridData = deserializer.ReadInt32Array("Grid Data");
-
             m_Regions = deserializer.ReadList("Objects", (index) =>
             {
                 return deserializer.ReadSerializable<RegionObject>($"Object {index}", false);
             });
 
-            m_MeshGenerationParamForLODs = deserializer.ReadList("MeshGenerationParamForLODs", (index) =>
+            m_MeshGenerators = deserializer.ReadList("Mesh Generators", (index) =>
             {
-                return deserializer.ReadSerializable<EditorRegionMeshGenerationParam>($"MeshGenerationParamForLOD {index}", false);
+                return deserializer.ReadSerializable<IRegionSystemLODMeshGen>($"Mesh Generator {index}", false);
             });
 
-            m_CurveRegionMeshGenerationParam = deserializer.ReadSerializable<CurveRegionMeshGenerationParam>("CurveRegionMeshGenerationParam", false);
+            if (m_MeshGenerators.Count == 0)
+            {
+                m_MeshGenerators.Add(new RegionRectangleMeshGen());
+            }
+            if (m_MeshGenerators.Count == 1)
+            {
+                m_MeshGenerators.Add(new RegionCurveMeshGen());
+            }
         }
 
         private int[] ConvertToIDs(IObjectIDConverter converter)
@@ -418,8 +463,12 @@ namespace XDay.WorldAPI.Region.Editor
 
         public Vector3 GetRegionCenter(int regionID)
         {
+            return GetRegionCenter(GetRegionCoordinates(regionID));
+        }
+
+        public Vector3 GetRegionCenter(List<Vector2Int> coords)
+        {
             Vector3 total = Vector3.zero;
-            var coords = GetRegionCoordinates(regionID);
             if (coords.Count == 0)
             {
                 return total;
@@ -431,13 +480,105 @@ namespace XDay.WorldAPI.Region.Editor
             return total / coords.Count;
         }
 
-        public int GetGridData(int x, int y)
+        public void GenerateMeshes(bool generateAssets)
         {
-            if (x >= 0 && y >= 0 &&  x < m_HorizontalGridCount && y < m_VerticalGridCount)
+            var error = System.Validate();
+            if (!string.IsNullOrEmpty(error))
             {
-                return m_GridData[y * m_HorizontalGridCount + x];
+                EditorUtility.DisplayDialog("出错了", error, "确定");
+                return;
             }
-            return 0;
+
+            if (generateAssets)
+            {
+                var folder = GetRegionAssetFolder();
+                Helper.CreateDirectory(folder);
+                EditorHelper.DeleteFolderContent(folder);
+            }
+
+            FixGrids();
+
+            foreach (var generator in m_MeshGenerators)
+            {
+                generator.Generate(generateAssets);
+            }
+        }
+
+        public string GetPrefabFolder(int lod)
+        {
+            var folder = GetRegionAssetFolder();
+            return $"{folder}/{Name}/lod{lod}";
+        }
+
+        public string GetRegionObjectNamePrefix(string type, int regionID, int lod)
+        {
+            var folder = GetPrefabFolder(lod);
+            Helper.CreateDirectory(folder);
+            return $"{folder}/region_{type}_{regionID}_lod{lod}";
+        }
+
+        private string GetRegionAssetFolder()
+        {
+            return $"{WorldEditor.ActiveWorld.GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{RegionDefine.REGION_SYSTEM_RUNTIME_ASSETS_FOLDER_NAME}";
+        }
+
+        internal void Export()
+        {
+            ISerializer serializer = ISerializer.CreateBinary();
+            serializer.WriteInt32(m_ExportVersion, "Region.Version");
+
+            serializer.WriteInt32(m_Regions.Count, "Region Count");
+            for (var i = 0; i < m_Regions.Count; i++)
+            {
+                var region = m_Regions[i];
+                serializer.WriteString(region.Name, "");
+                serializer.WriteInt32(region.ConfigID, "");
+                serializer.WriteColor(region.Color, "");
+                serializer.WriteVector3(region.BuildingPosition, "");
+            }
+
+            var gridData = new int[m_GridData.Length];
+            for (var i = 0; i < gridData.Length; i++)
+            {
+                var region = GetRegion(m_GridData[i]);
+                gridData[i] = region == null ? 0 : region.ConfigID;
+            }
+
+            serializer.WriteInt32Array(gridData, "");
+
+            serializer.Uninit();
+
+            EditorHelper.WriteFile(serializer.Data, "d:\\region_export.bytes");
+        }
+
+        internal void Import()
+        {
+            var reader = IDeserializer.CreateBinary(new FileStream("d:\\region_export.bytes", FileMode.Open), ISerializableFactory.Create());
+
+            reader.ReadInt32("Region.Version");
+
+            var regionCount = reader.ReadInt32("Region Count");
+            for (var i = 0; i < regionCount; i++)
+            {
+                var name = reader.ReadString("");
+                var configID = reader.ReadInt32("");
+                var color = reader.ReadColor("");
+                var buildingPosition = reader.ReadVector3("");
+
+                var region = new RegionObject(World.AllocateObjectID(), i, m_ID, color, configID, name, buildingPosition);
+                UndoSystem.CreateObject(region, World.ID, "Add Region System Layer", System.ID, lod: 0);
+            }
+
+            var gridData = reader.ReadInt32Array("");
+            for (var i = 0; i < gridData.Length; i++)
+            {
+                var region = GetRegionByConfigID(gridData[i]);
+                m_GridData[i] = region == null ? 0 : region.ID;
+            }
+
+            m_Renderer.UpdateColors(0, 0, m_HorizontalGridCount - 1, m_VerticalGridCount - 1);
+
+            reader.Uninit();
         }
 
         [SerializeField]
@@ -466,13 +607,16 @@ namespace XDay.WorldAPI.Region.Editor
         private int[] m_GridData;
         [SerializeField]
         private float m_Alpha = 0.7f;
+        [SerializeField]
+        private float m_YOffset = 0;
+        [SerializeField]
+        private List<IRegionSystemLODMeshGen> m_MeshGenerators = new();
         private string[] m_RegionNames;
         private float m_Width;
         private float m_Height;
         private List<RegionObject> m_Regions = new();
         private RegionSystemLayerRenderer m_Renderer = null;
-        private const int m_EditorVersion = 1;
         private static Color m_Empty = new(0, 0, 0, 0);
+        private const int m_EditorVersion = 1;
     }
 }
-

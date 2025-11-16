@@ -24,6 +24,8 @@
 using MiniJSON;
 using System;
 using System.Collections.Generic;
+using System.Text;
+using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 
@@ -117,6 +119,98 @@ namespace XDay.CameraAPI
             }
         }
 
+        public void Save(string path)
+        {
+            var error = Validate();
+            if (!string.IsNullOrEmpty(error))
+            {
+                EditorUtility.DisplayDialog("出错了,无法保存相机配置", error, "确定");
+                return;
+            }
+
+            Dictionary<string, object> root = new();
+
+            root["Direction"] = m_Direction.ToString();
+            root["Default Altitude"] = m_DefaultAltitude;
+            root["Change FOV"] = m_ChangeFOV;
+            root["Fixed FOV"] = m_FixedFOV;
+
+            var boundsConfig = new Dictionary<string, object>
+            {
+                ["Min"] = FromVector2(m_FocusPointBounds.min),
+                ["Max"] = FromVector2(m_FocusPointBounds.max)
+            };
+            root["Bounds"] = boundsConfig;
+
+            var rotationConfig = new Dictionary<string, object>
+            {
+                ["Pitch"] = m_Orbit.Pitch,
+                ["Yaw"] = m_Orbit.Yaw,
+                ["Range"] = m_Orbit.Range,
+                ["Min Altitude"] = m_Orbit.MinAltitude,
+                ["Max Altitude"] = m_Orbit.MaxAltitude,
+                ["Restore Speed"] = m_Orbit.RestoreSpeed,
+                ["Zoom"] = m_Orbit.EnableTouchOrbit,
+                ["Free"] = m_Orbit.EnableUnrestrictedOrbit
+            };
+            root["Orbit"] = rotationConfig;
+
+            var restoreConfig = new Dictionary<string, object>
+            {
+                ["Duration"] = m_Restore.Duration,
+                ["Distance"] = m_Restore.Distance
+            };
+            root["Restore"] = restoreConfig;
+
+            List<object> altitudes = new();
+            foreach (var altitude in m_AltitudeManager.AltitudeSetups)
+            {
+                var config = new Dictionary<string, object>
+                {
+                    ["Name"] = altitude.Name,
+                    ["Altitude"] = altitude.Altitude,
+                    ["FOV"] = altitude.FOV
+                };
+                altitudes.Add(config);
+            }
+            root["Altitude"] = altitudes;
+
+            var text = Json.Serialize(root);
+
+            EditorHelper.WriteFile(text, path);
+
+            AssetDatabase.Refresh();
+        }
+
+        private string Validate()
+        {
+            StringBuilder error = new();
+            HashSet<string> names = new();
+            foreach (var altitude in m_AltitudeManager.AltitudeSetups)
+            {
+                if (!names.Contains(altitude.Name))
+                {
+                    names.Add(altitude.Name);
+                }
+                else
+                {
+                    error.AppendLine($"重复的名字: {altitude.Name}");
+                }
+            }
+
+            if (m_AltitudeManager.AltitudeSetups[0].Name != "min")
+            {
+                error.AppendLine("min必须是第一个");
+            }
+
+            if (m_AltitudeManager.AltitudeSetups[^1].Name != "max")
+            {
+                error.AppendLine("max必须是最后一个");
+            }
+
+            return error.ToString();
+        }
+
         private Vector2 ToVector2(string v)
         {
             v = v.Trim();
@@ -124,6 +218,11 @@ namespace XDay.CameraAPI
             float x = float.Parse(tokens[0]);
             float y = float.Parse(tokens[1]);
             return new Vector2(x, y);
+        }
+
+        private string FromVector2(Vector2 v)
+        {
+            return $"{v.x},{v.y}";
         }
     }
 }

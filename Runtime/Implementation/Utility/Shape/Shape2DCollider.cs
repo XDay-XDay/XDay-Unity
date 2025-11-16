@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.WorldAPI;
@@ -145,6 +146,64 @@ namespace XDay.UtilityAPI.Shape
         private readonly TransformChangedCheck m_TransformChangeCheck = new();
 
         private static readonly List<Shape2DCollider> m_AllColliders = new();
+#else
+        public int AreaID => 0;
+        public float Height => 0;
+        public bool Walkable => false;
+        public ObstacleAttribute Attribute => ObstacleAttribute.None;
+        public List<Vector3> WorldPolygon => null;
+        public Rect WorldBounds => new Rect();
+        public static List<Shape2DCollider> AllColliders => null;
+        public bool IsTransformChanged { get => false; set { } }
+        public int VertexCount => 0;
+        public float VertexDisplaySize => 0;
+        public bool ShowVertexIndex => false;
+        public List<Vector3> VerticesCopy => null;
+
+        public Vector3 GetVertexPosition(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Vector3 TransformToLocalPosition(Vector3 worldPos)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MoveVertex(int index, Vector3 moveOffset)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MoveShape(Vector3 moveOffset)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool InsertVertex(int index, Vector3 localPosition)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool DeleteVertex(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<Vector3> GetPolyonInLocalSpace()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ResetShape(GameObject gameObject)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Vector3 TransformToWorldPosition(Vector3 vector3)
+        {
+            throw new NotImplementedException();
+        }
 #endif
     }
 }

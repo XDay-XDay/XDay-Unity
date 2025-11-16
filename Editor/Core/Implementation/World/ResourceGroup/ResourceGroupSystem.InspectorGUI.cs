@@ -49,7 +49,7 @@ namespace XDay.WorldAPI.Editor
                     }
                     EditorGUILayout.EndHorizontal();
 
-                    if (m_SelectedGroupIndex >= 0)
+                    if (m_SelectedGroupIndex >= 0 && m_SelectedGroupIndex < m_Groups.Count)
                     {
                         m_Groups[m_SelectedGroupIndex].InspectorGUI(flags);
                     }

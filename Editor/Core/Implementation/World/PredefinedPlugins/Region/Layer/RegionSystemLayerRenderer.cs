@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -194,13 +193,16 @@ namespace XDay.WorldAPI.Region.Editor
         {
             m_Root = new GameObject(m_Layer.Name);
             m_Root.transform.SetParent(parent, true);
+            m_Root.transform.position = new Vector3(0, m_Layer.YOffset, 0);
             Selection.activeGameObject = m_Root;
             var filter = m_Root.AddComponent<MeshFilter>();
             filter.sharedMesh = CreateMesh();
 
             var renderer = m_Root.AddComponent<MeshRenderer>();
-            m_GridMaterial = new Material(Shader.Find("XDay/TextureTransparent"));
-            m_GridMaterial.renderQueue = 3200 + m_Layer.ObjectIndex * 5;
+            m_GridMaterial = new Material(Shader.Find("XDay/TextureTransparent"))
+            {
+                renderQueue = 3200 + m_Layer.ObjectIndex * 5
+            };
             renderer.sharedMaterial = m_GridMaterial;
 
             m_Texture = new Texture2D(m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount, TextureFormat.RGBA32, false);
@@ -241,7 +243,7 @@ namespace XDay.WorldAPI.Region.Editor
         {
             var shader = Shader.Find("XDay/Grid");
             var material = new Material(shader);
-            m_GridMesh = new GridMesh(m_Layer.Name, m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount,
+            m_GridMesh = new GridMesh(m_Layer.Name, m_Layer.Origin, m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount,
                 m_Layer.GridWidth, m_Layer.GridHeight, material, new Color32(255, 190, 65, 150), m_Root.transform, true, 
                 3000 + m_Layer.ObjectIndex * 5 + 1);
             ShowGrid(m_Layer.GridVisible);
@@ -250,34 +252,38 @@ namespace XDay.WorldAPI.Region.Editor
 
         public void UpdateColors(int minX, int minY, int maxX, int maxY)
         {
-            var validRange = CheckRange(minX, minY, maxX, maxY);
+            var validRange = CheckRange(minX, minY, maxX, maxY, out var validMinX, out var validMinY, out var validMaxX, out var validMaxY);
             if (!validRange)
             {
                 return;
             }
 
-            var h = m_Layer.HorizontalGridCount;
-            var v = m_Layer.VerticalGridCount;
-            var bw = maxX - minX + 1;
-            var bh = maxY - minY + 1;
+            var bw = validMaxX - validMinX + 1;
+            var bh = validMaxY - validMinY + 1;
             var colors = m_Layer.System.Renderer.Pool.Rent(bw * bh);
             var idx = 0;
-            for (var y = minY; y <= maxY; ++y)
+            for (var y = validMinY; y <= validMaxY; ++y)
             {
-                for (var x = minX; x <= maxX; ++x)
+                for (var x = validMinX; x <= validMaxX; ++x)
                 {
                     colors[idx] = m_Layer.GetColor(x, y);
                     ++idx;
                 }
             }
 
-            SetGridColors(minX, minY, maxX, maxY, colors);
+            SetGridColors(validMinX, validMinY, validMaxX, validMaxY, colors);
 
             m_Layer.System.Renderer.Pool.Return(colors);
         }
 
-        private bool CheckRange(int minX, int minY, int maxX, int maxY)
+        private bool CheckRange(int minX, int minY, int maxX, int maxY, 
+            out int validMinX, out int validMinY, out int validMaxX, out int validMaxY)
         {
+            validMinX = 0;
+            validMinY = 0;
+            validMaxX = 0;
+            validMaxY = 0;
+
             if (minX >= m_Layer.HorizontalGridCount ||
                 minY >= m_Layer.VerticalGridCount ||
                 maxX < 0 ||
@@ -285,6 +291,11 @@ namespace XDay.WorldAPI.Region.Editor
             {
                 return false;
             }
+
+            validMinX = Mathf.Max(minX, 0);
+            validMinY = Mathf.Max(minY, 0);
+            validMaxX = Mathf.Min(maxX, m_Layer.HorizontalGridCount - 1);
+            validMaxY = Mathf.Min(maxY, m_Layer.VerticalGridCount - 1);
 
             return true;
         }
@@ -317,4 +328,3 @@ namespace XDay.WorldAPI.Region.Editor
     }
 }
 
-//XDay
