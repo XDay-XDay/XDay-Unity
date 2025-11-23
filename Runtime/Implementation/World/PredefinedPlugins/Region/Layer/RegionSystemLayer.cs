@@ -97,7 +97,10 @@ namespace XDay.WorldAPI.Region
             internal abstract void OnUpdateViewport(Rect oldVisibleArea, Rect newVisibleArea);
             public abstract int GetValue(int x, int y);
             public abstract void SetValue(int x, int y, int type);
-            public abstract void SetColor(int regionConfigID, Color color);
+            public abstract void SetBorderLOD0Color(int regionConfigID, Color color);
+            public abstract void SetBorderLOD0Material(int regionConfigID, Material material);
+            public abstract void SetBorderLOD1Material(int regionConfigID, Material material);
+            public abstract void SetMeshLOD1Material(int regionConfigID, Material material);
 
             [SerializeField]
             private string m_Name;
@@ -145,12 +148,36 @@ namespace XDay.WorldAPI.Region
                 return 0;
             }
 
-            public override void SetColor(int regionConfigID, Color color)
+            public override void SetBorderLOD0Color(int regionConfigID, Color color)
             {
                 if (m_RegionsDic.TryGetValue(regionConfigID, out var region))
                 {
                     region.Color = color;
-                    m_Renderer.OnRegionColorChange(region);
+                    m_Renderer.OnRegionBorderLOD0ColorChange(region);
+                }
+            }
+
+            public override void SetBorderLOD0Material(int regionConfigID, Material material)
+            {
+                if (m_RegionsDic.TryGetValue(regionConfigID, out var region))
+                {
+                    m_Renderer.OnRegionBorderLOD0MaterialChange(region, material);
+                }
+            }
+
+            public override void SetBorderLOD1Material(int regionConfigID, Material material)
+            {
+                if (m_RegionsDic.TryGetValue(regionConfigID, out var region))
+                {
+                    m_Renderer.OnRegionBorderLOD1MaterialChange(region, material);
+                }
+            }
+
+            public override void SetMeshLOD1Material(int regionConfigID, Material material)
+            {
+                if (m_RegionsDic.TryGetValue(regionConfigID, out var region))
+                {
+                    m_Renderer.OnRegionMeshLOD1MaterialChange(region, material);
                 }
             }
 

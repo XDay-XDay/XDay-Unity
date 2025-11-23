@@ -124,6 +124,7 @@ namespace XDay.WorldAPI
 
         void Update(Camera camera);
         Rect GetVisibleAreas(Camera camera);
+        Rect GetNarrowVisibleAreas(Camera camera);
         Vector3 GetFocusPoint(Camera camera);
         void DebugDraw();
     }
@@ -141,6 +142,7 @@ namespace XDay.WorldAPI
         void Reset();
         bool BeginUpdate();
         void EndUpdate();
+        void SetDistanceThreshold(float distance);
     }
 
     public interface IResourceDescriptor : IWorldObject

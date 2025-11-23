@@ -35,7 +35,7 @@ using System;
 using System.Collections.Generic;
 using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Defines k-D trees for agents and static obstacles in the

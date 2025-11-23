@@ -31,11 +31,10 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-using System;
 using System.Collections.Generic;
 using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Defines an agent in the simulation.</summary>

@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -61,6 +59,7 @@ namespace XDay.CameraAPI.Editor
     ""Direction"":""XZ"",
     ""Change FOV"":""true"",
     ""Fixed FOV"":""0"",
+    ""Use Narrow View"":""true"",
     ""Default Altitude"":""0"",
     ""Bounds"":
     {

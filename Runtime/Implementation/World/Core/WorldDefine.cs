@@ -53,6 +53,7 @@ namespace XDay.WorldAPI
         public const int CITY_SYSTEM_FILE_ID_OFFSET =           62000000;
         public const int NAVIGATION_SYSTEM_FILE_ID_OFFSET =     63000000;
         public const int LOGIC_OBJECT_SYSTEM_FILE_ID_OFFSET =   64000000;
+        public const int FOG_SYSTEM_FILE_ID_OFFSET          =   94000000;
     }
 }
 

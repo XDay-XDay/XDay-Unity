@@ -45,35 +45,44 @@ namespace XDay.UtilityAPI.Editor
 
             Task.WaitAll(tasks);
 
+            var meshIndexCount = 0;
+            var meshVertexCount = 0;
             for (int i = 0; i < m_Regions.Count; ++i)
             {
                 TriangulateStep2(m_Regions[i], folder, lod, generateAssets);
+
+                meshIndexCount += m_Regions[i].MeshVertices.Length;
+                meshVertexCount += m_Regions[i].MeshIndices.Length;
             }
+            Debug.LogError($"LOD1 Total Mesh Vertex Count: {meshVertexCount}, Triangle Count: {meshIndexCount / 3}");
         }
 
         private void TriangulateStep1(Region region, string folder, int lod, bool generateAssets)
         {
             if (!string.IsNullOrEmpty(folder))
             {
-                PolygonTriangulator.Triangulate(region.Outline, out region.RegionMeshVertices, out region.RegionMeshIndices);
+                PolygonTriangulator.Triangulate(region.Outline, out region.MeshVertices, out region.MeshIndices);
             }
             else
             {
-                region.RegionMeshVertices = null;
-                region.RegionMeshIndices = null;
+                region.MeshVertices = null;
+                region.MeshIndices = null;
             }
         }
 
-        //must be called in main thread
         private void TriangulateStep2(Region region, string folder, int lod, bool generateAssets)
         {
-            var meshVertices = region.RegionMeshVertices;
-            var meshIndices = region.RegionMeshIndices;
+            var meshVertices = region.MeshVertices;
+            var meshIndices = region.MeshIndices;
             if (meshVertices != null)
             {
                 var mesh = new Mesh();
-                mesh.SetVertices(region.RegionMeshVertices);
+                mesh.SetVertices(region.MeshVertices);
                 mesh.SetIndices(meshIndices, MeshTopology.Triangles, 0);
+
+                var uv = CreateMeshUV(region.MeshVertices);
+                mesh.uv = uv;
+
                 var obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 obj.transform.position = new Vector3(0, 0.05f, 0);
                 obj.name = $"region mesh {region.RegionID}";
@@ -91,7 +100,7 @@ namespace XDay.UtilityAPI.Editor
                 {
                     mtl = Object.Instantiate(mtl);
                 }
-                mtl.color = region.Color;
+                //mtl.color = region.Color;
                 renderer.sharedMaterial = mtl;
                 region.SetGameObject(Region.ObjectType.Region, obj);
 
@@ -99,10 +108,10 @@ namespace XDay.UtilityAPI.Editor
                 {
                     var regionConfigID = m_Input.GetRegionConfigIDFunc(region.RegionID);
                     var prefix = m_Input.GetRegionObjectNamePrefix("mesh", regionConfigID, 1);
-                    var localMesh = CreateLocalMesh(mesh, region.RegionID);
+                    var localMesh = CreateLocalMesh(mesh, region.RegionID, out var center);
                     AssetDatabase.CreateAsset(localMesh, $"{prefix}.asset");
                     var regionObj = new GameObject();
-                    regionObj.transform.position = new Vector3(0, 0, 0);
+                    regionObj.transform.position = center;
                     var objRenderer = regionObj.AddComponent<MeshRenderer>();
                     objRenderer.sharedMaterial = m_Input.Settings.RegionMaterial;
                     var regionFilter = regionObj.AddComponent<MeshFilter>();
@@ -113,14 +122,27 @@ namespace XDay.UtilityAPI.Editor
             }
         }
 
-        private Mesh CreateLocalMesh(Mesh mesh, int regionID)
+        private Vector2[] CreateMeshUV(Vector3[] meshVertices)
         {
-            var offset = m_Input.GetRegionCenterFunc(regionID);
+            Vector2[] uvs = new Vector2[meshVertices.Length];
+            var bounds = Helper.CalculateBounds(meshVertices);
+            var idx = 0;
+            foreach (var vert in meshVertices)
+            {
+                uvs[idx] = new Vector2((vert.x - bounds.min.x) / bounds.size.x, (vert.z - bounds.min.z) / bounds.size.z);
+                ++idx;
+            }
+            return uvs;
+        }
+
+        private Mesh CreateLocalMesh(Mesh mesh, int regionID, out Vector3 center)
+        {
+            center = m_Input.GetRegionCenterFunc(regionID);
             Mesh localMesh = Mesh.Instantiate(mesh);
             var vertices = localMesh.vertices;
             for (int i = 0; i < vertices.Length; ++i)
             {
-                vertices[i] -= offset;
+                vertices[i] -= center;
             }
             localMesh.vertices = vertices;
             localMesh.RecalculateBounds();

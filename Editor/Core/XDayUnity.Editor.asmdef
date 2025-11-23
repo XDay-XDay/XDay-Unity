@@ -21,7 +21,8 @@
         "XDay.dll",
         "ZString.dll",
         "NVIDIA.PhysX.dll",
-        "NVIDIA.PhysX.Unity.dll"
+        "NVIDIA.PhysX.Unity.dll",
+        "Poly2Tri.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

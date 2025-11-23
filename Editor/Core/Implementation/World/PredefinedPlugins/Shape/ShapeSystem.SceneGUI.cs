@@ -26,14 +26,13 @@ using UnityEngine;
 using UnityEditor;
 using XDay.UtilityAPI;
 using XDay.WorldAPI.Editor;
-using System;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
     /// <summary>
     /// 编辑Shape
     /// </summary>
-    internal partial class ShapeSystem
+    public partial class ShapeSystem
     {
         public void Clear()
         {

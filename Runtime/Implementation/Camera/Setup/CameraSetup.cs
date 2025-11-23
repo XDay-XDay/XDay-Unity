@@ -39,6 +39,7 @@ namespace XDay.CameraAPI
         public RestoreSetup Restore => m_Restore;
         public string Name => m_Name;
         public bool ChangeFOV { get => m_ChangeFOV; set => m_ChangeFOV = value; }
+        public bool UseNarrowView { get => m_UseNarrowView; set => m_UseNarrowView = value; }
         public float FixedFOV { get => m_FixedFOV; set => m_FixedFOV = value; }
         public float DefaultAltitude { get => m_DefaultAltitude; set => m_DefaultAltitude = Mathf.Max(0, value); }
         public CameraDirection Direction { get => m_Direction; internal set => m_Direction = value; }
@@ -122,6 +123,7 @@ namespace XDay.CameraAPI
 
         private string m_Name;
         private bool m_ChangeFOV = true;
+        private bool m_UseNarrowView = true;
         private float m_FixedFOV = 0;
         //相机默认高度
         private float m_DefaultAltitude = 0;

@@ -172,17 +172,17 @@ namespace XDay.WorldAPI.Attribute.Editor
                 {
                     vertices = new Vector3[]
                     {
-                        new Vector3(0, 0, 0),
-                        new Vector3(0, 0, height),
-                        new Vector3(width, 0, height),
-                        new Vector3(width, 0, 0),
+                        new(0, 0, 0),
+                        new(0, 0, height),
+                        new(width, 0, height),
+                        new(width, 0, 0),
                     },
                     uv = new Vector2[]
                     {
-                        new Vector2(0, 0),
-                        new Vector2(0, 1),
-                        new Vector2(1, 1),
-                        new Vector2(1, 0),
+                        new(0, 0),
+                        new(0, 1),
+                        new(1, 1),
+                        new(1, 0),
                     },
                     triangles = new int[] { 0, 1, 2, 0, 2, 3 }
                 };

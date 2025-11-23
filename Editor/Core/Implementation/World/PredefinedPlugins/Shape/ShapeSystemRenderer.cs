@@ -27,7 +27,7 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
-    internal partial class ShapeSystemRenderer
+    public class ShapeSystemRenderer
     {
         public GameObject Root => m_Root;
 

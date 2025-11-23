@@ -106,6 +106,7 @@ namespace XDay.UtilityAPI.Editor
                 filePath.IndexOf("RecyclableScrollRect") >= 0 ||
                 filePath.IndexOf("RVO2") >= 0 ||
                 filePath.IndexOf("clipper") >= 0 ||
+                filePath.IndexOf("Clipper2") >= 0 ||
                 filePath.IndexOf("KCP\\Protocal") >= 0;
         }
 

@@ -192,7 +192,16 @@ namespace XDay.CameraAPI
             {
                 cameraTransform.position = new Vector3(0, cameraHeight, 0);
             }
-            var area = m_Calculator.GetVisibleAreas(m_CameraManipulator.Camera);
+
+            Rect area;
+            if (m_CameraManipulator.Setup.UseNarrowView)
+            {
+                area = m_Calculator.GetNarrowVisibleAreas(m_CameraManipulator.Camera);
+            }
+            else
+            {
+                area = m_Calculator.GetVisibleAreas(m_CameraManipulator.Camera);
+            }
 
             //z值会被忽略
             var focusPointWorldPosition = m_Calculator.GetFocusPoint(camera);

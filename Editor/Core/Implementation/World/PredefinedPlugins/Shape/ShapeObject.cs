@@ -25,7 +25,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using XDay.UtilityAPI.Shape;
 using XDay.UtilityAPI;
-using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Shape.Editor
 {

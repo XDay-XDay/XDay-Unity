@@ -29,7 +29,7 @@ using XDay.WorldAPI.Editor;
 namespace XDay.WorldAPI.Shape.Editor
 {
     [WorldPluginMetadata("形状层", "shape_editor_data", typeof(ShapeSystemCreateWindow), singleton:true)]
-    internal partial class ShapeSystem : EditorWorldPlugin, IObstacleSource
+    public partial class ShapeSystem : EditorWorldPlugin, IObstacleSource
     {
         public override GameObject Root => m_Renderer == null ? null : m_Renderer.Root;
         public override List<string> GameFileNames => new() { "shape" };
@@ -350,7 +350,7 @@ namespace XDay.WorldAPI.Shape.Editor
             return new();
         }
 
-        private ShapeSystemLayer GetLayer(string name)
+        public ShapeSystemLayer GetLayer(string name)
         {
             foreach (var layer in m_Layers)
             {

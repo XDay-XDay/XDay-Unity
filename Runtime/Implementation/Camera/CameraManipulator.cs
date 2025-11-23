@@ -53,6 +53,7 @@ namespace XDay.CameraAPI
         }
         public float MinAltitude => m_Setup.MinAltitude;
         public float CurrentAltitude => RenderPosition.y;
+        public float LastAltitude => m_Transform.LastRenderPosition.y;
         public Vector2 CurrentAreaMin => m_FocusPointClamp.FocusPointBoundsMin;
         public Vector2 CurrentAreaMax => m_FocusPointClamp.FocusPointBoundsMax;
         public Vector3 RenderPosition => m_Transform.CurrentRenderPosition;
@@ -238,7 +239,7 @@ namespace XDay.CameraAPI
             }
             m_IsRenderTransformChanged = false;
 
-            if (m_Camera.enabled)
+            if (m_Camera != null && m_Camera.enabled)
             {
                 m_Transform.BeginUpdate(m_Camera);
 
@@ -461,16 +462,16 @@ namespace XDay.CameraAPI
         }
 
         private Camera m_Camera;
-        private List<CameraTransformPostProcessor> m_PostProcessors = new();
-        private List<CameraTransformPostProcessor> m_ActivePostProcessors = new();
+        private readonly List<CameraTransformPostProcessor> m_PostProcessors = new();
+        private readonly List<CameraTransformPostProcessor> m_ActivePostProcessors = new();
         private CameraSetup m_Setup;
         private CameraTransform m_Transform;
         private PositionClamp m_FocusPointClamp;
         private FieldOfViewUpdater m_FOVUpdater;
-        private List<BehaviourRequest> m_Queue = new();
-        private List<BehaviourRequestSender> m_Senders = new();
-        private Dictionary<BehaviourType, BehaviourRequestReceiver> m_Receivers = new();
-        private List<BehaviourRequestReceiver> m_ActiveReceivers = new();
+        private readonly List<BehaviourRequest> m_Queue = new();
+        private readonly List<BehaviourRequestSender> m_Senders = new();
+        private readonly Dictionary<BehaviourType, BehaviourRequestReceiver> m_Receivers = new();
+        private readonly List<BehaviourRequestReceiver> m_ActiveReceivers = new();
         private bool m_IsRenderTransformChanged;
         private bool m_NeedDestroyCamera = false;
         private bool m_FreeCameraControl = false;

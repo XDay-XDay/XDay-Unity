@@ -30,24 +30,22 @@ namespace XDay.WorldAPI.Region
         public string Name => m_Name;
         public Vector3 Position => m_Position;
         public int ConfigID => m_ConfigID;
-        public string LOD0PrefabPath => m_LOD0PrefabPath;
-        public string LOD1PrefabPath => m_LOD1PrefabPath;
+        public string FullPrefabPath => m_FullPrefabPath;
         public Rect Bounds => m_Bounds;
         public bool Active { get => m_Active; set => m_Active = value; }
         public Color Color { get => m_Color; set => m_Color = value; }
 
         public RegionObject(string name, int configID, Vector3 position, 
-            Color color, Rect bounds, string lod0PrefabPath, string lod1PrefabPath) 
+            Color color, Rect bounds, string fullPrefabPath) 
         {
             m_Name = name;
             m_Color = color;
             m_Position = position;
             m_Bounds = bounds;
             m_ConfigID = configID;
-            m_LOD0PrefabPath = lod0PrefabPath;
-            m_LOD1PrefabPath = lod1PrefabPath;
+            m_FullPrefabPath = fullPrefabPath;
         }
-
+        
         public bool Intersect(ref Rect area)
         {
             if (m_Bounds.xMin > area.xMax ||
@@ -61,12 +59,11 @@ namespace XDay.WorldAPI.Region
         }
 
         private bool m_Active = false;
-        private string m_Name;
+        private readonly string m_Name;
         private Color m_Color;
         private Vector3 m_Position;
-        private int m_ConfigID;
-        private string m_LOD0PrefabPath;
-        private string m_LOD1PrefabPath;
+        private readonly int m_ConfigID;
+        private readonly string m_FullPrefabPath;
         private Rect m_Bounds;
     }
 }

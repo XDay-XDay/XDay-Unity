@@ -72,10 +72,14 @@ namespace XDay.WorldAPI.Region
             if (m_Renderers.TryGetValue(region.ConfigID, out var renderer))
             {
                 renderer.SetActive(region.Active);
+                if (region.Active)
+                {
+                    renderer.SetLOD(m_Layer.System.CurrentLOD);
+                }
             }
         }
 
-        internal void OnRegionColorChange(RegionObject region)
+        internal void OnRegionBorderLOD0ColorChange(RegionObject region)
         {
             if (m_Renderers.TryGetValue(region.ConfigID, out var renderer))
             {
@@ -83,8 +87,32 @@ namespace XDay.WorldAPI.Region
             }
         }
 
+        internal void OnRegionBorderLOD0MaterialChange(RegionObject region, Material material)
+        {
+            if (m_Renderers.TryGetValue(region.ConfigID, out var renderer))
+            {
+                renderer.SetBorderLOD0Material(material);
+            }
+        }
+
+        internal void OnRegionBorderLOD1MaterialChange(RegionObject region, Material material)
+        {
+            if (m_Renderers.TryGetValue(region.ConfigID, out var renderer))
+            {
+                renderer.SetBorderLOD1Material(material);
+            }
+        }
+
+        internal void OnRegionMeshLOD1MaterialChange(RegionObject region, Material material)
+        {
+            if (m_Renderers.TryGetValue(region.ConfigID, out var renderer))
+            {
+                renderer.SetMeshLOD1Material(material);
+            }
+        }
+
         private GameObject m_Root;
-        private RegionSystem.Layer m_Layer;
-        private Dictionary<int, RegionObjectRenderer> m_Renderers = new();
+        private readonly RegionSystem.Layer m_Layer;
+        private readonly Dictionary<int, RegionObjectRenderer> m_Renderers = new();
     }
 }

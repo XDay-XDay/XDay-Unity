@@ -36,7 +36,7 @@ using System.Collections.Generic;
 using System.Threading;
 using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Defines the simulation.</summary>

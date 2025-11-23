@@ -1627,9 +1627,9 @@ namespace XDay.UtilityAPI
             return bounds;
         }
 
-        public static Bounds CalculateBounds(List<Vector3> points)
+        public static Bounds CalculateBounds(IEnumerable<Vector3> points)
         {
-            if (points.Count == 0)
+            if (!points.Any())
             {
                 return new Bounds();
             }
@@ -2018,6 +2018,21 @@ namespace XDay.UtilityAPI
             }
 
             return result;
+        }
+
+        public static List<Type> GetClassesWithAttribute<TAttribute>()
+                    where TAttribute : Attribute
+        {
+            List<Type> allTypes = new();
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var markedTypes = assembly.GetTypes()
+                                      .Where(t => t.IsClass && t.GetCustomAttribute<TAttribute>() != null)
+                                      .ToList();
+                allTypes.AddRange(markedTypes);
+            }
+            
+            return allTypes;
         }
 
         public static T GetClassAttribute<T>(Type type, bool inherit = false) where T : Attribute

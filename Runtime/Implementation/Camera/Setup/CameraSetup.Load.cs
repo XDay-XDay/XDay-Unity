@@ -25,7 +25,6 @@ using MiniJSON;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 
@@ -58,6 +57,11 @@ namespace XDay.CameraAPI
             if (root.ContainsKey("Change FOV"))
             {
                 m_ChangeFOV = System.Convert.ToBoolean(root["Change FOV"]);
+            }
+
+            if (root.ContainsKey("Use Narrow View"))
+            {
+                m_UseNarrowView = System.Convert.ToBoolean(root["Use Narrow View"]);
             }
 
             //load bounds
@@ -121,10 +125,11 @@ namespace XDay.CameraAPI
 
         public void Save(string path)
         {
+#if UNITY_EDITOR
             var error = Validate();
             if (!string.IsNullOrEmpty(error))
             {
-                EditorUtility.DisplayDialog("出错了,无法保存相机配置", error, "确定");
+                UnityEditor.EditorUtility.DisplayDialog("出错了,无法保存相机配置", error, "确定");
                 return;
             }
 
@@ -179,9 +184,11 @@ namespace XDay.CameraAPI
 
             EditorHelper.WriteFile(text, path);
 
-            AssetDatabase.Refresh();
+            UnityEditor.AssetDatabase.Refresh();
+#endif
         }
 
+#if UNITY_EDITOR
         private string Validate()
         {
             StringBuilder error = new();
@@ -211,6 +218,12 @@ namespace XDay.CameraAPI
             return error.ToString();
         }
 
+        private string FromVector2(Vector2 v)
+        {
+            return $"{v.x},{v.y}";
+        }
+#endif
+
         private Vector2 ToVector2(string v)
         {
             v = v.Trim();
@@ -218,11 +231,6 @@ namespace XDay.CameraAPI
             float x = float.Parse(tokens[0]);
             float y = float.Parse(tokens[1]);
             return new Vector2(x, y);
-        }
-
-        private string FromVector2(Vector2 v)
-        {
-            return $"{v.x},{v.y}";
         }
     }
 }

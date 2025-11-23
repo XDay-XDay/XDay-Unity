@@ -37,6 +37,7 @@ namespace XDay.WorldAPI.Region.Editor
         public bool ShowInInspector { get => m_ShowInInspector; set => m_ShowInInspector = value; }
         public Vector3 BuildingPosition { get => m_BuildingPosition; set => m_BuildingPosition = value; }
         public int ConfigID { get => m_ConfigID; set => m_ConfigID = value; }
+        public int Level { get => m_Level; set => m_Level = value; }
         public List<Vector3> Outline { get => m_Outline; set => m_Outline = value; }
         protected override WorldObjectVisibility VisibilityInternal
         {
@@ -53,7 +54,7 @@ namespace XDay.WorldAPI.Region.Editor
         {
         }
 
-        public RegionObject(int id, int index, int regionLayerID, Color color, int configID, string name, Vector3 buildingPosition)
+        public RegionObject(int id, int index, int regionLayerID, Color color, int configID, string name, Vector3 buildingPosition, int level)
             : base(id, index)
         {
             m_RegionLayerID = regionLayerID;
@@ -61,6 +62,7 @@ namespace XDay.WorldAPI.Region.Editor
             m_ConfigID = configID;
             m_Name = name;
             m_BuildingPosition = buildingPosition;
+            m_Level = level;
         }
 
         protected override void OnInit()
@@ -83,6 +85,7 @@ namespace XDay.WorldAPI.Region.Editor
             serializer.WriteBoolean(m_ShowInInspector, "Show In Inspector");
             serializer.WriteInt32(m_ConfigID, "Config ID");
             serializer.WriteVector3(m_BuildingPosition, "Building Position");
+            serializer.WriteInt32(m_Level, "Level");
             serializer.WriteVector3List(m_Outline, "Outline");
             serializer.WriteStructure("Aspect Container", () =>
             {
@@ -102,6 +105,14 @@ namespace XDay.WorldAPI.Region.Editor
             m_ShowInInspector = deserializer.ReadBoolean("Show In Inspector");
             m_ConfigID = deserializer.ReadInt32("Config ID");
             m_BuildingPosition = deserializer.ReadVector3("Building Position");
+            if (version >= 2)
+            {
+                m_Level = deserializer.ReadInt32("Level");
+            }
+            else
+            {
+                m_Level = 1;
+            }
             m_Outline = deserializer.ReadVector3List("Outline");
             deserializer.ReadStructure("Aspect Container", () =>
             {
@@ -182,10 +193,12 @@ namespace XDay.WorldAPI.Region.Editor
         [SerializeField]
         private int m_ConfigID;
         [SerializeField]
+        private int m_Level;
+        [SerializeField]
         private Vector3 m_BuildingPosition;
         [SerializeField]
         private List<Vector3> m_Outline;
 
-        private const int m_Version = 1;
+        private const int m_Version = 2;
     }
 }

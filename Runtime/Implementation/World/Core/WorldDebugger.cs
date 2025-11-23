@@ -131,8 +131,10 @@ namespace XDay.WorldAPI
             }
             if (m_CameraDebugger != null)
             {
-                GUILayout.Label($"视野范围: {m_CameraDebugger.VisibleAreas}", m_StyleSmall);
-                GUILayout.Label($"扩大的视野范围: {m_CameraDebugger.ExpandedVisibleAreas}", m_StyleSmall);
+                var visibleArea = m_World.CameraVisibleAreaCalculator.VisibleArea;
+                var expandedVisibleArea = m_World.CameraVisibleAreaCalculator.ExpandedArea;
+                GUILayout.Label($"视野范围: {visibleArea}", m_StyleSmall);
+                GUILayout.Label($"扩大的视野范围: {expandedVisibleArea}", m_StyleSmall);
             }
         }
 

@@ -31,10 +31,9 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-using System;
 using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Contains functions and constants used in multiple classes.

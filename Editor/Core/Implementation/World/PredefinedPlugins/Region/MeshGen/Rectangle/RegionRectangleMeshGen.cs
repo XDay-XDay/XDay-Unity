@@ -96,7 +96,7 @@ namespace XDay.WorldAPI.Region.Editor
                 }
             }
 
-            Debug.LogError($"LOD0: vertex count: {totalVertexCount}, indexCount: {totalIndexCount}");
+            Debug.LogError($"LOD0: vertex count: {totalVertexCount}, triangle count: {totalIndexCount / 3}");
 
             if (generateAssets)
             {

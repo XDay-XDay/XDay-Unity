@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
-    internal class ShapeSystemLayer : WorldObject
+    public class ShapeSystemLayer : WorldObject
     {
         public ShapeSystemLayerRenderer Renderer => m_Renderer;
         public ShapeSystem System => World.QueryObject<ShapeSystem>(m_ShapeSystemID);

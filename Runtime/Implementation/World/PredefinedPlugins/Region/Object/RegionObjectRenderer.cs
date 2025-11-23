@@ -31,38 +31,85 @@ namespace XDay.WorldAPI.Region
     {
         public RegionObjectRenderer(RegionObject region, IAssetLoader loader, Transform parent)
         {
-            m_GameObject = loader.LoadGameObject(region.LOD0PrefabPath);
-            if (m_GameObject != null)
+            m_Root = loader.LoadGameObject(region.FullPrefabPath);
+            if (m_Root != null)
             {
-                m_GameObject.transform.localPosition = region.Position;
-                m_GameObject.transform.SetParent(parent, false);
-                m_GameObject.SetActive(region.Active);
-                SetColor(region.Color);
+                m_Root.transform.localPosition = region.Position;
+                m_Root.transform.SetParent(parent, false);
+
+                m_BorderLOD0 = m_Root.transform.Find("LOD0Border").gameObject;
+                m_BorderLOD1 = m_Root.transform.Find("LOD1Border").gameObject;
+                m_MeshLOD1 = m_Root.transform.Find("LOD1Mesh").gameObject;
+                Debug.Assert(m_BorderLOD0 != null && m_BorderLOD1 != null && m_MeshLOD1 != null);
+
+                m_BorderLOD0Renderer = m_BorderLOD0.GetComponent<MeshRenderer>();
+                m_BorderLOD1Renderer = m_BorderLOD1.GetComponent<MeshRenderer>();
+                m_MeshLOD1Renderer = m_MeshLOD1.GetComponent<MeshRenderer>();
+
+                m_Root.SetActive(region.Active);
+                SetColor(Color.white);
             }
         }
 
         public void OnDestroy()
         {
-            Helper.DestroyUnityObject(m_GameObject);
-            m_GameObject = null;
+            Helper.DestroyUnityObject(m_Root);
+            m_Root = null;
         }
 
         internal void SetActive(bool active)
         {
-            if (m_GameObject != null)
+            if (m_Root != null)
             {
-                m_GameObject.SetActive(active);
+                m_Root.SetActive(active);
             }
         }
 
         internal void SetColor(Color color)
         {
-            if (m_GameObject != null)
+            if (m_Root != null)
             {
-                m_GameObject.GetComponent<MeshRenderer>().sharedMaterial.color = color;
+                m_BorderLOD0Renderer.sharedMaterial.color = color;
             }
         }
 
-        private GameObject m_GameObject;
+        internal void SetBorderLOD0Material(Material material)
+        {
+            m_BorderLOD0Renderer.sharedMaterial = material;
+        }
+
+        internal void SetBorderLOD1Material(Material material)
+        {
+            m_BorderLOD1Renderer.sharedMaterial = material;
+        }
+
+        internal void SetMeshLOD1Material(Material material)
+        {
+            m_MeshLOD1Renderer.sharedMaterial = material;
+        }
+
+        internal void SetLOD(int lod)
+        {
+            if (lod == 0)
+            {
+                m_BorderLOD0.SetActive(true);
+                m_BorderLOD1.SetActive(false);
+                m_MeshLOD1.SetActive(false);
+            }
+            else
+            {
+                m_BorderLOD0.SetActive(false);
+                m_BorderLOD1.SetActive(true);
+                m_MeshLOD1.SetActive(true);
+            }
+        }
+
+        private GameObject m_Root;
+        private GameObject m_BorderLOD0;
+        private GameObject m_BorderLOD1;
+        private GameObject m_MeshLOD1;
+        private MeshRenderer m_BorderLOD0Renderer;
+        private MeshRenderer m_BorderLOD1Renderer;
+        private MeshRenderer m_MeshLOD1Renderer;
     }
 }

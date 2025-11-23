@@ -172,6 +172,12 @@ namespace XDay.WorldAPI.House
         Vector3 GetLeftTeleporterPosition();
 
         /// <summary>
+        ///  获取右边传送点坐标
+        /// </summary>
+        /// <returns></returns>
+        Vector3 GetRightTeleporterPosition();
+
+        /// <summary>
         /// 获取房间内随机坐标
         /// </summary>
         /// <param name="curPos">当前坐标,不会生成当前坐标所在格子的坐标</param>

@@ -73,9 +73,8 @@ namespace XDay.WorldAPI.Region
                 var color = reader.ReadColor32("Region Color");
                 var name = reader.ReadString("Region Name");
                 var bounds = reader.ReadRect("Region Bounds");
-                var lod0PrefabPath = reader.ReadString("LOD0 Prefab Path");
-                var lod1PrefabPath = reader.ReadString("LOD1 Prefab Path");
-                RegionObject region = new RegionObject(name, configID, position, color, bounds, lod0PrefabPath, lod1PrefabPath);
+                var fullPrefabPath = reader.ReadString("Full Prefab Path");
+                RegionObject region = new RegionObject(name, configID, position, color, bounds, fullPrefabPath);
                 layer.AddRegion(region);
             }
         }

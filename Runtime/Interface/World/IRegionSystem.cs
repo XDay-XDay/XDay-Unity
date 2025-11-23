@@ -39,7 +39,9 @@ namespace XDay.WorldAPI.Region
         Vector3 CoordinateToPosition(int x, int y);
         Vector3 CoordinateToCenterPosition(int x, int y);
 
-        void SetColor(int regionConfigID, Color color);
+        void SetBorderLOD0Color(int regionConfigID, Color color);
+        void SetBorderLOD1Material(int regionConfigID, Material material);
+        void SetMeshLOD1Material(int regionConfigID, Material material);
     }
 
     [Preserve]
@@ -87,6 +89,8 @@ namespace XDay.WorldAPI.Region
         /// </summary>
         /// <param name="layerIndex"></param>
         /// <param name="color"></param>
-        void SetColor(int layerIndex, int regionConfigID, Color color);
+        void SetBorderLOD0Color(int layerIndex, int regionConfigID, Color color);
+        void SetBorderLOD1Material(int layerIndex, int regionConfigID, Material material);
+        void SetMeshLOD1Material(int layerIndex, int regionConfigID, Material material);
     }
 }

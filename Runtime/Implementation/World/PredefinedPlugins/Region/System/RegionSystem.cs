@@ -34,6 +34,7 @@ namespace XDay.WorldAPI.Region
         public override string TypeName => "RegionSystem";
         public override string Name { get => m_Name; set => throw new System.NotImplementedException(); }
         internal RegionSystemRenderer Renderer => m_Renderer;
+        public int CurrentLOD => m_LODSystem.CurrentLOD;
 
         public RegionSystem()
         {
@@ -43,7 +44,8 @@ namespace XDay.WorldAPI.Region
         {
             m_Renderer = new RegionSystemRenderer(World.Root.transform);
 
-            m_VisibleAreaUpdater = new CameraVisibleAreaUpdater(World.CameraVisibleAreaCalculator);
+            m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_VisibleAreaUpdater.SetDistanceThreshold(40);
 
             foreach (var layer in m_Layers)
             {
@@ -133,16 +135,42 @@ namespace XDay.WorldAPI.Region
             return null;
         }
 
-        public void SetColor(int layerIndex, int regionConfigID, Color color)
+        public void SetBorderLOD1Material(int layerIndex, int regionConfigID, Material material)
         {
             var layer = GetLayer(layerIndex);
             if (layer != null)
             {
-                layer.SetColor(regionConfigID, color);
+                layer.SetBorderLOD1Material(regionConfigID, material);
             }
             else
             {
-                Debug.LogError($"Invalid layer: {layerIndex}");
+                Debug.LogError($"SetMaterial failed: invalid layer: {layerIndex}");
+            }
+        }
+
+        public void SetMeshLOD1Material(int layerIndex, int regionConfigID, Material material)
+        {
+            var layer = GetLayer(layerIndex);
+            if (layer != null)
+            {
+                layer.SetMeshLOD1Material(regionConfigID, material);
+            }
+            else
+            {
+                Debug.LogError($"SetMaterial failed: invalid layer: {layerIndex}");
+            }
+        }
+
+        public void SetBorderLOD0Color(int layerIndex, int regionConfigID, Color color)
+        {
+            var layer = GetLayer(layerIndex);
+            if (layer != null)
+            {
+                layer.SetBorderLOD0Color(regionConfigID, color);
+            }
+            else
+            {
+                Debug.LogError($"SetColor failed, invalid layer: {layerIndex}");
             }
         }
 
@@ -165,7 +193,7 @@ namespace XDay.WorldAPI.Region
         private string m_Name;
         private List<LayerBase> m_Layers;
         private IPluginLODSystem m_LODSystem;
-        private CameraVisibleAreaUpdater m_VisibleAreaUpdater;
+        private ICameraVisibleAreaUpdater m_VisibleAreaUpdater;
         private RegionSystemRenderer m_Renderer;
     }
 }

@@ -269,7 +269,6 @@ namespace XDay.WorldAPI
         {
             m_Inited = false;
 
-            m_Manipulator?.SetActive(false);
             m_Manipulator?.OnDestroy();
 
             foreach (var plugin in m_Plugins)

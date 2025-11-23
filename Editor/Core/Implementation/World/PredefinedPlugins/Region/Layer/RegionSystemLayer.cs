@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -502,6 +503,13 @@ namespace XDay.WorldAPI.Region.Editor
             {
                 generator.Generate(generateAssets);
             }
+
+            if (generateAssets)
+            {
+                BuildFullPrefabs();
+
+                WorldEditor.GameSerialize();
+            }
         }
 
         public string GetPrefabFolder(int lod)
@@ -517,9 +525,70 @@ namespace XDay.WorldAPI.Region.Editor
             return $"{folder}/region_{type}_{regionID}_lod{lod}";
         }
 
+        /// <summary>
+        /// 获取组装LOD0和LOD1后的Prefab路径
+        /// </summary>
+        /// <param name="regionID"></param>
+        /// <param name="lod"></param>
+        /// <returns></returns>
+        public string GetRegionFullObjectNamePrefix(int regionID)
+        {
+            var folder = $"{GetRegionAssetFolder()}/{Name}";
+            Helper.CreateDirectory(folder);
+            return $"{folder}/region_full_{regionID}";
+        }
+
         private string GetRegionAssetFolder()
         {
             return $"{WorldEditor.ActiveWorld.GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{RegionDefine.REGION_SYSTEM_RUNTIME_ASSETS_FOLDER_NAME}";
+        }
+
+        /// <summary>
+        /// 将LOD0和LOD1组装到一起
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        private void BuildFullPrefabs()
+        {
+            for (var i = 0; i < m_Regions.Count; i++)
+            {
+                var full = new GameObject();
+                var lod0BorderPath = $"{GetRegionObjectNamePrefix("border", m_Regions[i].ConfigID, 0)}.prefab";
+                var lod1BorderPath = $"{GetRegionObjectNamePrefix("border", m_Regions[i].ConfigID, 1)}.prefab";
+                var lod1MeshPath = $"{GetRegionObjectNamePrefix("mesh", m_Regions[i].ConfigID, 1)}.prefab";
+                var lod0Border = CreateGameObject(lod0BorderPath, "LOD0Border");
+                if (lod0Border == null)
+                {
+                    continue;
+                }
+                var lod1Border = CreateGameObject(lod1BorderPath, "LOD1Border");
+                var lod1Mesh = CreateGameObject(lod1MeshPath, "LOD1Mesh");
+                lod1Border.gameObject.SetActive(false);
+                lod1Mesh.gameObject.SetActive(false);
+                var pos = lod0Border.transform.position;
+                pos.y = 0;
+                full.transform.position = pos;
+                lod0Border.transform.SetParent(full.transform, true);
+                lod0Border.transform.localPosition = Vector3.zero;
+                lod1Border.transform.SetParent(full.transform, true);
+                lod1Border.transform.localPosition = Vector3.zero;
+                lod1Mesh.transform.SetParent(full.transform, true);
+                lod1Mesh.transform.localPosition = Vector3.zero;
+                PrefabUtility.SaveAsPrefabAsset(full, $"{GetRegionFullObjectNamePrefix(m_Regions[i].ConfigID)}.prefab");
+                Helper.DestroyUnityObject(full);
+            }
+            AssetDatabase.Refresh();
+        }
+
+        private GameObject CreateGameObject(string prefabPath, string name)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+            {
+                return null;
+            }
+            var obj = UnityEngine.Object.Instantiate(prefab);
+            obj.name = name;
+            return obj;
         }
 
         internal void Export()
@@ -535,6 +604,7 @@ namespace XDay.WorldAPI.Region.Editor
                 serializer.WriteInt32(region.ConfigID, "");
                 serializer.WriteColor(region.Color, "");
                 serializer.WriteVector3(region.BuildingPosition, "");
+                serializer.WriteInt32(region.Level, "");
             }
 
             var gridData = new int[m_GridData.Length];
@@ -564,8 +634,9 @@ namespace XDay.WorldAPI.Region.Editor
                 var configID = reader.ReadInt32("");
                 var color = reader.ReadColor("");
                 var buildingPosition = reader.ReadVector3("");
+                var level = reader.ReadInt32("");
 
-                var region = new RegionObject(World.AllocateObjectID(), i, m_ID, color, configID, name, buildingPosition);
+                var region = new RegionObject(World.AllocateObjectID(), i, m_ID, color, configID, name, buildingPosition, level);
                 UndoSystem.CreateObject(region, World.ID, "Add Region System Layer", System.ID, lod: 0);
             }
 

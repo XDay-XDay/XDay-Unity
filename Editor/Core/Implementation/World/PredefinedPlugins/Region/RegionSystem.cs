@@ -49,7 +49,6 @@ namespace XDay.WorldAPI.Region.Editor
         public override Bounds Bounds => m_Bounds;
         public override string TypeName => "EditorRegionSystem";
         public RegionSystemRenderer Renderer => m_Renderer;
-        public bool GenerateUnityAssets { get => m_GenerateUnityAssets; set { m_GenerateUnityAssets = value; } }
         public override int FileIDOffset => WorldDefine.REGION_SYSTEM_FILE_ID_OFFSET;
 
         public RegionSystem()
@@ -62,8 +61,6 @@ namespace XDay.WorldAPI.Region.Editor
             m_Bounds = bounds;
             m_Name = name;
             m_PluginLODSystem = IPluginLODSystem.Create(1);
-
-            m_PluginLODSystem.EventLODCountChanged += OnLODCountChanged;
         }
 
         protected override void InitInternal()
@@ -431,7 +428,6 @@ namespace XDay.WorldAPI.Region.Editor
         private List<RegionSystemLayer> m_Layers = new();
         private int m_CurrentLayerID = 0;
         private IPluginLODSystem m_PluginLODSystem;
-        private bool m_GenerateUnityAssets;
         private const int m_Version = 1;
     }
 }

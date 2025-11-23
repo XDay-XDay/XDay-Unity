@@ -83,7 +83,7 @@ namespace XDay.UtilityAPI.Editor
                     return;
                 }
             }
-            RemoveRegionsVerticesMultithread(false);
+            RemoveRegionsVertices(false);
 
             if (displayProgressBar)
             {
@@ -250,7 +250,7 @@ namespace XDay.UtilityAPI.Editor
         }
 
         //删除与点index够近且满足一些其他条件的点
-        private void RemoveCloseEnoughVertices(Region t, VertexWrapper v, int index, List<VertexWrapper> vertices, 
+        private void RemoveCloseEnoughVertices(Region t, VertexWrapper v, int index, List<VertexWrapper> vertices,
             float distanceThreshold, int regionIndex)
         {
             //遍历从index + 1开始的点
@@ -449,8 +449,10 @@ namespace XDay.UtilityAPI.Editor
                 }
             }
 
-            List<Vector3> outline = new();
-            outline.Add(edges[0].Start);
+            List<Vector3> outline = new()
+            {
+                edges[0].Start
+            };
             var curEdge = edges[0];
             Vector3 end = curEdge.Start;
             //从相连的edge一直走，找到所有的outline顶点
@@ -796,14 +798,15 @@ namespace XDay.UtilityAPI.Editor
             }
             return points;
         }
-        
-        private void RemoveRegionsVerticesMultithread(bool checkError)
+
+        private void RemoveRegionsVertices(bool checkError)
         {
             List<Task<List<Vector3>>> tasks = new();
             for (int i = 0; i < m_Regions.Count; ++i)
             {
                 int idx = i;
-                var task = Task.Run(() => {
+                var task = Task.Run(() =>
+                {
                     var removedVertices = RemoveAndMoveVertices(m_Regions[idx], m_Regions[idx].Outline, idx);
                     if (checkError)
                     {
@@ -858,6 +861,18 @@ namespace XDay.UtilityAPI.Editor
             }
 
             Task.WaitAll(tasks);
+
+#if false
+            foreach (var region in m_Regions)
+            {
+                foreach (var cp in region.ControlPoints)
+                {
+                    var dp = new GameObject("Cp");
+                    var c = dp.AddComponent<DrawControlPointInEditor>();
+                    c.Set(cp.Position, cp.Tangent0, cp.Tangent1);
+                }
+            }
+#endif
         }
 
         //根据region的control points生成曲线outline
@@ -868,7 +883,8 @@ namespace XDay.UtilityAPI.Editor
             for (int i = 0; i < m_Regions.Count; ++i)
             {
                 int idx = i;
-                var task = Task.Run(() => {
+                var task = Task.Run(() =>
+                {
                     m_Regions[idx].Outline = SmoothVertices(m_Regions[idx].ControlPoints, m_Input.Settings.PointDeltaDistance, m_Input.Settings.MaxPointCountInOneSegment);
                 });
 
@@ -896,7 +912,16 @@ namespace XDay.UtilityAPI.Editor
                 totalIndexCount += indexCount;
             }
 
-            Debug.LogError($"LOD1: vertex count: {totalVertexCount}, indexCount: {totalIndexCount}");
+            Debug.LogError($"LOD1: vertex count: {totalVertexCount}, triangleCount: {totalIndexCount / 3}");
+
+#if false
+            foreach (var region in m_Regions)
+            {
+                var dp = new GameObject("region");
+                var d = dp.AddComponent<DrawPolyLineInEditor>();
+                d.SetVertices(region.Outline);
+            }
+#endif
         }
 
         public void HideLine()

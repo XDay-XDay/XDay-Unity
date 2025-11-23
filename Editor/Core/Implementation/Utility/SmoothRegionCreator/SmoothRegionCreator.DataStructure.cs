@@ -30,6 +30,8 @@ namespace XDay.UtilityAPI.Editor
     {
         private class Edge
         {
+            public bool IsHorizontal => Mathf.Approximately(Start.z, End.z);
+
             public Edge(int id, Vector3 start, Vector3 end, int selfRegionID, int neighbourRegionID)
             {
                 ID = id;
@@ -38,8 +40,6 @@ namespace XDay.UtilityAPI.Editor
                 SelfRegionID = selfRegionID;
                 NeighbourRegionID = neighbourRegionID;
             }
-
-            public bool IsHorizontal => Mathf.Approximately(Start.z, End.z);
 
             public Vector3 Start;
             public Vector3 End;
@@ -58,18 +58,18 @@ namespace XDay.UtilityAPI.Editor
         {
             public SharedEdgeWithNeighbourRegion(List<Vector3> controlPoints, int selfRegionID, int neighbourRegionID)
             {
-                ControlPointPositions = controlPoints;
+                m_ControlPointPositions = controlPoints;
                 SelfRegionID = selfRegionID;
                 NeighbourRegionID = neighbourRegionID;
             }
 
             public void RemoveControlPoint(Vector3 pos)
             {
-                for (int i = 0; i < ControlPointPositions.Count; ++i)
+                for (int i = 0; i < m_ControlPointPositions.Count; ++i)
                 {
-                    if (ControlPointPositions[i] == pos)
+                    if (m_ControlPointPositions[i] == pos)
                     {
-                        ControlPointPositions.RemoveAt(i);
+                        m_ControlPointPositions.RemoveAt(i);
                         break;
                     }
                 }
@@ -78,9 +78,9 @@ namespace XDay.UtilityAPI.Editor
             public void ConvertToControlPoints(List<ControlPoint> controlPointsReference)
             {
                 ControlPoints = new List<ControlPoint>();
-                for (int i = 0; i < ControlPointPositions.Count; ++i)
+                for (int i = 0; i < m_ControlPointPositions.Count; ++i)
                 {
-                    var controlPoint = GetControlPoint(controlPointsReference, ControlPointPositions[i]);
+                    var controlPoint = GetControlPoint(controlPointsReference, m_ControlPointPositions[i]);
                     Debug.Assert(controlPoint != null);
                     ControlPoints.Add(controlPoint);
                 }
@@ -100,19 +100,18 @@ namespace XDay.UtilityAPI.Editor
 
             public bool IsEndPoint(Vector3 pos)
             {
-                return ControlPointPositions[ControlPointPositions.Count - 1] == pos;
+                return m_ControlPointPositions[^1] == pos;
             }
 
             public int SelfRegionID;
             public int NeighbourRegionID;
-            //control point
-            private List<Vector3> ControlPointPositions;
             public List<ControlPoint> ControlPoints;
             //曲线点
             public List<Vector3> EvaluatedVertices;
             public string PrefabPath;
             public string MeshPath;
             public int FixedEdgePointCount = 0;
+            private readonly List<Vector3> m_ControlPointPositions;
         }
 
         private class Region
@@ -226,8 +225,8 @@ namespace XDay.UtilityAPI.Editor
                 return null;
             }
 
-            public Vector3[] RegionMeshVertices;
-            public int[] RegionMeshIndices;
+            public Vector3[] MeshVertices;
+            public int[] MeshIndices;
 
             private List<Edge> m_Edges;
             private List<SharedEdgeWithNeighbourRegion> m_OutlineSharedEdges = new();

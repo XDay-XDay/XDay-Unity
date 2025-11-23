@@ -33,7 +33,7 @@
 
 using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Defines static obstacles in the simulation.</summary>

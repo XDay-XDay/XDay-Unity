@@ -23,7 +23,6 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.UtilityAPI.Math;
 
 namespace XDay.UtilityAPI.Editor
 {
@@ -46,10 +45,18 @@ namespace XDay.UtilityAPI.Editor
         {
             Helper.RemoveDuplicatedFast(outline);
 
-            var innerOutline = PolygonHelper.ExpandPolygon(outline, -param.Width, true)[0];
+            var innerOutline = PolygonHelper.ExpandPolygon2(outline, -param.Width, true)[0];
 
             PolygonHelper.GetPolygonDifference(outline, innerOutline, out var noneHoles, out var holes);
-            PolygonTriangulator.Triangulate(noneHoles[0], holes, new(), out var vertices, out var indices);
+
+            var option = new TriangulationOption()
+            {
+                MaximumArea = 0,
+                MinimumAngle = 0,
+                Pool = null,
+                UseDelaunayTriangulation = false,
+            };
+            PolygonTriangulator.Triangulate(noneHoles[0], holes, option, out var vertices, out var indices);
 
             Reorder(innerOutline, outline);
 

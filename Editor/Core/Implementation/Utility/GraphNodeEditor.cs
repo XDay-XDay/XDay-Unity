@@ -104,25 +104,25 @@ namespace XDay.UtilityAPI.Editor
             return pos;
         }
 
-        internal Vector2 World2Window(Vector2 pos)
+        public Vector2 World2Window(Vector2 pos)
         {
             m_Viewer.WorldToWindow(m_WindowContentWidth, m_WindowContentHeight, pos, out float x, out float y);
             return new Vector2(x, y);
         }
 
-        protected Vector2 Window2World(Vector2 pos)
+        public Vector2 Window2World(Vector2 pos)
         {
             m_Viewer.WindowToWorld(m_WindowContentWidth, m_WindowContentHeight, pos, out float x, out float y);
             return new Vector2(x, y);
         }
 
-        protected Vector2 World2Window(float px, float py)
+        public Vector2 World2Window(float px, float py)
         {
             m_Viewer.WorldToWindow(m_WindowContentWidth, m_WindowContentHeight, new Vector2(px, py), out float x, out float y);
             return new Vector2(x, y);
         }
 
-        protected Vector2 Window2World(float px, float py)
+        public Vector2 Window2World(float px, float py)
         {
             m_Viewer.WindowToWorld(m_WindowContentWidth, m_WindowContentHeight, new Vector2(px, py), out float x, out float y);
             return new Vector2(x, y);
@@ -320,7 +320,7 @@ namespace XDay.UtilityAPI.Editor
             }
         }
 
-        internal void DrawRect(Vector2 min, Vector2 max, Color color)
+        public void DrawRect(Vector2 min, Vector2 max, Color color)
         {
             EditorGUI.DrawRect(new Rect(min, max - min), color);
         }

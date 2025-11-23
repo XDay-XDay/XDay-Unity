@@ -51,6 +51,7 @@ namespace XDay.WorldAPI.Tile
             m_Root.transform.SetParent(World.Root.transform, true);
 
             m_CameraVisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_CameraVisibleAreaUpdater.SetDistanceThreshold(40);
 
             m_DescriptorSystem.Init(World);
 

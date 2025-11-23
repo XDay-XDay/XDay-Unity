@@ -116,6 +116,7 @@ namespace XDay.CameraAPI
         public int Priority = 0;
         public int Layer = 0;
         public float MinFollowSpeed = 200.0f;
+        public FocusMovementType MovementType = FocusMovementType.Line;
     }
 
     /// <summary>
@@ -199,6 +200,8 @@ namespace XDay.CameraAPI
         /// current camera height
         /// </summary>
         float CurrentAltitude { get; }
+
+        float LastAltitude { get; }
 
         Vector3 Forward { get; }
 

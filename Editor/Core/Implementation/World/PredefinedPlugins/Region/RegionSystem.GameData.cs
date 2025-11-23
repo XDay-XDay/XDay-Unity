@@ -87,10 +87,8 @@ namespace XDay.WorldAPI.Region.Editor
                 serializer.WriteColor32(region.Color, "Region Color");
                 serializer.WriteString(region.Name, "Region Name");
                 serializer.WriteRect(layer.GetRegionWorldBounds(regionCoordinates[region.ID]), "Bounds Bounds");
-                var lod0PrefabPath = $"{layer.GetRegionObjectNamePrefix("border", region.ConfigID, 0)}.prefab";
-                var lod1PrefabPath = $"{layer.GetRegionObjectNamePrefix("border", region.ConfigID, 1)}.prefab";
-                serializer.WriteString(lod0PrefabPath, "LOD0 Prefab Path");
-                serializer.WriteString(lod1PrefabPath, "LOD1 Prefab Path");
+                var fullPrefabPath = $"{layer.GetRegionFullObjectNamePrefix(region.ConfigID)}.prefab";
+                serializer.WriteString(fullPrefabPath, "Full Prefab Path");
             }
         }
 
@@ -116,7 +114,7 @@ namespace XDay.WorldAPI.Region.Editor
         /// </summary>
         private void ExportJson()
         {
-            var data = GetRegionData(out var horizontalGridCount, out var verticalGridCount, out var neighbours);
+            var data = GetRegionData(out var horizontalGridCount, out var verticalGridCount, out var neighbours, out var buildings);
             if (data != null)
             {
                 Dictionary<string, object> root = new()
@@ -124,7 +122,8 @@ namespace XDay.WorldAPI.Region.Editor
                     ["width"] = horizontalGridCount,
                     ["height"] = verticalGridCount,
                     ["neighbours"] = neighbours,
-                    ["regions"] = data
+                    ["regions"] = data,
+                    ["buildings"] = buildings,
                 };
 
                 var text = Json.Serialize(root);
@@ -137,10 +136,13 @@ namespace XDay.WorldAPI.Region.Editor
             }
         }
 
-        private int[] GetRegionData(out int horizontalGridCount, out int verticalGridCount, out Dictionary<string, object> neighbours)
+        private int[] GetRegionData(out int horizontalGridCount, out int verticalGridCount, 
+            out Dictionary<string, object> neighbours, 
+            out List<object> buildings)
         {
             int[] regionData = null;
             neighbours = null;
+            buildings = null;
             horizontalGridCount = 0;
             verticalGridCount = 0;
 
@@ -176,6 +178,21 @@ namespace XDay.WorldAPI.Region.Editor
                 foreach (var kv in neighboursList)
                 {
                     neighbours.Add(ToRegionConfigID(layer, kv.Key).ToString(), ToList(layer, kv.Value));
+                }
+
+                buildings = new();
+                foreach (var region in layer.Regions)
+                {
+                    var entry = new Dictionary<string, object>
+                    {
+                        ["cfgId"] = region.ConfigID
+                    };
+                    var pos = region.BuildingPosition;
+                    var coord = layer.PositionToCoordinate(pos);
+                    entry["x"] = coord.x;
+                    entry["z"] = coord.y;
+                    entry["level"] = region.Level;
+                    buildings.Add(entry);
                 }
             }
 
@@ -254,10 +271,10 @@ namespace XDay.WorldAPI.Region.Editor
 
         private Vector2Int[] m_Neighbours = new Vector2Int[4]
         {
-            new Vector2Int(-1, 0),
-            new Vector2Int(1, 0),
-            new Vector2Int(0, -1),
-            new Vector2Int(0, 1),
+            new(-1, 0),
+            new(1, 0),
+            new(0, -1),
+            new(0, 1),
         };
 
         private const int m_RuntimeVersion = 1;

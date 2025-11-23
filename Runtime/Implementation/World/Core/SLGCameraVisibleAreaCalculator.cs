@@ -123,6 +123,35 @@ namespace XDay.WorldAPI
             }
         }
 
+        /// <summary>
+        /// 以梯形的下部分作为边框
+        /// </summary>
+        /// <param name="camera"></param>
+        /// <returns></returns>
+        public Rect GetNarrowVisibleAreas(Camera camera)
+        {
+            var bottomLeft = Raycast(camera.ViewportPointToRay(new Vector3(0, 0, 1)));
+            var topLeft = Raycast(camera.ViewportPointToRay(new Vector3(0, 1, 1)));
+            var bottomRight = Raycast(camera.ViewportPointToRay(new Vector3(1, 0, 1)));
+
+            if (m_XYPlane)
+            {
+                var minX = bottomLeft.x;
+                var maxX = bottomRight.x;
+                var minY = bottomLeft.y;
+                var maxY = topLeft.y;
+                return new Rect(minX, minY, maxX - minX, maxY - minY);
+            }
+            else
+            {
+                var minX = bottomLeft.x;
+                var maxX = bottomRight.x;
+                var minZ = bottomLeft.z;
+                var maxZ = topLeft.z;
+                return new Rect(minX, minZ, maxX - minX, maxZ - minZ);
+            }
+        }
+
         private Rect m_VisibleArea;
         private Rect m_ExpandedArea;
         private Vector3 m_LastCameraPos;

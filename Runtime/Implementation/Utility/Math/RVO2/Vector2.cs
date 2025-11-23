@@ -31,10 +31,9 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-using System;
 using System.Globalization;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Defines a two-dimensional vector.</summary>

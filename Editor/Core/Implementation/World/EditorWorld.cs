@@ -355,6 +355,11 @@ namespace XDay.WorldAPI.Editor
                 return Vector3.zero;
             }
 
+            public Rect GetNarrowVisibleAreas(Camera camera)
+            {
+                return new Rect();
+            }
+
             public Rect GetVisibleAreas(Camera camera)
             {
                 return new Rect();

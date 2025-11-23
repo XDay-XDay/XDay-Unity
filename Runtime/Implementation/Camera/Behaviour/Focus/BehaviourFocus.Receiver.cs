@@ -79,9 +79,9 @@ namespace XDay.CameraAPI
                 }
             }
 
-            protected override BehaviourState UpdateInternal(CameraTransform pose)
+            protected override BehaviourState UpdateInternal(CameraTransform transform)
             {
-                return m_CurrentMovement.Update(pose);
+                return m_CurrentMovement.Update(transform);
             }
 
             public override void OnBeingInterrupted(BehaviourRequest request)
@@ -136,7 +136,6 @@ namespace XDay.CameraAPI
                     camera.transform.position = oldPos;
                     param.FocusPoint += screenCenter - screenPos;
                 }
-                
             }
 
             private bool m_AlwaysInvokeCallback;
@@ -144,9 +143,9 @@ namespace XDay.CameraAPI
             private Action<BehaviourType> m_CameraInterruptCallback;
             private LineMovement m_LineMovement;
             private HorizontalAndVertical m_HorizontalAndVerticalMovement;
+            private Movement m_CurrentMovement;
             private FocusMovementType m_MovementType = FocusMovementType.Line;
             private BehaviourMask m_InterruptMask;
-            private Movement m_CurrentMovement;
         }
     }
 }

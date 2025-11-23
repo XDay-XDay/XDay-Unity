@@ -73,7 +73,7 @@ namespace XDay.WorldAPI.Region.Editor
 
         private void CommandAddRegion(RegionSystemLayer layer)
         {
-            var region = new RegionObject(World.AllocateObjectID(), layer.RegionCount, layer.ID, Random.ColorHSV(0, 1, 0, 1, 1, 1), 0, "Region", Vector3.zero);
+            var region = new RegionObject(World.AllocateObjectID(), layer.RegionCount, layer.ID, Random.ColorHSV(0, 1, 0, 1, 1, 1), 0, "Region", Vector3.zero, 1);
             UndoSystem.CreateObject(region, World.ID, "Add Region System Layer", layer.System.ID, lod: 0);
             layer.SelectedRegionIndex = layer.RegionCount - 1;
         }
@@ -126,6 +126,7 @@ namespace XDay.WorldAPI.Region.Editor
                 {
                     region.ConfigID = EditorGUILayout.IntField("ID", region.ConfigID);
                     region.Name = EditorGUILayout.TextField("名字", region.Name);
+                    region.Level = EditorGUILayout.IntField("等级", region.Level);
                     EditorGUILayout.BeginHorizontal();
                     region.Color = EditorGUILayout.ColorField("颜色", region.Color);
                     if (GUILayout.Button("应用", GUILayout.MaxWidth(40)))

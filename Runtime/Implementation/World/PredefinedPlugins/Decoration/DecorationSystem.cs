@@ -290,7 +290,8 @@ namespace XDay.WorldAPI.Decoration
 
             InitInitialVisibleState();
 
-            m_VisibleAreaUpdater = new CameraVisibleAreaUpdater(World.CameraVisibleAreaCalculator);
+            m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_VisibleAreaUpdater.SetDistanceThreshold(40);
 
             InitRendererInternal();
 
@@ -740,7 +741,7 @@ namespace XDay.WorldAPI.Decoration
 
         private DecorationSystemRenderer m_Renderer;
         private Bounds m_Bounds;
-        private CameraVisibleAreaUpdater m_VisibleAreaUpdater;
+        private ICameraVisibleAreaUpdater m_VisibleAreaUpdater;
         private float m_GridWidth;
         private float m_GridHeight;
         private bool m_UpdateNeeded;

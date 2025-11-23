@@ -76,6 +76,7 @@ namespace XDay.CameraAPI.Editor
                 EditorGUI.indentLevel++;
                 m_Setup.Direction = (CameraDirection)EditorGUILayout.EnumPopup("朝向", m_Setup.Direction);
                 m_Setup.FixedFOV = EditorGUILayout.FloatField("固定FOV", m_Setup.FixedFOV);
+                m_Setup.UseNarrowView = EditorGUILayout.Toggle("使用窄视野", m_Setup.UseNarrowView);
                 m_Setup.ChangeFOV = EditorGUILayout.Toggle("修改FOV", m_Setup.ChangeFOV);
 
                 EditorStyles.label.normal.textColor = Color.green;

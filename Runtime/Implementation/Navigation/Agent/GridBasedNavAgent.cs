@@ -31,7 +31,7 @@ namespace XDay.NavigationAPI
     {
         public IGridBasedPathFinder PathFinder { set => m_PathFinder = value; get => m_PathFinder; }
         public bool IsMoving => m_CurrentState.GetType() == typeof(Move);
-        public Quaternion Rotation 
+        public Quaternion Rotation
         {
             get => m_Rotation;
             set
@@ -88,9 +88,12 @@ namespace XDay.NavigationAPI
 
         public void Stop()
         {
-            m_Path.Clear();
-            SetState<Idle>();
-            EventStopMove?.Invoke();
+            if (m_Path.Count > 0)
+            {
+                m_Path.Clear();
+                SetState<Idle>();
+                EventStopMove?.Invoke();
+            }
         }
 
         public void MoveTo(Vector3 target)

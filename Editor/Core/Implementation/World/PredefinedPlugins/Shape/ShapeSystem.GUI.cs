@@ -22,7 +22,6 @@
  */
 
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
@@ -31,7 +30,7 @@ using XDay.WorldAPI.Editor;
 
 namespace XDay.WorldAPI.Shape.Editor
 {
-    internal partial class ShapeSystem
+    public partial class ShapeSystem
     {
         private Vector3 SnapVertexWorld(Vector3 worldPosition)
         {
@@ -119,7 +118,6 @@ namespace XDay.WorldAPI.Shape.Editor
                 DrawCloneObjects();
                 DrawCombineObjects();
                 DrawShowVertexIndex();
-                DrawCreateNavMap();
                 DrawVertexDisplaySize();
                 GUILayout.Space(30);
 
@@ -171,14 +169,6 @@ namespace XDay.WorldAPI.Shape.Editor
             }
         }
 
-        private void DrawCreateNavMap()
-        {
-            if (m_ButtonCreateNavMap.Render(Inited))
-            {
-                CreateNavMap();
-            }
-        }
-
         private void CreateUIControls()
         {
             if (m_Controls == null)
@@ -214,8 +204,8 @@ namespace XDay.WorldAPI.Shape.Editor
                 m_ButtonRenameObjects = EditorWorldHelper.CreateImageButton("rename.png", "修改物体名称");
                 m_Controls.Add(m_ButtonRenameObjects);
 
-                m_ButtonCreateNavMap = EditorWorldHelper.CreateImageButton("create.png", "创建NavMap");
-                m_Controls.Add(m_ButtonCreateNavMap);
+                //m_ButtonCreateNavMap = EditorWorldHelper.CreateImageButton("create.png", "创建NavMap");
+                //m_Controls.Add(m_ButtonCreateNavMap);
 
                 m_VertexSizeField = new FloatField("顶点大小", "", 100);
                 m_Controls.Add(m_VertexSizeField);
@@ -665,7 +655,6 @@ namespace XDay.WorldAPI.Shape.Editor
         private ImageButton m_ButtonCloneObjects;
         private ImageButton m_ButtonCombineObjects;
         private ImageButton m_ButtonRenameObjects;
-        private ImageButton m_ButtonCreateNavMap;
         private FloatField m_VertexSizeField;
         private ColorField m_ColorField;
         private ToggleImageButton m_ShowVertexIndexButton;

@@ -21,10 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-using XDay.UtilityAPI;
-using System;
 using UnityEngine;
 
 namespace XDay.CameraAPI
@@ -39,6 +35,8 @@ namespace XDay.CameraAPI
             public Receiver(CameraManipulator manipulator)
                 : base(manipulator)
             {
+                m_LineMovement = new(manipulator);
+                m_HorizontalAndVerticalMovement = new(manipulator);
             }
 
             protected override void RespondInternal(BehaviourRequest request, CameraTransform pos)
@@ -61,207 +59,43 @@ namespace XDay.CameraAPI
                 Stop();
             }
 
-            private void Execute(RequestFollow request, CameraTransform pose)
+            private void Execute(RequestFollow request, CameraTransform transform)
             {
-                SetState(State.Catch);
-                m_Target = request.Param.Target;
-                m_MinFollowSpeed = request.Param.MinFollowSpeed;
                 m_Interrupters = request.Interrupters;
-                m_OnTargetFollowed = request.Param.TargetFollowedCallback;
-                m_TargetAltitude = request.Param.TargetAltitude;
-                if (m_TargetAltitude == 0)
+
+                m_MovementType = request.Param.MovementType;
+                if (m_MovementType == FocusMovementType.HorizontalAndVertical)
                 {
-                    if (m_Manipulator.Direction == CameraDirection.XZ)
-                    {
-                        m_TargetAltitude = pose.CurrentLogicPosition.y;
-                    }
-                    else
-                    {
-                        m_TargetAltitude = -pose.CurrentLogicPosition.z;
-                    }
+                    m_CurrentMovement = m_HorizontalAndVerticalMovement;
                 }
-                m_CatchDuration = request.Param.CatchDuration;
-                m_Latency = request.Param.Latency;
-                m_ZoomDuration = request.Param.ZoomDuration;
+                else if (m_MovementType == FocusMovementType.Line)
+                {
+                    m_CurrentMovement = m_LineMovement;
+                }
+                else
+                {
+                    Debug.Assert(false, "Todo");
+                }
+
+                m_CurrentMovement.Respond(request.Param.Target, request, transform);
             }
 
             protected override BehaviourState UpdateInternal(CameraTransform pose)
             {
-                if (m_State == State.Catch)
-                {
-                    Catching(pose);
-                }
-
-                if (m_State == State.PrepareZoom)
-                {
-                    PrepareZoom(pose);
-                }
-
-                if (m_State == State.Zoom)
-                {
-                    Zoom(pose);
-                }
-
-                if (m_State == State.Followed)
-                {
-                    Follow(pose);
-                }
-
-                return m_State == State.Idle ? BehaviourState.Over : BehaviourState.Running;
+                return m_CurrentMovement.Update(pose);
             }
 
             private void Stop()
             {
-                if (m_Target != null)
-                {
-                    m_Target.OnStopFollow();
-                    m_Target = null;
-                }
-
-                SetState(State.Idle);
-                m_CatchSpeed = 0;
-                m_CameraAltitudeWhenZoomBegin = 0;
-                m_CatchDuration = 0;
-                m_Latency = 0;
-                m_ZoomTicker.Reset();
-                m_LagTicker.Reset();
-                m_ZoomDuration = 0;
-                m_TargetAltitude = 0;
-                m_SpeedModulator = null;
+                m_CurrentMovement?.Over();
+                m_CurrentMovement = null;
             }
-
-            private void Follow(CameraTransform pose)
-            {
-                if (!m_Target.IsValid)
-                {
-                    Stop();
-                }
-                else
-                {
-                    if (m_Manipulator.Direction == CameraDirection.XZ)
-                    {
-                        pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y);
-                    }
-                    else
-                    {
-                        pose.CurrentLogicPosition = AltitudeToPosition(-pose.CurrentLogicPosition.z);
-                    }
-                }
-            }
-
-            private void PrepareZoom(CameraTransform pose)
-            {
-                if (m_LagTicker.Step(Time.deltaTime))
-                {
-                    SetState(State.Zoom);
-                    m_ZoomTicker.Start(m_ZoomDuration);
-
-                    if (m_Manipulator.Direction == CameraDirection.XZ)
-                    {
-                        m_CameraAltitudeWhenZoomBegin = pose.CurrentRenderPosition.y;
-                    }
-                    else
-                    {
-                        m_CameraAltitudeWhenZoomBegin = -pose.CurrentRenderPosition.z;
-                    }
-                }
-
-                if (m_Manipulator.Direction == CameraDirection.XZ)
-                {
-                    pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y);
-                }
-                else
-                {
-                    pose.CurrentLogicPosition = AltitudeToPosition(-pose.CurrentLogicPosition.z);
-                }
-            }
-
-            private void Zoom(CameraTransform pose)
-            {
-                if (m_ZoomTicker.Step(Time.deltaTime))
-                {
-                    SetState(State.Followed);
-                    m_OnTargetFollowed?.Invoke();
-                }
-
-                var t = m_ZoomTicker.NormalizedTime;
-                if (m_SpeedModulator != null)
-                {
-                    t = m_SpeedModulator.Evaluate(t);
-                }
-
-                pose.CurrentLogicPosition = AltitudeToPosition(Mathf.Lerp(m_CameraAltitudeWhenZoomBegin, m_TargetAltitude, t));
-            }
-
-            private void Catching(CameraTransform pos)
-            {
-                Vector3 cameraPos;
-                if (m_Manipulator.Direction == CameraDirection.XZ)
-                {
-                    cameraPos = AltitudeToPosition(pos.CurrentLogicPosition.y);
-                }
-                else
-                {
-                    cameraPos = AltitudeToPosition(-pos.CurrentLogicPosition.z);
-                }
-                if (m_CatchSpeed == 0)
-                {
-                    if (m_CatchDuration <= 0)
-                    {
-                        m_CatchSpeed = float.MaxValue;
-                    }
-                    else
-                    {
-                        m_CatchSpeed = Vector3.Distance(cameraPos, pos.CurrentLogicPosition) / m_CatchDuration;
-                    }
-                }
-
-                m_CatchSpeed = Mathf.Max(m_CatchSpeed, m_MinFollowSpeed);
-                pos.CurrentLogicPosition = Vector3.MoveTowards(pos.CurrentLogicPosition, cameraPos, m_CatchSpeed * Time.deltaTime);
-                if (pos.CurrentLogicPosition == cameraPos)
-                {
-                    m_LagTicker.Start(m_Latency);
-                    SetState(State.PrepareZoom);
-                }
-            }
-
-            private Vector3 AltitudeToPosition(float altitude)
-            {
-                if (m_Manipulator.Direction == CameraDirection.XZ)
-                {
-                    return Helper.FromFocusPointXZ(m_Manipulator.Camera, m_Target.Position, altitude);
-                }
-                return Helper.FromFocusPointXY(m_Manipulator.Camera, m_Target.Position, altitude);
-            }
-
-            private void SetState(State state)
-            {
-                m_State = state;
-            }
-
-            private enum State
-            {
-                Idle,
-                PrepareZoom,
-                Followed,
-                Zoom,
-                Catch,
-            }
-
-            private State m_State;
-            private float m_TargetAltitude = 0;
-            private IFollowTarget m_Target;
-            private float m_Latency;
-            private float m_CatchDuration;
-            private float m_CameraAltitudeWhenZoomBegin;
-            private float m_ZoomDuration;
-            private float m_CatchSpeed;
-            private AnimationCurve m_SpeedModulator;
-            private Action m_OnTargetFollowed;
-            private float m_MinFollowSpeed;
+            
             private BehaviourMask m_Interrupters;
-            private Ticker m_ZoomTicker = new();
-            private Ticker m_LagTicker = new();
+            private LineMovement m_LineMovement;
+            private HorizontalAndVertical m_HorizontalAndVerticalMovement;
+            private Movement m_CurrentMovement;
+            private FocusMovementType m_MovementType = FocusMovementType.Line;
         }
     }
 }

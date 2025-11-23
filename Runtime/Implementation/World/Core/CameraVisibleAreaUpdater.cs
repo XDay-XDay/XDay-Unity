@@ -22,6 +22,7 @@
  */
 
 using UnityEngine;
+using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI
 {
@@ -44,19 +45,39 @@ namespace XDay.WorldAPI
 
         public bool BeginUpdate()
         {
-            var areaChanged = m_CurrentArea != m_CameraVisibleAreaCalculator.ExpandedArea;
-            m_CurrentArea = m_CameraVisibleAreaCalculator.ExpandedArea;
-            return areaChanged;
+            m_AreaChanged = false;
+
+            var expandedArea = m_CameraVisibleAreaCalculator.ExpandedArea;
+
+            if (Helper.GT(Mathf.Abs(expandedArea.x - m_CurrentArea.x), m_DistanceThreshold) ||
+                Helper.GT(Mathf.Abs(expandedArea.y - m_CurrentArea.y), m_DistanceThreshold) ||
+                Helper.GT(Mathf.Abs(expandedArea.xMax - m_CurrentArea.xMax), m_DistanceThreshold) ||
+                Helper.GT(Mathf.Abs(expandedArea.yMax - m_CurrentArea.yMax), m_DistanceThreshold))
+            {
+                m_AreaChanged = m_CurrentArea != expandedArea;
+                m_CurrentArea = expandedArea;
+            }
+            return m_AreaChanged;
         }
 
         public void EndUpdate()
         {
-            m_PreviousArea = m_CurrentArea;
+            if (m_AreaChanged)
+            {
+                m_PreviousArea = m_CurrentArea;
+            }
+        }
+
+        public void SetDistanceThreshold(float distance)
+        {
+            m_DistanceThreshold = distance;
         }
 
         private ICameraVisibleAreaCalculator m_CameraVisibleAreaCalculator;
         private Rect m_PreviousArea;
         private Rect m_CurrentArea;
+        private float m_DistanceThreshold = 0;
+        private bool m_AreaChanged = false;
     }
 }
 

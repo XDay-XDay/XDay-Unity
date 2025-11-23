@@ -25,7 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Assets.XDay.Test.RVOTest;
-using RVO;
+using RVOFixed;
 using UnityEngine;
 using XDay;
 using XDay.CameraAPI;

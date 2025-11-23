@@ -259,13 +259,23 @@ namespace XDay.WorldAPI.House
             return m_Teleporters[0].WorldPosition;
         }
 
+        public Vector3 GetRightTeleporterPosition()
+        {
+            if (m_Teleporters.Count == 0)
+            {
+                return Vector3.zero;
+            }
+            return m_Teleporters[1].WorldPosition;
+        }
+
         public Vector3 GetRandomWalkablePosition(Vector3 curPos)
         {
-            var curCoord = PositionToCoordinate(curPos);
             var x = UnityEngine.Random.Range(m_WorldBounds.min.x, m_WorldBounds.max.x);
             var z = UnityEngine.Random.Range(m_WorldBounds.min.z, m_WorldBounds.max.z);
+            var size = m_WorldBounds.size;
+            var searchDistance = Mathf.Max(Mathf.CeilToInt(size.x / m_GridSize), Mathf.CeilToInt(size.z / m_GridSize));
             var newCoord = PositionToCoordinate(new Vector3(x, 0, z));
-            var ret = FindNearestWalkableCoordinate(newCoord.x, newCoord.y, 10);
+            var ret = FindNearestWalkableCoordinate(newCoord.x, newCoord.y, searchDistance);
             return CoordinateToGridCenterPosition(ret.x, ret.y);
         }
 
