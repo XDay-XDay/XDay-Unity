@@ -157,6 +157,11 @@ namespace XDay.WorldAPI.Decoration.Editor
 
                     m_EnableInstanceRendering = EditorGUILayout.ToggleLeft("开启Instance渲染", m_EnableInstanceRendering);
 
+                    if (GUILayout.Button("全选物体"))
+                    {
+                        SelectAllDecorations();
+                    }
+
                     var newBounds = EditorGUILayout.RectField("范围", m_Bounds.ToRect());
                     SetBounds(newBounds.ToBounds());
 
@@ -164,6 +169,21 @@ namespace XDay.WorldAPI.Decoration.Editor
                 });
                 EditorGUILayout.EndScrollView();
             }
+        }
+
+        private void SelectAllDecorations()
+        {
+            List<Object> objects = new();
+            foreach (var decoration in m_Decorations.Values)
+            {
+                var gameObject = m_Renderer.GetGameObject(decoration.ID);
+                if (gameObject != null)
+                {
+                    objects.Add(gameObject);
+                }
+            }
+
+            Selection.objects = objects.ToArray();
         }
 
         private void RedoLastGeneration()

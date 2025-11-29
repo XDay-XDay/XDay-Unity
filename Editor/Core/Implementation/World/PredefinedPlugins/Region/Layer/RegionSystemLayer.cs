@@ -156,6 +156,19 @@ namespace XDay.WorldAPI.Region.Editor
             m_Renderer.UpdateColors(x, y, x + width - 1, y + height - 1);
         }
 
+        public int GetRegionIndex(int id)
+        {
+            for (var i = 0; i < m_Regions.Count; ++i)
+            {
+                if (m_Regions[i].ID == id)
+                {
+                    Debug.Assert(i <= 255);
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         public Color GetRegionColor(int id)
         {
             var t = GetRegion(id);

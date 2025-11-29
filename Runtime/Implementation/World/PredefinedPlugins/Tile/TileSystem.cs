@@ -47,6 +47,8 @@ namespace XDay.WorldAPI.Tile
 
         protected override void InitInternal()
         {
+            m_LODSystem.Init(World.WorldLODSystem);
+
             m_Root = new GameObject(m_Name);
             m_Root.transform.SetParent(World.Root.transform, true);
 

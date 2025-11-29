@@ -1,8 +1,9 @@
 /*
- * Obstacle.cs
+ * Line.cs
  * RVO2 Library C#
  *
- * Copyright 2008 University of North Carolina at Chapel Hill
+ * SPDX-FileCopyrightText: 2008 University of North Carolina at Chapel Hill
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +31,16 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-namespace RVO
+using XDay;
+
+namespace RVOFixed
 {
     /**
-     * <summary>Defines static obstacles in the simulation.</summary>
+     * <summary>Defines a directed line.</summary>
      */
-    internal class Obstacle
+    public struct Line
     {
-
-        internal Obstacle next_;
-        internal Obstacle previous_;
-        internal Vector2 direction_;
-        internal Vector2 point_;
-        internal int id_;
-        internal bool convex_;
+        public FixedVector2 direction;
+        public FixedVector2 point;
     }
 }

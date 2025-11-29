@@ -95,8 +95,7 @@ namespace XDay.WorldAPI.Region
             protected abstract void OnInit(Transform parent);
             internal abstract void OnLODChanged(Rect oldVisibleArea, Rect newVisibleArea);
             internal abstract void OnUpdateViewport(Rect oldVisibleArea, Rect newVisibleArea);
-            public abstract int GetValue(int x, int y);
-            public abstract void SetValue(int x, int y, int type);
+            public abstract int GetRegionConfigID(int x, int y);
             public abstract void SetBorderLOD0Color(int regionConfigID, Color color);
             public abstract void SetBorderLOD0Material(int regionConfigID, Material material);
             public abstract void SetBorderLOD1Material(int regionConfigID, Material material);
@@ -124,9 +123,10 @@ namespace XDay.WorldAPI.Region
             public List<RegionObject> RegionList => m_RegionsList;
 
             public Layer(string name, int horizontalGridCount, int verticalGridCount, float gridWidth, float gridHeight, 
-                Vector2 origin, float height) 
+                Vector2 origin, float height, byte[] gridData) 
                 : base(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, height)
             {
+                m_GridData = gridData;
             }
 
             protected override void OnInit(Transform parent) 
@@ -139,12 +139,17 @@ namespace XDay.WorldAPI.Region
                 m_Renderer?.OnDestroy();
             }
 
-            public override void SetValue(int x, int y, int value)
+            public override int GetRegionConfigID(int x, int y)
             {
-            }
+                if (x >= 0 && x < HorizontalGridCount && y >= 0 && y < VerticalGridCount)
+                {
+                    var index = (int)m_GridData[y * HorizontalGridCount + x];
+                    if (index >= 0 && index < m_RegionsList.Count)
+                    {
+                        return m_RegionsList[index].ConfigID;
+                    }
+                }
 
-            public override int GetValue(int x, int y)
-            {
                 return 0;
             }
 
@@ -240,10 +245,11 @@ namespace XDay.WorldAPI.Region
                 }
             }
 
-            private Dictionary<int, RegionObject> m_RegionsDic = new();
-            private List<RegionObject> m_VisibleRegions = new();
-            private List<RegionObject> m_RegionsList = new();
+            private readonly Dictionary<int, RegionObject> m_RegionsDic = new();
+            private readonly List<RegionObject> m_VisibleRegions = new();
+            private readonly List<RegionObject> m_RegionsList = new();
             private RegionSystemLayerRenderer m_Renderer;
+            private readonly byte[] m_GridData;
         }
     }
 }

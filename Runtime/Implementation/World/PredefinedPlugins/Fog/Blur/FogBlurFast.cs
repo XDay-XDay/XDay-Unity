@@ -26,18 +26,11 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.FOW
 {
-    internal abstract class BlurBase
-    {
-        public abstract Texture Output { get; }
-        public abstract void Blur(Texture texture, float texelSkip);
-        public abstract void OnDestroy();
-    }
-
-    internal class BlurCS : BlurBase
+    internal class FogBlurFast : FogBlur
     {
         public override Texture Output => m_VertBlur;
 
-        public BlurCS(int horizontalResolution, int verticalResolution, ComputeShader blurShader, bool repeat)
+        public FogBlurFast(int horizontalResolution, int verticalResolution, ComputeShader blurShader, bool repeat)
         {
             m_BlurShader = blurShader;
 
@@ -56,7 +49,7 @@ namespace XDay.WorldAPI.FOW
             var verticalKernel = m_BlurShader.FindKernel("VerticalBlur");
 
             m_BlurShader.SetFloat("TexelSkip", texelSkip);
-
+             
             m_BlurShader.SetTexture(horizontalKernel, "InputTex", texture);
             m_BlurShader.SetTexture(horizontalKernel, "OutputTex", m_HorizBlur);
             DispatchShader(horizontalKernel, m_HorizBlur);
@@ -67,38 +60,38 @@ namespace XDay.WorldAPI.FOW
             DispatchShader(verticalKernel, m_VertBlur);
         }
 
-        private void DispatchShader(int kernelIndex, RenderTexture targetRT)
-        {
-            var threadGroupsX = Mathf.CeilToInt(targetRT.width / 8.0f);
-            var threadGroupsY = Mathf.CeilToInt(targetRT.height / 8.0f);
-            m_BlurShader.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, 1);
-        }
-
         private void CreateRenderTextures(int width, int height, bool repeat)
         {
             m_HorizBlur = new RenderTexture(width, height, 0)
             {
-                enableRandomWrite = true,
+                filterMode = FilterMode.Bilinear,
+                format = RenderTextureFormat.ARGBHalf,
+                wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp,
                 useMipMap = false,
                 autoGenerateMips = false,
-                format = RenderTextureFormat.ARGBHalf,
-                filterMode = FilterMode.Bilinear,
-                wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp,
+                enableRandomWrite = true,
             };
             var ok = m_HorizBlur.Create();
             Debug.Assert(ok);
 
             m_VertBlur = new RenderTexture(width, height, 0)
             {
-                enableRandomWrite = true,
+                filterMode = FilterMode.Bilinear,
+                format = RenderTextureFormat.ARGBHalf,
+                wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp,
                 useMipMap = false,
                 autoGenerateMips = false,
-                format = RenderTextureFormat.ARGBHalf,
-                filterMode = FilterMode.Bilinear,
-                wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp,
+                enableRandomWrite = true,
             };
             ok = m_VertBlur.Create();
             Debug.Assert(ok);
+        }
+
+        private void DispatchShader(int kernelIndex, RenderTexture targetRT)
+        {
+            var threadGroupsX = Mathf.CeilToInt(targetRT.width / 8.0f);
+            var threadGroupsY = Mathf.CeilToInt(targetRT.height / 8.0f);
+            m_BlurShader.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, 1);
         }
 
         private RenderTexture m_HorizBlur;

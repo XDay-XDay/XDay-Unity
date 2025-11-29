@@ -2,8 +2,7 @@
  * Line.cs
  * RVO2 Library C#
  *
- * SPDX-FileCopyrightText: 2008 University of North Carolina at Chapel Hill
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright 2008 University of North Carolina at Chapel Hill
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +30,14 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-using XDay;
-
-namespace RVOFixed
+namespace RVO
 {
     /**
      * <summary>Defines a directed line.</summary>
      */
     public struct Line
     {
-        public FixedVector2 direction;
-        public FixedVector2 point;
+        public Vector2 direction;
+        public Vector2 point;
     }
 }

@@ -125,6 +125,15 @@ namespace XDay.CameraAPI.Editor
             }
             EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.BeginHorizontal();
+            m_InputAltitude = EditorGUILayout.FloatField("高度", m_InputAltitude);
+            if (GUILayout.Button("计算FOV", GUILayout.MaxWidth(100)))
+            {
+                m_Setup.AltitudeManager.FOVAtAltitude(m_InputAltitude, out var fov);
+                Debug.LogError($"高度{m_InputAltitude}对应的FOV:{fov}");
+            }
+            EditorGUILayout.EndHorizontal();
+
             if (m_ShowAltitude)
             {
                 EditorGUI.indentLevel++;
@@ -260,5 +269,6 @@ namespace XDay.CameraAPI.Editor
         private bool m_ShowAltitude = true;
         private CameraSetup m_Setup;
         private string m_CameraSetupFilePath;
+        private float m_InputAltitude;
     }
 }

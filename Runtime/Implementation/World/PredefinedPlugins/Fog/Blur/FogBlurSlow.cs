@@ -26,11 +26,11 @@ using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.FOW
 {
-    internal class BlurCPU : BlurBase
+    internal class FogBlurSlow : FogBlur
     {
         public override Texture Output => m_Output;
 
-        public BlurCPU(int horizontalResolution, int verticalResolution)
+        public FogBlurSlow(int horizontalResolution, int verticalResolution)
         {
             m_HorizontalResolution = horizontalResolution;
             m_VerticalResolution = verticalResolution;

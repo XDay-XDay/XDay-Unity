@@ -35,6 +35,8 @@ namespace XDay.WorldAPI.Region
         float GridHeight { get; }
         Vector2 Origin { get; }
 
+        int GetRegionConfigID(int x, int y);
+
         Vector2Int PositionToCoordinate(float x, float z);
         Vector3 CoordinateToPosition(int x, int y);
         Vector3 CoordinateToCenterPosition(int x, int y);
@@ -92,5 +94,13 @@ namespace XDay.WorldAPI.Region
         void SetBorderLOD0Color(int layerIndex, int regionConfigID, Color color);
         void SetBorderLOD1Material(int layerIndex, int regionConfigID, Material material);
         void SetMeshLOD1Material(int layerIndex, int regionConfigID, Material material);
+
+        /// <summary>
+        /// 获取世界坐标所在的区域配置ID
+        /// </summary>
+        /// <param name="layerIndex"></param>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        int GetRegionConfigID(int layerIndex, Vector3 position);
     }
 }

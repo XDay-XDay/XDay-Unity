@@ -56,7 +56,8 @@ namespace XDay.WorldAPI.Region
                 var gridHeight = reader.ReadSingle("GridHeight");
                 var origin = reader.ReadVector2("Origin");
                 var height = reader.ReadSingle("Height");
-                var layer = new Layer(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, height);
+                var gridData = reader.ReadByteArray("Grid");
+                var layer = new Layer(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, height, gridData);
                 m_Layers.Add(layer);
 
                 LoadRegions(reader, layer);
@@ -74,7 +75,7 @@ namespace XDay.WorldAPI.Region
                 var name = reader.ReadString("Region Name");
                 var bounds = reader.ReadRect("Region Bounds");
                 var fullPrefabPath = reader.ReadString("Full Prefab Path");
-                RegionObject region = new RegionObject(name, configID, position, color, bounds, fullPrefabPath);
+                RegionObject region = new(name, configID, position, color, bounds, fullPrefabPath);
                 layer.AddRegion(region);
             }
         }

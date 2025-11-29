@@ -2336,6 +2336,28 @@ namespace XDay.UtilityAPI
             return null;
         }
 
+        public static Transform FindChildNoAlloc(Transform transform, string name)
+        {
+            var n = transform.childCount;
+            for (var i = 0; i < n; ++i)
+            {
+                var child = transform.GetChild(i);
+                if (child.name == name)
+                {
+                    return child;
+                }
+                else
+                {
+                    var ret = FindChildNoAlloc(child, name);
+                    if (ret != null)
+                    {
+                        return ret;
+                    }
+                }
+            }
+            return null;
+        }
+
         public static string ToHexColor(Color32 color)
         {
             StringBuilder builder = new();

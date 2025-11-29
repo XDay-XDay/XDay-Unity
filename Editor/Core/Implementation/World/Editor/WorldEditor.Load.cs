@@ -68,7 +68,7 @@ namespace XDay.WorldAPI.Editor
             {
                 Uninit();
 
-                CreateScene($"{setup.GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{WorldDefine.WORLD_EDITOR_NAME}.unity");
+                CreateScene(setup.SceneFilePath);
 
                 Init();
 
@@ -83,7 +83,7 @@ namespace XDay.WorldAPI.Editor
             {
                 Uninit();
 
-                CreateScene($"{setup.GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{WorldDefine.WORLD_EDITOR_NAME}.unity");
+                CreateScene(setup.SceneFilePath);
 
                 Init();
 
@@ -133,6 +133,10 @@ namespace XDay.WorldAPI.Editor
             EditorSceneManager.newSceneCreated += OnSceneCreated;
             EditorSceneManager.sceneClosed -= OnSceneClosed;
             EditorSceneManager.sceneClosed += OnSceneClosed;
+            EditorSceneManager.sceneClosing -= OnSceneClosing;
+            EditorSceneManager.sceneClosing += OnSceneClosing;
+            EditorApplication.quitting -= OnQuitting;
+            EditorApplication.quitting += OnQuitting;
 
             m_IsCreatingEditorScene = true;
 
@@ -177,6 +181,29 @@ namespace XDay.WorldAPI.Editor
                 UndoSystem.RemoveUndoRedoCallback(OnRedoUndoApplied);
 
                 Uninit();
+            }
+        }
+
+        private static void OnQuitting()
+        {
+            var activeScene = EditorSceneManager.GetActiveScene();
+            OnSceneClosing(activeScene, false);
+        }
+
+        private static void OnSceneClosing(Scene scene, bool removeScene)
+        {
+            if (scene.name == WorldDefine.WORLD_EDITOR_NAME && !string.IsNullOrEmpty(scene.path))
+            {
+                var rootObjects = scene.GetRootGameObjects();
+                foreach (var obj in rootObjects)
+                {
+                    if (obj.name == WorldDefine.WORLD_EDITOR_NAME || obj.CompareTag("EditorOnly"))
+                    {
+                        UnityEngine.Object.DestroyImmediate(obj);
+                    }
+                }
+
+                EditorSceneManager.SaveScene(scene);
             }
         }
 

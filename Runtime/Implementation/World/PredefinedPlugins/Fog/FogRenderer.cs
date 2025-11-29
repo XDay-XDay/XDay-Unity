@@ -35,7 +35,7 @@ namespace XDay.WorldAPI.FOW
             m_HorizontalResolution = horizontalResolution;
             m_VerticalResolution = verticalResolution;
             m_AssetLoader = assetLoader;
-            m_IsFogOpen = isFogOpen;
+            m_IsFogOpenFunc = isFogOpen;
 
             m_FogConfig = m_AssetLoader.Load<FogConfig>(fogConfigPath);
             m_FogGameObject = m_AssetLoader.LoadGameObject(fogPrefabPath);
@@ -56,34 +56,43 @@ namespace XDay.WorldAPI.FOW
         public void OnDestroy()
         {
             Helper.DestroyUnityObject(m_FogGameObject);
-            Helper.DestroyUnityObject(m_Mask);
+            Helper.DestroyUnityObject(m_MaskTexture);
             m_Blur.OnDestroy();
         }
 
         private void CreateMask(string blurShaderPath)
         {
-            Debug.Log($"support compute shaders: {SystemInfo.supportsComputeShaders}. random write: {SystemInfo.SupportsRandomWriteOnRenderTextureFormat(RenderTextureFormat.ARGBFloat)}, support format: {SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat)}, support NPOT: {SystemInfo.npotSupport == NPOTSupport.Full}");
-
-            if (SystemInfo.supportsComputeShaders &&
-                SystemInfo.SupportsRandomWriteOnRenderTextureFormat(RenderTextureFormat.ARGBFloat) &&
-                SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) &&
-                SystemInfo.npotSupport == NPOTSupport.Full)
+            if (SupportCS())
             {
-                m_Blur = new BlurCS(m_HorizontalResolution, m_VerticalResolution, m_AssetLoader.Load<ComputeShader>(blurShaderPath), repeat: false);
+                m_Blur = new FogBlurFast(m_HorizontalResolution, m_VerticalResolution, m_AssetLoader.Load<ComputeShader>(blurShaderPath), false);
             }
             else
             {
-                m_Blur = new BlurCPU(m_HorizontalResolution, m_VerticalResolution);
+                m_Blur = new FogBlurSlow(m_HorizontalResolution, m_VerticalResolution);
             }
 
-            m_Mask = new Texture2D(m_HorizontalResolution, m_VerticalResolution, TextureFormat.RGBA32, false);
-
-            m_MaskPixels = new Color32[m_HorizontalResolution * m_VerticalResolution];
+            m_MaskData = new Color32[m_HorizontalResolution * m_VerticalResolution];
+            m_MaskTexture = new Texture2D(m_HorizontalResolution, m_VerticalResolution, TextureFormat.RGBA32, false);
 
             UpdateMask(true);
         }
 
-        //r:修改前状态,g:修改前状态加偏移,b:修改后状态,a:修改后状态加偏移
+        private bool SupportCS()
+        {
+            return 
+                SystemInfo.supportsComputeShaders &&
+                SystemInfo.npotSupport == NPOTSupport.Full &&
+                SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBHalf) &&
+                SystemInfo.SupportsRandomWriteOnRenderTextureFormat(RenderTextureFormat.ARGBHalf);
+        }
+
+        /// <summary>
+        /// r:修改前状态
+        /// g:偏移后的修改前状态
+        /// b:修改后状态
+        /// a:偏移后的修改后状态
+        /// </summary>
+        /// <param name="reset"></param>
         public void UpdateMask(bool reset)
         {
             if (reset)
@@ -94,13 +103,13 @@ namespace XDay.WorldAPI.FOW
                 {
                     for (var j = 0; j < m_HorizontalResolution; ++j)
                     {
-                        var r = m_IsFogOpen.Invoke(j, i) ? (byte)0 : (byte)255;
-                        m_MaskPixels[idx] = new Color32(r, 0, r, 0);
+                        var r = m_IsFogOpenFunc.Invoke(j, i) ? (byte)0 : (byte)255;
+                        m_MaskData[idx] = new Color32(r, 0, r, 0);
                         ++idx;
                     }
                 }
 
-                //偏移
+                //加偏移
                 idx = 0;
                 for (var i = 0; i < m_VerticalResolution; ++i)
                 {
@@ -112,11 +121,11 @@ namespace XDay.WorldAPI.FOW
                             offsetY >= 0 && offsetY < m_VerticalResolution)
                         {
                             var offsetIdx = offsetY * m_HorizontalResolution + offsetX;
-                            var pixel = m_MaskPixels[idx];
-                            var offsetPixel = m_MaskPixels[offsetIdx];
+                            var pixel = m_MaskData[idx];
+                            var offsetPixel = m_MaskData[offsetIdx];
                             offsetPixel.g = pixel.r;
                             offsetPixel.a = pixel.b;
-                            m_MaskPixels[offsetIdx] = offsetPixel;
+                            m_MaskData[offsetIdx] = offsetPixel;
                         }
                         ++idx;
                     }
@@ -129,17 +138,17 @@ namespace XDay.WorldAPI.FOW
                 {
                     for (var j = 0; j < m_HorizontalResolution; ++j)
                     {
-                        var pixel = m_MaskPixels[idx];
+                        var pixel = m_MaskData[idx];
                         var r = pixel.b;
-                        var b = m_IsFogOpen.Invoke(j, i) ? (byte)0 : (byte)255;
+                        var b = m_IsFogOpenFunc.Invoke(j, i) ? (byte)0 : (byte)255;
                         var g = pixel.a;
 
-                        m_MaskPixels[idx] = new Color32(r, g, b, 0);
+                        m_MaskData[idx] = new Color32(r, g, b, 0);
                         ++idx;
                     }
                 }
 
-                //偏移
+                //加偏移
                 idx = 0;
                 for (var i = 0; i < m_VerticalResolution; ++i)
                 {
@@ -151,19 +160,19 @@ namespace XDay.WorldAPI.FOW
                             offsetY >= 0 && offsetY < m_VerticalResolution)
                         {
                             var offsetIdx = offsetY * m_HorizontalResolution + offsetX;
-                            var pixel = m_MaskPixels[idx];
-                            var offsetPixel = m_MaskPixels[offsetIdx];
+                            var pixel = m_MaskData[idx];
+                            var offsetPixel = m_MaskData[offsetIdx];
                             offsetPixel.a = pixel.b;
-                            m_MaskPixels[offsetIdx] = offsetPixel;
+                            m_MaskData[offsetIdx] = offsetPixel;
                         }
                         ++idx;
                     }
                 }
             }
 
-            m_Mask.SetPixels32(m_MaskPixels);
-            m_Mask.Apply();
-            m_Blur.Blur(m_Mask, 1);
+            m_MaskTexture.SetPixels32(m_MaskData);
+            m_MaskTexture.Apply();
+            m_Blur.Blur(m_MaskTexture, 1);
 
             if (!reset)
             {
@@ -173,7 +182,7 @@ namespace XDay.WorldAPI.FOW
 
         public void Update(float dt)
         {
-            if (m_IsOpening)
+            if (m_IsFading)
             {
                 var finish = m_Ticker.Step(dt);
                 m_FogMaterial.SetFloat("_ElapsedTime", m_Ticker.NormalizedTime * m_FogConfig.FadeDuration);
@@ -184,21 +193,6 @@ namespace XDay.WorldAPI.FOW
             }
         }
 
-        private void StartFade()
-        {
-            m_FogMaterial.SetFloat("_FadeDuration", m_FogConfig.FadeDuration);
-            m_FogMaterial.EnableKeyword("FADEFOGWAR");
-            m_IsOpening = true;
-            m_Ticker.Start(m_FogConfig.FadeDuration);
-        }
-
-        private void OnFadeFinish()
-        {
-            m_IsOpening = false;
-            m_FogMaterial.DisableKeyword("FADEFOGWAR");
-            SwapChannel();
-        }
-
         private void SwapChannel()
         {
             var idx = 0;
@@ -206,31 +200,45 @@ namespace XDay.WorldAPI.FOW
             {
                 for (var j = 0; j < m_HorizontalResolution; ++j)
                 {
-                    var pixel = m_MaskPixels[idx];
+                    var pixel = m_MaskData[idx];
                     pixel.r = pixel.b;
                     pixel.g = pixel.a;
-                    m_MaskPixels[idx] = pixel;
+                    m_MaskData[idx] = pixel;
                     ++idx;
                 }
             }
 
-            m_Mask.SetPixels32(m_MaskPixels);
-            m_Mask.Apply();
-            m_Blur.Blur(m_Mask, 1);
+            m_MaskTexture.SetPixels32(m_MaskData);
+            m_MaskTexture.Apply();
+            m_Blur.Blur(m_MaskTexture, 1);
         }
 
+        private void StartFade()
+        {
+            m_FogMaterial.SetFloat("_FadeDuration", m_FogConfig.FadeDuration);
+            m_FogMaterial.EnableKeyword("FADEFOG");
+            m_IsFading = true;
+            m_Ticker.Start(m_FogConfig.FadeDuration);
+        }
+
+        private void OnFadeFinish()
+        {
+            m_IsFading = false;
+            m_FogMaterial.DisableKeyword("FADEFOG");
+            SwapChannel();
+        }
+
+        private readonly FogConfig m_FogConfig;
+        private readonly GameObject m_FogGameObject;
+        private readonly Material m_FogMaterial;
         private readonly int m_HorizontalResolution;
         private readonly int m_VerticalResolution;
-        private readonly GameObject m_FogGameObject;
-        private Texture2D m_Mask;
-        //r:修改前状态,g:修改前状态加偏移,b:修改后状态,a:修改后状态加偏移
-        private Color32[] m_MaskPixels;
-        private BlurBase m_Blur;
-        private readonly FogConfig m_FogConfig;
-        private readonly Material m_FogMaterial;
-        private bool m_IsOpening = false;
-        private readonly Ticker m_Ticker = new();
+        private Color32[] m_MaskData;
+        private Texture2D m_MaskTexture;
+        private bool m_IsFading = false;
         private readonly IAssetLoader m_AssetLoader;
-        private readonly Func<int, int, bool> m_IsFogOpen;
+        private readonly Func<int, int, bool> m_IsFogOpenFunc;
+        private readonly Ticker m_Ticker = new();
+        private FogBlur m_Blur;
     }
 }

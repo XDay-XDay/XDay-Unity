@@ -28,6 +28,9 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.SceneManagement;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
+using System;
 
 namespace XDay.WorldAPI.Editor
 {
@@ -83,6 +86,8 @@ namespace XDay.WorldAPI.Editor
             m_EventSystem = null;
 
             m_CameraEditor = null;
+
+            EnableRenderFeature(false);
         }
 
         public static void Update(float dt)
@@ -106,6 +111,25 @@ namespace XDay.WorldAPI.Editor
                 {
                     m_CameraEditor = new();
                     m_CameraEditor.Load(world.Setup.CameraSetupFilePath);
+
+                    //打开LOD RenderFeature
+                    EnableRenderFeature(true);
+                }
+            }
+        }
+
+        private static void EnableRenderFeature(bool enable)
+        {
+            var renderDatas = EditorHelper.QueryAssets<UniversalRendererData>();
+            foreach (var renderData in renderDatas)
+            {
+                foreach (var feature in renderData.rendererFeatures)
+                {
+                    if (feature.name == "DrawObjectLOD")
+                    {
+                        feature.SetActive(enable);
+                        break;
+                    }
                 }
             }
         }
@@ -190,21 +214,10 @@ namespace XDay.WorldAPI.Editor
 
         private static void SaveSceneObjects()
         {
-            var scene = EditorSceneManager.GetActiveScene();
-            List<GameObject> unsavedGameObjects = new();
-            foreach (var obj in scene.GetRootGameObjects())
+            if (m_ActiveWorld != null)
             {
-                if (obj.name == WorldDefine.WORLD_EDITOR_NAME)
-                {
-                    obj.hideFlags = HideFlags.DontSaveInEditor | HideFlags.HideAndDontSave;
-                    unsavedGameObjects.Add(obj);
-                }
-            }
-            EditorSceneManager.SaveScene(scene, $"{m_ActiveWorld.GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{WorldDefine.WORLD_EDITOR_NAME}.unity", true);
-
-            foreach (var obj in unsavedGameObjects)
-            {
-                obj.hideFlags = HideFlags.None;
+                var scene = EditorSceneManager.GetActiveScene();
+                EditorSceneManager.SaveScene(scene, m_ActiveWorld.Setup.SceneFilePath, true);
             }
         }
 

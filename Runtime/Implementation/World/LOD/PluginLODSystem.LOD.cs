@@ -72,6 +72,16 @@ namespace XDay.WorldAPI
                 serializer.WriteInt32(m_RenderLOD, "Render LOD");
             }
 
+            public void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
+            {
+                serializer.WriteInt32(m_RuntimeVersion, "PluginLODSystem.Version");
+
+                serializer.WriteSingle(m_Height, "Height");
+                serializer.WriteSingle(m_Tolerance, "Tolerance");
+                serializer.WriteInt32(m_RenderLOD, "Render LOD");
+                serializer.WriteString(m_Name, "Name");
+            }
+
             public void GameDeserialize(IDeserializer deserializer, string label)
             {
                 var version = deserializer.ReadInt32("PluginLODSystem.Version");
@@ -82,15 +92,14 @@ namespace XDay.WorldAPI
                 {
                     m_RenderLOD = deserializer.ReadInt32("Render LOD");
                 }
-            }
-
-            public void GameSerialize(ISerializer serializer, string label, IObjectIDConverter converter)
-            {
-                serializer.WriteInt32(m_RuntimeVersion, "PluginLODSystem.Version");
-
-                serializer.WriteSingle(m_Height, "Height");
-                serializer.WriteSingle(m_Tolerance, "Tolerance");
-                serializer.WriteInt32(m_RenderLOD, "Render LOD");
+                if (version >= 3)
+                {
+                    m_Name = deserializer.ReadString("Name");
+                }
+                else
+                {
+                    m_Name = $"LOD {m_RenderLOD}";
+                }
             }
 
             [XDaySerializableField(1, "Tolerance")]
@@ -103,7 +112,7 @@ namespace XDay.WorldAPI
             private int m_RenderLOD;
 
             private const int m_Version = 2;
-            private const int m_RuntimeVersion = 2;
+            private const int m_RuntimeVersion = 3;
         }
     }
 }

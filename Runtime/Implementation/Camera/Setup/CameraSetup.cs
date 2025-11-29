@@ -131,7 +131,7 @@ namespace XDay.CameraAPI
         private OrbitSetup m_Orbit = new();
         private AltitudeSetupManager m_AltitudeManager = new();
         private RestoreSetup m_Restore = new();
-        private float m_MouseZoomSpeed = 30.0f;
+        private float m_MouseZoomSpeed = 100;
         private Rect m_FocusPointBounds;
     }
 }

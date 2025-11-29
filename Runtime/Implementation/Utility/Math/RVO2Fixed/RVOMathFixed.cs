@@ -2,7 +2,8 @@
  * RVOMath.cs
  * RVO2 Library C#
  *
- * Copyright 2008 University of North Carolina at Chapel Hill
+ * SPDX-FileCopyrightText: 2008 University of North Carolina at Chapel Hill
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +31,20 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-using System;
+using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Contains functions and constants used in multiple classes.
      * </summary>
      */
-    public struct RVOMath
+    public class RVOMath
     {
         /**
          * <summary>A sufficiently small positive number.</summary>
          */
-        internal const float RVO_EPSILON = 0.00001f;
+        internal static FixedPoint RVO_EPSILON = (FixedPoint)0.00001f;
 
         /**
          * <summary>Computes the length of a specified two-dimensional vector.
@@ -53,7 +54,7 @@ namespace RVO
          * computed.</param>
          * <returns>The length of the two-dimensional vector.</returns>
          */
-        public static float abs(Vector2 vector)
+        public static FixedPoint abs(FixedVector2 vector)
         {
             return sqrt(absSq(vector));
         }
@@ -67,9 +68,9 @@ namespace RVO
          * <param name="vector">The two-dimensional vector whose squared length
          * is to be computed.</param>
          */
-        public static float absSq(Vector2 vector)
+        public static FixedPoint absSq(FixedVector2 vector)
         {
-            return vector * vector;
+            return FixedVector2.Dot(vector, vector);
         }
 
         /**
@@ -81,7 +82,7 @@ namespace RVO
          * <param name="vector">The two-dimensional vector whose normalization
          * is to be computed.</param>
          */
-        public static Vector2 normalize(Vector2 vector)
+        public static FixedVector2 normalize(FixedVector2 vector)
         {
             return vector / abs(vector);
         }
@@ -99,9 +100,9 @@ namespace RVO
          * <param name="vector2">The bottom row of the two-dimensional square
          * matrix.</param>
          */
-        internal static float det(Vector2 vector1, Vector2 vector2)
+        internal static FixedPoint det(FixedVector2 vector1, FixedVector2 vector2)
         {
-            return vector1.x_ * vector2.y_ - vector1.y_ * vector2.x_;
+            return vector1.X * vector2.Y - vector1.Y * vector2.X;
         }
 
         /**
@@ -117,16 +118,16 @@ namespace RVO
          * <param name="vector3">The point to which the squared distance is to
          * be calculated.</param>
          */
-        internal static float distSqPointLineSegment(Vector2 vector1, Vector2 vector2, Vector2 vector3)
+        internal static FixedPoint distSqPointLineSegment(FixedVector2 vector1, FixedVector2 vector2, FixedVector2 vector3)
         {
-            float r = ((vector3 - vector1) * (vector2 - vector1)) / absSq(vector2 - vector1);
+            FixedPoint r =  FixedVector2.Dot(vector3 - vector1, vector2 - vector1) / absSq(vector2 - vector1);
 
-            if (r < 0.0f)
+            if (r < FixedPoint.Zero)
             {
                 return absSq(vector3 - vector1);
             }
 
-            if (r > 1.0f)
+            if (r > FixedPoint.One)
             {
                 return absSq(vector3 - vector2);
             }
@@ -135,16 +136,16 @@ namespace RVO
         }
 
         /**
-         * <summary>Computes the absolute value of a float.</summary>
+         * <summary>Computes the absolute value of a FixedPoint.</summary>
          *
-         * <returns>The absolute value of the float.</returns>
+         * <returns>The absolute value of the FixedPoint.</returns>
          *
-         * <param name="scalar">The float of which to compute the absolute
+         * <param name="scalar">The FixedPoint of which to compute the absolute
          * value.</param>
          */
-        internal static float fabs(float scalar)
+        internal static FixedPoint fabs(FixedPoint scalar)
         {
-            return Math.Abs(scalar);
+            return FixedMath.Abs(scalar);
         }
 
         /**
@@ -159,34 +160,34 @@ namespace RVO
          * <param name="c">The point to which the signed distance is to be
          * calculated.</param>
          */
-        internal static float leftOf(Vector2 a, Vector2 b, Vector2 c)
+        internal static FixedPoint leftOf(FixedVector2 a, FixedVector2 b, FixedVector2 c)
         {
             return det(a - c, b - a);
         }
 
         /**
-         * <summary>Computes the square of a float.</summary>
+         * <summary>Computes the square of a FixedPoint.</summary>
          *
-         * <returns>The square of the float.</returns>
+         * <returns>The square of the FixedPoint.</returns>
          *
-         * <param name="scalar">The float to be squared.</param>
+         * <param name="scalar">The FixedPoint to be squared.</param>
          */
-        internal static float sqr(float scalar)
+        internal static FixedPoint sqr(FixedPoint scalar)
         {
             return scalar * scalar;
         }
 
         /**
-         * <summary>Computes the square root of a float.</summary>
+         * <summary>Computes the square root of a FixedPoint.</summary>
          *
-         * <returns>The square root of the float.</returns>
+         * <returns>The square root of the FixedPoint.</returns>
          *
-         * <param name="scalar">The float of which to compute the square root.
+         * <param name="scalar">The FixedPoint of which to compute the square root.
          * </param>
          */
-        internal static float sqrt(float scalar)
+        internal static FixedPoint sqrt(FixedPoint scalar)
         {
-            return (float)Math.Sqrt(scalar);
+            return FixedMath.Sqrt(scalar);
         }
     }
 }

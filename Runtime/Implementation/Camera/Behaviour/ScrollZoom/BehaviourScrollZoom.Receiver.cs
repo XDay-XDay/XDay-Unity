@@ -22,8 +22,6 @@
  */
 
 
-using UnityEngine;
-
 namespace XDay.CameraAPI
 {
     internal partial class BehaviourScrollZoom
@@ -48,7 +46,10 @@ namespace XDay.CameraAPI
                 var req = request as Request;
                 if (req.ScrollDelta != 0)
                 {
-                    pos.CurrentLogicPosition += req.ScrollDelta * m_ZoomSpeed * (pos.CurrentRenderRotation * Vector3.forward);
+                    var newZoomFactor = m_Manipulator.ZoomFactor - req.ScrollDelta * m_ZoomSpeed;
+
+                    m_Manipulator.Setup.AltitudeManager.DecomposeZoomFactor(newZoomFactor, out var focalLength, out _);
+                    pos.CurrentLogicPosition = m_Manipulator.FocusPoint - m_Manipulator.Forward * focalLength;
                 }
             }
 

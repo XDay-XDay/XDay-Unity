@@ -2,7 +2,8 @@
  * KdTree.cs
  * RVO2 Library C#
  *
- * Copyright 2008 University of North Carolina at Chapel Hill
+ * SPDX-FileCopyrightText: 2008 University of North Carolina at Chapel Hill
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +31,11 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Defines k-D trees for agents and static obstacles in the
@@ -50,10 +52,10 @@ namespace RVO
             internal int end_;
             internal int left_;
             internal int right_;
-            internal float maxX_;
-            internal float maxY_;
-            internal float minX_;
-            internal float minY_;
+            internal FixedPoint maxX_;
+            internal FixedPoint maxY_;
+            internal FixedPoint minX_;
+            internal FixedPoint minY_;
         }
 
         /**
@@ -61,17 +63,17 @@ namespace RVO
          */
         private struct FloatPair
         {
-            private float a_;
-            private float b_;
+            private readonly FixedPoint a_;
+            private readonly FixedPoint b_;
 
             /**
              * <summary>Constructs and initializes a pair of scalar
              * values.</summary>
              *
-             * <param name="a">The first scalar value.</returns>
-             * <param name="b">The second scalar value.</returns>
+             * <param name="a">The first scalar value.</param>
+             * <param name="b">The second scalar value.</param>
              */
-            internal FloatPair(float a, float b)
+            internal FloatPair(FixedPoint a, FixedPoint b)
             {
                 a_ = a;
                 b_ = b;
@@ -218,7 +220,7 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeAgentNeighbors(Agent agent, ref float rangeSq)
+        internal void computeAgentNeighbors(Agent agent, ref FixedPoint rangeSq)
         {
             queryAgentTreeRecursive(agent, ref rangeSq, 0);
         }
@@ -231,7 +233,7 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeObstacleNeighbors(Agent agent, float rangeSq)
+        internal void computeObstacleNeighbors(Agent agent, FixedPoint rangeSq)
         {
             queryObstacleTreeRecursive(agent, rangeSq, obstacleTree_);
         }
@@ -250,7 +252,7 @@ namespace RVO
          * <param name="radius">The radius within which visibility is to be
          * tested.</param>
          */
-        internal bool queryVisibility(Vector2 q1, Vector2 q2, float radius)
+        internal bool queryVisibility(FixedVector2 q1, FixedVector2 q2, FixedPoint radius)
         {
             return queryVisibilityRecursive(q1, q2, radius, obstacleTree_);
         }
@@ -267,34 +269,34 @@ namespace RVO
         {
             agentTree_[node].begin_ = begin;
             agentTree_[node].end_ = end;
-            agentTree_[node].minX_ = agentTree_[node].maxX_ = agents_[begin].position_.x_;
-            agentTree_[node].minY_ = agentTree_[node].maxY_ = agents_[begin].position_.y_;
+            agentTree_[node].minX_ = agentTree_[node].maxX_ = agents_[begin].position_.X;
+            agentTree_[node].minY_ = agentTree_[node].maxY_ = agents_[begin].position_.Y;
 
             for (int i = begin + 1; i < end; ++i)
             {
-                agentTree_[node].maxX_ = Math.Max(agentTree_[node].maxX_, agents_[i].position_.x_);
-                agentTree_[node].minX_ = Math.Min(agentTree_[node].minX_, agents_[i].position_.x_);
-                agentTree_[node].maxY_ = Math.Max(agentTree_[node].maxY_, agents_[i].position_.y_);
-                agentTree_[node].minY_ = Math.Min(agentTree_[node].minY_, agents_[i].position_.y_);
+                agentTree_[node].maxX_ = FixedMath.Max(agentTree_[node].maxX_, agents_[i].position_.X);
+                agentTree_[node].minX_ = FixedMath.Min(agentTree_[node].minX_, agents_[i].position_.X);
+                agentTree_[node].maxY_ = FixedMath.Max(agentTree_[node].maxY_, agents_[i].position_.Y);
+                agentTree_[node].minY_ = FixedMath.Min(agentTree_[node].minY_, agents_[i].position_.Y);
             }
 
             if (end - begin > MAX_LEAF_SIZE)
             {
                 /* No leaf node. */
                 bool isVertical = agentTree_[node].maxX_ - agentTree_[node].minX_ > agentTree_[node].maxY_ - agentTree_[node].minY_;
-                float splitValue = 0.5f * (isVertical ? agentTree_[node].maxX_ + agentTree_[node].minX_ : agentTree_[node].maxY_ + agentTree_[node].minY_);
+                FixedPoint splitValue = (FixedPoint)0.5f * (isVertical ? agentTree_[node].maxX_ + agentTree_[node].minX_ : agentTree_[node].maxY_ + agentTree_[node].minY_);
 
                 int left = begin;
                 int right = end;
 
                 while (left < right)
                 {
-                    while (left < right && (isVertical ? agents_[left].position_.x_ : agents_[left].position_.y_) < splitValue)
+                    while (left < right && (isVertical ? agents_[left].position_.X : agents_[left].position_.Y) < splitValue)
                     {
                         ++left;
                     }
 
-                    while (right > left && (isVertical ? agents_[right - 1].position_.x_ : agents_[right - 1].position_.y_) >= splitValue)
+                    while (right > left && (isVertical ? agents_[right - 1].position_.X : agents_[right - 1].position_.Y) >= splitValue)
                     {
                         --right;
                     }
@@ -340,7 +342,7 @@ namespace RVO
                 return null;
             }
 
-            ObstacleTreeNode node = new ObstacleTreeNode();
+            ObstacleTreeNode node = new();
 
             int optimalSplit = 0;
             int minLeft = obstacles.Count;
@@ -365,8 +367,8 @@ namespace RVO
                     Obstacle obstacleJ1 = obstacles[j];
                     Obstacle obstacleJ2 = obstacleJ1.next_;
 
-                    float j1LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ1.point_);
-                    float j2LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ2.point_);
+                    FixedPoint j1LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ1.point_);
+                    FixedPoint j2LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ2.point_);
 
                     if (j1LeftOfI >= -RVOMath.RVO_EPSILON && j2LeftOfI >= -RVOMath.RVO_EPSILON)
                     {
@@ -429,8 +431,8 @@ namespace RVO
                     Obstacle obstacleJ1 = obstacles[j];
                     Obstacle obstacleJ2 = obstacleJ1.next_;
 
-                    float j1LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ1.point_);
-                    float j2LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ2.point_);
+                    FixedPoint j1LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ1.point_);
+                    FixedPoint j2LeftOfI = RVOMath.leftOf(obstacleI1.point_, obstacleI2.point_, obstacleJ2.point_);
 
                     if (j1LeftOfI >= -RVOMath.RVO_EPSILON && j2LeftOfI >= -RVOMath.RVO_EPSILON)
                     {
@@ -443,11 +445,11 @@ namespace RVO
                     else
                     {
                         /* Split obstacle j. */
-                        float t = RVOMath.det(obstacleI2.point_ - obstacleI1.point_, obstacleJ1.point_ - obstacleI1.point_) / RVOMath.det(obstacleI2.point_ - obstacleI1.point_, obstacleJ1.point_ - obstacleJ2.point_);
+                        FixedPoint t = RVOMath.det(obstacleI2.point_ - obstacleI1.point_, obstacleJ1.point_ - obstacleI1.point_) / RVOMath.det(obstacleI2.point_ - obstacleI1.point_, obstacleJ1.point_ - obstacleJ2.point_);
 
-                        Vector2 splitPoint = obstacleJ1.point_ + t * (obstacleJ2.point_ - obstacleJ1.point_);
+                        FixedVector2 splitPoint = obstacleJ1.point_ + t * (obstacleJ2.point_ - obstacleJ1.point_);
 
-                        Obstacle newObstacle = new Obstacle();
+                        Obstacle newObstacle = new();
                         newObstacle.point_ = splitPoint;
                         newObstacle.previous_ = obstacleJ1;
                         newObstacle.next_ = obstacleJ2;
@@ -461,7 +463,7 @@ namespace RVO
                         obstacleJ1.next_ = newObstacle;
                         obstacleJ2.previous_ = newObstacle;
 
-                        if (j1LeftOfI > 0.0f)
+                        if (j1LeftOfI > FixedPoint.Zero)
                         {
                             leftObstacles[leftCounter++] = obstacleJ1;
                             rightObstacles[rightCounter++] = newObstacle;
@@ -491,7 +493,7 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current agent k-D tree node index.</param>
          */
-        private void queryAgentTreeRecursive(Agent agent, ref float rangeSq, int node)
+        private void queryAgentTreeRecursive(Agent agent, ref FixedPoint rangeSq, int node)
         {
             if (agentTree_[node].end_ - agentTree_[node].begin_ <= MAX_LEAF_SIZE)
             {
@@ -502,8 +504,8 @@ namespace RVO
             }
             else
             {
-                float distSqLeft = RVOMath.sqr(Math.Max(0.0f, agentTree_[agentTree_[node].left_].minX_ - agent.position_.x_)) + RVOMath.sqr(Math.Max(0.0f, agent.position_.x_ - agentTree_[agentTree_[node].left_].maxX_)) + RVOMath.sqr(Math.Max(0.0f, agentTree_[agentTree_[node].left_].minY_ - agent.position_.y_)) + RVOMath.sqr(Math.Max(0.0f, agent.position_.y_ - agentTree_[agentTree_[node].left_].maxY_));
-                float distSqRight = RVOMath.sqr(Math.Max(0.0f, agentTree_[agentTree_[node].right_].minX_ - agent.position_.x_)) + RVOMath.sqr(Math.Max(0.0f, agent.position_.x_ - agentTree_[agentTree_[node].right_].maxX_)) + RVOMath.sqr(Math.Max(0.0f, agentTree_[agentTree_[node].right_].minY_ - agent.position_.y_)) + RVOMath.sqr(Math.Max(0.0f, agent.position_.y_ - agentTree_[agentTree_[node].right_].maxY_));
+                FixedPoint distSqLeft = RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agentTree_[agentTree_[node].left_].minX_ - agent.position_.X)) + RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agent.position_.X - agentTree_[agentTree_[node].left_].maxX_)) + RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agentTree_[agentTree_[node].left_].minY_ - agent.position_.Y)) + RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agent.position_.Y - agentTree_[agentTree_[node].left_].maxY_));
+                FixedPoint distSqRight = RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agentTree_[agentTree_[node].right_].minX_ - agent.position_.X)) + RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agent.position_.X - agentTree_[agentTree_[node].right_].maxX_)) + RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agentTree_[agentTree_[node].right_].minY_ - agent.position_.Y)) + RVOMath.sqr(FixedMath.Max(FixedPoint.Zero, agent.position_.Y - agentTree_[agentTree_[node].right_].maxY_));
 
                 if (distSqLeft < distSqRight)
                 {
@@ -542,22 +544,22 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current obstacle k-D node.</param>
          */
-        private void queryObstacleTreeRecursive(Agent agent, float rangeSq, ObstacleTreeNode node)
+        private void queryObstacleTreeRecursive(Agent agent, FixedPoint rangeSq, ObstacleTreeNode node)
         {
             if (node != null)
             {
                 Obstacle obstacle1 = node.obstacle_;
                 Obstacle obstacle2 = obstacle1.next_;
 
-                float agentLeftOfLine = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, agent.position_);
+                FixedPoint agentLeftOfLine = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, agent.position_);
 
-                queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= 0.0f ? node.left_ : node.right_);
+                queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= FixedPoint.Zero ? node.left_ : node.right_);
 
-                float distSqLine = RVOMath.sqr(agentLeftOfLine) / RVOMath.absSq(obstacle2.point_ - obstacle1.point_);
+                FixedPoint distSqLine = RVOMath.sqr(agentLeftOfLine) / RVOMath.absSq(obstacle2.point_ - obstacle1.point_);
 
                 if (distSqLine < rangeSq)
                 {
-                    if (agentLeftOfLine < 0.0f)
+                    if (agentLeftOfLine < FixedPoint.Zero)
                     {
                         /*
                          * Try obstacle at this node only if agent is on right side of
@@ -567,7 +569,7 @@ namespace RVO
                     }
 
                     /* Try other side of line. */
-                    queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= 0.0f ? node.right_ : node.left_);
+                    queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= FixedPoint.Zero ? node.right_ : node.left_);
                 }
             }
         }
@@ -587,7 +589,7 @@ namespace RVO
          * tested.</param>
          * <param name="node">The current obstacle k-D node.</param>
          */
-        private bool queryVisibilityRecursive(Vector2 q1, Vector2 q2, float radius, ObstacleTreeNode node)
+        private bool queryVisibilityRecursive(FixedVector2 q1, FixedVector2 q2, FixedPoint radius, ObstacleTreeNode node)
         {
             if (node == null)
             {
@@ -597,31 +599,31 @@ namespace RVO
             Obstacle obstacle1 = node.obstacle_;
             Obstacle obstacle2 = obstacle1.next_;
 
-            float q1LeftOfI = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, q1);
-            float q2LeftOfI = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, q2);
-            float invLengthI = 1.0f / RVOMath.absSq(obstacle2.point_ - obstacle1.point_);
+            FixedPoint q1LeftOfI = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, q1);
+            FixedPoint q2LeftOfI = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, q2);
+            FixedPoint invLengthI = FixedPoint.One / RVOMath.absSq(obstacle2.point_ - obstacle1.point_);
 
-            if (q1LeftOfI >= 0.0f && q2LeftOfI >= 0.0f)
+            if (q1LeftOfI >= FixedPoint.Zero && q2LeftOfI >= FixedPoint.Zero)
             {
                 return queryVisibilityRecursive(q1, q2, radius, node.left_) && ((RVOMath.sqr(q1LeftOfI) * invLengthI >= RVOMath.sqr(radius) && RVOMath.sqr(q2LeftOfI) * invLengthI >= RVOMath.sqr(radius)) || queryVisibilityRecursive(q1, q2, radius, node.right_));
             }
 
-            if (q1LeftOfI <= 0.0f && q2LeftOfI <= 0.0f)
+            if (q1LeftOfI <= FixedPoint.Zero && q2LeftOfI <= FixedPoint.Zero)
             {
                 return queryVisibilityRecursive(q1, q2, radius, node.right_) && ((RVOMath.sqr(q1LeftOfI) * invLengthI >= RVOMath.sqr(radius) && RVOMath.sqr(q2LeftOfI) * invLengthI >= RVOMath.sqr(radius)) || queryVisibilityRecursive(q1, q2, radius, node.left_));
             }
 
-            if (q1LeftOfI >= 0.0f && q2LeftOfI <= 0.0f)
+            if (q1LeftOfI >= FixedPoint.Zero && q2LeftOfI <= FixedPoint.Zero)
             {
                 /* One can see through obstacle from left to right. */
                 return queryVisibilityRecursive(q1, q2, radius, node.left_) && queryVisibilityRecursive(q1, q2, radius, node.right_);
             }
 
-            float point1LeftOfQ = RVOMath.leftOf(q1, q2, obstacle1.point_);
-            float point2LeftOfQ = RVOMath.leftOf(q1, q2, obstacle2.point_);
-            float invLengthQ = 1.0f / RVOMath.absSq(q2 - q1);
+            FixedPoint point1LeftOfQ = RVOMath.leftOf(q1, q2, obstacle1.point_);
+            FixedPoint point2LeftOfQ = RVOMath.leftOf(q1, q2, obstacle2.point_);
+            FixedPoint invLengthQ = FixedPoint.One / RVOMath.absSq(q2 - q1);
 
-            return point1LeftOfQ * point2LeftOfQ >= 0.0f && RVOMath.sqr(point1LeftOfQ) * invLengthQ > RVOMath.sqr(radius) && RVOMath.sqr(point2LeftOfQ) * invLengthQ > RVOMath.sqr(radius) && queryVisibilityRecursive(q1, q2, radius, node.left_) && queryVisibilityRecursive(q1, q2, radius, node.right_);
+            return point1LeftOfQ * point2LeftOfQ >= FixedPoint.Zero && RVOMath.sqr(point1LeftOfQ) * invLengthQ > RVOMath.sqr(radius) && RVOMath.sqr(point2LeftOfQ) * invLengthQ > RVOMath.sqr(radius) && queryVisibilityRecursive(q1, q2, radius, node.left_) && queryVisibilityRecursive(q1, q2, radius, node.right_);
         }
     }
 }

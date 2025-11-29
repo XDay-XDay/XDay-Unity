@@ -42,6 +42,8 @@ namespace XDay.WorldAPI.Region
 
         protected override void InitInternal()
         {
+            m_LODSystem.Init(World.WorldLODSystem);
+
             m_Renderer = new RegionSystemRenderer(World.Root.transform);
 
             m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
@@ -172,6 +174,21 @@ namespace XDay.WorldAPI.Region
             {
                 Debug.LogError($"SetColor failed, invalid layer: {layerIndex}");
             }
+        }
+
+        public int GetRegionConfigID(int layerIndex, Vector3 position)
+        {
+            var layer = GetLayer(layerIndex);
+            if (layer != null)
+            {
+                var coord = layer.PositionToCoordinate(position.x, position.z);
+                return layer.GetRegionConfigID(coord.x, coord.y);
+            }
+            else
+            {
+                Debug.LogError($"GetRegionConfigID failed, invalid layer: {layerIndex}");
+            }
+            return 0;
         }
 
         private void OnLODChanged(Rect previousArea, Rect currentArea)

@@ -36,6 +36,7 @@ namespace XDay.WorldAPI
         public string CameraSetupFilePath => $"{GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{CameraSetupFileName}.bytes";
         public string GameFolder { get => m_GameFolder; set => m_GameFolder = value; }
         public string EditorFolder { get => m_EditorFolder; set => m_EditorFolder = value; }
+        public string SceneFilePath => $"{GameFolder}/{WorldDefine.CONSTANT_FOLDER_NAME}/{WorldDefine.WORLD_EDITOR_NAME}.unity";
 
         public WorldSetup(string name, int id, string gameFolder, string editorFolder, string cameraSetupFilePath)
         {

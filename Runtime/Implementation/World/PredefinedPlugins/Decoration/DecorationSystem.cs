@@ -277,6 +277,8 @@ namespace XDay.WorldAPI.Decoration
 
         protected override void InitInternal()
         {
+            m_LODSystem.Init(World.WorldLODSystem);
+
             foreach (var grid in m_GridData)
             {
                 grid.Init(this);

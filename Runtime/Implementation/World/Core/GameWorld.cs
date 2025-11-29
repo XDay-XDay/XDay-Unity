@@ -53,10 +53,7 @@ namespace XDay.WorldAPI
         {
             base.Init();
 
-            if (m_PluginLODSystem == null)
-            {
-                m_PluginLODSystem = new(WorldLODSystem.LODCount);
-            }
+            m_PluginLODSystem ??= new(WorldLODSystem.LODCount);
             m_PluginLODSystem.Init(WorldLODSystem);
 
             InitRendererInternal();

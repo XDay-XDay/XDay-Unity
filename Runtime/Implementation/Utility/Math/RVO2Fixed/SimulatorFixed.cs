@@ -2,7 +2,8 @@
  * Simulator.cs
  * RVO2 Library C#
  *
- * Copyright 2008 University of North Carolina at Chapel Hill
+ * SPDX-FileCopyrightText: 2008 University of North Carolina at Chapel Hill
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +34,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using XDay;
 
-namespace RVO
+namespace RVOFixed
 {
     /**
      * <summary>Defines the simulation.</summary>
@@ -46,9 +48,9 @@ namespace RVO
          */
         private class Worker
         {
-            private ManualResetEvent doneEvent_;
-            private int end_;
-            private int start_;
+            private readonly ManualResetEvent doneEvent_;
+            private readonly int end_;
+            private readonly int start_;
 
             /**
              * <summary>Constructs and initializes a worker.</summary>
@@ -103,14 +105,15 @@ namespace RVO
         internal IList<Agent> agents_;
         internal IList<Obstacle> obstacles_;
         internal KdTree kdTree_;
-        internal float timeStep_;
+        internal FixedPoint timeStep_;
 
-        private static Simulator instance_ = new Simulator();
+        private static readonly Simulator instance_ = new();
 
+        private Agent defaultAgent_;
         private ManualResetEvent[] doneEvents_;
         private Worker[] workers_;
         private int numWorkers_;
-        private float globalTime_;
+        private FixedPoint globalTime_;
         internal int agentCount_;
         private List<int> freeIndexList_ = new();
         private bool hasRemovedAgent_ = false;
@@ -122,6 +125,32 @@ namespace RVO
             {
                 return instance_;
             }
+        }
+
+        /**
+         * <summary>Adds a new agent with default properties to the simulation.
+         * </summary>
+         *
+         * <returns>The number of the agent, or -1 when the agent defaults have
+         * not been set.</returns>
+         *
+         * <param name="position">The two-dimensional starting position of this
+         * agent.</param>
+         */
+        public int addAgent(FixedVector2 position)
+        {
+            if (defaultAgent_ == null)
+            {
+                return -1;
+            }
+
+            return addAgent(position, defaultAgent_.neighborDist_, defaultAgent_.maxNeighbors_, defaultAgent_.timeHorizon_, defaultAgent_.timeHorizonObst_, defaultAgent_.radius_, defaultAgent_.maxSpeed_, defaultAgent_.velocity_);
+        }
+
+        public void removeAgent(int id)
+        {
+            hasRemovedAgent_ = true;
+            agents_[id].removed_ = true;
         }
 
         /**
@@ -158,7 +187,7 @@ namespace RVO
          * <param name="velocity">The initial two-dimensional linear velocity of
          * this agent.</param>
          */
-        public int addAgent(Vector2 position, float maxSpeed, float radius, Vector2 velocity, float neighborDist = 3, int maxNeighbors = 5, float timeHorizon = 10f, float timeHorizonObst = 10f)
+        public int addAgent(FixedVector2 position, FixedPoint neighborDist, int maxNeighbors, FixedPoint timeHorizon, FixedPoint timeHorizonObst, FixedPoint radius, FixedPoint maxSpeed, FixedVector2 velocity)
         {
             Agent agent = new();
             var id = getFreeIndex();
@@ -184,15 +213,6 @@ namespace RVO
             return agent.id_;
         }
 
-        public void removeAgent(int id)
-        {
-            if (id >= 0 && id < agents_.Count)
-            {
-                hasRemovedAgent_ = true;
-                agents_[id].removed_ = true;
-            }
-        }
-
         /**
          * <summary>Adds a new obstacle to the simulation.</summary>
          *
@@ -206,7 +226,7 @@ namespace RVO
          * the environment, the vertices should be listed in clockwise order.
          * </remarks>
          */
-        public int addObstacle(IList<Vector2> vertices)
+        public int addObstacle(IList<FixedVector2> vertices)
         {
             if (vertices.Count < 2)
             {
@@ -240,7 +260,7 @@ namespace RVO
                 }
                 else
                 {
-                    obstacle.convex_ = (RVOMath.leftOf(vertices[(i == 0 ? vertices.Count - 1 : i - 1)], vertices[i], vertices[(i == vertices.Count - 1 ? 0 : i + 1)]) >= 0.0f);
+                    obstacle.convex_ = (RVOMath.leftOf(vertices[(i == 0 ? vertices.Count - 1 : i - 1)], vertices[i], vertices[(i == vertices.Count - 1 ? 0 : i + 1)]) >= FixedPoint.Zero);
                 }
 
                 obstacle.id_ = obstacles_.Count;
@@ -262,10 +282,11 @@ namespace RVO
         public void Clear()
         {
             agents_ = new List<Agent>();
+            defaultAgent_ = null;
             kdTree_ = new KdTree();
             obstacles_ = new List<Obstacle>();
-            globalTime_ = 0;
-            timeStep_ = 0.1f;
+            globalTime_ = FixedPoint.Zero;
+            timeStep_ = (FixedPoint)0.1f;
             agentCount_ = 0;
             freeIndexList_.Clear();
             hasRemovedAgent_ = false;
@@ -280,7 +301,7 @@ namespace RVO
          *
          * <returns>The global time after the simulation step.</returns>
          */
-        public float doStep()
+        public FixedPoint doStep()
         {
             if (workers_ == null)
             {
@@ -358,7 +379,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose maximum speed is
          * to be retrieved.</param>
          */
-        public float getAgentMaxSpeed(int agentNo)
+        public FixedPoint getAgentMaxSpeed(int agentNo)
         {
             return agents_[agentNo].maxSpeed_;
         }
@@ -373,7 +394,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose maximum neighbor
          * distance is to be retrieved.</param>
          */
-        public float getAgentNeighborDist(int agentNo)
+        public FixedPoint getAgentNeighborDist(int agentNo)
         {
             return agents_[agentNo].neighborDist_;
         }
@@ -453,7 +474,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose two-dimensional
          * position is to be retrieved.</param>
          */
-        public Vector2 getAgentPosition(int agentNo)
+        public FixedVector2 getAgentPosition(int agentNo)
         {
             return agents_[agentNo].position_;
         }
@@ -468,7 +489,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose two-dimensional
          * preferred velocity is to be retrieved.</param>
          */
-        public Vector2 getAgentPrefVelocity(int agentNo)
+        public FixedVector2 getAgentPrefVelocity(int agentNo)
         {
             return agents_[agentNo].prefVelocity_;
         }
@@ -481,7 +502,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose radius is to be
          * retrieved.</param>
          */
-        public float getAgentRadius(int agentNo)
+        public FixedPoint getAgentRadius(int agentNo)
         {
             return agents_[agentNo].radius_;
         }
@@ -494,7 +515,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose time horizon is
          * to be retrieved.</param>
          */
-        public float getAgentTimeHorizon(int agentNo)
+        public FixedPoint getAgentTimeHorizon(int agentNo)
         {
             return agents_[agentNo].timeHorizon_;
         }
@@ -509,7 +530,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose time horizon with
          * respect to obstacles is to be retrieved.</param>
          */
-        public float getAgentTimeHorizonObst(int agentNo)
+        public FixedPoint getAgentTimeHorizonObst(int agentNo)
         {
             return agents_[agentNo].timeHorizonObst_;
         }
@@ -524,7 +545,7 @@ namespace RVO
          * <param name="agentNo">The number of the agent whose two-dimensional
          * linear velocity is to be retrieved.</param>
          */
-        public Vector2 getAgentVelocity(int agentNo)
+        public FixedVector2 getAgentVelocity(int agentNo)
         {
             return agents_[agentNo].velocity_;
         }
@@ -535,7 +556,7 @@ namespace RVO
          * <returns>The present global time of the simulation (zero initially).
          * </returns>
          */
-        public float getGlobalTime()
+        public FixedPoint getGlobalTime()
         {
             return globalTime_;
         }
@@ -581,7 +602,7 @@ namespace RVO
          * <param name="vertexNo">The number of the obstacle vertex to be
          * retrieved.</param>
          */
-        public Vector2 getObstacleVertex(int vertexNo)
+        public FixedVector2 getObstacleVertex(int vertexNo)
         {
             return obstacles_[vertexNo].point_;
         }
@@ -621,7 +642,7 @@ namespace RVO
          *
          * <returns>The present time step of the simulation.</returns>
          */
-        public float getTimeStep()
+        public FixedPoint getTimeStep()
         {
             return timeStep_;
         }
@@ -652,9 +673,57 @@ namespace RVO
          * the two points and the obstacles in order for the points to be
          * mutually visible (optional). Must be non-negative.</param>
          */
-        public bool queryVisibility(Vector2 point1, Vector2 point2, float radius)
+        public bool queryVisibility(FixedVector2 point1, FixedVector2 point2, FixedPoint radius)
         {
             return kdTree_.queryVisibility(point1, point2, radius);
+        }
+
+        /**
+         * <summary>Sets the default properties for any new agent that is added.
+         * </summary>
+         *
+         * <param name="neighborDist">The default maximum distance (center point
+         * to center point) to other agents a new agent takes into account in
+         * the navigation. The larger this number, the longer he running time of
+         * the simulation. If the number is too low, the simulation will not be
+         * safe. Must be non-negative.</param>
+         * <param name="maxNeighbors">The default maximum number of other agents
+         * a new agent takes into account in the navigation. The larger this
+         * number, the longer the running time of the simulation. If the number
+         * is too low, the simulation will not be safe.</param>
+         * <param name="timeHorizon">The default minimal amount of time for
+         * which a new agent's velocities that are computed by the simulation
+         * are safe with respect to other agents. The larger this number, the
+         * sooner an agent will respond to the presence of other agents, but the
+         * less freedom the agent has in choosing its velocities. Must be
+         * positive.</param>
+         * <param name="timeHorizonObst">The default minimal amount of time for
+         * which a new agent's velocities that are computed by the simulation
+         * are safe with respect to obstacles. The larger this number, the
+         * sooner an agent will respond to the presence of obstacles, but the
+         * less freedom the agent has in choosing its velocities. Must be
+         * positive.</param>
+         * <param name="radius">The default radius of a new agent. Must be
+         * non-negative.</param>
+         * <param name="maxSpeed">The default maximum speed of a new agent. Must
+         * be non-negative.</param>
+         * <param name="velocity">The default initial two-dimensional linear
+         * velocity of a new agent.</param>
+         */
+        public void setAgentDefaults(FixedPoint neighborDist, int maxNeighbors, FixedPoint timeHorizon, FixedPoint timeHorizonObst, FixedPoint radius, FixedPoint maxSpeed, FixedVector2 velocity)
+        {
+            if (defaultAgent_ == null)
+            {
+                defaultAgent_ = new Agent();
+            }
+
+            defaultAgent_.maxNeighbors_ = maxNeighbors;
+            defaultAgent_.maxSpeed_ = maxSpeed;
+            defaultAgent_.neighborDist_ = neighborDist;
+            defaultAgent_.radius_ = radius;
+            defaultAgent_.timeHorizon_ = timeHorizon;
+            defaultAgent_.timeHorizonObst_ = timeHorizonObst;
+            defaultAgent_.velocity_ = velocity;
         }
 
         /**
@@ -679,7 +748,7 @@ namespace RVO
          * <param name="maxSpeed">The replacement maximum speed. Must be
          * non-negative.</param>
          */
-        public void setAgentMaxSpeed(int agentNo, float maxSpeed)
+        public void setAgentMaxSpeed(int agentNo, FixedPoint maxSpeed)
         {
             agents_[agentNo].maxSpeed_ = maxSpeed;
         }
@@ -693,7 +762,7 @@ namespace RVO
          * <param name="neighborDist">The replacement maximum neighbor distance.
          * Must be non-negative.</param>
          */
-        public void setAgentNeighborDist(int agentNo, float neighborDist)
+        public void setAgentNeighborDist(int agentNo, FixedPoint neighborDist)
         {
             agents_[agentNo].neighborDist_ = neighborDist;
         }
@@ -707,7 +776,7 @@ namespace RVO
          * <param name="position">The replacement of the two-dimensional
          * position.</param>
          */
-        public void setAgentPosition(int agentNo, Vector2 position)
+        public void setAgentPosition(int agentNo, FixedVector2 position)
         {
             agents_[agentNo].position_ = position;
         }
@@ -721,7 +790,7 @@ namespace RVO
          * <param name="prefVelocity">The replacement of the two-dimensional
          * preferred velocity.</param>
          */
-        public void setAgentPrefVelocity(int agentNo, Vector2 prefVelocity)
+        public void setAgentPrefVelocity(int agentNo, FixedVector2 prefVelocity)
         {
             agents_[agentNo].prefVelocity_ = prefVelocity;
         }
@@ -734,7 +803,7 @@ namespace RVO
          * <param name="radius">The replacement radius. Must be non-negative.
          * </param>
          */
-        public void setAgentRadius(int agentNo, float radius)
+        public void setAgentRadius(int agentNo, FixedPoint radius)
         {
             agents_[agentNo].radius_ = radius;
         }
@@ -748,7 +817,7 @@ namespace RVO
          * <param name="timeHorizon">The replacement time horizon with respect
          * to other agents. Must be positive.</param>
          */
-        public void setAgentTimeHorizon(int agentNo, float timeHorizon)
+        public void setAgentTimeHorizon(int agentNo, FixedPoint timeHorizon)
         {
             agents_[agentNo].timeHorizon_ = timeHorizon;
         }
@@ -762,7 +831,7 @@ namespace RVO
          * <param name="timeHorizonObst">The replacement time horizon with
          * respect to obstacles. Must be positive.</param>
          */
-        public void setAgentTimeHorizonObst(int agentNo, float timeHorizonObst)
+        public void setAgentTimeHorizonObst(int agentNo, FixedPoint timeHorizonObst)
         {
             agents_[agentNo].timeHorizonObst_ = timeHorizonObst;
         }
@@ -776,7 +845,7 @@ namespace RVO
          * <param name="velocity">The replacement two-dimensional linear
          * velocity.</param>
          */
-        public void setAgentVelocity(int agentNo, Vector2 velocity)
+        public void setAgentVelocity(int agentNo, FixedVector2 velocity)
         {
             agents_[agentNo].velocity_ = velocity;
         }
@@ -786,7 +855,7 @@ namespace RVO
          *
          * <param name="globalTime">The global time of the simulation.</param>
          */
-        public void setGlobalTime(float globalTime)
+        public void setGlobalTime(FixedPoint globalTime)
         {
             globalTime_ = globalTime;
         }
@@ -813,7 +882,7 @@ namespace RVO
          * <param name="timeStep">The time step of the simulation. Must be
          * positive.</param>
          */
-        public void setTimeStep(float timeStep)
+        public void setTimeStep(FixedPoint timeStep)
         {
             timeStep_ = timeStep;
         }

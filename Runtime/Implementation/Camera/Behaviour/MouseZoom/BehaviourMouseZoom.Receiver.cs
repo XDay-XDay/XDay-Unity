@@ -67,11 +67,15 @@ namespace XDay.CameraAPI
                     {
                         scrollRate = m_Speed * deltaDis * Mathf.Abs(pos.CurrentLogicPosition.z);
                     }
-                    pos.CurrentLogicPosition += scrollRate * (pos.CurrentLogicRotation * Vector3.forward);
+
+                    var newZoomFactor = m_Manipulator.ZoomFactor - scrollRate;
+
+                    m_Manipulator.Setup.AltitudeManager.DecomposeZoomFactor(newZoomFactor, out var focalLength, out _);
+                    pos.CurrentLogicPosition = m_Manipulator.FocusPoint - m_Manipulator.Forward * focalLength;
                 }
             }
 
-            private float m_Speed = 0.01f;
+            private float m_Speed = 0.1f;
             private Vector2 m_PrevMousePos = Vector2.zero;
         }
     }

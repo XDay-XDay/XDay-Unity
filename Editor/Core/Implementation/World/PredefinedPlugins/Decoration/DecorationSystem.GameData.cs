@@ -133,7 +133,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             for (var i = 0; i < decorations.Count; ++i)
             {
                 decorationMetadata.LODResourceChangeMasks[i] = CalculateLODChangeMasks(decorations[i]);
-                decorationMetadata.Position[i] = decorations[i].Position;
+                decorationMetadata.Position[i] = GetRealPosition(decorations[i]);
                 decorationMetadata.ResourceMetadataIndex[i] = QueryResourceMetadataIndex(decorations[i], resourceMetadatas);
                 initialVisible[i] = IsInitialVisible(decorations[i]);
             }
@@ -208,6 +208,28 @@ namespace XDay.WorldAPI.Decoration.Editor
             resourceMetadata[resourceMetadataIndex].GPUBatchID = batchID;
 
             return resourceMetadataIndex;
+        }
+
+        private Vector3 GetRealPosition(DecorationObject decoration)
+        {
+            var batchID = CalculateBatchID(decoration);
+            if (batchID < 0)
+            {
+                return decoration.Position;
+            }
+
+            var gameObject = m_Renderer.GetGameObject(decoration.ID);
+            if (gameObject != null)
+            {
+                var filter = gameObject.GetComponentInChildren<MeshFilter>();
+                if (filter != null)
+                {
+                    return filter.gameObject.transform.position;
+                }
+            }
+
+            Debug.LogError("No mesh found!, will return default scale");
+            return Vector3.one;
         }
 
         private Vector3 GetRealScale(int batchID, DecorationObject decoration)

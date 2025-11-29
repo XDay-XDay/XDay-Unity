@@ -22,6 +22,7 @@
  */
 
 using MiniJSON;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -64,6 +65,8 @@ namespace XDay.WorldAPI.Region.Editor
             for (var i = 0; i < m_Layers.Count; i++)
             {
                 var layer = m_Layers[i];
+                var gridData = GetGridIndexData(layer);
+
                 serializer.WriteString(layer.Name, "Name");
                 serializer.WriteInt32(layer.HorizontalGridCount, "HorizontalGridCount");
                 serializer.WriteInt32(layer.VerticalGridCount, "VerticalGridCount");
@@ -71,9 +74,24 @@ namespace XDay.WorldAPI.Region.Editor
                 serializer.WriteSingle(layer.GridHeight, "GridHeight");
                 serializer.WriteVector2(layer.Origin, "Origin");
                 serializer.WriteSingle(layer.Renderer.Root.transform.position.y, "Height");
+                serializer.WriteByteArray(gridData, "Grid");
 
                 ExportRegions(serializer, m_Layers[i]);
             }
+        }
+
+        private byte[] GetGridIndexData(RegionSystemLayer layer)
+        {
+            byte[] ret = new byte[layer.HorizontalGridCount * layer.VerticalGridCount];
+            var idx = 0;
+            for (var i = 0; i < layer.VerticalGridCount; ++i)
+            {
+                for (var j = 0; j < layer.HorizontalGridCount; ++j)
+                {
+                    ret[idx++] = (byte)layer.GetRegionIndex(layer.GetGrid(j, i));
+                }
+            }
+            return ret;
         }
 
         private void ExportRegions(ISerializer serializer, RegionSystemLayer layer)
@@ -86,7 +104,7 @@ namespace XDay.WorldAPI.Region.Editor
                 serializer.WriteVector3(layer.GetRegionCenter(regionCoordinates[region.ID]), "Region Center");
                 serializer.WriteColor32(region.Color, "Region Color");
                 serializer.WriteString(region.Name, "Region Name");
-                serializer.WriteRect(layer.GetRegionWorldBounds(regionCoordinates[region.ID]), "Bounds Bounds");
+                serializer.WriteRect(layer.GetRegionWorldBounds(regionCoordinates[region.ID]), "Region Bounds");
                 var fullPrefabPath = $"{layer.GetRegionFullObjectNamePrefix(region.ConfigID)}.prefab";
                 serializer.WriteString(fullPrefabPath, "Full Prefab Path");
             }

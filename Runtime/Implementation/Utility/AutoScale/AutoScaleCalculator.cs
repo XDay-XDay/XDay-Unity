@@ -11,6 +11,8 @@ namespace XDay.UtilityAPI
         {
             m_Camera = camera;
             m_ScaleConfigs = scaleConfigs;
+
+            Update(true);
         }
 
         public void Update(bool forceUpdate)
@@ -23,10 +25,10 @@ namespace XDay.UtilityAPI
             var currentAltitude = m_Camera.CurrentAltitude;
             var lastAltitude = m_Camera.LastAltitude;
 
-            //if (!forceUpdate && Mathf.Approximately(lastAltitude, currentAltitude))
-            //{
-            //    return;
-            //}
+            if (!forceUpdate && Mathf.Approximately(lastAltitude, currentAltitude))
+            {
+                return;
+            }
 
             foreach (var scaleConfig in m_ScaleConfigs)
             {
@@ -68,8 +70,8 @@ namespace XDay.UtilityAPI
             return height * m_Camera.Camera.aspect;
         }
 
-        private ICameraManipulator m_Camera;
-        private AutoScaleConfig[] m_ScaleConfigs;
+        private readonly ICameraManipulator m_Camera;
+        private readonly AutoScaleConfig[] m_ScaleConfigs;
         private float m_CurrentScale = 0;
     }
 }

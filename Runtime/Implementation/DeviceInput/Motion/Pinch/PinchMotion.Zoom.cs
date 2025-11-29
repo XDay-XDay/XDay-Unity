@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using UnityEngine;
 
 namespace XDay.InputAPI
@@ -89,7 +87,7 @@ namespace XDay.InputAPI
             private Vector2 m_ZoomCenter;
             private float m_StartDistance = 0;
             private Vector2 m_StartDirection;
-            private float m_MoveThreshold = 10.0f;
+            private float m_MoveThreshold = 5.0f;
             private float m_LastZoomRate;
             private float m_LastDistance = 0;
         }

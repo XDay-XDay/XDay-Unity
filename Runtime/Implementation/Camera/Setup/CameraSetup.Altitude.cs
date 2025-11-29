@@ -176,10 +176,10 @@ namespace XDay.CameraAPI
 
             internal void OnFOVChange(float fov)
             {
-                foreach (var setup in m_Setups)
-                {
-                    setup.SetFOV(fov);
-                }
+                //foreach (var setup in m_Setups)
+                //{
+                //    setup.SetFOV(fov);
+                //}
             }
 
             private void Assign()
@@ -276,7 +276,11 @@ namespace XDay.CameraAPI
         public class AltitudeSetup
         {
             public string Name { get => m_Name; internal set => m_Name = value; }
-            public float FOV { get => m_FOV; internal set => m_FOV = Mathf.Max(1, value); }
+            public float FOV 
+            { 
+                get => m_FOV; 
+                internal set => m_FOV = Mathf.Max(1, value);
+            }
             public float FocalLength => m_FocalLength;
             public float ZoomFactor => m_ZoomFactor;
             public float Altitude { get => m_Altitude; internal set => m_Altitude = Mathf.Max(1, value); }

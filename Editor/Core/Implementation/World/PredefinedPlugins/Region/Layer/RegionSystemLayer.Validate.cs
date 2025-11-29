@@ -227,6 +227,16 @@ namespace XDay.WorldAPI.Region.Editor
             return 0;
         }
 
+        internal int GetGrid(int x, int y)
+        {
+            if (x >= 0 && x < m_HorizontalGridCount &&
+                y >= 0 && y < m_VerticalGridCount)
+            {
+                return m_GridData[y * m_HorizontalGridCount + x];
+            }
+            return 0;
+        }
+
         private readonly HashSet<Vector2Int> m_TempList = new();
         private readonly List<Vector2Int> m_ObliqueNeighbours = new() 
         {
