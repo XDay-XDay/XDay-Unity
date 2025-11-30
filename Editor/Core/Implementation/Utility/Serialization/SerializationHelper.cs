@@ -26,7 +26,7 @@ using System.IO;
 
 namespace XDay.SerializationAPI.Editor
 {
-    internal static class SerializationHelper
+    public static class SerializationHelper
     {
         public static string GetClassFilePath(string classFullName)
         {

@@ -29,8 +29,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.SceneManagement;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.SceneManagement;
-using System;
 
 namespace XDay.WorldAPI.Editor
 {

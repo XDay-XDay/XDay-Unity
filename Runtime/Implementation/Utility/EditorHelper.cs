@@ -214,7 +214,10 @@ namespace XDay.UtilityAPI
             return null;
         }
 
-        public static void RunProcess(string exeName, string argument, string workingDir, out string output, out string error, bool waitForExit = true)
+        public static void RunProcess(string exeName, string argument, string workingDir, out string output, out string error, 
+            bool waitForExit = true, 
+            bool shellExecute = false,
+            bool createNoWindow = true)
         {
             output = "";
             error = "";
@@ -224,11 +227,11 @@ namespace XDay.UtilityAPI
             {
                 FileName = exeName,
                 Arguments = argument,
-                RedirectStandardOutput = true, // Redirect output
-                RedirectStandardError = true, // Redirect errors
-                UseShellExecute = false, // Necessary for redirection
+                RedirectStandardOutput = !shellExecute, // Redirect output
+                RedirectStandardError = !shellExecute, // Redirect errors
+                UseShellExecute = shellExecute, // Necessary for redirection
                 WorkingDirectory = workingDir,
-                CreateNoWindow = true // Do not create a window
+                CreateNoWindow = createNoWindow,
             };
 
             try
