@@ -37,12 +37,16 @@ namespace XDay.RenderingAPI.BRG
 
         public GPUBatchManager()
         {
+#if ENABLE_TUANJIE
+            m_Handle = new BatchRendererGroup(OnPerformCulling, IntPtr.Zero);
+#else
             BatchRendererGroupCreateInfo createInfo = new()
             {
                 cullingCallback = OnPerformCulling,
                 userContext = IntPtr.Zero,
             };
             m_Handle = new BatchRendererGroup(createInfo);
+#endif
         }
 
         public void OnDestroy()
@@ -83,13 +87,16 @@ namespace XDay.RenderingAPI.BRG
             drawCommands->drawRanges[0].filterSettings = filterSettings;
             drawCommands->drawRanges[0].drawCommandsBegin = 0;
             drawCommands->drawRanges[0].drawCommandsCount = (uint)drawCommandCount;
+#if !ENABLE_TUANJIE
             drawCommands->drawRanges[0].drawCommandsType = BatchDrawCommandType.Direct;
+#endif
 
             var count = 0;
             for (var i = 0; i < drawCommandCount; ++i)
             {
                 var batch = m_Batches[i];
                 var instanceCount = batch.InstanceCount;
+                //drawCommands->drawCommands[i].flags = BatchDrawCommandFlags.HasSortingPosition;
                 drawCommands->drawCommands[i].flags = 0;
                 drawCommands->drawCommands[i].batchID = batch.HandleID;
                 drawCommands->drawCommands[i].visibleOffset = (uint)count;

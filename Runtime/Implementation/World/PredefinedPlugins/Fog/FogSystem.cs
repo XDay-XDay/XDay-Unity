@@ -26,10 +26,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
     [Preserve]
-    internal partial class FogSystem : WorldPlugin
+    internal partial class FogSystem : WorldPlugin, IFogSystem
     {
         public event Action<bool> EventFogStateChange
         {
@@ -47,6 +47,7 @@ namespace XDay.WorldAPI.FOW
         public string FogPrefabPath => m_FogPrefabPath;
         public string FogConfigPath => m_FogConfigPath;
         public string BlurShaderPath => m_BlurShaderPath;
+        public FogType FogType => m_FogType;
 
         public FogSystem()
         {
@@ -62,6 +63,7 @@ namespace XDay.WorldAPI.FOW
         protected override void UninitInternal()
         {
             m_Impl.OnDestroy();
+			m_Renderer.OnDestroy();
         }
 
         public void ResetFog()
@@ -116,8 +118,19 @@ namespace XDay.WorldAPI.FOW
             m_FogPrefabPath = deserializer.ReadString("Fog Prefab");
             m_FogConfigPath = deserializer.ReadString("Fog Config");
             m_BlurShaderPath = deserializer.ReadString("Fog Blur Shader");
+            m_FogType = (FogType)deserializer.ReadInt32("Fog Type");
 
             deserializer.Uninit();
+        }
+
+	    protected override void UpdateInternal(float dt)
+	    {
+	        m_Renderer?.Update(dt);
+	    }
+
+        public Vector2Int PositionToCoord(Vector3 pos)
+        {
+            return new Vector2Int(Mathf.FloorToInt((pos.x - m_Origin.x) / m_GridWidth), Mathf.FloorToInt((pos.z - m_Origin.z) / m_GridHeight));
         }
 
         private IFogSystemImpl m_Impl;
@@ -132,5 +145,6 @@ namespace XDay.WorldAPI.FOW
         private string m_FogPrefabPath;
         private string m_FogConfigPath;
         private string m_BlurShaderPath;
+        private FogType m_FogType;
     }
 }

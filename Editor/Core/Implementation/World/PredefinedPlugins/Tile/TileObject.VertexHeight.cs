@@ -47,12 +47,19 @@ namespace XDay.WorldAPI.Tile.Editor
 
         public float GetHeight(int x, int y)
         {
-            if (m_VertexHeights == null)
+            if (m_VertexHeights == null || m_VertexHeights.Length == 0)
             {
                 return 0;
             }
-            int idx = y * (m_MeshResolution + 1) + x;
-            return m_VertexHeights[idx];
+
+            if (x >= 0 && x <= m_MeshResolution &&
+                y >= 0 && y <= m_MeshResolution)
+            {
+                int idx = y * (m_MeshResolution + 1) + x;
+                return m_VertexHeights[idx];
+            }
+
+            return 0;
         }
 
         public float GetHeightAtPos(float localPosX, float localPosZ, float gridSize)
@@ -121,7 +128,7 @@ namespace XDay.WorldAPI.Tile.Editor
                     m_MeshResolution = resolution;
                 }
             }
-            if (m_VertexHeights != null)
+            if (m_VertexHeights != null && m_VertexHeights.Length > 0)
             {
                 if (dontChangeEdgeVertexHeight)
                 {

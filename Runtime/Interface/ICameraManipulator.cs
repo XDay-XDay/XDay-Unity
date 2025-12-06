@@ -85,7 +85,7 @@ namespace XDay.CameraAPI
         public Action<BehaviourType> InterruptCallback = null;
         public FocusMovementType MovementType = FocusMovementType.Line;
         public float MoveDuration = 0.5f;
-        public float m_ZoomTime = 0.5f;
+        public float ZoomTime = 0.5f;
         public BehaviourMask InterruptMask = BehaviourMask.All;
         public Vector2 ScreenPosition = new Vector2(-1, -1);
         public RequestQueueType QueueType = RequestQueueType.Replace;

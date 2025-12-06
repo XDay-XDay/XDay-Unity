@@ -580,7 +580,7 @@ namespace XDay.WorldAPI.Decoration
             var oldBounds = GetBoundsInVisibleArea(oldVisibleArea);
             var newBounds = GetBoundsInVisibleArea(newVisibleArea);
 
-            if (oldBounds != newBounds)
+            if (!Helper.CompareEqual(oldBounds, newBounds))
             {
                 var oldMin = oldBounds.min;
                 var oldMax = oldBounds.max;

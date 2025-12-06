@@ -255,9 +255,21 @@ namespace XDay.WorldAPI.Region.Editor
             return new Vector2Int(coordX, coordY);
         }
 
+        internal Vector2 PositionToFloatCoordinate(float x, float z)
+        {
+            var coordX = (x - m_Origin.x) / m_GridWidth;
+            var coordY = (z - m_Origin.y) / m_GridHeight;
+            return new Vector2(coordX, coordY);
+        }
+
         internal Vector2Int PositionToCoordinate(Vector3 pos)
         {
             return PositionToCoordinate(pos.x, pos.z);
+        }
+
+        internal Vector2 PositionToFloatCoordinate(Vector3 pos)
+        {
+            return PositionToFloatCoordinate(pos.x, pos.z);
         }
 
         internal Vector3 CoordinateToPosition(int x, int y)

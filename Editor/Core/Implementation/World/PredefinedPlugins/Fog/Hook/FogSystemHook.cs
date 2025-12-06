@@ -23,7 +23,7 @@
 
 using UnityEngine;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public abstract class FogSystemHook : ScriptableObject
     {

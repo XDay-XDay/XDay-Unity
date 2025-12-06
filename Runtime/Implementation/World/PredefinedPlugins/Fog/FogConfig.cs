@@ -23,7 +23,7 @@
 
 using UnityEngine;
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
     [CreateAssetMenu(fileName = "XDay/FogConfig")]
     public class FogConfig : ScriptableObject

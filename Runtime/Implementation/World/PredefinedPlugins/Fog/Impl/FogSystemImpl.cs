@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XDay.WorldAPI.Attribute;
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
     [Flags]
     public enum FogDataType : byte

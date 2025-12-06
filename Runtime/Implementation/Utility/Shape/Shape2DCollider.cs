@@ -161,47 +161,47 @@ namespace XDay.UtilityAPI.Shape
 
         public Vector3 GetVertexPosition(int index)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public Vector3 TransformToLocalPosition(Vector3 worldPos)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public void MoveVertex(int index, Vector3 moveOffset)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public void MoveShape(Vector3 moveOffset)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public bool InsertVertex(int index, Vector3 localPosition)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public bool DeleteVertex(int index)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public List<Vector3> GetPolyonInLocalSpace()
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public void ResetShape(GameObject gameObject)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public Vector3 TransformToWorldPosition(Vector3 vector3)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 #endif
     }

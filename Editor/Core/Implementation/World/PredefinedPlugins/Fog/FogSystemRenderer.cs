@@ -27,7 +27,7 @@ using System.Collections.Generic;
 using XDay.UtilityAPI;
 using System.Buffers;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public partial class FogSystemRenderer
     {
@@ -70,11 +70,11 @@ namespace XDay.WorldAPI.FOW.Editor
             m_LayerRenderers[layerIndex].UpdateGrid(minX, minY, maxX, maxY);
         }
 
-        public void Update()
+        public void Update(float dt)
         {
             foreach (var layer in m_LayerRenderers)
             {
-                layer.Update(false, false);
+                layer.Update(false, false, dt);
             }
         }
 
@@ -119,7 +119,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 var layerRenderer = GetLayerRenderer(objectID);
                 if (layerRenderer != null)
                 {
-                    layerRenderer.Update(true, true);
+                    layerRenderer.Update(true, true, 0);
                 }
             }
             else if (name == "Layer Name")
@@ -145,6 +145,11 @@ namespace XDay.WorldAPI.FOW.Editor
                 var layer = m_FogSystem.QueryObjectUndo(objectID) as FogSystem.LayerBase;
                 ShowGrid(objectID, layer.GridVisible);
             }
+            else if (name == "Block Visible")
+            {
+                var layer = m_FogSystem.QueryObjectUndo(objectID) as FogSystem.LayerBase;
+                ShowBlock(objectID, layer.BlockVisible);
+            }
         }
 
         internal LayerRenderer QueryRenderer(int layerID)
@@ -163,6 +168,12 @@ namespace XDay.WorldAPI.FOW.Editor
         {
             var renderer = GetLayerRenderer(layerID);
             renderer?.ShowGrid(show);
+        }
+
+        private void ShowBlock(int layerID, bool show)
+        {
+            var renderer = GetLayerRenderer(layerID);
+            renderer?.ShowBlock(show);
         }
 
         private LayerRenderer GetLayerRenderer(int layerID)

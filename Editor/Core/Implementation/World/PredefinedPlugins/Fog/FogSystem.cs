@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using XDay.WorldAPI.Editor;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     [WorldPluginMetadata("迷雾层", "fog_editor_data", typeof(FogSystemCreateWindow), true)]
     public partial class FogSystem : EditorWorldPlugin
@@ -42,6 +42,7 @@ namespace XDay.WorldAPI.FOW.Editor
             public Vector2 Origin;
             public int MaxGridCountPerBlock;
             public int Layer0ID;
+            public FogType FogType;
         }
 
         public override string Name
@@ -88,8 +89,10 @@ namespace XDay.WorldAPI.FOW.Editor
             var horizontalBlockCount = Mathf.CeilToInt((float)createInfo.HorizontalGridCount / createInfo.MaxGridCountPerBlock);
             var verticalBlockCount = Mathf.CeilToInt((float)createInfo.VerticalGridCount / createInfo.MaxGridCountPerBlock);
 
-            var layer = new Layer(createInfo.Layer0ID, objectIndex: 0, createInfo.ID, "迷雾", createInfo.HorizontalGridCount, createInfo.VerticalGridCount,
-                createInfo.GridWidth, createInfo.GridHeight, createInfo.Origin, horizontalBlockCount, verticalBlockCount, LayerType.UserDefined, Color.white);
+            var layer = new Layer(createInfo.Layer0ID, objectIndex: 0, createInfo.ID, "迷雾", 
+                createInfo.HorizontalGridCount, createInfo.VerticalGridCount,
+                createInfo.GridWidth, createInfo.GridHeight, createInfo.Origin, horizontalBlockCount, verticalBlockCount, 
+                LayerType.UserDefined, Color.white, createInfo.FogType);
             m_Layers.Add(layer);
         }
 
@@ -124,7 +127,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 m_ActiveLayerID = m_Layers.Min.ID;
             }
 
-            m_Renderer?.Update();
+            m_Renderer?.Update(dt);
         }
 
         public override void AddObjectUndo(IWorldObject obj, int lod, int objectIndex)

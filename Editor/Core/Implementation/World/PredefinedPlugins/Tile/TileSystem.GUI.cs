@@ -546,7 +546,7 @@ namespace XDay.WorldAPI.Tile.Editor
             "贴图绘制",
             "材质设置",
             "刷地块",
-            //"绘制顶点高度",
+            "绘制顶点高度",
         };
     }
 }

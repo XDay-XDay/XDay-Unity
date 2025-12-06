@@ -23,6 +23,7 @@
 
 #if UNITY_EDITOR
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using FixMath.NET;
@@ -35,6 +36,7 @@ using XDay.RenderingAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
 using XDay.WorldAPI.Decoration;
+using XDay.WorldAPI.Fog;
 
 internal partial class WorldPreview : MonoBehaviour
 {
@@ -119,7 +121,31 @@ internal partial class WorldPreview : MonoBehaviour
         //DecorationSystemTest();
         //AddressableTest();
         //UpdateFollowTargetTest();
+        FogTest();
         m_StripeEffect?.Update();
+    }
+
+    private void FogTest()
+    {
+        if (Input.GetMouseButtonDown(1))
+        {
+            var world = m_XDay.WorldManager.FirstWorld;
+            if (world != null)
+            {
+                var pos = Helper.RayCastWithXZPlane(Input.mousePosition, world.CameraManipulator.Camera);
+                var fogSystem = world.QueryPlugin<IFogSystem>();
+                if (fogSystem != null)
+                {
+                    var sightRange = 20;
+                    var centerCoord = fogSystem.PositionToCoord(pos);
+                    var minX = centerCoord.x - sightRange / 2;
+                    var minY = centerCoord.y - sightRange / 2;
+                    var maxX = centerCoord.x + sightRange / 2;
+                    var maxY = centerCoord.y + sightRange / 2;
+                    fogSystem.OpenCircle(FogDataType.Client, minX, minY, maxX, maxY, false);
+                }
+            }
+        }
     }
 
     private void UpdateFollowTargetTest()

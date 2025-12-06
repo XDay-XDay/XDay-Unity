@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using XDay.UtilityAPI;
 using UnityEngine;
 
@@ -64,11 +62,11 @@ namespace XDay.CameraAPI
 
                 if (m_Direction == CameraDirection.XZ)
                 {
-                    Begin(request.FocusParam.m_ZoomTime, request.FocusParam.FocusPoint.x, request.FocusParam.FocusPoint.z, m_Manipulator.Camera, pos);
+                    Begin(request.FocusParam.ZoomTime, request.FocusParam.FocusPoint.x, request.FocusParam.FocusPoint.z, m_Manipulator.Camera, pos);
                 }
                 else
                 {
-                    Begin(request.FocusParam.m_ZoomTime, request.FocusParam.FocusPoint.x, request.FocusParam.FocusPoint.y, m_Manipulator.Camera, pos);
+                    Begin(request.FocusParam.ZoomTime, request.FocusParam.FocusPoint.x, request.FocusParam.FocusPoint.y, m_Manipulator.Camera, pos);
                 }
             }
 

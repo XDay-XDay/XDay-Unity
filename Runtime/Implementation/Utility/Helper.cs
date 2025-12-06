@@ -2620,6 +2620,16 @@ namespace XDay.UtilityAPI
             return center;
         }
 
+        internal static bool CompareEqual(RectInt oldBounds, RectInt newBounds)
+        {
+#if ENABLE_TUANJIE
+            return oldBounds.min == newBounds.min &&
+                oldBounds.max == newBounds.max;
+#else
+            return oldBounds == newBounds;
+#endif
+        }
+
         private const double m_DegToRad = 0.0174532924;
         private static float m_ScaleFactor = 10000;
     }

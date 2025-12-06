@@ -29,7 +29,9 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using XDay.UtilityAPI;
+#if !ENABLE_TUANJIE
 using static UnityEditor.Android.UserBuildSettings;
+#endif
 
 namespace XDay.PlayerBuildPipeline.Editor
 {
@@ -153,16 +155,22 @@ namespace XDay.PlayerBuildPipeline.Editor
                 PlayerSettings.Android.keyaliasPass = EditorHelper.GetJsonValue("Env/env.json", "Android.KeyAliasPassword");
                 if (isAAB)
                 {
+#if ENABLE_TUANJIE
+                    PlayerSettings.Android.useAPKExpansionFiles = true;
+#else
                     PlayerSettings.Android.splitApplicationBinary = true;
+#endif
                     EditorUserBuildSettings.buildAppBundle = true;
                 }
                 else
                 {
-                    PlayerSettings.Android.splitApplicationBinary = false;
+                    
                     EditorUserBuildSettings.buildAppBundle = false;
                 }
                 PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+#if !ENABLE_TUANJIE
                 DebugSymbols.level = Unity.Android.Types.DebugSymbolLevel.Full;
+#endif
             }
         }
 

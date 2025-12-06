@@ -23,7 +23,7 @@
 
 using UnityEngine;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public partial class FogSystem
     {
@@ -48,6 +48,7 @@ namespace XDay.WorldAPI.FOW.Editor
             public Color Color { get => m_Color; set => m_Color = value; }
             public LayerType Type { get => m_Type; set => m_Type = value; }
             public bool GridVisible { get => m_GridVisible; set => m_GridVisible = value; }
+            public bool BlockVisible { get => m_BlockVisible; set => m_BlockVisible = value; }
             protected override bool EnabledInternal { get => m_Visible; set => m_Visible = value; }
             protected override WorldObjectVisibility VisibilityInternal
             {
@@ -140,6 +141,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 writer.WriteColor(m_Color, "Color");
                 writer.WriteBoolean(m_Visible, "Visible");
                 writer.WriteBoolean(m_GridVisible, "Grid Visible");
+                writer.WriteBoolean(m_BlockVisible, "Block Visible");
                 writer.WriteObjectID(m_FogSystemID, "Fog System ID", converter);
             }
 
@@ -160,6 +162,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 m_Color = reader.ReadColor("Color");
                 m_Visible = reader.ReadBoolean("Visible");
                 m_GridVisible = reader.ReadBoolean("Grid Visible");
+                m_BlockVisible = reader.ReadBoolean("Block Visible");
                 m_FogSystemID = reader.ReadInt32("Fog System ID");
             }
 
@@ -221,6 +224,8 @@ namespace XDay.WorldAPI.FOW.Editor
             [SerializeField]
             private bool m_GridVisible = true;
             [SerializeField]
+            private bool m_BlockVisible = true;
+            [SerializeField]
             private int m_FogSystemID;
             private float m_Width;
             private float m_Height;
@@ -235,16 +240,19 @@ namespace XDay.WorldAPI.FOW.Editor
             public string FogConfigGUID { get => m_FogConfigGUID; set => m_FogConfigGUID = value; }
             public string BlurShaderGUID { get => m_BlurShaderGUID; set => m_BlurShaderGUID = value; }
             public string FogPrefabGUID { get => m_FogPrefabGUID; set => m_FogPrefabGUID = value; }
+            public FogType FogType { get => m_Type; set => m_Type = value; }
 
             public Layer()
             {
             }
 
             public Layer(int id, int objectIndex, int fogSystemID, string name, int horizontalGridCount, int verticalGridCount, 
-                float gridWidth, float gridHeight, Vector2 origin, int horizontalBlockCount, int verticalBlockCount, LayerType type, Color color)
+                float gridWidth, float gridHeight, Vector2 origin, int horizontalBlockCount, int verticalBlockCount, 
+                LayerType type, Color color, FogType fogType)
                 : base(id, objectIndex, fogSystemID, name, horizontalGridCount, verticalGridCount, 
                       gridWidth, gridHeight, origin, horizontalBlockCount, verticalBlockCount, type, color)
             {
+                m_Type = fogType;
                 m_Data = new uint[verticalGridCount * horizontalGridCount];
             }
 
@@ -282,6 +290,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 writer.WriteString(m_FogConfigGUID, "Fog Config GUID");
                 writer.WriteString(m_BlurShaderGUID, "Blur Shader GUID");
                 writer.WriteString(m_FogPrefabGUID, "Fog Prefab GUID");
+                writer.WriteInt32((int)m_Type, "Fog Type");
             }
 
             public override void EditorDeserialize(IDeserializer reader, string mark)
@@ -294,6 +303,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 m_FogConfigGUID = reader.ReadString("Fog Config GUID");
                 m_BlurShaderGUID = reader.ReadString("Blur Shader GUID");
                 m_FogPrefabGUID = reader.ReadString("Fog Prefab GUID");
+                m_Type = (FogType)reader.ReadInt32("Fog Type");
             }
 
             public override void GameSerialize(ISerializer writer, string mark, IObjectIDConverter converter)
@@ -303,6 +313,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 base.GameSerialize(writer, mark, converter);
 
                 writer.WriteUInt32Array(m_Data, "Data");
+                writer.WriteInt32((int)m_Type, "Fog Type");
             }
 
             public override void GameDeserialize(IDeserializer reader, string mark)
@@ -312,6 +323,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 base.GameDeserialize(reader, mark);
 
                 m_Data = reader.ReadUInt32Array("Data");
+                m_Type = (FogType)reader.ReadInt32("Fog Type");
             }
 
             [SerializeField]
@@ -322,6 +334,8 @@ namespace XDay.WorldAPI.FOW.Editor
             private string m_BlurShaderGUID;
             [SerializeField]
             private string m_FogConfigGUID;
+            [SerializeField]
+            private FogType m_Type = FogType.RTS;
 
             private const int m_EditorVersion = 1;
             private const int m_RuntimeVersion = 1;

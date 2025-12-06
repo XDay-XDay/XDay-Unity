@@ -24,9 +24,9 @@
 using UnityEngine;
 using XDay.UtilityAPI;
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
-    internal class FogBlurSlow : FogBlur
+    public class FogBlurSlow : FogBlur
     {
         public override Texture Output => m_Output;
 

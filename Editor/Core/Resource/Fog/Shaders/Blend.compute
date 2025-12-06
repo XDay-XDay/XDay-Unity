@@ -1,52 +1,30 @@
 #pragma kernel HorizontalBlur
 #pragma kernel VerticalBlur
+#pragma kernel Blend
 
-Texture2D<float4> InputTex;
+Texture2D<float4> CurTex;
+Texture2D<float4> NextTex;
 RWTexture2D<float4> OutputTex;
 
-float TexelSkip;
+float Ratio;
 
 [numthreads(8, 8, 1)]
-void HorizontalBlur(uint3 id : SV_DispatchThreadID)
+void Blend(uint3 id : SV_DispatchThreadID)
 {
-    const float4 weights[5] = {
-        float4(0.227027, 0.227027, 0.227027, 0.227027),
-        float4(0.1945946, 0.1945946, 0.1945946, 0.1945946),
-        float4(0.1216216, 0.1216216, 0.1216216, 0.1216216),
-        float4(0.054054, 0.054054, 0.054054, 0.054054),
-        float4(0.016216, 0.016216, 0.016216, 0.016216)
-    };
-
     uint width, height;
-    OutputTex.GetDimensions(width, height); 
+    OutputTex.GetDimensions(width, height);
 
     if (id.x >= width || id.y >= height)
         return;
 
-    float4 sum = float4(0, 0, 0, 0);
-    float totalWeight = 0.0;
-
-    for (int i = 0; i < 5; ++i)
-    {
-        float2 offsetLeft = float2(-i * TexelSkip, 0);
-        float2 offsetRight = float2(i * TexelSkip, 0);
-
-        sum += InputTex[id.xy + offsetLeft] * weights[i];
-        
-        if (i != 0)
-        {
-            sum += InputTex[id.xy + offsetRight] * weights[i];
-        }
-        totalWeight += (i == 0) ? weights[i].r : 2 * weights[i].r;
-    }
-
-    OutputTex[id.xy] = sum / totalWeight;
-} 
+    OutputTex[id.xy] = CurTex[id.xy] * (1 - Ratio) + NextTex[id.xy] * Ratio;
+}
 
 [numthreads(8, 8, 1)]
-void VerticalBlur(uint3 id : SV_DispatchThreadID)
+void HorizontalBlur(uint3 id : SV_DispatchThreadID)
 {
-    const float4 weights[5] = {
+    const float4 weights[5] =
+    {
         float4(0.227027, 0.227027, 0.227027, 0.227027),
         float4(0.1945946, 0.1945946, 0.1945946, 0.1945946),
         float4(0.1216216, 0.1216216, 0.1216216, 0.1216216),
@@ -65,13 +43,51 @@ void VerticalBlur(uint3 id : SV_DispatchThreadID)
 
     for (int i = 0; i < 5; ++i)
     {
-        float2 offsetUp = float2(0, -i * TexelSkip);
-        float2 offsetDown = float2(0, i * TexelSkip);
+        float2 offsetLeft = float2(-i, 0);
+        float2 offsetRight = float2(i, 0);
 
-        sum += InputTex[id.xy + offsetUp] * weights[i];
+        sum += NextTex[id.xy + offsetLeft] * weights[i];
+        
         if (i != 0)
         {
-            sum += InputTex[id.xy + offsetDown] * weights[i];
+            sum += NextTex[id.xy + offsetRight] * weights[i];
+        }
+        totalWeight += (i == 0) ? weights[i].r : 2 * weights[i].r;
+    }
+
+    OutputTex[id.xy] = sum / totalWeight;
+}
+
+[numthreads(8, 8, 1)]
+void VerticalBlur(uint3 id : SV_DispatchThreadID)
+{
+    const float4 weights[5] =
+    {
+        float4(0.227027, 0.227027, 0.227027, 0.227027),
+        float4(0.1945946, 0.1945946, 0.1945946, 0.1945946),
+        float4(0.1216216, 0.1216216, 0.1216216, 0.1216216),
+        float4(0.054054, 0.054054, 0.054054, 0.054054),
+        float4(0.016216, 0.016216, 0.016216, 0.016216)
+    };
+
+    uint width, height;
+    OutputTex.GetDimensions(width, height);
+
+    if (id.x >= width || id.y >= height)
+        return;
+
+    float4 sum = float4(0, 0, 0, 0);
+    float totalWeight = 0.0;
+
+    for (int i = 0; i < 5; ++i)
+    {
+        float2 offsetUp = float2(0, -i);
+        float2 offsetDown = float2(0, i);
+
+        sum += NextTex[id.xy + offsetUp] * weights[i];
+        if (i != 0)
+        {
+            sum += NextTex[id.xy + offsetDown] * weights[i];
         }
         totalWeight += (i == 0) ? weights[i].r : 2 * weights[i].r;
     }

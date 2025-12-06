@@ -21,11 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using UnityEditor;
 using XDay.UtilityAPI;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public partial class FogSystem
     {
@@ -74,6 +73,7 @@ namespace XDay.WorldAPI.FOW.Editor
             writer.WriteString(prefabPath, "Fog Prefab");
             writer.WriteString(configPath, "Fog Config");
             writer.WriteString(blurShaderPath, "Fog Blur Shader");
+            writer.WriteInt32((int)fogLayer.FogType, "Fog Type");
         }
 
         private const int m_RuntimeVersion = 1;

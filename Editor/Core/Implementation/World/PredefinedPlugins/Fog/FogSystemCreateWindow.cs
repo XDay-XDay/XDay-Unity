@@ -23,7 +23,7 @@
 
 using XDay.WorldAPI.Editor;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public class FogSystemCreateWindow : GridBasedWorldPluginCreateWindow
     {
@@ -44,6 +44,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 GridHeight = m_Height / m_GridCountY,
                 MaxGridCountPerBlock = 1024,
                 Layer0ID = World.AllocateObjectID(),
+                FogType = FogType.RTS,
             };
 
             var system = new FogSystem(createInfo);

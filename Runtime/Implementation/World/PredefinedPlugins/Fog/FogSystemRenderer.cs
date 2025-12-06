@@ -21,8 +21,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
+    public interface IFogRenderer
+    {
+        void OnDestroy();
+        void UpdateMask(bool reset);
+        void Update(float dt);
+    }
+
+    public enum FogType
+    {
+        SLG,
+        RTS,
+    }
+
     internal partial class FogSystemRenderer
     {
         public FogSystemRenderer(FogSystem fog)
@@ -33,7 +46,14 @@ namespace XDay.WorldAPI.FOW
 
             if (m_RenderFog)
             {
-                m_Renderer = new FogRenderer("fog of war", null, m_Fog.HorizontalResolution, m_Fog.VerticalResolution, m_Fog.GridWidth, m_Fog.GridHeight, m_Fog.Origin, fog.World.AssetLoader, m_Fog.FogPrefabPath, m_Fog.FogConfigPath, m_Fog.BlurShaderPath, m_Fog.IsOpen);
+                if (fog.FogType == FogType.SLG)
+                {
+                    m_Renderer = new FogRenderer("fog of war", null, m_Fog.HorizontalResolution, m_Fog.VerticalResolution, m_Fog.GridWidth, m_Fog.GridHeight, m_Fog.Origin, fog.World.AssetLoader, m_Fog.FogPrefabPath, m_Fog.FogConfigPath, m_Fog.BlurShaderPath, m_Fog.IsOpen);
+                }
+                else
+                {
+                    m_Renderer = new FogOfWarRenderer("fog of war", null, m_Fog.HorizontalResolution, m_Fog.VerticalResolution, m_Fog.GridWidth, m_Fog.GridHeight, m_Fog.Origin, fog.World.AssetLoader, m_Fog.FogPrefabPath, m_Fog.BlurShaderPath, m_Fog.IsOpen);
+                }
 
                 m_Fog.EventFogStateChange += OnFogStateChange;
             }
@@ -65,7 +85,7 @@ namespace XDay.WorldAPI.FOW
         }
 
         private readonly FogSystem m_Fog;
-        private readonly FogRenderer m_Renderer;
+        private readonly IFogRenderer m_Renderer;
         private readonly bool m_RenderFog;
     }
 }

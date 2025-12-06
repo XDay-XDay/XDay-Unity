@@ -24,7 +24,7 @@
 using System;
 using UnityEngine;
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
     internal partial class PlaceholderFogSystemImpl : IFogSystemImpl
     {

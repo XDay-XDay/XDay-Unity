@@ -26,7 +26,7 @@ using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public partial class FogSystemRenderer
     {
@@ -59,7 +59,7 @@ namespace XDay.WorldAPI.FOW.Editor
                         var endGridX = Mathf.Min(startGridX + blockWidth, horizontalGridCount) - 1;
                         var endGridY = Mathf.Min(startGridY + blockHeight, verticalGridCount) - 1;
 
-                        m_BlockRenderers[y * layer.HorizontalBlockCount + x] = new BlockRenderer(startGridX, startGridY, endGridX, endGridY, m_Layer, m_Root.transform, pool);
+                        m_BlockRenderers[y * layer.HorizontalBlockCount + x] = new BlockRenderer(startGridX, startGridY, endGridX, endGridY, m_Layer, m_Root.transform, pool, layer.BlockVisible);
                     }
                 }
 
@@ -86,26 +86,43 @@ namespace XDay.WorldAPI.FOW.Editor
                 m_Root = null;
             }
 
-            public void CreateFogRenderer()
+            public void CreateFogRenderer(FogType type)
             {
                 if (string.IsNullOrEmpty(m_Layer.FogPrefabGUID) ||
-                    string.IsNullOrEmpty(m_Layer.FogConfigGUID) ||
                     string.IsNullOrEmpty(m_Layer.BlurShaderGUID))
                 {
                     Debug.LogError("Fog参数未设置!");
                     return;
                 }
 
+                if (type == FogType.SLG && string.IsNullOrEmpty(m_Layer.FogConfigGUID))
+                {
+                    Debug.LogError("Fog Config参数未设置!");
+                    return;
+                }
+
                 m_FogRenderer?.OnDestroy();
                 m_FogRenderer = null;
 
-                m_FogRenderer = new FogRenderer("Fog", m_Root.transform, m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount, m_Layer.GridWidth, m_Layer.GridHeight, m_Layer.Origin, m_Layer.System.World.AssetLoader,
-                    AssetDatabase.GUIDToAssetPath(m_Layer.FogPrefabGUID),
-                    AssetDatabase.GUIDToAssetPath(m_Layer.FogConfigGUID),
-                    AssetDatabase.GUIDToAssetPath(m_Layer.BlurShaderGUID), (x, y) =>
-                    {
-                        return m_Layer.Get(x, y) != 0;
-                    });
+                if (type == FogType.SLG)
+                {
+                    m_FogRenderer = new FogRenderer("Fog", m_Root.transform, m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount, m_Layer.GridWidth, m_Layer.GridHeight, m_Layer.Origin, m_Layer.System.World.AssetLoader,
+                        AssetDatabase.GUIDToAssetPath(m_Layer.FogPrefabGUID),
+                        AssetDatabase.GUIDToAssetPath(m_Layer.FogConfigGUID),
+                        AssetDatabase.GUIDToAssetPath(m_Layer.BlurShaderGUID), (x, y) =>
+                        {
+                            return m_Layer.Get(x, y) != 0;
+                        });
+                }
+                else
+                {
+                    m_FogRenderer = new FogOfWarRenderer("Fog", m_Root.transform, m_Layer.HorizontalGridCount, m_Layer.VerticalGridCount, m_Layer.GridWidth, m_Layer.GridHeight, m_Layer.Origin, m_Layer.System.World.AssetLoader,
+                        AssetDatabase.GUIDToAssetPath(m_Layer.FogPrefabGUID),
+                        AssetDatabase.GUIDToAssetPath(m_Layer.BlurShaderGUID), (x, y) =>
+                        {
+                            return m_Layer.Get(x, y) != 0;
+                        });
+                }
             }
 
             public void UpdateGrid(int minX, int minY, int maxX, int maxY)
@@ -118,7 +135,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 m_FogRenderer?.UpdateMask(false);
             }
 
-            public void Update(bool forceUpdate, bool updateAll)
+            public void Update(bool forceUpdate, bool updateAll, float dt)
             {
                 foreach (var block in m_BlockRenderers)
                 {
@@ -126,6 +143,11 @@ namespace XDay.WorldAPI.FOW.Editor
                 }
 
                 m_FogRenderer?.UpdateMask(false);
+
+                if (m_FogRenderer is FogOfWarRenderer fowRenderer)
+                {
+                    fowRenderer.Update(dt);
+                }
             }
 
             public void ShowGrid(bool show)
@@ -133,11 +155,19 @@ namespace XDay.WorldAPI.FOW.Editor
                 m_GridMesh.SetActive(show);
             }
 
+            public void ShowBlock(bool show)
+            {
+                foreach (var renderer in m_BlockRenderers)
+                {
+                    renderer.SetActive(show);
+                }
+            }
+
             private GameObject m_Root;
             private BlockRenderer[] m_BlockRenderers;
             private readonly FogSystem.Layer m_Layer;
             private readonly GridMesh m_GridMesh;
-            private FogRenderer m_FogRenderer;
+            private IFogRenderer m_FogRenderer;
         }
     }
 }

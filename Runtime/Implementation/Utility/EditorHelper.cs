@@ -464,7 +464,7 @@ namespace XDay.UtilityAPI
             {
                 return 0;
             }
-            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj.GetInstanceID(), out _, out var localID);
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj.GetInstanceID(), out _, out long localID);
             return localID;
         }
 
@@ -824,7 +824,21 @@ namespace XDay.UtilityAPI
             EditorGUI.indentLevel++;
             for (int i = 0; i < list.Count; i++)
             {
+                var removed = false;
+                EditorGUILayout.BeginHorizontal();
                 list[i] = EditorGUILayout.Vector3Field($"{elementName} {i}", list[i]);
+                EditorGUILayout.Space();
+                if (GUILayout.Button("X", GUILayout.MaxWidth(20)))
+                {
+                    list.RemoveAt(i);
+                    removed = true;
+                }
+                EditorGUILayout.EndHorizontal();
+
+                if (removed)
+                {
+                    break;
+                }
             }
             EditorGUI.indentLevel--;
         }
@@ -913,6 +927,44 @@ namespace XDay.UtilityAPI
         {
             Selection.activeObject = obj;
             EditorGUIUtility.PingObject(obj);
+        }
+
+        public static void DrawList<T>(string title, List<T> list, Action<T, int> drawElement) where T : new()
+        {
+            int newSize = EditorGUILayout.DelayedIntField(title, list.Count);
+            if (newSize != list.Count)
+            {
+                var added = newSize - list.Count;
+                for (var i = 0; i < added; i++)
+                {
+                    list.Add(new T());
+                }
+                for (var i = 0; i < -added; i++)
+                {
+                    list.RemoveAt(list.Count - 1);
+                }
+            }
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var removed = false;
+                EditorGUILayout.BeginHorizontal();
+                drawElement(list[i], i);
+                EditorGUILayout.Space();
+                if (GUILayout.Button("X", GUILayout.MaxWidth(20)))
+                {
+                    list.RemoveAt(i);
+                    removed = true;
+                }
+                EditorGUILayout.EndHorizontal();
+
+                if (removed)
+                {
+                    break;
+                }
+            }
+            EditorGUI.indentLevel--;
         }
     }
 }

@@ -29,7 +29,7 @@ using XDay.UtilityAPI;
 using XDay.UtilityAPI.Editor;
 using XDay.UtilityAPI.Math;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public partial class FogSystem
     {
@@ -66,6 +66,15 @@ namespace XDay.WorldAPI.FOW.Editor
             if (m_ShowGrid.Render(true, GUI.enabled && layer != null))
             {
                 SetGridVisibility(m_ShowGrid.Active);
+            }
+
+            if (layer != null)
+            {
+                m_ShowBlock.Active = layer.BlockVisible;
+            }
+            if (m_ShowBlock.Render(true, GUI.enabled && layer != null))
+            {
+                SetBlockVisibility(m_ShowBlock.Active);
             }
 
             if (m_AddLayerButton.Render(Inited))
@@ -162,10 +171,11 @@ namespace XDay.WorldAPI.FOW.Editor
                     layer.FogPrefabGUID = EditorHelper.ObjectFieldGUID<GameObject>("模型", layer.FogPrefabGUID);
                     layer.FogConfigGUID = EditorHelper.ObjectFieldGUID<FogConfig>("配置", layer.FogConfigGUID);
                     layer.BlurShaderGUID = EditorHelper.ObjectFieldGUID<ComputeShader>("模糊Shader", layer.BlurShaderGUID);
+                    layer.FogType = (FogType)EditorGUILayout.EnumPopup("类型", layer.FogType);
                     if (GUILayout.Button("创建Renderer"))
                     {
                         var renderer = m_Renderer.QueryRenderer(layer.ID);
-                        renderer?.CreateFogRenderer();
+                        renderer?.CreateFogRenderer(layer.FogType);
                     }
                 }
             });
@@ -313,6 +323,9 @@ namespace XDay.WorldAPI.FOW.Editor
 
                 m_ShowGrid = EditorWorldHelper.CreateToggleImageButton(false, "grid.png", "显隐格子");
                 m_Controls.Add(m_ShowGrid);
+
+                m_ShowBlock = EditorWorldHelper.CreateToggleImageButton(false, "block.png", "显隐方块");
+                m_Controls.Add(m_ShowBlock);
             }
         }
 
@@ -343,6 +356,12 @@ namespace XDay.WorldAPI.FOW.Editor
                 {
                     var layer = QueryObjectUndo(objectID) as LayerBase;
                     layer.GridVisible = property.GetBoolean();
+                    m_Renderer.SetAspect(objectID, name);
+                }
+                else if (name == "Block Visible")
+                {
+                    var layer = QueryObjectUndo(objectID) as LayerBase;
+                    layer.BlockVisible = property.GetBoolean();
                     m_Renderer.SetAspect(objectID, name);
                 }
                 else if (name == "Layer Color")
@@ -395,6 +414,12 @@ namespace XDay.WorldAPI.FOW.Editor
             {
                 var layer = QueryObjectUndo(objectID) as LayerBase;
                 return IAspect.FromBoolean(layer.GridVisible);
+            }
+
+            if (name == "Block Visible")
+            {
+                var layer = QueryObjectUndo(objectID) as LayerBase;
+                return IAspect.FromBoolean(layer.BlockVisible);
             }
 
             if (name == "Layer Color")
@@ -511,6 +536,18 @@ namespace XDay.WorldAPI.FOW.Editor
             }
         }
 
+        private void SetBlockVisibility(bool show)
+        {
+            UndoSystem.NextGroupAndJoin();
+            foreach (var layer in m_Layers)
+            {
+                if (layer != null)
+                {
+                    UndoSystem.SetAspect(layer, "Block Visible", IAspect.FromBoolean(show), $"Set Block {layer.ID} Visibility", ID, UndoActionJoinMode.None);
+                }
+            }
+        }
+
         private void CommandAddLayer()
         {
             var width = World.Width;
@@ -539,6 +576,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 new ParameterWindow.IntParameter("横向格子数", "", horizontalGridCount),
                 new ParameterWindow.IntParameter("纵向格子数", "", verticalGridCount),
                 new ParameterWindow.StringArrayParameter("类型", "", m_LayerTypeNames),
+                new ParameterWindow.EnumParameter("迷雾类型", "", FogType.RTS),
             };
             ParameterWindow.Open("新建子层", input, (items) =>
             {
@@ -548,11 +586,12 @@ namespace XDay.WorldAPI.FOW.Editor
                 ok &= ParameterWindow.GetInt(items[3], out var horizontalGridCount);
                 ok &= ParameterWindow.GetInt(items[4], out var verticalGridCount);
                 ok &= ParameterWindow.GetStringArraySelection(items[5], out var layerType);
+                ok &= ParameterWindow.GetEnum<FogType>(items[6], out var fogType);
                 if (ok)
                 {
                     if (QueryLayer(name) == null)
                     {
-                        var layer = new Layer(World.AllocateObjectID(), objectIndex: m_Layers.Count, ID, name, horizontalGridCount, verticalGridCount, width / horizontalGridCount, height / verticalGridCount, origin, horizontalBlockCount, verticalBlockCount, (LayerType)layerType, Color.white);
+                        var layer = new Layer(World.AllocateObjectID(), objectIndex: m_Layers.Count, ID, name, horizontalGridCount, verticalGridCount, width / horizontalGridCount, height / verticalGridCount, origin, horizontalBlockCount, verticalBlockCount, (LayerType)layerType, Color.white, fogType);
 
                         UndoSystem.CreateObject(layer, World.ID, "Add Fog Layer", ID, lod: 0);
 
@@ -703,6 +742,7 @@ namespace XDay.WorldAPI.FOW.Editor
         private ImageButton m_EditLayerNameButton;
         private ToggleImageButton m_LayerVisibilityButton;
         private ToggleImageButton m_ShowGrid;
+        private ToggleImageButton m_ShowBlock;
         private List<UIControl> m_Controls;
         private GUIStyle m_TipsStyle;
         private List<FogSystemHook> m_Hooks;

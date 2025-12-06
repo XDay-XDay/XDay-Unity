@@ -65,10 +65,8 @@ namespace XDay.WorldAPI.Editor
 
             EditorGUIUtility.labelWidth = 150;
 
-            GUI.enabled = false;
             DrawEditorFolder();
             DrawGameFolder();
-            GUI.enabled = true;
 
             DrawWorldList();
 
@@ -246,13 +244,17 @@ namespace XDay.WorldAPI.Editor
 
         private void DrawEditorFolder()
         {
+            GUI.enabled = string.IsNullOrEmpty(m_SetupManager.EditorFolder);
             var directory = EditorHelper.DirectoryField("地编目录", m_SetupManager.EditorFolder, "EditorWorld", () => { Save(); });
             m_SetupManager.EditorFolder = Helper.ToRelativePath(directory, Directory.GetCurrentDirectory());
+            GUI.enabled = true;
         }
 
         private void DrawGameFolder()
         {
+            GUI.enabled = string.IsNullOrEmpty(m_SetupManager.GameFolder);
             m_SetupManager.GameFolder = EditorHelper.ObjectField<DefaultAsset>("游戏目录", m_SetupManager.GameFolder, 0, () => { EditorUtility.SetDirty(m_SetupManager); });
+            GUI.enabled = true;
         }
 
         private void DrawHeader()

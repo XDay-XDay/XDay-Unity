@@ -22,6 +22,7 @@
  */
 
 using UnityEngine;
+using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Tile
 {
@@ -108,7 +109,7 @@ namespace XDay.WorldAPI.Tile
             var newBounds = CalculateCoordinateBounds(areaUpdater.CurrentArea);
 
             var lodSystem = m_TileSystem.LODSystem;
-            if (oldBounds != newBounds)
+            if (!Helper.CompareEqual(oldBounds, newBounds))
             {
                 var oldMin = oldBounds.min;
                 var oldMax = oldBounds.max;

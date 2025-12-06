@@ -23,9 +23,9 @@
 
 using UnityEngine;
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
-    internal abstract class FogBlur
+    public abstract class FogBlur
     {
         public abstract Texture Output { get; }
         public abstract void Blur(Texture texture, float texelSkip);

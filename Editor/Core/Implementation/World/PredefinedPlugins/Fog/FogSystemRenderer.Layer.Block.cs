@@ -25,7 +25,7 @@ using System.Buffers;
 using UnityEngine;
 using XDay.UtilityAPI;
 
-namespace XDay.WorldAPI.FOW.Editor
+namespace XDay.WorldAPI.Fog.Editor
 {
     public partial class FogSystemRenderer
     {
@@ -36,7 +36,7 @@ namespace XDay.WorldAPI.FOW.Editor
             public int EndGridX => m_EndGridX;
             public int EndGridY => m_EndGridY;
 
-            public BlockRenderer(int startGridX, int startGridY, int endGridX, int endGridY, FogSystem.LayerBase layer, Transform parent, ArrayPool<Color32> pool)
+            public BlockRenderer(int startGridX, int startGridY, int endGridX, int endGridY, FogSystem.LayerBase layer, Transform parent, ArrayPool<Color32> pool, bool visible)
             {
                 m_StartGridX = startGridX;
                 m_StartGridY = startGridY;
@@ -49,7 +49,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 m_DirtyMaxY = m_EndGridY;
                 m_Pool = pool;
 
-                CreateRoot(parent);
+                CreateRoot(parent, visible);
 
                 UpdateColors(true, false);
             }
@@ -145,7 +145,7 @@ namespace XDay.WorldAPI.FOW.Editor
                 return true;
             }
 
-            private void CreateRoot(Transform parent)
+            private void CreateRoot(Transform parent, bool visible)
             {
                 m_Root = new GameObject("Block");
                 Helper.HideGameObject(m_Root);
@@ -164,6 +164,7 @@ namespace XDay.WorldAPI.FOW.Editor
 
                 m_Root.transform.SetParent(parent, worldPositionStays: false);
                 m_Root.transform.localPosition = m_Layer.CoordinateToPosition(m_StartGridX, m_StartGridY);
+                m_Root.SetActive(visible);
             }
 
             private Mesh CreateMesh(float width, float height)
@@ -200,6 +201,11 @@ namespace XDay.WorldAPI.FOW.Editor
                     wrapMode = TextureWrapMode.Clamp,
                     filterMode = FilterMode.Point
                 };
+            }
+
+            internal void SetActive(bool show)
+            {
+                m_Root.SetActive(show);
             }
 
             private readonly int m_StartGridX;

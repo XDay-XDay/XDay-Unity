@@ -26,11 +26,18 @@ using UnityEngine;
 using XDay.AssetAPI;
 using XDay.UtilityAPI;
 
-namespace XDay.WorldAPI.FOW
+namespace XDay.WorldAPI.Fog
 {
-    public class FogRenderer
+    /// <summary>
+    /// 绘制SLG游戏类型的静态迷雾
+    /// </summary>
+    public class FogRenderer : IFogRenderer
     {
-        public FogRenderer(string name, Transform parent, int horizontalResolution, int verticalResolution, float gridWidth, float gridHeight, Vector3 origin, IAssetLoader assetLoader, string fogPrefabPath, string fogConfigPath, string blurShaderPath, Func<int, int, bool> isFogOpen)
+        public FogRenderer(string name, Transform parent, 
+            int horizontalResolution, int verticalResolution, float gridWidth, float gridHeight, 
+            Vector3 origin, IAssetLoader assetLoader, 
+            string fogPrefabPath, string fogConfigPath, string blurShaderPath,
+            Func<int, int, bool> isFogOpen)
         {
             m_HorizontalResolution = horizontalResolution;
             m_VerticalResolution = verticalResolution;
@@ -95,6 +102,11 @@ namespace XDay.WorldAPI.FOW
         /// <param name="reset"></param>
         public void UpdateMask(bool reset)
         {
+            if (m_FogConfig == null)
+            {
+                return;
+            }
+
             if (reset)
             {
                 //直接到修改后状态
