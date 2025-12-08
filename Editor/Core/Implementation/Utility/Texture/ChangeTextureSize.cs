@@ -42,6 +42,12 @@ namespace XDay.WorldAPI.City.Editor
             }
         }
 
+        [MenuItem("XDay/Other/打开Application.PersistentDataPath")]
+        static void OpenApplicationPersistentDataPath()
+        {
+            EditorHelper.ShowInExplorer(Application.persistentDataPath);
+        }
+
         [MenuItem("XDay/Other/修改贴图高度")]
         static void Process()
         {

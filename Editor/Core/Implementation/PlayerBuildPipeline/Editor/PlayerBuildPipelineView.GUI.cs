@@ -29,7 +29,7 @@ using XDay.UtilityAPI;
 using XDay.UtilityAPI.Editor;
 using Cysharp.Threading.Tasks;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     internal partial class PlayerBuildPipelineView
     {

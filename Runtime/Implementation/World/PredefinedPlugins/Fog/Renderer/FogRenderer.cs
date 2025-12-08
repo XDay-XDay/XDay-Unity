@@ -23,7 +23,6 @@
 
 using System;
 using UnityEngine;
-using XDay.AssetAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Fog
@@ -35,7 +34,7 @@ namespace XDay.WorldAPI.Fog
     {
         public FogRenderer(string name, Transform parent, 
             int horizontalResolution, int verticalResolution, float gridWidth, float gridHeight, 
-            Vector3 origin, IAssetLoader assetLoader, 
+            Vector3 origin, IWorldAssetLoader assetLoader, 
             string fogPrefabPath, string fogConfigPath, string blurShaderPath,
             Func<int, int, bool> isFogOpen)
         {
@@ -248,7 +247,7 @@ namespace XDay.WorldAPI.Fog
         private Color32[] m_MaskData;
         private Texture2D m_MaskTexture;
         private bool m_IsFading = false;
-        private readonly IAssetLoader m_AssetLoader;
+        private readonly IWorldAssetLoader m_AssetLoader;
         private readonly Func<int, int, bool> m_IsFogOpenFunc;
         private readonly Ticker m_Ticker = new();
         private FogBlur m_Blur;

@@ -23,7 +23,6 @@
 
 using UnityEngine;
 using UnityEngine.Pool;
-using XDay.AssetAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.CDLODTerrain
@@ -32,7 +31,7 @@ namespace XDay.WorldAPI.CDLODTerrain
     {
         public bool IsVisible => m_Tile.IsVisible;
 
-        public TileRenderer(Tile tile, Texture2D heightMapTexture, IAssetLoader loader)
+        public TileRenderer(Tile tile, Texture2D heightMapTexture, IWorldAssetLoader loader)
         {
             m_Tile = tile;
 

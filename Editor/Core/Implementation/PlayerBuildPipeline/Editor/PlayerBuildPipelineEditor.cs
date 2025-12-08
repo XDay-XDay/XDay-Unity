@@ -23,7 +23,7 @@
 
 using UnityEditor;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     internal class PlayerBuildPipelineEditor : EditorWindow
     {

@@ -23,7 +23,6 @@
 
 using System;
 using UnityEngine;
-using XDay.AssetAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Fog
@@ -33,7 +32,7 @@ namespace XDay.WorldAPI.Fog
     /// </summary>
     public class FogOfWarRenderer : IFogRenderer
     {
-        public FogOfWarRenderer(string name, Transform parent, int horizontalResolution, int verticalResolution, float gridWidth, float gridHeight, Vector3 origin, IAssetLoader assetLoader, string fogPrefabPath, string blurShaderPath, Func<int, int, bool> isFogOpen)
+        public FogOfWarRenderer(string name, Transform parent, int horizontalResolution, int verticalResolution, float gridWidth, float gridHeight, Vector3 origin, IWorldAssetLoader assetLoader, string fogPrefabPath, string blurShaderPath, Func<int, int, bool> isFogOpen)
         {
             m_HorizontalResolution = horizontalResolution;
             m_VerticalResolution = verticalResolution;
@@ -142,7 +141,7 @@ namespace XDay.WorldAPI.Fog
         private readonly int m_VerticalResolution;
         private Color32[] m_MaskData;
         private Texture2D m_MaskTexture;
-        private readonly IAssetLoader m_AssetLoader;
+        private readonly IWorldAssetLoader m_AssetLoader;
         private readonly Func<int, int, bool> m_IsFogOpenFunc;
         private BlendAndBlur m_Blur;
         private bool m_Dirty;

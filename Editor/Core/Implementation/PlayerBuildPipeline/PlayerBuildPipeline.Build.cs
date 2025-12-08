@@ -26,7 +26,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     public partial class PlayerBuildPipeline
     {

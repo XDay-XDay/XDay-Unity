@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using TMPro;
@@ -1467,8 +1468,8 @@ namespace XDay.UtilityAPI
             Debug.Assert(closestEdgeIndex >= 0);
             return (closestEdgeIndex + 1) % polygon.Count;
         }
-		
-		public static Vector3 ToVector3(this FixedVector3 v)
+
+        public static Vector3 ToVector3(this FixedVector3 v)
         {
             return new Vector3(v.X.FloatValue, v.Y.FloatValue, v.Z.FloatValue);
         }
@@ -1486,7 +1487,7 @@ namespace XDay.UtilityAPI
         public static FixedVector2 FromVector2(Vector3 v)
         {
             return new FixedVector2(v.x, v.y);
-        }	
+        }
 
         public static long GetTimeNow()
         {
@@ -2031,7 +2032,7 @@ namespace XDay.UtilityAPI
                                       .ToList();
                 allTypes.AddRange(markedTypes);
             }
-            
+
             return allTypes;
         }
 
@@ -2628,6 +2629,16 @@ namespace XDay.UtilityAPI
 #else
             return oldBounds == newBounds;
 #endif
+        }
+
+        public static string CalculateSHA256Hash(Stream stream)
+        {
+            var sha256 = SHA256.Create();
+            byte[] hashBytes = sha256.ComputeHash(stream);
+            // 将字节数组转换为十六进制字符串
+            var text = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+            sha256.Dispose();
+            return text;
         }
 
         private const double m_DegToRad = 0.0174532924;

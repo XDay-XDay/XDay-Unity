@@ -25,7 +25,7 @@ using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     internal partial class PlayerBuildPipelineView
     {

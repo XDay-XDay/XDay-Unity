@@ -24,7 +24,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     /// <summary>
     /// 代码混淆

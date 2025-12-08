@@ -23,13 +23,12 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.AssetAPI;
 
 namespace XDay.WorldAPI
 {
     internal class WorldPluginLoader
     {
-        public WorldPluginLoader(IAssetLoader assetLoader, ISerializableFactory serializableFactory)
+        public WorldPluginLoader(IWorldAssetLoader assetLoader, ISerializableFactory serializableFactory)
         {
             m_AssetLoader = assetLoader;
             m_SerializableFactory = serializableFactory;
@@ -188,7 +187,7 @@ namespace XDay.WorldAPI
 
         private Dictionary<string, List<string>> m_FileNameMapping = new();
         private List<PluginInfo> m_PluginList;
-        private IAssetLoader m_AssetLoader;
+        private IWorldAssetLoader m_AssetLoader;
         private Dictionary<int, Dictionary<string, IDeserializer>> m_Deserializers = new();
         private ISerializableFactory m_SerializableFactory;
     }

@@ -23,7 +23,6 @@
 
 using XDay.CameraAPI;
 using UnityEngine;
-using XDay.AssetAPI;
 using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
@@ -43,7 +42,7 @@ namespace XDay.WorldAPI
             m_PluginLODSystem = new();
         }
 
-        public GameWorld(IWorldManager worldManager, WorldSetup setup, IAssetLoader assetLoader, ICameraManipulator manipulator, ISerializableFactory serializableFactory, WorldPluginLoader pluginLoader, float width = 0, float height = 0)
+        public GameWorld(IWorldManager worldManager, WorldSetup setup, IWorldAssetLoader assetLoader, ICameraManipulator manipulator, ISerializableFactory serializableFactory, WorldPluginLoader pluginLoader, float width = 0, float height = 0)
             : base(worldManager, setup, new SLGCameraVisibleAreaCalculator(manipulator == null ? false : manipulator.Direction == CameraDirection.XY), assetLoader, manipulator, serializableFactory, width, height)
         {
             m_PluginLoader = pluginLoader;

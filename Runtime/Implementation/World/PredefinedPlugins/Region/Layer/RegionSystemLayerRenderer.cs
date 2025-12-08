@@ -23,7 +23,6 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.AssetAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Region
@@ -61,7 +60,7 @@ namespace XDay.WorldAPI.Region
             }
         }
 
-        private void AddRenderer(RegionObject region, IAssetLoader loader)
+        private void AddRenderer(RegionObject region, IWorldAssetLoader loader)
         {
             var renderer = new RegionObjectRenderer(region, loader, m_Root.transform);
             m_Renderers.Add(region.ConfigID, renderer);

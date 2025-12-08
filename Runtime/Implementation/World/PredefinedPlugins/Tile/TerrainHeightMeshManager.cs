@@ -23,13 +23,12 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.AssetAPI;
 
 namespace XDay.WorldAPI.Tile
 {
     public class TerrainHeightMeshManager
     {
-        public TerrainHeightMeshManager(string worldDataFolder, IAssetLoader loader)
+        public TerrainHeightMeshManager(string worldDataFolder, IWorldAssetLoader loader)
         {
             m_WorldDataFolder = worldDataFolder;
             m_AssetLoader = loader;
@@ -62,6 +61,6 @@ namespace XDay.WorldAPI.Tile
         private readonly Dictionary<string, Mesh> m_TileOriginalMesh = new();
         private readonly Dictionary<Vector3Int, string> m_MeshPath = new();
         private readonly string m_WorldDataFolder;
-        private readonly IAssetLoader m_AssetLoader;
+        private readonly IWorldAssetLoader m_AssetLoader;
     }
 }

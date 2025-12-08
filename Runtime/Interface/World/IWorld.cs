@@ -26,9 +26,9 @@ using XDay.CameraAPI;
 using XDay.UtilityAPI;
 using System.Collections.Generic;
 using UnityEngine;
-using XDay.AssetAPI;
 using System;
 using UnityEngine.Scripting;
+using System.IO;
 
 namespace XDay.WorldAPI
 {
@@ -44,6 +44,21 @@ namespace XDay.WorldAPI
         BothInEditorAndGame,
         OnlyGenerateData,
         OnlyInEditor,
+    }
+
+    public interface IWorldAssetLoader
+    {
+        void OnDestroy();
+        T Load<T>(string path) where T : UnityEngine.Object;
+        UniTask<T> LoadAsync<T>(string path) where T : UnityEngine.Object;
+        GameObject LoadGameObject(string path);
+        UniTask<GameObject> LoadGameObjectAsync(string path);
+        UniTaskVoid LoadGameObjectAsync(string path, System.Action<GameObject> onLoaded);
+        byte[] LoadBytes(string path);
+        string LoadText(string path);
+        Stream LoadTextStream(string path);
+        bool Exists(string path);
+        bool UnloadAsset(string path);
     }
 
     [Preserve]
@@ -78,7 +93,7 @@ namespace XDay.WorldAPI
         int PluginCount { get; }
         string GameFolder { get; }
         string EditorFolder { get; }
-        IAssetLoader AssetLoader { get; }
+        IWorldAssetLoader AssetLoader { get; }
         ICameraManipulator CameraManipulator { get; set; }
         IWorldManager WorldManager { get; }
         GameObject Root { get; }
@@ -103,7 +118,7 @@ namespace XDay.WorldAPI
     public interface IWorldManager
     {
         IWorld FirstWorld { get; }
-        IAssetLoader WorldAssetLoader { get; }
+        IWorldAssetLoader WorldAssetLoader { get; }
         ITaskSystem TaskSystem { get; }
 
         UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc = null, bool createManipulator = true);

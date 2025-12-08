@@ -21,35 +21,39 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.IO;
+#if UNITY_EDITOR
+
 using Cysharp.Threading.Tasks;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 
-namespace XDay.AssetAPI
+namespace XDay.WorldAPI
 {
-    public class DefaultAssetLoader : IAssetLoader
+    public class EditorWorldAssetLoader : IWorldAssetLoader
     {
-        public DefaultAssetLoader()
-        {
-        }
-
         public void OnDestroy()
         {
         }
 
-        public bool Exists(string path)
-        {
-            return m_AssetSystem.Exists(path);
-        }
-
         public T Load<T>(string path) where T : Object
         {
-            return m_AssetSystem.Load<T>(path);
+            return AssetDatabase.LoadAssetAtPath<T>(path);
+        }
+
+        public GameObject LoadGameObject(string path)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab != null)
+            {
+                return Object.Instantiate(prefab);
+            }
+            return null;
         }
 
         public byte[] LoadBytes(string path)
         {
-            var asset = m_AssetSystem.Load<TextAsset>(path);
+            var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
             if (asset != null)
             {
                 return asset.bytes;
@@ -58,21 +62,19 @@ namespace XDay.AssetAPI
             return null;
         }
 
-        public GameObject LoadGameObject(string path)
+        public bool Exists(string path)
         {
-            var prefab = m_AssetSystem.Load<GameObject>(path);
-            if (prefab != null)
-            {
-                var obj = Object.Instantiate(prefab);
-                obj.name = prefab.name;
-                return obj;
-            }
-            return null;
+            return File.Exists(path) || Directory.Exists(path);
+        }
+
+        public Stream LoadTextStream(string path)
+        {
+            return new MemoryStream(File.ReadAllBytes(path));
         }
 
         public string LoadText(string path)
         {
-            var asset = m_AssetSystem.Load<TextAsset>(path);
+            var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
             if (asset != null)
             {
                 return asset.text;
@@ -81,31 +83,31 @@ namespace XDay.AssetAPI
             return null;
         }
 
-        public Stream LoadTextStream(string path)
-        {
-            return new MemoryStream(LoadBytes(path));
-        }
-
         public async UniTask<T> LoadAsync<T>(string path) where T : Object
         {
-            return await m_AssetSystem.LoadAsync<T>(path);
+            var ret = Load<T>(path);
+            return await UniTask.FromResult(ret);
         }
 
         public async UniTask<GameObject> LoadGameObjectAsync(string path)
         {
-            return await m_AssetSystem.LoadGameObjectAsync(path);
+            var ret = LoadGameObject(path);
+            return await UniTask.FromResult(ret);
         }
 
-        public void LoadGameObjectAsync(string path, System.Action<GameObject> onLoaded)
+        public async UniTaskVoid LoadGameObjectAsync(string path, System.Action<GameObject> onLoaded)
         {
-            m_AssetSystem.LoadGameObjectAsync(path, onLoaded);
+            var ret = LoadGameObject(path);
+            onLoaded?.Invoke(ret);
         }
 
         public bool UnloadAsset(string path)
         {
-            return m_AssetSystem.UnloadAsset(path);
+            return true;
         }
-
-        private readonly IAddressableAssetSystem m_AssetSystem = IAddressableAssetSystem.Create();
     }
 }
+
+#endif
+
+//XDay

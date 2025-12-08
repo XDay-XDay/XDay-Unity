@@ -23,7 +23,7 @@
 
 using System;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     /// <summary>
     /// stage描述

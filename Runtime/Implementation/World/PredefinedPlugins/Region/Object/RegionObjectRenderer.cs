@@ -22,14 +22,13 @@
  */
 
 using UnityEngine;
-using XDay.AssetAPI;
 using XDay.UtilityAPI;
 
 namespace XDay.WorldAPI.Region
 {
     internal class RegionObjectRenderer
     {
-        public RegionObjectRenderer(RegionObject region, IAssetLoader loader, Transform parent)
+        public RegionObjectRenderer(RegionObject region, IWorldAssetLoader loader, Transform parent)
         {
             m_Root = loader.LoadGameObject(region.FullPrefabPath);
             if (m_Root != null)

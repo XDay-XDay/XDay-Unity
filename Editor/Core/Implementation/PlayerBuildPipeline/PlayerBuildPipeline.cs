@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     [CreateAssetMenu(menuName = "XDay/Build/Player Build Pipeline")]
     public partial class PlayerBuildPipeline : ScriptableObject
@@ -224,7 +224,7 @@ namespace XDay.PlayerBuildPipeline.Editor
             }
         }
 
-        internal BuildTarget GetTarget()
+        public BuildTarget GetTarget()
         {
             bool ok = Enum.TryParse<BuildTarget>(GetCommandLineArgValue("build_target"), ignoreCase: true, out var target);
             if (ok)

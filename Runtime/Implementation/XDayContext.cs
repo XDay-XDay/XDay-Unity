@@ -27,7 +27,6 @@ using XDay.InputAPI;
 using XDay.NavigationAPI;
 using XDay.UtilityAPI;
 using XDay.WorldAPI;
-using XDay.AssetAPI;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -41,15 +40,15 @@ namespace XDay.API
         public IWorldManager WorldManager => m_WorldSystem;
         public ITaskSystem TaskSystem => m_TaskSystem;
         public INavigationManager NavigationManager => m_NavigationManager;
-        public IAssetLoader WorldAssetLoader => m_WorldSystem?.WorldAssetLoader;
+        public IWorldAssetLoader WorldAssetLoader => m_WorldSystem?.WorldAssetLoader;
         public ITickTimer TickTimer => m_TickTimer;
         public ITickTimer FrameTimer => m_FrameTimer;
         public IEventSystem EventSystem => m_EventSystem;
 
-        public XDayContext(string worldSetupFilePath, IAssetLoader loader, bool enableLog, bool enableUI)
+        public XDayContext(string worldSetupFilePath, IWorldAssetLoader loader, bool enableLog, bool enableUI)
         {
             Debug.Assert(!string.IsNullOrEmpty(worldSetupFilePath));
-            loader ??= new DefaultAssetLoader();
+            Debug.Assert(loader != null);
 
             var logSetting = new LogSetting()
             {
@@ -160,7 +159,7 @@ namespace XDay.API
             return LogType.Exception;
         }
 
-        private readonly IAssetLoader m_AssetLoader;
+        private readonly IWorldAssetLoader m_AssetLoader;
         private readonly WorldManager m_WorldSystem;
         private readonly IDeviceInput m_Input;
         private readonly ITaskSystem m_TaskSystem;

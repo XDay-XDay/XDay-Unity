@@ -28,7 +28,7 @@ using UnityEditor.Build;
 using XDay.CodeStripping;
 using XDay.UtilityAPI;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     /// <summary>
     /// 代码剔除

@@ -24,7 +24,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using XDay.InputAPI;
-using XDay.AssetAPI;
 using UnityEngine.Scripting;
 
 namespace XDay.WorldAPI
@@ -34,11 +33,11 @@ namespace XDay.WorldAPI
     {
         public IWorld FirstWorld => m_Worlds.Count > 0 ? m_Worlds[0] : null;
         public ITaskSystem TaskSystem => m_TaskSystem;
-        public IAssetLoader WorldAssetLoader => m_AssetLoader;
+        public IWorldAssetLoader WorldAssetLoader => m_AssetLoader;
         public ISerializableFactory SerializableFactory => m_SerializableFactory;
         internal WorldPluginLoader PluginLoaderManager => m_PluginLoader;
 
-        public virtual void Init(string setupFilePath, IAssetLoader assetLoader, ITaskSystem taskSystem, IDeviceInput input)
+        public virtual void Init(string setupFilePath, IWorldAssetLoader assetLoader, ITaskSystem taskSystem, IDeviceInput input)
         {
             m_TaskSystem = taskSystem;
             m_AssetLoader = assetLoader;
@@ -225,7 +224,7 @@ namespace XDay.WorldAPI
 
         protected List<World> m_Worlds = new();
         protected WorldSetupManager m_SetupManager;
-        protected IAssetLoader m_AssetLoader;
+        protected IWorldAssetLoader m_AssetLoader;
         protected ISerializableFactory m_SerializableFactory;
         protected ITaskSystem m_TaskSystem;
         private WorldPluginLoader m_PluginLoader;

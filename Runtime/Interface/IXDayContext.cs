@@ -25,7 +25,6 @@ using XDay.CameraAPI;
 using XDay.InputAPI;
 using XDay.WorldAPI;
 using UnityEngine;
-using XDay.AssetAPI;
 
 namespace XDay.API
 {
@@ -36,7 +35,7 @@ namespace XDay.API
     {
         static IXDayContext Create(
             string worldSetupFilePath,
-            IAssetLoader loader,
+            IWorldAssetLoader loader,
             bool enableLog,
             bool enableUI)
         {
@@ -46,7 +45,7 @@ namespace XDay.API
         IDeviceInput DeviceInput { get; }
         IWorldManager WorldManager { get; }
         ITaskSystem TaskSystem { get; }
-        IAssetLoader WorldAssetLoader { get; }
+        IWorldAssetLoader WorldAssetLoader { get; }
         ITickTimer TickTimer { get; }
         ITickTimer FrameTimer { get; }
         IEventSystem EventSystem { get; }

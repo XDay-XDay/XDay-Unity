@@ -27,7 +27,7 @@ using UnityEditor;
 using UnityEngine;
 using XDay.UtilityAPI;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     public static class CICDBuild
     {

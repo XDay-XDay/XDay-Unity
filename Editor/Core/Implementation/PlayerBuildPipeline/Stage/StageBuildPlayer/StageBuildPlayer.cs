@@ -33,7 +33,7 @@ using XDay.UtilityAPI;
 using static UnityEditor.Android.UserBuildSettings;
 #endif
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     /// <summary>
     /// 编译unity player

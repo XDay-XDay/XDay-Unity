@@ -26,7 +26,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     public enum StageStatus
     {

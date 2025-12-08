@@ -21,11 +21,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using XDay.UtilityAPI;
 using UnityEngine;
-using XDay.AssetAPI;
 using Cysharp.Threading.Tasks;
 
 namespace XDay.WorldAPI
@@ -35,7 +32,7 @@ namespace XDay.WorldAPI
         public GameObject Root => m_Root;
         public IGameObjectPool Cache => m_Cache;
 
-        public WorldRenderer(string name, IAssetLoader assetLoader)
+        public WorldRenderer(string name, IWorldAssetLoader assetLoader)
         {
             m_AssetLoader = assetLoader;
 
@@ -98,7 +95,7 @@ namespace XDay.WorldAPI
 
         private GameObject m_Root;
         private IGameObjectPool m_Cache;
-        private IAssetLoader m_AssetLoader;
+        private IWorldAssetLoader m_AssetLoader;
     }
 }
 

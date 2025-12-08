@@ -27,13 +27,12 @@ using XDay.InputAPI;
 using System;
 using UnityEditor;
 using UnityEngine;
-using XDay.AssetAPI;
 
 namespace XDay.WorldAPI.Editor
 {
     internal class EditorWorldManager : WorldManager
     {
-        public override void Init(string setupFilePath, IAssetLoader assetLoader, ITaskSystem taskSystem, IDeviceInput deviceInput)
+        public override void Init(string setupFilePath, IWorldAssetLoader assetLoader, ITaskSystem taskSystem, IDeviceInput deviceInput)
         {
             base.Init(setupFilePath, assetLoader, taskSystem, deviceInput);
 

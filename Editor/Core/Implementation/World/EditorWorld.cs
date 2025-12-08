@@ -29,7 +29,6 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
-using XDay.AssetAPI;
 
 namespace XDay.WorldAPI.Editor
 {
@@ -70,8 +69,8 @@ namespace XDay.WorldAPI.Editor
         }
 
         public EditorWorld(
-            IWorldManager worldManager, WorldSetup setup, 
-            IAssetLoader assetLoader, 
+            IWorldManager worldManager, WorldSetup setup,
+            IWorldAssetLoader assetLoader, 
             ICameraManipulator manipulator, 
             ISerializableFactory serialzableFactory, 
             EditorWorldPluginLoader pluginLoader,

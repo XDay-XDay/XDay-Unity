@@ -28,7 +28,7 @@ using XDay.UtilityAPI.Editor;
 using UnityEditor;
 using XDay.WorldAPI;
 
-namespace XDay.PlayerBuildPipeline.Editor
+namespace XDay.Build.Editor
 {
     internal partial class PlayerBuildPipelineView : GraphNodeEditor
     {
