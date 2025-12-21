@@ -21,7 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,6 +36,16 @@ namespace XDay.DisplayKeyAPI.Editor
     public class DisplayKeyEditor
     {
         public DisplayKeyManager DisplayKeyManager => m_DisplayKeyManager;
+        
+        public void SetCustomDrawer(Action<DisplayKey> drawer)
+        {
+            m_CustomDrawer = drawer;
+        }
+
+        public void SetCustomDataTranslator(Func<string, string> translator)
+        {
+            m_DisplayKeyManager.SetCustomDataTranslator(translator);
+        }
 
         public void DrawEditor()
         {
@@ -133,6 +142,14 @@ namespace XDay.DisplayKeyAPI.Editor
             group.Name = EditorGUILayout.TextField("", group.Name, GUILayout.MaxWidth(100));
             EditorGUIUtility.labelWidth = 0;
             GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button(new GUIContent("Add Key", "新建Key")))
+            {
+                group.AddKey(new DisplayKey());
+                m_ScrollPos.y = float.MaxValue;
+                Save(false);
+            }
+
             if (GUILayout.Button(new GUIContent("Fold", "折叠Group所有Key的参数列表")))
             {
                 FoldAll(group);
@@ -141,13 +158,6 @@ namespace XDay.DisplayKeyAPI.Editor
             if (GUILayout.Button(new GUIContent("Expand", "展开Group所有Key的参数列表")))
             {
                 ExpandAll(group);
-            }
-
-            if (GUILayout.Button(new GUIContent("Add Key", "新建Key")))
-            {
-                group.AddKey(new DisplayKey());
-                m_ScrollPos.y = float.MaxValue;
-                Save(false);
             }
 
             bool removed = false;
@@ -198,13 +208,16 @@ namespace XDay.DisplayKeyAPI.Editor
                     key.PrefabPath = prefabPath;
                     Save(false);
                 }
-                EditorGUIUtility.labelWidth = 30;
-                var iconPath = AssetDatabase.AssetPathToGUID(EditorHelper.ObjectField<Sprite>("Icon", AssetDatabase.GUIDToAssetPath(key.IconPath), 100));
+                EditorGUIUtility.labelWidth = 1;
+                var iconPath = AssetDatabase.AssetPathToGUID(EditorHelper.ObjectField<Sprite>("", AssetDatabase.GUIDToAssetPath(key.IconPath), 0));
                 if (key.IconPath != iconPath)
                 {
                     key.IconPath = iconPath;
                     Save(false);
                 }
+
+                m_CustomDrawer?.Invoke(key);
+
                 EditorGUIUtility.labelWidth = 50;
                 var audioClipPath = AssetDatabase.AssetPathToGUID(EditorHelper.ObjectField<AudioClip>("Audio", AssetDatabase.GUIDToAssetPath(key.AudioClipPath), 140));
                 if (key.AudioClipPath != audioClipPath)
@@ -644,5 +657,6 @@ namespace XDay.DisplayKeyID
         private string m_SearchText = "";
         private DisplayKeyConfig m_Config;
         private Vector2 m_ScrollPos;
+        private Action<DisplayKey> m_CustomDrawer;
     }
 }

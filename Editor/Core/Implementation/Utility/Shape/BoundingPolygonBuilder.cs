@@ -60,6 +60,12 @@ namespace XDay.UtilityAPI.Editor
                 m_OutputFilePath = Helper.FindFile("concave.exe", "Assets");
             }
 
+            if (string.IsNullOrEmpty(m_OutputFilePath))
+            {
+                Debug.LogError("concave.exe not found!");
+                return new List<Vector3>();
+            }
+
             m_OutputFilePath = m_OutputFilePath.Replace('\\', '/');
             m_OutputFilePath = Helper.GetFolderPath(m_OutputFilePath);
 

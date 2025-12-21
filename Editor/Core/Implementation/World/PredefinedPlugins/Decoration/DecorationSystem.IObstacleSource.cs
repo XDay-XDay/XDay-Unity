@@ -63,6 +63,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             public float Height => 0;
             public bool Walkable => false;
             public ObstacleAttribute Attribute => ObstacleAttribute.None;
+            public bool IsValid => true;
 
             public Obstacle(List<Vector3> polygon, string name)
             {

@@ -140,7 +140,7 @@ namespace XDay.InputAPI
         private Zoom m_Zoom;
         private bool m_EnableRotate = true;
         private float m_MoveThreshold = 3.0f;
-        private float m_ZoomAngleThreshold = 45.0f;
+        private float m_ZoomAngleThreshold = 60.0f;
         private float m_Range;
         private float m_MinAltitude;
         private float m_MaxAltitude;

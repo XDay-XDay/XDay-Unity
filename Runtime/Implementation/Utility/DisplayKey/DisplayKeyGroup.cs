@@ -101,7 +101,7 @@ namespace XDay.DisplayKeyAPI
 
             serializer.WriteList(m_DisplayKeys, "Display Keys", (key, index) => {
                 serializer.WriteStructure($"Display Key {index}", () => {
-                    key.Export(serializer);
+                    key.Export(serializer, m_Manager.GetCustomDataTranslator());
                 });
             });
         }

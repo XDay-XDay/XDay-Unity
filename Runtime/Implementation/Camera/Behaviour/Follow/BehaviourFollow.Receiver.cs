@@ -82,6 +82,10 @@ namespace XDay.CameraAPI
 
             protected override BehaviourState UpdateInternal(CameraTransform pose)
             {
+                if (m_CurrentMovement == null)
+                {
+                    return BehaviourState.Over;
+                }
                 return m_CurrentMovement.Update(pose);
             }
 

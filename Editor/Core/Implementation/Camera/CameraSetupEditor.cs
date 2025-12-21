@@ -92,6 +92,8 @@ namespace XDay.CameraAPI.Editor
 
                 DrawAltitudeSetup();
 
+                DrawRotationSetup();
+
                 EditorGUI.indentLevel--;
             }
         }
@@ -174,6 +176,25 @@ namespace XDay.CameraAPI.Editor
             }
         }
 
+        private void DrawRotationSetup()
+        {
+            m_ShowRotation = EditorGUILayout.Foldout(m_ShowRotation, "旋转设置");
+            if (m_ShowRotation)
+            {
+                EditorGUI.indentLevel++;
+
+                m_Setup.Orbit.EnableTouchOrbit = EditorGUILayout.Toggle("开启二指缩放", m_Setup.Orbit.EnableTouchOrbit);
+                m_Setup.Orbit.EnableUnrestrictedOrbit = EditorGUILayout.Toggle("无限制缩放", m_Setup.Orbit.EnableUnrestrictedOrbit);
+                GUI.enabled = !m_Setup.Orbit.EnableUnrestrictedOrbit;
+                m_Setup.Orbit.Range = EditorGUILayout.FloatField("旋转范围(0-360°)", m_Setup.Orbit.Range);
+                GUI.enabled = true;
+                m_Setup.Orbit.MinAltitude = EditorGUILayout.FloatField("最小可旋转高度", m_Setup.Orbit.MinAltitude);
+                m_Setup.Orbit.MaxAltitude = EditorGUILayout.FloatField("最大可旋转高度", m_Setup.Orbit.MaxAltitude);
+
+                EditorGUI.indentLevel--;
+            }
+        }
+
         private void CalculateMaxAltitude()
         {
             var userSetSize = m_Setup.FocusPointBounds.size;
@@ -193,7 +214,7 @@ namespace XDay.CameraAPI.Editor
             var maxHeight = m_Setup.MaxAltitude;
 
             var maxSize = CalculateVisibleSize(camera, fov, xRot, yRot, xy, maxHeight, calculator);
-            
+
             if (maxSize.x <= userSetSize.x && maxSize.y <= userSetSize.y)
             {
                 return;
@@ -210,7 +231,7 @@ namespace XDay.CameraAPI.Editor
                 var size = CalculateVisibleSize(camera, fov, xRot, yRot, xy, middleHeight, calculator);
                 var dx = size.x - userSetSize.x;
                 var dy = size.y - userSetSize.y;
-                if (Mathf.Abs(dx) <= threshold && 
+                if (Mathf.Abs(dx) <= threshold &&
                     Mathf.Abs(dy) <= threshold)
                 {
                     m_Setup.MaxAltitude = middleHeight;
@@ -270,5 +291,6 @@ namespace XDay.CameraAPI.Editor
         private CameraSetup m_Setup;
         private string m_CameraSetupFilePath;
         private float m_InputAltitude;
+        private bool m_ShowRotation = false;
     }
 }

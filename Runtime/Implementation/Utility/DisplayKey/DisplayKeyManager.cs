@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -82,6 +83,15 @@ namespace XDay.DisplayKeyAPI
                 }
             }
             Log.Instance?.Error($"display key {id} not found!");
+            return null;
+        }
+
+        public DisplayKey GetKeyByIndex(int index)
+        {
+            if (index >= 0 && index < m_AllKeys.Count)
+            {
+                return m_AllKeys[index];
+            }
             return null;
         }
 
@@ -196,11 +206,22 @@ namespace XDay.DisplayKeyAPI
             m_AllKeys.Add(key);
         }
 
+        internal void SetCustomDataTranslator(Func<string, string> translator)
+        {
+            m_CustomDataTranslator = translator;
+        }
+
+        internal Func<string, string> GetCustomDataTranslator()
+        {
+            return m_CustomDataTranslator;
+        }
+
         private List<DisplayKeyGroup> m_Groups = new();
         private readonly List<DisplayKey> m_AllKeys = new();
         private string m_OutputFolder;
         private const int m_EditorVersion = 2;
         private const int m_RuntimeVersion = 1;
+        private Func<string, string> m_CustomDataTranslator;
         private static DisplayKeyManager m_Instance;
     }
 
@@ -224,6 +245,26 @@ namespace XDay.DisplayKeyAPI
                 return null;
             }
             return key.PrefabPath;
+        }
+
+        public static string GetAudioClipPath(this int id)
+        {
+            var key = DisplayKeyManager.Instance.GetKey(id);
+            if (key == null)
+            {
+                return null;
+            }
+            return key.AudioClipPath;
+        }
+
+        public static string GetCustomData(this int id)
+        {
+            var key = DisplayKeyManager.Instance.GetKey(id);
+            if (key == null)
+            {
+                return null;
+            }
+            return key.CustomData;
         }
     }
 }

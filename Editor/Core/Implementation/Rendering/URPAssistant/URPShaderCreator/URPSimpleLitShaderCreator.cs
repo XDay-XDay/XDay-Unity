@@ -24,6 +24,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using XDay.UtilityAPI.Editor;
+using XDay.WorldAPI;
 
 namespace ShaderTool
 {
@@ -39,12 +40,14 @@ namespace ShaderTool
             };
             URPSimpleLitShaderCreator creator = new();
             var parameter = new URPShaderTemplateParameter();
-            var prop = new PropertyDefine();
-            prop.Name = "_Splat";
-            prop.DefaultValue = "";
-            prop.IsMainTexture = true;
-            prop.DisplayName = "Splat Map";
-            prop.Type = ShaderParameterType.Texture2D;
+            var prop = new PropertyDefine
+            {
+                Name = "_Splat",
+                DefaultValue = "",
+                IsMainTexture = true,
+                DisplayName = "Splat Map",
+                Type = ShaderParameterType.Texture2D
+            };
             parameter.Properties.Add(prop);
 
             ParameterWindow.Open("Create URP Simple Lit Shader", parameters, (p) =>
@@ -67,7 +70,7 @@ namespace ShaderTool
 
         protected override string GetTemplateFilePath()
         {
-            return "Assets/XDay/Editor/Core/Implementation/Rendering/URPAssistant/URPShaderCreator/URPSimpleLitTemplate";
+            return $"{WorldHelper.GetShaderPath("URPSimpleLitTemplate")}";
         }
     }
 }

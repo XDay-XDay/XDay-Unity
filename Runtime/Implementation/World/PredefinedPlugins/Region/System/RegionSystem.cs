@@ -47,7 +47,7 @@ namespace XDay.WorldAPI.Region
             m_Renderer = new RegionSystemRenderer(World.Root.transform);
 
             m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
-            m_VisibleAreaUpdater.SetDistanceThreshold(40);
+            m_VisibleAreaUpdater.SetDistanceThreshold((World as GameWorld).VisibleAreaUpdateDistance);
 
             foreach (var layer in m_Layers)
             {

@@ -47,7 +47,12 @@ namespace XDay.InputAPI
         /// </summary>
         Right = 4,
 
-        All = Middle | Left | Right,
+        /// <summary>
+        /// Ä£Äâ¼ü
+        /// </summary>
+        Virtual = 8,
+
+        All = Middle | Left | Right | Virtual,
     }
 
     public enum DeviceType
@@ -93,6 +98,8 @@ namespace XDay.InputAPI
         event Action<Vector2> EventAnySceneTouchBegin;
 
         bool UseConfigurableTouchAsSceneTouch { get; set; }
+
+        Vector3 VirtualKeyPosition { get; set; }
 
         /// <summary>
         /// number of touches

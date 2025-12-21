@@ -139,6 +139,7 @@ namespace XDay.CameraAPI
             root["Default Altitude"] = m_DefaultAltitude;
             root["Change FOV"] = m_ChangeFOV;
             root["Fixed FOV"] = m_FixedFOV;
+            root["Use Narrow View"] = m_UseNarrowView;
 
             var boundsConfig = new Dictionary<string, object>
             {

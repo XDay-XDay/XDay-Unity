@@ -39,6 +39,8 @@ namespace XDay.WorldAPI
 
         public virtual void Init(string setupFilePath, IWorldAssetLoader assetLoader, ITaskSystem taskSystem, IDeviceInput input)
         {
+            Debug.Assert(assetLoader != null, "Asset loader is null");
+
             m_TaskSystem = taskSystem;
             m_AssetLoader = assetLoader;
             m_DeviceInput = input;

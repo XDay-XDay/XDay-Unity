@@ -46,6 +46,8 @@ namespace XDay.InputAPI
         public int UITouchCount => m_Device.UITouchCount;
         public int TouchCountNotStartFromUI => m_Device.TouchCountNotStartFromUI;
         public int SceneTouchCountNotStartFromUI => m_Device.SceneTouchCountNotStartFromUI;
+        public Vector3 VirtualKeyPosition { get => m_VirtualKeyPosition; set => m_VirtualKeyPosition = value; }
+
         public event Action<Vector2> EventAnyTouchBegin
         {
             add
@@ -223,9 +225,10 @@ namespace XDay.InputAPI
         }
 
         private IDevice m_Device;
-        private MotionSystem m_MotionSystem = new();
-        private List<Action> m_VoidSpaceClickCallbacks = new();
+        private readonly MotionSystem m_MotionSystem = new();
+        private readonly List<Action> m_VoidSpaceClickCallbacks = new();
         private bool m_UseConfigurableTouchAsSceneTouch = true;
+        private Vector3 m_VirtualKeyPosition = new(1400, 700, 0);
     }
 
     internal interface IDevice

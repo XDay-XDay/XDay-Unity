@@ -41,7 +41,7 @@ namespace XDay.InputAPI
         public MouseDevice(IDeviceInput deviceInput)
         {
             m_DeviceInput = deviceInput;
-            m_Touches = new MouseTouch[3];
+            m_Touches = new MouseTouch[4];
             for (var i = 0; i < m_Touches.Length; i++)
             {
                 m_Touches[i] = new(ButtonToTouchID(i));
@@ -78,6 +78,11 @@ namespace XDay.InputAPI
                 return TouchID.Middle;
             }
 
+            if (touchID == PointerInputModule.kFakeTouchesId)
+            {
+                return TouchID.Virtual;
+            }
+
             Debug.Assert(false, $"unknown touchID: {touchID}");
             return TouchID.Unknown;
         }
@@ -88,6 +93,7 @@ namespace XDay.InputAPI
 
             var scroll = Input.mouseScrollDelta;
             var mousePos = Input.mousePosition;
+            var virtualKeyPos = m_DeviceInput.VirtualKeyPosition;
 
             var anyStart = false;
             for (var i = 0; i < m_Touches.Length; ++i)
@@ -96,14 +102,46 @@ namespace XDay.InputAPI
                 var validTouch = true;
                 var start = false;
                 var state = ButtonState.Idle;
-                if (Input.GetMouseButtonDown(i))
+
+                //check虚拟键
+                bool press;
+                if (i == 3)
+                {
+                    press = Input.GetKeyDown(KeyCode.Space);
+                }
+                else
+                {
+                    press = Input.GetMouseButtonDown(i);
+                }
+
+                bool up;
+                if (i == 3)
+                {
+                    up = Input.GetKeyUp(KeyCode.Space);
+                }
+                else
+                {
+                    up = Input.GetMouseButtonUp(i);
+                }
+
+                bool down;
+                if (i == 3)
+                {
+                    down = Input.GetKey(KeyCode.Space);
+                }
+                else
+                {
+                    down = Input.GetMouseButton(i);
+                }
+
+                if (press)
                 {
                     anyStart = true;
                     start = true;
                     state = ButtonState.Start;
                 }
 
-                if (Input.GetMouseButtonUp(i))
+                if (up)
                 {
                     if (start) 
                     {
@@ -111,7 +149,7 @@ namespace XDay.InputAPI
                     }
                     state = ButtonState.Finish;
                 }
-                else if (Input.GetMouseButton(i))
+                else if (down)
                 {
                     if (!start)
                     {
@@ -123,7 +161,7 @@ namespace XDay.InputAPI
                 {
                     if (state != ButtonState.Idle || (scroll != Vector2.zero && i == 2))
                     {
-                        UpdateTouch(i, mousePos, state, scroll, m_DeviceInput);
+                        UpdateTouch(i, i == 3 ? virtualKeyPos : mousePos, state, scroll, m_DeviceInput);
                     }
                 }
             }
@@ -272,6 +310,8 @@ namespace XDay.InputAPI
                     return PointerInputModule.kMouseRightId;
                 case 2:
                     return PointerInputModule.kMouseMiddleId;
+                case 3:
+                    return PointerInputModule.kFakeTouchesId;
             }
             Debug.Assert(false, $"Unknown button: {button}");
             return 0;

@@ -50,8 +50,11 @@ namespace XDay.WorldAPI.Attribute
                 var layerType = (LayerType)reader.ReadInt32("Layer Type");
                 var origin = reader.ReadVector2("Origin");
                 var data = reader.ReadUInt32Array("Data");
-                var layer = new Layer(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, layerType, data);
-                m_Layers.Add(layer);
+                if (horizontalGridCount > 0)
+                {
+                    var layer = new Layer(name, horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, layerType, data);
+                    m_Layers.Add(layer);
+                }
             }
 
             reader.Uninit();
@@ -66,7 +69,10 @@ namespace XDay.WorldAPI.Attribute
             var origin = reader.ReadVector2("");
             var data = reader.ReadUInt32Array("");
             var layer = new Layer("Obstacle", horizontalGridCount, verticalGridCount, gridWidth, gridHeight, origin, LayerType.Obstacle, data);
-            m_Layers.Add(layer);
+            if (horizontalGridCount > 0)
+            {
+                m_Layers.Add(layer);
+            }
         }
     }
 }

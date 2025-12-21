@@ -35,6 +35,7 @@ namespace XDay.WorldAPI.Attribute.Editor
     {
         Disable,
         ByObstacleTag,
+        ByCollider,
         ByShapeColliders,
         All,
     }
@@ -182,8 +183,13 @@ namespace XDay.WorldAPI.Attribute.Editor
 
                 if (layer == null)
                 {
-                    Debug.LogError("没有自动碰撞层,先设置层的类型为自动碰撞");
-                    return;
+                    Debug.LogError("没有自动碰撞层,尝试找到名字为Obstacle的Layer");
+                    layer = QueryLayer("Obstacle");
+                    if (layer == null)
+                    {
+                        Debug.LogError("没有碰撞层,无法自动计算碰撞");
+                        return;
+                    }
                 }
 
                 var hasObstacle = new bool[layer.VerticalGridCount, layer.HorizontalGridCount];
@@ -213,8 +219,19 @@ namespace XDay.WorldAPI.Attribute.Editor
                     allObstacles.AddRange(shapeColliders);
                 }
 
+                if (m_ObstacleMode == ObstacleCalculationMode.All ||
+                    m_ObstacleMode == ObstacleCalculationMode.ByCollider)
+                {
+                    var colliders = GetColliders();
+                    allObstacles.AddRange(colliders);
+                }
+
                 foreach (var obstacle in allObstacles)
                 {
+                    if (!obstacle.IsValid)
+                    {
+                        continue;
+                    }
                     var bounds = obstacle.WorldBounds;
                     var minCoord = layer.PositionToCoordinate(bounds.min.x, bounds.min.y);
                     var maxCoord = layer.PositionToCoordinate(bounds.max.x, bounds.max.y);
@@ -259,6 +276,21 @@ namespace XDay.WorldAPI.Attribute.Editor
                 shapeColliders.AddRange(colliders);
             }
             return shapeColliders;
+        }
+
+        private List<IObstacle> GetColliders()
+        {
+            List<IObstacle> obstacles = new();
+            foreach (var obj in EditorSceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                var colliders = obj.GetComponentsInChildren<UnityEngine.Collider>(false);
+                foreach (var collider in colliders)
+                {
+                    var obstacle = new ColliderObstacle(collider);
+                    obstacles.Add(obstacle);
+                }
+            }
+            return obstacles;
         }
 
         public override void EditorSerialize(ISerializer writer, string label, IObjectIDConverter converter)

@@ -160,6 +160,14 @@ namespace XDay.CameraAPI
             AddRequest(request);
         }
 
+        public void SetRotation(Quaternion rotation)
+        {
+            m_Camera.transform.rotation = rotation;
+            m_Transform.LastLogicRotation = rotation;
+            m_Transform.CurrentLogicRotation = rotation;
+            m_Transform.CurrentRenderRotation = rotation;
+        }
+
         public void SetFocusPointBounds(Vector2 min, Vector2 max)
         {
             m_FocusPointClamp.SetVisibleBounds(min, max);
@@ -373,7 +381,7 @@ namespace XDay.CameraAPI
         {
             m_Senders.Add(new BehaviourMouseZoom.Sender(this, input));
             m_Senders.Add(new BehaviourScrollZoom.Sender(this, input));
-            m_Senders.Add(new BehaviourPinch.Sender(this, input, m_Setup.Orbit.MinAltitude, m_Setup.Orbit.MaxAltitude, m_Setup.Orbit.Range, false));
+            m_Senders.Add(new BehaviourPinch.Sender(this, input, m_Setup.Orbit.MinAltitude, m_Setup.Orbit.MaxAltitude, m_Setup.Orbit.Range, m_Setup.Orbit.EnableTouchOrbit));
             m_Senders.Add(new BehaviourDrag.Sender(this, input, TouchID.Left, Mathf.Max(20, Screen.width * 0.01f)));
 
             m_Receivers.Add(BehaviourType.MouseZoom, new BehaviourMouseZoom.Receiver(this));

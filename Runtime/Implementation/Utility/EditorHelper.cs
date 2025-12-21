@@ -54,6 +54,14 @@ namespace XDay.UtilityAPI
             return false;
         }
 
+        public static void HorizontalLine(Color color)
+        {
+            var old = GUI.color;
+            GUI.color = color;
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            GUI.color = old;
+        }
+
         public static void HorizontalLine()
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
@@ -325,20 +333,30 @@ namespace XDay.UtilityAPI
             T asset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
             if (string.IsNullOrEmpty(tooltip))
             {
+                var content = GUIContent.none;
+                if (!string.IsNullOrEmpty(title))
+                {
+                    content = new GUIContent(title, tooltip);
+                }
                 if (maxWidth > 0)
                 {
-                    asset = EditorGUILayout.ObjectField(title, asset, typeof(T), allowSceneObjects, GUILayout.MinWidth(maxWidth)) as T;
+                    asset = EditorGUILayout.ObjectField(content, asset, typeof(T), allowSceneObjects, GUILayout.MinWidth(maxWidth)) as T;
                 }
                 else
                 {
-                    asset = EditorGUILayout.ObjectField(title, asset, typeof(T), allowSceneObjects) as T;
+                    asset = EditorGUILayout.ObjectField(content, asset, typeof(T), allowSceneObjects) as T;
                 }
             }
             else
             {
+                var content = GUIContent.none;
+                if (!string.IsNullOrEmpty(title))
+                {
+                    content = new GUIContent(title, tooltip);
+                }
                 if (maxWidth > 0)
                 {
-                    asset = EditorGUILayout.ObjectField(new GUIContent(title, tooltip), asset, typeof(T), allowSceneObjects, GUILayout.MinWidth(maxWidth)) as T;
+                    asset = EditorGUILayout.ObjectField(content, asset, typeof(T), allowSceneObjects, GUILayout.MinWidth(maxWidth)) as T;
                 }
                 else
                 {

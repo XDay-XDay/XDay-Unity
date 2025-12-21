@@ -35,6 +35,7 @@ namespace XDay.WorldAPI
 
     public interface IObstacle
     {
+        bool IsValid { get; }
         int AreaID => 0;
         //for 3d navmesh
         float Height => 0;

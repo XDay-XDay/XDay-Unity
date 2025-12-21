@@ -251,6 +251,8 @@ namespace XDay.CameraAPI
         /// <param name="priority"></param>
         void SetPosition(Vector3 position, Action onCameraReachTarget = null);
 
+        void SetRotation(Quaternion rotation);
+
         /// <summary>
         /// camera follows target
         /// </summary>

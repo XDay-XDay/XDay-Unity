@@ -109,6 +109,7 @@ namespace XDay.DisplayKeyAPI
     {
         public int ID { get;set; }
         public string Name { get; set; } = "";
+        public string CustomData { get; set; } = "";
         //keep guid in editor, path in runtime
         public string IconPath { get; set; } = "";
         public string PrefabPath { get; set; } = "";
@@ -214,6 +215,7 @@ namespace XDay.DisplayKeyAPI
 
             serializer.WriteInt32(ID, "ID");
             serializer.WriteString(Name, "Name");
+            serializer.WriteString(CustomData, "CustomData");
             serializer.WriteString(IconPath, "IconPath");
             serializer.WriteString(PrefabPath, "PrefabPath");
             serializer.WriteString(AudioClipPath, "AudioClipPath");
@@ -232,6 +234,10 @@ namespace XDay.DisplayKeyAPI
 
             ID = deserializer.ReadInt32("ID");
             Name = deserializer.ReadString("Name");
+            if (version >= 3)
+            {
+                CustomData = deserializer.ReadString("CustomData");
+            }
             IconPath = deserializer.ReadString("IconPath");
             PrefabPath = deserializer.ReadString("PrefabPath");
             if (version >= 2)
@@ -249,12 +255,13 @@ namespace XDay.DisplayKeyAPI
             });
         }
 
-        public void Export(ISerializer serializer)
+        public void Export(ISerializer serializer, Func<string, string> getCustomDataTranslator)
         {
             serializer.WriteInt32(m_RuntimeVersion, "Version");
 
             serializer.WriteInt32(ID, "ID");
             serializer.WriteString(Name, "Name");
+            serializer.WriteString(getCustomDataTranslator == null ? CustomData : getCustomDataTranslator.Invoke(CustomData), "CustomData");
             serializer.WriteString(UnityEditor.AssetDatabase.GUIDToAssetPath(IconPath), "IconPath");
             serializer.WriteString(UnityEditor.AssetDatabase.GUIDToAssetPath(PrefabPath), "PrefabPath");
             serializer.WriteString(UnityEditor.AssetDatabase.GUIDToAssetPath(AudioClipPath), "AudioClipPath");
@@ -273,6 +280,7 @@ namespace XDay.DisplayKeyAPI
 
             ID = deserializer.ReadInt32("ID");
             Name = deserializer.ReadString("Name");
+            CustomData = deserializer.ReadString("CustomData");
             IconPath = deserializer.ReadString("IconPath");
             PrefabPath = deserializer.ReadString("PrefabPath");
             AudioClipPath = deserializer.ReadString("AudioClipPath");
@@ -307,7 +315,7 @@ namespace XDay.DisplayKeyAPI
         }
 
         private List<DisplayKeyParam> m_Parameters;
-        private const int m_EditorVersion = 2;
+        private const int m_EditorVersion = 3;
         private const int m_RuntimeVersion = 1;
     }
 }

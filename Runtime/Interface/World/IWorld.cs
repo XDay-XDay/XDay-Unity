@@ -53,7 +53,7 @@ namespace XDay.WorldAPI
         UniTask<T> LoadAsync<T>(string path) where T : UnityEngine.Object;
         GameObject LoadGameObject(string path);
         UniTask<GameObject> LoadGameObjectAsync(string path);
-        UniTaskVoid LoadGameObjectAsync(string path, System.Action<GameObject> onLoaded);
+        void LoadGameObjectAsync(string path, System.Action<GameObject> onLoaded);
         byte[] LoadBytes(string path);
         string LoadText(string path);
         Stream LoadTextStream(string path);

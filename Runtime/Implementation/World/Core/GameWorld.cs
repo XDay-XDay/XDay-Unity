@@ -36,6 +36,7 @@ namespace XDay.WorldAPI
         public event CameraAltitudeChangeCallback EventCameraAltitudeChanged;
         public override string TypeName => "GameWorld";
         public override int CurrentLOD => m_PluginLODSystem.CurrentLOD;
+        public float VisibleAreaUpdateDistance => m_VisibleAreaUpdateDistance;
 
         public GameWorld()
         {
@@ -73,12 +74,21 @@ namespace XDay.WorldAPI
 
         public void GameDeserialize(IDeserializer deserializer, string label)
         {
-            deserializer.ReadInt32("World.Version");
+            var version = deserializer.ReadInt32("World.Version");
 
             m_LODSystem = deserializer.ReadSerializable<WorldLODSystem>("LOD System", true);
             m_Width = deserializer.ReadSingle("Width");
             m_Height = deserializer.ReadSingle("Height");
             m_Plugins = m_PluginLoader.LoadPlugins(this);
+            if (version >= 2)
+            {
+                m_ShowGrid = deserializer.ReadBoolean("Enable Grid");
+                m_GridWidth = deserializer.ReadSingle("Grid Width", 100);
+                m_GridHeight = deserializer.ReadSingle("Grid Height", 100);
+                m_HorizontalGridCount = deserializer.ReadInt32("Horizontal Grid Count", 27);
+                m_VerticalGridCount = deserializer.ReadInt32("Vertical Grid Count", 27);
+                m_VisibleAreaUpdateDistance = deserializer.ReadSingle("VisibleAreaUpdateDistance");
+            }
         }
 
         protected override void OnUpdate(float dt)
@@ -152,8 +162,9 @@ namespace XDay.WorldAPI
         }
 
         private PluginLODSystem m_PluginLODSystem;
-        private WorldPluginLoader m_PluginLoader;
+        private readonly WorldPluginLoader m_PluginLoader;
         private float m_LastCheckCameraAltitude;
+        private float m_VisibleAreaUpdateDistance = 5;
     }
 }
 

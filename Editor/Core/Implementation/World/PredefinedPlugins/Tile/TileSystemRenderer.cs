@@ -65,6 +65,8 @@ namespace XDay.WorldAPI.Tile.Editor
                         return renderer;
                     }
                 }
+
+                return renderers[0];
             }
 
             return null;

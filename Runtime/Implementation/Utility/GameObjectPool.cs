@@ -26,7 +26,6 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-
 namespace XDay.UtilityAPI
 {
     internal class GameObjectPool : IGameObjectPool

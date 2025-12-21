@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -21,37 +21,49 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using XDay.UtilityAPI;
 
-namespace XDay.UtilityAPI
+namespace XDay.WorldAPI.Tile.Editor
 {
-    public class AutoScale : MonoBehaviour
+    internal class AddBoxColliderToTile
     {
-        public bool Inited => m_ScaleCalculator != null;
-
-        public void Init(AutoScaleCalculator calculator)
+        [MenuItem("XDay/地图/地块/给地块增加BoxCollider")]
+        private static void AddBoxCollider()
         {
-            m_ScaleCalculator = calculator;
-        }
+            var instance = new AddBoxColliderToTile();
 
-        private void Update()
-        {
-            if (m_ScaleCalculator == null)
+            List<GameObject> prefabs = new();
+            foreach (var obj in Selection.objects)
             {
-                return;
+                if (EditorHelper.IsPrefab(obj as GameObject))
+                {
+                    prefabs.Add(obj as GameObject);
+                }
             }
 
-            if (m_ScaleCalculator.CurrentScale != 0)
-            {
-                transform.localScale = m_ScaleCalculator.CurrentScale * Vector3.one;
-            }
+            instance.Do(prefabs);
         }
 
-        public void Uninit()
+        private void Do(List<GameObject> prefabs)
         {
-            m_ScaleCalculator = null;
-        }
+            foreach (var obj in prefabs)
+            {
+                var renderers = obj.GetComponentsInChildren<Renderer>(true);
+                foreach (var renderer in renderers)
+                {
+                    if (renderer.gameObject.GetComponent<UnityEngine.Collider>() == null)
+                    {
+                        renderer.gameObject.AddComponent<UnityEngine.BoxCollider>();
+                    }
+                }
 
-        private AutoScaleCalculator m_ScaleCalculator;
+                PrefabUtility.SavePrefabAsset(obj);
+            }
+
+            AssetDatabase.Refresh();
+        }
     }
 }

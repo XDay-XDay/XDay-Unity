@@ -2641,6 +2641,34 @@ namespace XDay.UtilityAPI
             return text;
         }
 
+        public static void Clamp(ref Vector3 vector, float maxValue)
+        {
+            var len = vector.sqrMagnitude;
+            if (len > maxValue * maxValue)
+            {
+                len = Mathf.Sqrt(len);
+                vector *= maxValue / len;
+            }
+        }
+
+        public static void ClampXZ(ref Vector3 vector, float maxValue)
+        {
+            var y = vector.y;
+            vector.y = 0;
+            var len = vector.sqrMagnitude;
+            if (len > maxValue * maxValue)
+            {
+                len = Mathf.Sqrt(len);
+                vector *= maxValue / len;
+            }
+            vector.y = y;
+        }
+
+        public static void ClampY(ref Vector3 vector, float maxValue)
+        {
+            vector.y = Mathf.Min(vector.y, maxValue);
+        }
+
         private const double m_DegToRad = 0.0174532924;
         private static float m_ScaleFactor = 10000;
     }

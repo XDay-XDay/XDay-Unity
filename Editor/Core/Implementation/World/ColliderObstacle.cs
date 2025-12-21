@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2024-2025 XDay
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -21,24 +21,35 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
 using UnityEngine;
+using XDay.UtilityAPI;
 
-namespace XDay.UtilityAPI
+namespace XDay.WorldAPI.Editor
 {
-    [CreateAssetMenu(fileName = "AutoScaleConfig", menuName = "XDay/AutoScaleConfig")]
-    public class AutoScaleConfig : ScriptableObject
+    internal class ColliderObstacle : IObstacle
     {
-        /// <summary>
-        /// 开始缩放的相机高度
-        /// </summary>
-        public float StartScaleCameraAltitude = 550;
-        /// <summary>
-        /// 结束缩放的相机高度
-        /// </summary>
-        public float EndScaleCameraAltitude = 700;
-        public float BaseScale = 1f;
-        public float CameraAltitudeWhenScaleIsBaseScale = 18;
-        public float CameraFOVWhenScaleIsBaseScale = 30;
-        public float ExtraScaleMultiplier = 0;
+        public bool IsValid => true;
+        public List<Vector3> WorldPolygon => m_WorldPolyon;
+        public Rect WorldBounds => m_WorldBounds;
+
+        public ColliderObstacle(UnityEngine.Collider collider)
+        {
+            var bounds = collider.bounds;
+            m_WorldBounds = bounds.ToRect();
+            m_WorldPolyon.Add(m_WorldBounds.min.ToVector3XZ());
+            m_WorldPolyon.Add(new Vector3(m_WorldBounds.xMin, 0, m_WorldBounds.yMax));
+            m_WorldPolyon.Add(new Vector3(m_WorldBounds.xMax, 0, m_WorldBounds.yMax));
+            m_WorldPolyon.Add(new Vector3(m_WorldBounds.xMax, 0, m_WorldBounds.yMin));
+#if false
+                //debug
+                var obj = new GameObject(name);
+                var dp = obj.AddComponent<DrawPolygon>();
+                dp.Init(polygon);
+#endif
+        }
+
+        private readonly List<Vector3> m_WorldPolyon = new();
+        private Rect m_WorldBounds;
     }
 }

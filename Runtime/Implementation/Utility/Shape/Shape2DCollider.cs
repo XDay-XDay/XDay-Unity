@@ -36,6 +36,7 @@ namespace XDay.UtilityAPI.Shape
         public bool IsTransformChanged { get => m_TransformChangeCheck.IsDirty; set => m_TransformChangeCheck.IsDirty = value; }
         public int VertexCount => m_Data.VertexCount;
         public float VertexDisplaySize => m_Data.VertexDisplaySize;
+        public bool IsValid => m_Data.IsValid;
         public bool ShowVertexIndex => m_Data.ShowVertexIndex;
         public List<Vector3> VerticesCopy => m_Data.VerticesCopy;
         public List<Vector3> WorldPolygon
@@ -149,6 +150,7 @@ namespace XDay.UtilityAPI.Shape
         public int AreaID => 0;
         public float Height => 0;
         public bool Walkable => false;
+        public bool IsValid => false;
         public ObstacleAttribute Attribute => ObstacleAttribute.None;
         public List<Vector3> WorldPolygon => null;
         public Rect WorldBounds => new Rect();

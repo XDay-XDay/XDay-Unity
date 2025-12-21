@@ -76,6 +76,7 @@ namespace XDay.WorldAPI.Shape.Editor
             set => m_Enabled = value;
             get => m_Enabled;
         }
+        public bool IsValid => true;
 
         public ShapeObject()
         {

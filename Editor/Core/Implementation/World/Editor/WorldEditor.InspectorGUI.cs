@@ -200,6 +200,8 @@ namespace XDay.WorldAPI.Editor
 					EditorGUILayout.EndHorizontal();
 				});
 
+                DrawWorldSetting();
+
                 DrawGridSetting();
 
                 DrawCameraSetting();
@@ -600,6 +602,18 @@ namespace XDay.WorldAPI.Editor
             }
         }
 
+        private static void DrawWorldSetting()
+        {
+            if (m_ActiveWorld != null)
+            {
+                m_ShowWorldSetting = EditorGUILayout.Foldout(m_ShowWorldSetting, "地图设置");
+                if (m_ShowWorldSetting)
+                {
+                    m_ActiveWorld.VisibleAreaUpdateDistance = EditorGUILayout.FloatField("Visible Area Update Distance", m_ActiveWorld.VisibleAreaUpdateDistance);
+                }
+            }
+        }
+
         private static void DrawGridSetting()
         {
             if (m_ActiveWorld != null)
@@ -713,6 +727,7 @@ namespace XDay.WorldAPI.Editor
         private static WorldLODSystemEditor m_LODEditor = new();
         private static DrawGridSetting m_DrawGridSetting = new();
         private static CameraSetupEditor m_CameraEditor;
+        private static bool m_ShowWorldSetting = true;
     }
 }
 

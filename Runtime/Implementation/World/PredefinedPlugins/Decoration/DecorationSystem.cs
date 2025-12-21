@@ -293,7 +293,7 @@ namespace XDay.WorldAPI.Decoration
             InitInitialVisibleState();
 
             m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
-            m_VisibleAreaUpdater.SetDistanceThreshold(40);
+            m_VisibleAreaUpdater.SetDistanceThreshold((World as GameWorld).VisibleAreaUpdateDistance);
 
             InitRendererInternal();
 

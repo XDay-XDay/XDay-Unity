@@ -70,9 +70,9 @@ namespace XDay.CameraAPI.Editor
     {
         ""Pitch"":45,
         ""Yaw"":0,
-        ""Range"":0,
+        ""Range"":180,
         ""Min Altitude"":0,
-        ""Max Altitude"":0,
+        ""Max Altitude"":100,
         ""Restore Speed"":200,
         ""Zoom"": false,
         ""Free"": false

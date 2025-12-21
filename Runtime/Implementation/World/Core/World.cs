@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using Cysharp.Threading.Tasks;
 using XDay.CameraAPI;
 using XDay.UtilityAPI;
@@ -72,6 +70,31 @@ namespace XDay.WorldAPI
         public IWorldAssetLoader AssetLoader => m_AssetLoader;
         public abstract string TypeName { get; }
         public bool ShowDebugInfo { get; set; } = false;
+
+        public GridMesh Grid
+        {
+            get => m_Grid;
+            set
+            {
+                m_Grid?.OnDestroy();
+                m_Grid = value;
+            }
+        }
+        public bool EnableGrid
+        {
+            get
+            {
+                if (m_Grid == null)
+                {
+                    return false;
+                }
+                return m_Grid.GetActive();
+            }
+            set
+            {
+                m_Grid?.SetActive(value);
+            }
+        }
 
         public World()
         {
@@ -281,6 +304,9 @@ namespace XDay.WorldAPI
 
             Debug.Assert(m_Objects.Count == 0);
             m_Objects.Clear();
+
+            m_Grid?.OnDestroy();
+            m_Grid = null;
         }
 
         public bool HasPlugin(string name)
@@ -355,6 +381,15 @@ namespace XDay.WorldAPI
         private void PostInit()
         {
             m_Inited = true;
+
+#if UNITY_EDITOR
+            var material = new Material(Shader.Find("XDay/Grid"));
+            if (m_GridWidth > 0)
+            {
+                m_Grid = new GridMesh("Custom Grid", Vector2.zero, m_HorizontalGridCount, m_VerticalGridCount, m_GridWidth, m_GridHeight, material, Color.white, Root.transform, true, 0, 0.1f);
+                m_Grid.SetActive(m_ShowGrid);
+            }
+#endif
         }
 
         private bool m_Inited = false;
@@ -368,6 +403,13 @@ namespace XDay.WorldAPI
         protected ISerializableFactory m_SerializableFactory;
         protected WorldRenderer m_WorldRenderer;
         private Dictionary<Type, Action<IWorldObject>> m_PostInitializers = new();
+        protected GridMesh m_Grid;
+        //grid data
+        protected bool m_ShowGrid = true;
+        protected float m_GridWidth;
+        protected float m_GridHeight;
+        protected int m_HorizontalGridCount;
+        protected int m_VerticalGridCount;
 
         [XDaySerializableField(1, "Width")]
         protected float m_Width;
@@ -379,6 +421,3 @@ namespace XDay.WorldAPI
         protected IWorldLODSystem m_LODSystem;
     }
 }
-
-
-//XDay

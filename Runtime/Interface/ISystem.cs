@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 namespace XDay.SystemAPI
 {
     /// <summary>
@@ -54,7 +52,7 @@ namespace XDay.SystemAPI
 
     public interface ISystem
     {
-        void OnCreate();
+        void OnCreate(object data);
         void OnDestroy();
     }
 
@@ -63,8 +61,18 @@ namespace XDay.SystemAPI
         void Update(float dt);
     }
 
+    public interface IFixedUpdatable
+    {
+        void FixedUpdate();
+    }
+
     public interface ILateUpdatable
     {
         void LateUpdate(float dt);
+    }
+
+    public interface ISaveable
+    {
+        void Save(object data);
     }
 }

@@ -35,6 +35,11 @@ namespace XDay.SystemAPI
         /// unload一个system时是否清理其他system对该system的field值
         /// </summary>
         public bool ClearReferencedFieldsWhenUnloadSystem = true;
+
+        /// <summary>
+        /// 传入System.OnCreate的参数
+        /// </summary>
+        public Func<object> GetSystemDataFunc;
     }
 
     /// <summary>
@@ -46,7 +51,7 @@ namespace XDay.SystemAPI
         {
             initInfo ??= new();
             m_InitInfo = initInfo;
-            return LoadSystems();
+            return LoadGlobalSystems();
         }
 
         public static void Uninit()
@@ -67,6 +72,29 @@ namespace XDay.SystemAPI
             foreach (var kv in m_LateUpdatableSystems)
             {
                 kv.Value.LateUpdate(dt);
+            }
+        }
+
+        public static void FixedUpdate()
+        {
+            foreach (var kv in m_FixedUpdatableSystems)
+            {
+                kv.Value.FixedUpdate();
+            }
+        }
+
+        public static void LoadSystemGroup(Type groupType)
+        {
+#if UNITY_EDITOR
+            Debug.Assert(typeof(ISystemGroup).IsAssignableFrom(groupType));
+#endif
+            foreach (var type in m_SortedInterfaceTypes)
+            {
+                var metadata = GetSystemMetadata(type);
+                if (metadata != null && metadata.Group == groupType && metadata.CreateTiming == SystemCreateTiming.CreateOnStartup)
+                {
+                    CreateSystem(type, metadata);
+                }
             }
         }
 
@@ -100,10 +128,20 @@ namespace XDay.SystemAPI
             return system as T;
         }
 
-        private static bool LoadSystems()
+        public static void GetSavableSystems(List<ISaveable> sableSystems)
+        {
+            sableSystems.Clear();
+            sableSystems.AddRange(m_SaveableSystems.Values);
+        }
+
+        /// <summary>
+        /// 只加载GlobalGroup的System
+        /// </summary>
+        /// <returns></returns>
+        private static bool LoadGlobalSystems()
         {
             var parser = new SystemParser();
-            bool ok = parser.Parse(out var sortedSystemInterfaceTypes, out m_InterfaceTypeToClassTypes, m_SystemDependencies, (a, b) =>
+            bool ok = parser.Parse(out m_SortedInterfaceTypes, out m_InterfaceTypeToClassTypes, m_SystemDependencies, (a, b) =>
             {
                 Debug.LogError($"{a}=>{b}产生循环依赖");
                 return true;
@@ -121,15 +159,16 @@ namespace XDay.SystemAPI
             }
 
             int updateOrder = 0;
-            foreach (var type in sortedSystemInterfaceTypes)
+            foreach (var type in m_SortedInterfaceTypes)
             {
                 m_SystemUpdateOrders.Add(type, ++updateOrder);
             }
 
-            foreach (var type in sortedSystemInterfaceTypes)
+            foreach (var type in m_SortedInterfaceTypes)
             {
                 var metadata = GetSystemMetadata(type);
-                if (metadata == null || metadata.CreateTiming == SystemCreateTiming.CreateOnStartup)
+                if (metadata == null ||
+                    (metadata.Group == typeof(IGlobalSystemGroup) && metadata.CreateTiming == SystemCreateTiming.CreateOnStartup))
                 {
                     CreateSystem(type, metadata);
                 }
@@ -158,9 +197,13 @@ namespace XDay.SystemAPI
 
             Debug.Assert(m_UpdatableSystems.Count == 0);
             Debug.Assert(m_LateUpdatableSystems.Count == 0);
+            Debug.Assert(m_FixedUpdatableSystems.Count == 0);
+            Debug.Assert(m_SaveableSystems.Count == 0);
             Debug.Assert(m_TypeToSystems.Count == 0);
             m_UpdatableSystems.Clear();
             m_LateUpdatableSystems.Clear();
+            m_FixedUpdatableSystems.Clear();
+            m_SaveableSystems.Clear();
             m_TypeToSystems.Clear();
             m_GroupedSystems.Clear();
             m_SystemUpdateOrders.Clear();
@@ -182,6 +225,8 @@ namespace XDay.SystemAPI
             var order = GetSystemUpdateOrder(interfaceType);
             m_UpdatableSystems.Remove(order);
             m_LateUpdatableSystems.Remove(order);
+            m_FixedUpdatableSystems.Remove(order);
+            m_SaveableSystems.Remove(order);
             bool ok = m_TypeToSystems.Remove(interfaceType);
             Debug.Assert(ok);
         }
@@ -207,7 +252,9 @@ namespace XDay.SystemAPI
             var system = System.Activator.CreateInstance(classType) as ISystem;
             SetSystemFields(system);
 
-            system.OnCreate();
+            system.OnCreate(m_InitInfo.GetSystemDataFunc == null ? null : m_InitInfo.GetSystemDataFunc?.Invoke());
+
+            Debug.Log($"System {system} created!");
 
             var updateOrder = GetSystemUpdateOrder(interfaceType);
             if (system is IUpdatable updatable)
@@ -219,6 +266,17 @@ namespace XDay.SystemAPI
             {
                 m_LateUpdatableSystems.Add(updateOrder, lateUpdatable);
             }
+
+            if (system is IFixedUpdatable fixedUpdatable)
+            {
+                m_FixedUpdatableSystems.Add(updateOrder, fixedUpdatable);
+            }
+
+            if (system is ISaveable saveable)
+            {
+                m_SaveableSystems.Add(updateOrder, saveable);
+            }
+
             m_TypeToSystems[interfaceType] = system;
 
             Type groupType = typeof(IGlobalSystemGroup);
@@ -235,7 +293,7 @@ namespace XDay.SystemAPI
 
             return system;
         }
-        
+
         private static void SetSystemFields(ISystem system)
         {
             var fields = GetFieldsOfSystemType(system.GetType());
@@ -307,6 +365,8 @@ namespace XDay.SystemAPI
         //按照依赖关系从最少依赖到最多依赖更新
         private static readonly SortedDictionary<int, IUpdatable> m_UpdatableSystems = new();
         private static readonly SortedDictionary<int, ILateUpdatable> m_LateUpdatableSystems = new();
+        private static readonly SortedDictionary<int, IFixedUpdatable> m_FixedUpdatableSystems = new();
+        private static readonly SortedDictionary<int, ISaveable> m_SaveableSystems = new();
         private static readonly Dictionary<Type, ISystem> m_TypeToSystems = new();
         //key是system kv interfaceType
         private static readonly Dictionary<Type, List<ISystem>> m_GroupedSystems = new();
@@ -314,7 +374,8 @@ namespace XDay.SystemAPI
         //key是interface
         private static readonly Dictionary<Type, List<Type>> m_SystemDependencies = new();
         private static Dictionary<Type, Type> m_InterfaceTypeToClassTypes;
-        private static Dictionary<Type, Type> m_ClassTypeToInterfaceTypes = new();
+        private static readonly Dictionary<Type, Type> m_ClassTypeToInterfaceTypes = new();
         private static SystemInitInfo m_InitInfo;
+        private static List<Type> m_SortedInterfaceTypes = new();
     }
 }

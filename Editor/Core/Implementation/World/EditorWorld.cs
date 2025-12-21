@@ -38,31 +38,8 @@ namespace XDay.WorldAPI.Editor
         public override string TypeName => "EditorWorld";
         public override int CurrentLOD => throw new NotImplementedException();
         public bool AllowUndo => true;
-        public GridMesh Grid
-        {
-            get => m_Grid;
-            set
-            {
-                m_Grid?.OnDestroy();
-                m_Grid = value;
-            }
-        }
-        public bool EnableGrid
-        {
-            get
-            {
-                if (m_Grid == null)
-                {
-                    return false;
-                }
-                return m_Grid.GetActive();
-            }
-            set
-            {
-                m_Grid?.SetActive(value);
-            }
-        }
         public Dictionary<int, IWorldObject> AllObjects => m_Objects;
+        public float VisibleAreaUpdateDistance { get => m_VisibleAreaUpdateDistance; set => m_VisibleAreaUpdateDistance = value; }
 
         public EditorWorld()
         {
@@ -93,18 +70,11 @@ namespace XDay.WorldAPI.Editor
             {
                 Selection.activeGameObject = selectedPlugin.Root;
             }
-
-            var material = new Material(Shader.Find("XDay/Grid"));
-            m_Grid = new GridMesh("Custom Grid", Vector2.zero, m_HorizontalGridCount, m_VerticalGridCount, m_GridWidth, m_GridHeight, material, Color.white, Root.transform, true);
-            m_Grid.SetActive(m_ShowGrid);
         }
 
         public override void OnDestroy()
         {
             base.OnDestroy();
-
-            m_Grid?.OnDestroy();
-            m_Grid = null;
         }
 
         public WorldPlugin QueryPlugin(GameObject gameObject)
@@ -173,6 +143,13 @@ namespace XDay.WorldAPI.Editor
             serializer.WriteSingle(m_Width, "Width");
             serializer.WriteSingle(m_Height, "Height");
 
+            serializer.WriteBoolean(EnableGrid, "Enable Grid");
+            serializer.WriteSingle(m_Grid.GridWidth, "Grid Width");
+            serializer.WriteSingle(m_Grid.GridHeight, "Grid Height");
+            serializer.WriteInt32(m_Grid.HorizontalGridCount, "Horizontal Grid Count");
+            serializer.WriteInt32(m_Grid.VerticalGridCount, "Vertical Grid Count");
+			serializer.WriteSingle(m_VisibleAreaUpdateDistance, "VisibleAreaUpdateDistance");
+
             GenerateGameData(converter);
         }
 
@@ -192,6 +169,7 @@ namespace XDay.WorldAPI.Editor
             serializer.WriteSingle(m_Grid.GridHeight, "Grid Height");
             serializer.WriteInt32(m_Grid.HorizontalGridCount, "Horizontal Grid Count");
             serializer.WriteInt32(m_Grid.VerticalGridCount, "Vertical Grid Count");
+            serializer.WriteSingle(m_VisibleAreaUpdateDistance, "VisibleAreaUpdateDistance");
 
             foreach (var plugin in m_Plugins)
             {
@@ -228,6 +206,26 @@ namespace XDay.WorldAPI.Editor
                 m_GridHeight = deserializer.ReadSingle("Grid Height", 100);
                 m_HorizontalGridCount = deserializer.ReadInt32("Horizontal Grid Count", 27);
                 m_VerticalGridCount = deserializer.ReadInt32("Vertical Grid Count", 27);
+                if (m_GridWidth == 0)
+                {
+                    m_GridWidth = 100;
+                }
+                if (m_GridHeight == 0)
+                {
+                    m_GridHeight = 100;
+                }
+                if (m_HorizontalGridCount == 0)
+                {
+                    m_HorizontalGridCount = Mathf.CeilToInt(m_Width / m_GridWidth);
+                }
+                if (m_VerticalGridCount == 0)
+                {
+                    m_VerticalGridCount = Mathf.CeilToInt(m_Height / m_GridHeight);
+                }
+            }
+            if (version >= 5)
+            {
+                m_VisibleAreaUpdateDistance = deserializer.ReadSingle("VisibleAreaUpdateDistance");
             }
 
             m_Plugins = m_PluginLoader.LoadPlugins(Setup.EditorFolder);
@@ -372,17 +370,11 @@ namespace XDay.WorldAPI.Editor
         private EditorWorldPluginLoader m_PluginLoader;
         [XDaySerializableField(1, "Selected Plugin")]
         private int m_SelectedPluginIndex = -1;
-        private GridMesh m_Grid;
 
-        //grid data
-        private bool m_ShowGrid = true;
-        private float m_GridWidth;
-        private float m_GridHeight;
-        private int m_HorizontalGridCount;
-        private int m_VerticalGridCount;
+        private float m_VisibleAreaUpdateDistance = 5;
 
-        private const int m_EditorVersion = 4;
-        private const int m_RuntimeVersion = 1;
+        private const int m_EditorVersion = 5;
+        private const int m_RuntimeVersion = 2;
     }
 }
 

@@ -36,9 +36,11 @@ namespace XDay.UtilityAPI.Shape
         public float VertexDisplaySize => m_VertexDisplaySize;
         public bool ShowVertexIndex => m_ShowVertexIndex;
         public List<Vector3> VerticesCopy => m_Polygon.VerticesCopy;
+        public bool IsValid => m_Transform != null;
 
         public void Initialize(Transform transform)
         {
+            Debug.Assert(transform != null, "Transform is null");
             m_Transform = transform;
 
             if (m_Polygon == null || m_Polygon.Vertices == null)

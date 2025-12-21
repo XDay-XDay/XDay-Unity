@@ -61,7 +61,6 @@ namespace XDay.InputAPI
                 var isFinished = (touch0.State == TouchState.Finish ||  touch1.State == TouchState.Finish);
 
                 if (m_Motion.EnableRotate &&
-                    m_Motion.Range > 0 &&
                     !isFinished &&
                     cameraPos.y > m_Motion.MinAltitude && 
                     cameraPos.y < m_Motion.MaxAltitude) 
@@ -130,12 +129,12 @@ namespace XDay.InputAPI
                     if (leftMove.y <= 0 && rightMove.y >= 0)
                     {
                         isRotating = true;
-                        m_SlideDirection = 1.0f;
+                        m_SlideDirection = -1.0f;
                     }
                     else if (rightMove.y <= 0 && leftMove.y >= 0)
                     {
                         isRotating = true;
-                        m_SlideDirection = -1.0f;
+                        m_SlideDirection = 1.0f;
                     }
                 }
                 else
@@ -143,12 +142,12 @@ namespace XDay.InputAPI
                     if (topMove.x <= 0 && bottomMove.x >= 0)
                     {
                         isRotating = true;
-                        m_SlideDirection = 1.0f;
+                        m_SlideDirection = -1.0f;
                     }
                     else if (topMove.x >= 0 && bottomMove.x <= 0)
                     {
                         isRotating = true;
-                        m_SlideDirection = -1.0f;
+                        m_SlideDirection = 1.0f;
                     }
                 }
 
