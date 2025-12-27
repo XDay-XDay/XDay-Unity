@@ -64,7 +64,7 @@ namespace XDay.WorldAPI.CDLODTerrain
             m_Size.x = m_XTileCount * m_TileWidth;
             m_Size.y = m_YTileCount * m_TileHeight;
             m_Center = new(m_Origin.x + m_Size.x * 0.5f, 0, m_Origin.y + m_Size.y * 0.5f);
-            m_CameraVisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_CameraVisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World);
 
             Debug.Assert(Mathf.IsPowerOfTwo((int)m_TileWidth));
 

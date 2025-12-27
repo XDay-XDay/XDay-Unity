@@ -52,7 +52,7 @@ namespace XDay.WorldAPI.Tile
             m_Root = new GameObject(m_Name);
             m_Root.transform.SetParent(World.Root.transform, true);
 
-            m_CameraVisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_CameraVisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World);
             m_CameraVisibleAreaUpdater.SetDistanceThreshold((World as GameWorld).VisibleAreaUpdateDistance);
 
             m_DescriptorSystem.Init(World);
@@ -93,7 +93,7 @@ namespace XDay.WorldAPI.Tile
 
         protected override void UpdateInternal(float dt)
         {
-            var cameraPos = World.CameraManipulator.RenderPosition;
+            var cameraPos = World.CameraManipulator.Camera.transform.position;
 
             var viewportChanged = m_CameraVisibleAreaUpdater.BeginUpdate();
             var lodChanged = LODSystem.Update(cameraPos.y);

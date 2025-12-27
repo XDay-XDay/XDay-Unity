@@ -93,18 +93,18 @@ namespace XDay.CameraAPI
                 {
                     if (m_Manipulator.Direction == CameraDirection.XZ)
                     {
-                        pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y);
+                        pose.CurrentLogicPosition = AltitudeToPosition(pose.CurrentLogicPosition.y, pose);
                     }
                     else
                     {
-                        pose.CurrentLogicPosition = AltitudeToPosition(-pose.CurrentLogicPosition.z);
+                        pose.CurrentLogicPosition = AltitudeToPosition(-pose.CurrentLogicPosition.z, pose);
                     }
                 }
             }
 
-            private void Catching(CameraTransform pos)
+            private void Catching(CameraTransform pose)
             {
-                Vector3 targetPos = AltitudeToPosition(m_TargetAltitude);
+                Vector3 targetPos = AltitudeToPosition(m_TargetAltitude, pose);
                 if (m_CatchSpeed == 0)
                 {
                     if (m_CatchDuration <= 0)
@@ -113,24 +113,35 @@ namespace XDay.CameraAPI
                     }
                     else
                     {
-                        m_CatchSpeed = Vector3.Distance(targetPos, pos.CurrentLogicPosition) / m_CatchDuration;
+                        m_CatchSpeed = Vector3.Distance(targetPos, pose.CurrentLogicPosition) / m_CatchDuration;
                     }
                 }
 
                 m_CatchSpeed = Mathf.Max(m_CatchSpeed, m_MinFollowSpeed);
-                pos.CurrentLogicPosition = Vector3.MoveTowards(pos.CurrentLogicPosition, targetPos, m_CatchSpeed * Time.deltaTime);
-                if (pos.CurrentLogicPosition == targetPos)
+                if (m_CatchDuration == 0)
+                {
+                    pose.CurrentLogicPosition = targetPos;
+                }
+                else
+                {
+                    pose.CurrentLogicPosition = Vector3.MoveTowards(pose.CurrentLogicPosition, targetPos, m_CatchSpeed * Time.deltaTime);
+                }
+                if (pose.CurrentLogicPosition == targetPos)
                 {
                     SetState(State.Followed);
                     m_OnTargetFollowed?.Invoke();
                 }
             }
 
-            private Vector3 AltitudeToPosition(float altitude)
+            private Vector3 AltitudeToPosition(float altitude, CameraTransform pose)
             {
                 if (m_Manipulator.Direction == CameraDirection.XZ)
                 {
-                    return Helper.FromFocusPointXZ(m_Manipulator.Camera, m_Target.Position, altitude);
+                    var rotation = m_Manipulator.Camera.transform.rotation;
+                    m_Manipulator.Camera.transform.rotation = pose.CurrentRenderRotation;
+                    var pos = Helper.FromFocusPointXZ(m_Manipulator.Camera, m_Target.Position, altitude);
+                    m_Manipulator.Camera.transform.rotation = rotation;
+                    return pos;
                 }
                 return Helper.FromFocusPointXY(m_Manipulator.Camera, m_Target.Position, altitude);
             }

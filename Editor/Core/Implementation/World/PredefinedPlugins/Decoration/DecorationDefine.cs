@@ -25,7 +25,7 @@
 
 namespace XDay.WorldAPI.Decoration.Editor
 {
-    internal class DecorationDefine
+    public class DecorationDefine
     {
         public const string LOD_LAYER_MASK_NAME = "LOD Layer";
         public const string LOD_NAME = "LOD";

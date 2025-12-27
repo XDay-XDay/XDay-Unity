@@ -21,8 +21,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using UnityEngine;
 
 namespace XDay.CameraAPI
@@ -41,10 +39,10 @@ namespace XDay.CameraAPI
             LastLogicRotation = StartRotation;
             CurrentLogicPosition = StartPosition;
             CurrentLogicRotation = StartRotation;
-            LastLogicPosition = StartPosition;
-            LastLogicRotation = StartRotation;
-            CurrentLogicPosition = StartPosition;
-            CurrentLogicRotation = StartRotation;
+            LastRenderPosition = StartPosition;
+            LastRenderRotation = StartRotation;
+            CurrentRenderPosition = StartPosition;
+            SetCurrentRotation(StartRotation);
         }
 
         public void BeginUpdate(Camera camera)
@@ -58,13 +56,29 @@ namespace XDay.CameraAPI
             LastRenderPosition = CurrentRenderPosition;
             LastRenderRotation = CurrentRenderRotation;
             CurrentRenderPosition = position;
-            CurrentRenderRotation = rotation;
+            SetCurrentRotation(rotation);
         }
 
         public void UpdateLogicTransform()
         {
             LastLogicPosition = CurrentLogicPosition;
             LastLogicRotation = CurrentLogicRotation;
+        }
+
+        public void SetRotation(Quaternion rotation)
+        {
+            LastLogicRotation = rotation;
+            LastRenderRotation = rotation;
+            CurrentLogicRotation = rotation;
+            SetCurrentRotation(rotation);
+        }
+
+        private void SetCurrentRotation(Quaternion rotation)
+        {
+            CurrentRenderRotation = rotation;
+            var euler = rotation.eulerAngles;
+            CurrentPitch = euler.x;
+            CurrentYaw = euler.y;
         }
 
         public Vector3 StartPosition;
@@ -77,6 +91,8 @@ namespace XDay.CameraAPI
         public Quaternion CurrentRenderRotation;
         public Vector3 LastRenderPosition;
         public Quaternion LastRenderRotation;
+        public float CurrentPitch;
+        public float CurrentYaw;
     }
 }
 

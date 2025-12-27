@@ -207,6 +207,8 @@ namespace XDay.CameraAPI
 
         CameraDirection Direction { get; }
 
+        bool IsActive { get; }
+
         void OnDestroy();
 
         /// <summary>

@@ -31,7 +31,7 @@ namespace XDay.WorldAPI
 {
     public partial class WorldManager
     {
-        public async UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc, bool createManipulator)
+        public async UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc, bool createManipulator, ICameraVisibleAreaCalculator updator)
         {
             if (m_SetupManager == null)
             {
@@ -42,24 +42,24 @@ namespace XDay.WorldAPI
             var setup = m_SetupManager.QuerySetup(name);
             if (setup != null)
             {
-                return await LoadWorldAsyncInternal(setup, cameraQueryFunc, createManipulator);
+                return await LoadWorldAsyncInternal(setup, cameraQueryFunc, createManipulator, updator);
             }
             Debug.LogError($"load world failed: {name}");
             return null;
         }
 
-        public async UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc, bool createManipulator)
+        public async UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc, bool createManipulator, ICameraVisibleAreaCalculator updator)
         {
             var setup = m_SetupManager.QuerySetup(worldID);
             if (setup != null)
             {
-                return await LoadWorldAsyncInternal(setup, cameraQueryFunc, createManipulator);
+                return await LoadWorldAsyncInternal(setup, cameraQueryFunc, createManipulator, updator);
             }
             Debug.LogError($"load world failed: {worldID}");
             return null;
         }
 
-        public IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc, bool createManipulator)
+        public IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc, bool createManipulator, ICameraVisibleAreaCalculator updator)
         {
             name = ConvertName(name);
 
@@ -70,25 +70,24 @@ namespace XDay.WorldAPI
                 return null;
             }
 
-            return LoadWorldInternal(setup, cameraQueryFunc, createManipulator);
+            return LoadWorldInternal(setup, cameraQueryFunc, createManipulator, updator);
         }
 
-        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup setup, Func<Camera> cameraQueryFunc, bool createManipulator)
+        private async UniTask<IWorld> LoadWorldAsyncInternal(WorldSetup setup, Func<Camera> cameraQueryFunc, bool createManipulator, ICameraVisibleAreaCalculator updator)
         {
             var source = new UniTaskCompletionSource<IWorld>();
 
             LoadWorldAsyncInternal(setup, (world) => {
                 OnLoadFinished(world, cameraQueryFunc, createManipulator);
-
                 source.TrySetResult(world);
-            });
+            }, updator);
 
             return await source.Task;
         }
 
-        private void LoadWorldAsyncInternal(WorldSetup setup, Action<IWorld> onLoadingFinished)
+        private void LoadWorldAsyncInternal(WorldSetup setup, Action<IWorld> onLoadingFinished, ICameraVisibleAreaCalculator updator)
         {
-            var world = new GameWorld(this, setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
+            var world = new GameWorld(this, setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader, updator);
             m_Worlds.Add(world);
 
             m_PluginLoader.Load(world.ID, setup.GameFolder);
@@ -98,7 +97,7 @@ namespace XDay.WorldAPI
             m_TaskSystem.ScheduleTask(job);
         }
 
-        private IWorld LoadWorldInternal(WorldSetup setup, Func<Camera> cameraQueryFunc, bool createManipulator)
+        private IWorld LoadWorldInternal(WorldSetup setup, Func<Camera> cameraQueryFunc, bool createManipulator, ICameraVisibleAreaCalculator updator)
         {
             var world = QueryWorld(setup.ID);
             if (world != null)
@@ -107,7 +106,7 @@ namespace XDay.WorldAPI
                 return world;
             }
 
-            var gameWorld = new GameWorld(this, setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader);
+            var gameWorld = new GameWorld(this, setup, m_AssetLoader, null, m_SerializableFactory, m_PluginLoader, updator);
             m_Worlds.Add(gameWorld);
 
             m_PluginLoader.Load(gameWorld.ID, setup.GameFolder);

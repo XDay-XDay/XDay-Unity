@@ -98,7 +98,7 @@ namespace XDay.WorldAPI
         IWorldManager WorldManager { get; }
         GameObject Root { get; }
         IGameObjectPool GameObjectPool { get; }
-        ICameraVisibleAreaCalculator CameraVisibleAreaCalculator { get; }
+        ICameraVisibleAreaCalculator CameraVisibleAreaCalculator { get; set; }
         IWorldLODSystem WorldLODSystem { get; }
         bool ShowDebugInfo { get; set; }
 
@@ -121,9 +121,9 @@ namespace XDay.WorldAPI
         IWorldAssetLoader WorldAssetLoader { get; }
         ITaskSystem TaskSystem { get; }
 
-        UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc = null, bool createManipulator = true);
-        UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc = null, bool createManipulator = true);
-        IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc = null, bool createManipulator = true);
+        UniTask<IWorld> LoadWorldAsync(string name, Func<Camera> cameraQueryFunc = null, bool createManipulator = true, ICameraVisibleAreaCalculator updator = null);
+        UniTask<IWorld> LoadWorldAsync(int worldID, Func<Camera> cameraQueryFunc = null, bool createManipulator = true, ICameraVisibleAreaCalculator updator = null);
+        IWorld LoadWorld(string name, Func<Camera> cameraQueryFunc = null, bool createManipulator = true, ICameraVisibleAreaCalculator updator = null);
         void UnloadWorld(string name);
         void UnloadWorld(int worldID);
         void LoadWorldRenderer(string name);
@@ -146,9 +146,9 @@ namespace XDay.WorldAPI
 
     public interface ICameraVisibleAreaUpdater
     {
-        static ICameraVisibleAreaUpdater Create(ICameraVisibleAreaCalculator calculator)
+        static ICameraVisibleAreaUpdater Create(IWorld world)
         {
-            return new CameraVisibleAreaUpdater(calculator);
+            return new CameraVisibleAreaUpdater(world);
         }
 
         Rect CurrentArea { get; }

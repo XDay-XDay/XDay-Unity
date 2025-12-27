@@ -62,9 +62,12 @@ namespace XDay.CameraAPI
         public Vector3 Forward => m_Transform.CurrentRenderRotation * Vector3.forward;
         public float FocalLength => Vector3.Distance(m_Transform.CurrentLogicPosition, FocusPoint);
         public float ZoomFactor => m_Camera.fieldOfView * FocalLength;
+        public float Pitch => m_Transform.CurrentPitch;
+        public float Yaw => m_Transform.CurrentYaw;
         public CameraSetup Setup => m_Setup;
         public bool IsRenderTransformChanged => m_IsRenderTransformChanged;
         public Camera Camera => m_Camera;
+        public bool IsActive => m_IsActive;
 
         public void Init(CameraSetup setup, Camera camera, IDeviceInput input)
         {
@@ -163,9 +166,7 @@ namespace XDay.CameraAPI
         public void SetRotation(Quaternion rotation)
         {
             m_Camera.transform.rotation = rotation;
-            m_Transform.LastLogicRotation = rotation;
-            m_Transform.CurrentLogicRotation = rotation;
-            m_Transform.CurrentRenderRotation = rotation;
+            m_Transform.SetRotation(rotation);
         }
 
         public void SetFocusPointBounds(Vector2 min, Vector2 max)
@@ -198,15 +199,7 @@ namespace XDay.CameraAPI
 
         public void SetActive(bool active)
         {
-            if (m_Camera != null)
-            {
-                if (m_Camera.gameObject.TryGetComponent<AudioListener>(out var audioListener))
-                {
-                    audioListener.enabled = active;
-                }
-
-                m_Camera.enabled = active;
-            }
+            m_IsActive = active;
 
             foreach (var sender in m_Senders)
             {
@@ -241,6 +234,11 @@ namespace XDay.CameraAPI
 
         public void Update()
         {
+            if (!m_IsActive)
+            {
+                return;
+            }
+
             if (m_FreeCameraControl)
             {
                 return;
@@ -447,7 +445,7 @@ namespace XDay.CameraAPI
             m_Transform.CurrentLogicPosition = m_FocusPointClamp.Clamp(
                 m_Transform.CurrentLogicPosition,
                 m_Transform.CurrentLogicRotation * Vector3.forward,
-                Setup.Orbit.Pitch, 
+                Pitch, 
                 MinAltitude, 
                 MaxAltitude, 
                 m_Camera);
@@ -483,6 +481,7 @@ namespace XDay.CameraAPI
         private bool m_IsRenderTransformChanged;
         private bool m_NeedDestroyCamera = false;
         private bool m_FreeCameraControl = false;
+        private bool m_IsActive = true;
     }
 }
 

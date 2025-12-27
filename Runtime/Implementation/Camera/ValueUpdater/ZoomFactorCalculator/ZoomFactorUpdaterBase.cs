@@ -37,8 +37,8 @@ namespace XDay.CameraAPI
         {
             if (direction == CameraDirection.XZ)
             {
-                float min = Helper.FocalLengthFromAltitudeXZ(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MinAltitude);
-                float max = Helper.FocalLengthFromAltitudeXZ(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MaxAltitude);
+                float min = Helper.FocalLengthFromAltitudeXZ(m_Manipulator.Pitch, m_Manipulator.MinAltitude);
+                float max = Helper.FocalLengthFromAltitudeXZ(m_Manipulator.Pitch, m_Manipulator.MaxAltitude);
                 focalLength = Mathf.Clamp(focalLength, min, max);
                 var centerPos = Helper.RayCastWithXZPlane(new Vector3(screenX, screenY, 0), camera);
 
@@ -54,8 +54,8 @@ namespace XDay.CameraAPI
             }
             else
             {
-                float min = Helper.FocalLengthFromAltitudeXY(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MinAltitude);
-                float max = Helper.FocalLengthFromAltitudeXY(m_Manipulator.Setup.Orbit.Pitch, m_Manipulator.MaxAltitude);
+                float min = Helper.FocalLengthFromAltitudeXY(m_Manipulator.Pitch, m_Manipulator.MinAltitude);
+                float max = Helper.FocalLengthFromAltitudeXY(m_Manipulator.Pitch, m_Manipulator.MaxAltitude);
                 focalLength = Mathf.Clamp(focalLength, min, max);
 
                 var plane = new Plane(Vector3.back, 0);

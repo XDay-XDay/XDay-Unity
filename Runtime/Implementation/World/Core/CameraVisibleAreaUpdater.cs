@@ -31,10 +31,10 @@ namespace XDay.WorldAPI
         public Rect CurrentArea => m_CurrentArea;
         public Rect PreviousArea => m_PreviousArea;
 
-        public CameraVisibleAreaUpdater(ICameraVisibleAreaCalculator calculator)
+        public CameraVisibleAreaUpdater(IWorld world)
         {
             Reset();
-            m_CameraVisibleAreaCalculator = calculator;
+            m_World = world;
         }
 
         public void Reset()
@@ -47,7 +47,7 @@ namespace XDay.WorldAPI
         {
             m_AreaChanged = false;
 
-            var expandedArea = m_CameraVisibleAreaCalculator.ExpandedArea;
+            var expandedArea = m_World.CameraVisibleAreaCalculator.ExpandedArea;
 
             if (Helper.GT(Mathf.Abs(expandedArea.x - m_CurrentArea.x), m_DistanceThreshold) ||
                 Helper.GT(Mathf.Abs(expandedArea.y - m_CurrentArea.y), m_DistanceThreshold) ||
@@ -73,7 +73,7 @@ namespace XDay.WorldAPI
             m_DistanceThreshold = distance;
         }
 
-        private ICameraVisibleAreaCalculator m_CameraVisibleAreaCalculator;
+        private IWorld m_World;
         private Rect m_PreviousArea;
         private Rect m_CurrentArea;
         private float m_DistanceThreshold = 0;

@@ -102,8 +102,6 @@ namespace XDay.NavigationAPI
         {
             sourceCoord = m_GridData.PositionToCoordinate(source);
             targetCoord = m_GridData.PositionToCoordinate(target);
-            //sourcePos = m_GridData.CoordinateToGridCenterPosition(sourceCoord.x, sourceCoord.y);
-            //targetPos = m_GridData.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
 
             if (!m_GridData.IsWalkable(sourceCoord.x, sourceCoord.y))
             {
@@ -114,7 +112,6 @@ namespace XDay.NavigationAPI
                 }
 
                 sourceCoord = m_GridData.FindNearestWalkableCoordinate(sourceCoord.x, sourceCoord.y, targetCoord, 10);
-                //sourcePos = m_GridData.CoordinateToGridCenterPosition(sourceCoord.x, sourceCoord.y);
             }
             if (!m_GridData.IsWalkable(sourceCoord.x, sourceCoord.y))
             {
@@ -130,7 +127,6 @@ namespace XDay.NavigationAPI
                     return false;
                 }
                 targetCoord = m_GridData.FindNearestWalkableCoordinate(targetCoord.x, targetCoord.y, 10);
-                //targetPos = m_GridData.CoordinateToGridCenterPosition(targetCoord.x, targetCoord.y);
             }
 
             if (!m_GridData.IsWalkable(targetCoord.x, targetCoord.y))

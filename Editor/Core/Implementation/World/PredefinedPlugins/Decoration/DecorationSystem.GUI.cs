@@ -171,7 +171,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
-        private void SelectAllDecorations()
+        public void SelectAllDecorations()
         {
             List<Object> objects = new();
             foreach (var decoration in m_Decorations.Values)
@@ -515,7 +515,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
-        private void SetObjectLODLayerMask(int lod, LayerMaskChangeMode changeMode)
+        public void SetObjectLODLayerMask(int lod, LayerMaskChangeMode changeMode)
         {
             if (lod < 0)
             {
@@ -1399,7 +1399,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             }
         }
 
-        private enum LayerMaskChangeMode
+        public enum LayerMaskChangeMode
         {
             AddToActiveLODOnly,
             DeleteFromActiveLODOnly,

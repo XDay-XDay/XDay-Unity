@@ -46,7 +46,11 @@ namespace XDay.WorldAPI
         public string Name => m_Setup.Name;
         public abstract int CurrentLOD { get; }
         public WorldSetup Setup => m_Setup;
-        public ICameraVisibleAreaCalculator CameraVisibleAreaCalculator => m_CameraVisibleAreaCalculator;
+        public ICameraVisibleAreaCalculator CameraVisibleAreaCalculator
+        {
+            get => m_CameraVisibleAreaCalculator;
+            set => m_CameraVisibleAreaCalculator = value;
+        }
         public GameObject Root => m_WorldRenderer.Root;
         public IGameObjectPool GameObjectPool => m_WorldRenderer.Cache;
         public IWorldLODSystem WorldLODSystem => m_LODSystem;

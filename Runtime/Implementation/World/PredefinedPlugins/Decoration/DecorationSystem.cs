@@ -292,7 +292,7 @@ namespace XDay.WorldAPI.Decoration
 
             InitInitialVisibleState();
 
-            m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World);
             m_VisibleAreaUpdater.SetDistanceThreshold((World as GameWorld).VisibleAreaUpdateDistance);
 
             InitRendererInternal();
@@ -388,7 +388,7 @@ namespace XDay.WorldAPI.Decoration
 
         protected override void UpdateInternal(float dt)
         {
-            var cameraPos = World.CameraManipulator.RenderPosition;
+            var cameraPos = World.CameraManipulator.Camera.transform.position;
 
             var viewportChanged = m_VisibleAreaUpdater.BeginUpdate();
             var lodChanged = m_LODSystem.Update(cameraPos.y);

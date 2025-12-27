@@ -46,7 +46,7 @@ namespace XDay.WorldAPI.Region
 
             m_Renderer = new RegionSystemRenderer(World.Root.transform);
 
-            m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_VisibleAreaUpdater = ICameraVisibleAreaUpdater.Create(World);
             m_VisibleAreaUpdater.SetDistanceThreshold((World as GameWorld).VisibleAreaUpdateDistance);
 
             foreach (var layer in m_Layers)
@@ -66,7 +66,7 @@ namespace XDay.WorldAPI.Region
 
         protected override void UpdateInternal(float dt)
         {
-            var cameraPos = World.CameraManipulator.RenderPosition;
+            var cameraPos = World.CameraManipulator.Camera.transform.position;
 
             var viewportChanged = m_VisibleAreaUpdater.BeginUpdate();
             var lodChanged = m_LODSystem.Update(cameraPos.y);

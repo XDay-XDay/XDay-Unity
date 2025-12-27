@@ -100,7 +100,7 @@ namespace XDay.WorldAPI.Decoration.Editor
             m_PluginLODSystem.Init(World.WorldLODSystem);
 
             m_Indicator = IMeshIndicator.Create(World);
-            m_AreaUpdater = ICameraVisibleAreaUpdater.Create(World.CameraVisibleAreaCalculator);
+            m_AreaUpdater = ICameraVisibleAreaUpdater.Create(World);
             m_Renderer = new DecorationSystemRenderer(World.Root.transform, World.GameObjectPool, this);
             m_ResourceGroupSystem.Init(null);
 

@@ -2492,6 +2492,16 @@ namespace XDay.UtilityAPI
             return x % y;
         }
 
+        public static float Mod(float x, float y)
+        {
+            if (x < 0)
+            {
+                return x + y;
+            }
+
+            return x % y;
+        }
+
         public static int UpScale(float v)
         {
             return (int)(v * m_ScaleFactor);
@@ -2667,6 +2677,20 @@ namespace XDay.UtilityAPI
         public static void ClampY(ref Vector3 vector, float maxValue)
         {
             vector.y = Mathf.Min(vector.y, maxValue);
+        }
+
+        /// <summary>
+        /// 计算透视相机在指定固定Z深度处的世界单位/像素比例
+        /// </summary>
+        public static Vector2 CalculateScaleAtFixedDepth(Camera camera, float zDistanceToCamera)
+        {
+            float fovVerticalRad = camera.fieldOfView * Mathf.Deg2Rad;
+            float halfHeightAtDistance = zDistanceToCamera * Mathf.Tan(fovVerticalRad * 0.5f);
+            float totalVerticalHeight = halfHeightAtDistance * 2.0f;
+            float totalHorizontalWidth = totalVerticalHeight * camera.aspect;
+            var worldToScreenXScale = totalHorizontalWidth / Screen.width;
+            var worldToScreenYScale = totalVerticalHeight / Screen.height;
+            return new Vector2(worldToScreenXScale, worldToScreenYScale);
         }
 
         private const double m_DegToRad = 0.0174532924;

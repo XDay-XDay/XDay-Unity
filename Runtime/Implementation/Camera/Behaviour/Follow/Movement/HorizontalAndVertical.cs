@@ -188,7 +188,14 @@ namespace XDay.CameraAPI
                 }
 
                 m_CatchSpeed = Mathf.Max(m_CatchSpeed, m_MinFollowSpeed);
-                pos.CurrentLogicPosition = Vector3.MoveTowards(pos.CurrentLogicPosition, cameraPos, m_CatchSpeed * Time.deltaTime);
+                if (m_CatchDuration == 0)
+                {
+                    pos.CurrentLogicPosition = cameraPos;
+                }
+                else
+                {
+                    pos.CurrentLogicPosition = Vector3.MoveTowards(pos.CurrentLogicPosition, cameraPos, m_CatchSpeed * Time.deltaTime);
+                }
                 if (pos.CurrentLogicPosition == cameraPos)
                 {
                     m_LagTicker.Start(m_Latency);

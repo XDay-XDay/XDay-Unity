@@ -23,7 +23,6 @@
 
 using System;
 using UnityEngine;
-using XDay;
 using XDay.NavigationAPI;
 
 namespace XDay.UtilityAPI.Editor.Navigation

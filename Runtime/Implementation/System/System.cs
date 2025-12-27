@@ -249,7 +249,14 @@ namespace XDay.SystemAPI
                 }
             }
 
-            var system = System.Activator.CreateInstance(classType) as ISystem;
+            m_TypeToSystems.TryGetValue(interfaceType, out var system);
+            if (system != null)
+            {
+                SetSystemFields(system);
+                return system;
+            }
+
+            system = System.Activator.CreateInstance(classType) as ISystem;
             SetSystemFields(system);
 
             system.OnCreate(m_InitInfo.GetSystemDataFunc == null ? null : m_InitInfo.GetSystemDataFunc?.Invoke());

@@ -21,54 +21,30 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace XDay.UtilityAPI
 {
-    public class AutoScale : MonoBehaviour
+    public class NoRotation : MonoBehaviour
     {
-        public bool Inited => m_ScaleCalculator != null;
-
-        private void Awake()
+        void OnEnable()
         {
-            m_BaseScale = gameObject.transform.localScale;
-        }
-
-        public void Init(AutoScaleCalculator calculator)
-        {
-            m_ScaleCalculator = calculator;
-        }
-
-        private void Update()
-        {
-            if (m_ScaleCalculator == null)
+            UniTask.DelayFrame(1).ContinueWith(() =>
             {
-                return;
-            }
-
-            if (m_ScaleCalculator.CurrentScale != 0)
-            {
-                var scale = m_ScaleCalculator.CurrentScale * m_BaseScale;
-                if (m_MaxScale == 0)
-                {
-                    transform.localScale = scale;
-                }
-                else
-                {
-                    var x = Mathf.Min(m_MaxScale, scale.x);
-                    transform.localScale = Vector3.one * x;
-                }
-            }
+                ResetRotation();   
+            }).Forget();
         }
 
-        public void Uninit()
+        public void ResetRotation()
         {
-            m_ScaleCalculator = null;
+            var transform = gameObject.transform;
+            var parent = transform.parent;
+            if (parent != null)
+            {
+                parent.rotation = Quaternion.identity;
+            }
+            transform.rotation = Quaternion.identity;
         }
-
-        private AutoScaleCalculator m_ScaleCalculator;
-        private Vector3 m_BaseScale;
-        [SerializeField]
-        private float m_MaxScale = 0;
     }
 }

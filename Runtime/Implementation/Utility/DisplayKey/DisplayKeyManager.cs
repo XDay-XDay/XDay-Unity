@@ -229,6 +229,11 @@ namespace XDay.DisplayKeyAPI
     {
         public static string GetIconPath(this int id)
         {
+            if (DisplayKeyManager.Instance == null)
+            {
+                return "";
+            }
+
             var key = DisplayKeyManager.Instance.GetKey(id);
             if (key == null)
             {
@@ -239,6 +244,11 @@ namespace XDay.DisplayKeyAPI
 
         public static string GetPrefabPath(this int id)
         {
+            if (DisplayKeyManager.Instance == null)
+            {
+                return "";
+            }
+
             var key = DisplayKeyManager.Instance.GetKey(id);
             if (key == null)
             {
@@ -249,6 +259,11 @@ namespace XDay.DisplayKeyAPI
 
         public static string GetAudioClipPath(this int id)
         {
+            if (DisplayKeyManager.Instance == null)
+            {
+                return "";
+            }
+
             var key = DisplayKeyManager.Instance.GetKey(id);
             if (key == null)
             {
@@ -259,6 +274,11 @@ namespace XDay.DisplayKeyAPI
 
         public static string GetCustomData(this int id)
         {
+            if (DisplayKeyManager.Instance == null)
+            {
+                return "";
+            }
+
             var key = DisplayKeyManager.Instance.GetKey(id);
             if (key == null)
             {

@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace XDay.WorldAPI
 {
-    internal class SLGCameraVisibleAreaCalculator : ICameraVisibleAreaCalculator
+    public class SLGCameraVisibleAreaCalculator : ICameraVisibleAreaCalculator
     {
         public Rect VisibleArea => m_VisibleArea;
         public Rect ExpandedArea => m_ExpandedArea;
